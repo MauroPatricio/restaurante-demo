@@ -1,0 +1,521 @@
+import express from 'express';
+import Restaurant from '../models/Restaurant.js';
+import Table from '../models/Table.js';
+import MenuItem from '../models/MenuItem.js';
+import Order from '../models/Order.js';
+import Audience from '../models/Audience.js';
+import Coupon from '../models/Coupon.js';
+import QRCode from 'qrcode';
+import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
+import { sendOrderNotification } from '../services/firebaseService.js';
+
+// Import feature-specific routes
+import authRoutes from './authRoutes.js';
+import paymentRoutes from './paymentRoutes.js';
+import subscriptionRoutes from './subscriptionRoutes.js';
+import feedbackRoutes from './feedbackRoutes.js';
+import couponRoutes from './couponRoutes.js';
+import deliveryRoutes from './deliveryRoutes.js';
+
+const router = express.Router();
+
+// Mount feature routes
+router.use('/auth', authRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/subscriptions', subscriptionRoutes);
+router.use('/feedback', feedbackRoutes);
+router.use('/coupons', couponRoutes);
+router.use('/delivery', deliveryRoutes);
+
+// ============ RESTAURANT ROUTES ============
+
+// Create restaurant (handled by auth/register)
+
+// Get restaurant details
+router.get('/restaurants/:id', async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id)
+      .populate('owner', 'name email phone')
+      .populate('subscription');
+
+    if (!restaurant) {
+      return res.status(404).json({ error: 'Restaurant not found' });
+    }
+
+    res.json({ restaurant });
+  } catch (error) {
+    console.error('Get restaurant error:', error);
+    res.status(500).json({ error: 'Failed to fetch restaurant' });
+  }
+});
+
+// Update restaurant
+router.patch('/restaurants/:id', authenticateToken, authorizeRoles('owner', 'admin'), async (req, res) => {
+  try {
+    const updates = req.body;
+
+    // Prevent changing owner and subscription fields via this route
+    delete updates.owner;
+    delete updates.subscription;
+
+    const restaurant = await Restaurant.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    );
+
+    if (!restaurant) {
+      return res.status(404).json({ error: 'Restaurant not found' });
+    }
+
+    res.json({
+      message: 'Restaurant updated successfully',
+      restaurant
+    });
+  } catch (error) {
+    console.error('Update restaurant error:', error);
+    res.status(500).json({ error: 'Failed to update restaurant' });
+  }
+});
+
+// ============ TABLE ROUTES ============
+
+// Create table with QR code
+router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
+  try {
+    const { restaurant, number } = req.body;
+
+    // Generate QR code data
+    const qrData = JSON.stringify({
+      restaurantId: restaurant,
+      tableId: `TBL-${number}`,
+      type: 'table'
+    });
+
+    const qrCode = await QRCode.toDataURL(qrData);
+    const table = await Table.create({ restaurant, number, qrCode });
+
+    res.status(201).json({
+      message: 'Table created successfully',
+      table
+    });
+  } catch (error) {
+    console.error('Create table error:', error);
+    res.status(500).json({ error: 'Failed to create table' });
+  }
+});
+
+// Get all tables for a restaurant
+router.get('/tables/restaurant/:restaurantId', async (req, res) => {
+  try {
+    const tables = await Table.find({ restaurant: req.params.restaurantId })
+      .sort({ number: 1 });
+
+    res.json({ tables });
+  } catch (error) {
+    console.error('Get tables error:', error);
+    res.status(500).json({ error: 'Failed to fetch tables' });
+  }
+});
+
+// Get single table
+router.get('/tables/:id', async (req, res) => {
+  try {
+    const table = await Table.findById(req.params.id).populate('restaurant');
+
+    if (!table) {
+      return res.status(404).json({ error: 'Table not found' });
+    }
+
+    res.json({ table });
+  } catch (error) {
+    console.error('Get table error:', error);
+    res.status(500).json({ error: 'Failed to fetch table' });
+  }
+});
+
+// Delete table
+router.delete('/tables/:id', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
+  try {
+    const table = await Table.findByIdAndDelete(req.params.id);
+
+    if (!table) {
+      return res.status(404).json({ error: 'Table not found' });
+    }
+
+    res.json({ message: 'Table deleted successfully' });
+  } catch (error) {
+    console.error('Delete table error:', error);
+    res.status(500).json({ error: 'Failed to delete table' });
+  }
+});
+
+// ============ MENU ITEM ROUTES ============
+
+// Get menu for a restaurant
+router.get('/menu/:restaurantId', async (req, res) => {
+  try {
+    const { category, available } = req.query;
+
+    const query = { restaurant: req.params.restaurantId };
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (available !== undefined) {
+      query.available = available === 'true';
+    }
+
+    const items = await MenuItem.find(query).sort({ category: 1, name: 1 });
+
+    res.json({ items });
+  } catch (error) {
+    console.error('Get menu error:', error);
+    res.status(500).json({ error: 'Failed to fetch menu' });
+  }
+});
+
+// Get menu categories for a restaurant
+router.get('/menu/:restaurantId/categories', async (req, res) => {
+  try {
+    const categories = await MenuItem.distinct('category', {
+      restaurant: req.params.restaurantId
+    });
+
+    res.json({ categories });
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// Create menu item
+router.post('/menu-items', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
+  try {
+    const menuItem = await MenuItem.create({
+      ...req.body,
+      restaurant: req.restaurant._id
+    });
+
+    res.status(201).json({
+      message: 'Menu item created successfully',
+      menuItem
+    });
+  } catch (error) {
+    console.error('Create menu item error:', error);
+    res.status(500).json({ error: 'Failed to create menu item' });
+  }
+});
+
+// Update menu item
+router.patch('/menu-items/:id', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
+  try {
+    const menuItem = await MenuItem.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!menuItem) {
+      return res.status(404).json({ error: 'Menu item not found' });
+    }
+
+    res.json({
+      message: 'Menu item updated successfully',
+      menuItem
+    });
+  } catch (error) {
+    console.error('Update menu item error:', error);
+    res.status(500).json({ error: 'Failed to update menu item' });
+  }
+});
+
+// Delete menu item
+router.delete('/menu-items/:id', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
+  try {
+    const menuItem = await MenuItem.findByIdAndDelete(req.params.id);
+
+    if (!menuItem) {
+      return res.status(404).json({ error: 'Menu item not found' });
+    }
+
+    res.json({ message: 'Menu item deleted successfully' });
+  } catch (error) {
+    console.error('Delete menu item error:', error);
+    res.status(500).json({ error: 'Failed to delete menu item' });
+  }
+});
+
+// ============ ORDER ROUTES ============
+
+// Create order
+router.post('/orders', async (req, res) => {
+  try {
+    const {
+      restaurant,
+      table,
+      items,
+      phone,
+      customerName,
+      email,
+      orderType,
+      deliveryAddress,
+      couponCode,
+      notes
+    } = req.body;
+
+    // Calculate subtotal
+    let subtotal = 0;
+    const populatedItems = [];
+
+    for (const orderItem of items) {
+      const menuItem = await MenuItem.findById(orderItem.item);
+      if (!menuItem) {
+        return res.status(404).json({ error: `Menu item ${orderItem.item} not found` });
+      }
+
+      if (!menuItem.available) {
+        return res.status(400).json({ error: `${menuItem.name} is currently unavailable` });
+      }
+
+      let itemSubtotal = menuItem.price * orderItem.qty;
+
+      // Calculate customization price modifications
+      if (orderItem.customizations) {
+        for (const customization of orderItem.customizations) {
+          itemSubtotal += (customization.priceModifier || 0) * orderItem.qty;
+        }
+      }
+
+      populatedItems.push({
+        item: menuItem._id,
+        qty: orderItem.qty,
+        customizations: orderItem.customizations,
+        itemPrice: menuItem.price,
+        subtotal: itemSubtotal
+      });
+
+      subtotal += itemSubtotal;
+
+      // Increment order count
+      menuItem.orderCount += orderItem.qty;
+      await menuItem.save();
+    }
+
+    // Get restaurant settings for tax and service charge
+    const restaurantData = await Restaurant.findById(restaurant);
+    const taxRate = restaurantData?.settings?.taxRate || 0;
+    const serviceChargeRate = restaurantData?.settings?.serviceChargeRate || 0;
+
+    const tax = (subtotal * taxRate) / 100;
+    const serviceCharge = (subtotal * serviceChargeRate) / 100;
+
+    // Apply coupon if provided
+    let discount = 0;
+    if (couponCode) {
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        restaurant
+      });
+
+      if (coupon) {
+        const validation = coupon.isValid(phone);
+        if (validation.valid && subtotal >= coupon.minOrderAmount) {
+          discount = coupon.calculateDiscount(subtotal);
+
+          // Mark coupon as used
+          coupon.usedCount += 1;
+          coupon.usedBy.push({ user: phone, usedAt: new Date() });
+          await coupon.save();
+        }
+      }
+    }
+
+    // Calculate delivery fee if delivery order
+    let deliveryFee = 0;
+    if (orderType === 'delivery' && deliveryAddress) {
+      deliveryFee = 50; // Default delivery fee, can be calculated based on distance
+    }
+
+    const total = subtotal + tax + serviceCharge + deliveryFee - discount;
+
+    // Estimate ready time
+    const maxEta = Math.max(...populatedItems.map(i => {
+      const menuItem = items.find(mi => mi.item === i.item.toString());
+      return menuItem?.eta || 15;
+    }));
+    const estimatedReadyTime = new Date(Date.now() + maxEta * 60 * 1000);
+
+    // Create order
+    const order = await Order.create({
+      restaurant,
+      table,
+      orderType: orderType || 'dine-in',
+      items: populatedItems,
+      subtotal,
+      discount,
+      couponCode,
+      tax,
+      serviceCharge,
+      deliveryFee,
+      total,
+      customerName,
+      phone,
+      email,
+      deliveryAddress,
+      estimatedReadyTime,
+      notes,
+      status: 'pending'
+    });
+
+    // Add to audience if phone provided
+    if (phone) {
+      await Audience.findOneAndUpdate(
+        { restaurant, phone },
+        { restaurant, phone },
+        { upsert: true }
+      );
+    }
+
+    // Send notification to kitchen
+    await sendOrderNotification(order, 'new-order');
+
+    res.status(201).json({
+      message: 'Order created successfully',
+      order: {
+        id: order._id,
+        total: order.total,
+        estimatedReadyTime: order.estimatedReadyTime,
+        status: order.status
+      }
+    });
+  } catch (error) {
+    console.error('Create order error:', error);
+    res.status(500).json({ error: 'Failed to create order', details: error.message });
+  }
+});
+
+// Get orders for a restaurant
+router.get('/orders/restaurant/:restaurantId', authenticateToken, checkSubscription, async (req, res) => {
+  try {
+    const { status, orderType, limit = 50 } = req.query;
+
+    const query = { restaurant: req.params.restaurantId };
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (orderType) {
+      query.orderType = orderType;
+    }
+
+    const orders = await Order.find(query)
+      .populate('items.item')
+      .populate('table')
+      .populate('feedback')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    res.json({ orders });
+  } catch (error) {
+    console.error('Get orders error:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+// Get single order
+router.get('/orders/:id', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('items.item')
+      .populate('table')
+      .populate('restaurant')
+      .populate('feedback');
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    res.json({ order });
+  } catch (error) {
+    console.error('Get order error:', error);
+    res.status(500).json({ error: 'Failed to fetch order' });
+  }
+});
+
+// Update order status
+router.patch('/orders/:id', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const updateData = {
+      status,
+      $push: {
+        statusHistory: {
+          status,
+          timestamp: new Date(),
+          updatedBy: req.user._id
+        }
+      }
+    };
+
+    // Set ready time when status changes to ready
+    if (status === 'ready') {
+      updateData.actualReadyTime = new Date();
+    }
+
+    // Set completed time when status changes to completed
+    if (status === 'completed') {
+      updateData.completedAt = new Date();
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Send notifications based on status
+    if (status === 'ready') {
+      await sendOrderNotification(order, 'order-ready');
+    }
+
+    res.json({
+      message: 'Order updated successfully',
+      order
+    });
+  } catch (error) {
+    console.error('Update order error:', error);
+    res.status(500).json({ error: 'Failed to update order' });
+  }
+});
+
+// ============ BROADCAST / MARKETING ============
+
+// Send broadcast message
+router.post('/broadcast', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
+  try {
+    const { restaurant, message } = req.body;
+    const phones = await Audience.find({ restaurant });
+
+    // TODO: Integrate with SMS/WhatsApp API
+    console.log(`Broadcasting to ${phones.length} customers: ${message}`);
+
+    res.json({
+      sent: phones.length,
+      message,
+      note: 'SMS/WhatsApp integration pending'
+    });
+  } catch (error) {
+    console.error('Broadcast error:', error);
+    res.status(500).json({ error: 'Failed to send broadcast' });
+  }
+});
+
+export default router;

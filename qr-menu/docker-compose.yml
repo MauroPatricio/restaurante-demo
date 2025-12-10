@@ -1,0 +1,10 @@
+version: '3'
+services:
+  api:
+    build: ./api
+    ports:
+      - '4000:4000'
+  mongo:
+    image: mongo:7
+    ports:
+      - '27017:27017'
