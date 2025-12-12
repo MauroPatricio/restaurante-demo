@@ -35,3 +35,9 @@ build/
 # Misc
 *.log
 .cache/
+
+# Secrets
+*firebase*.json
+*adminsdk*.json
+qr-menu/api/restaurante-notif-firebase-adminsdk-fbsvc-df9071aefd.json
+qr-menu/api/firebase-config.json

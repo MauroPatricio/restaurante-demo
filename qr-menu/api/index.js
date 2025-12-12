@@ -59,7 +59,14 @@ app.set('io', io);
 initializeFirebase();
 
 // Connect to MongoDB and start server
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/qr-menu-restaurant')
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/qr-menu-restaurant', {
+  serverSelectionTimeoutMS: 30000, // 30 seconds timeout
+  socketTimeoutMS: 45000, // 45 seconds socket
+  maxPoolSize: 10, // Connection pool limit
+  minPoolSize: 5, // Minimum connections
+  retryWrites: true, // Retry writes on failure
+  w: 'majority' // Write concern
+})
   .then(() => {
     console.log('✓ Connected to MongoDB');
 
