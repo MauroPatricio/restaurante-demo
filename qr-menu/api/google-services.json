@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "239639195468",
+    "project_id": "restaurante-notif",
+    "storage_bucket": "restaurante-notif.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:239639195468:android:b8ed01d3e3fcde310029e9",
+        "android_client_info": {
+          "package_name": "com.mpatricio.restaurant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCquq3mQksdh6vnAO-3G9Fh3mMaiUdYo1E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

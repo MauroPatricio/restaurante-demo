@@ -69,11 +69,15 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/qr-menu-res
 
     const PORT = process.env.PORT || 4000;
     server.listen(PORT, () => {
-      console.log(`✓ API running on port ${PORT}`);
+      console.log(`Servidor disponivel e escutando na porta ${PORT}`);
       console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   })
   .catch((error) => {
+    console.log('O servidor nao conseguiu se connectar com o mongoBD devido falta de permissoes de servidor');
+    if (error.name === 'MongooseServerSelectionError') {
+      console.log('HINT: Check if your IP address is whitelisted in MongoDB Atlas.');
+    }
     console.error('✗ MongoDB connection error:', error);
     process.exit(1);
   });
