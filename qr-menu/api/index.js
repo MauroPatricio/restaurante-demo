@@ -15,6 +15,14 @@ import { startSubscriptionMonitoring } from './src/services/scheduledJobs.js';
 // Carregando variáveis de ambiente
 dotenv.config();
 
+// Ensure JWT secret is set in production to avoid silent insecurity
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  console.error('❌ JWT_SECRET is required in production. Set JWT_SECRET in environment variables.');
+  process.exit(1);
+} else if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  Warning: JWT_SECRET is not set. Using defaults may be insecure for production.');
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 4000;
@@ -31,6 +39,7 @@ async function getPublicIP() {
 }
 
 // Conectar ao MongoDB (não bloqueia o servidor)
+// Conectar ao MongoDB (não bloqueia o servidor)
 (async () => {
   const publicIP = await getPublicIP();
 
@@ -40,46 +49,98 @@ async function getPublicIP() {
   console.log(`🔌 PORTA DO SERVIDOR: ${PORT}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-  mongoose
-    .connect(process.env.MONGO_URI || 5000, {
-      serverSelectionTimeoutMS: 30000, // ✅ 30 segundos timeout
-      socketTimeoutMS: 45000, // ✅ 45 segundos socket
-      maxPoolSize: 10, // ✅ Limite de conexões
-      minPoolSize: 5, // ✅ Mínimo de conexões
-      retryWrites: true, // ✅ Re-tentar escritas
-      w: 'majority' // ✅ Write concern
-    })
-    .then(() => {
-      console.log('✅ Conectado ao MongoDB com SUCESSO');
-      console.log(`✓ IP ${publicIP} está whitelistado corretamente\n`);
+  // Accept either MONGO_URI or MONGODB_URI (some projects use different names)
+  const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
 
-      // Start subscription monitoring cron job após conexão bem-sucedida
+  if (!mongoUri) {
+    console.error('❌ Nenhuma variável de ambiente de conexão MongoDB encontrada. Defina MONGO_URI ou MONGODB_URI no .env');
+    console.error('🔧 Exemplo: MONGO_URI=mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/mydb?retryWrites=true&w=majority');
+    return;
+  }
+
+  const options = {
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
+    maxPoolSize: 10,
+    minPoolSize: 5,
+    retryWrites: true,
+    w: 'majority'
+  };
+
+  // Global handlers to avoid crashes on unhandled errors during network operations
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+  });
+
+  // Try to connect with retries to avoid transient DNS/network issues crashing the process
+  async function connectWithRetry(uri, opts, maxAttempts = 5, initialDelay = 3000) {
+    let attempt = 0;
+    let delay = initialDelay;
+    while (attempt < maxAttempts) {
+      attempt += 1;
       try {
-        startSubscriptionMonitoring();
-        console.log('✓ Monitoramento de assinaturas iniciado');
+        await mongoose.connect(uri, opts);
+        console.log(`✅ Conectado ao MongoDB (attempt ${attempt})`);
+        // Log detailed connection info when successful
+        try {
+          const masked = uri.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@');
+          const m = uri.match(/@([^\/]+)\/?([^?]*)/);
+          const hosts = m ? m[1] : '<unknown-hosts>';
+          const dbName = m && m[2] ? m[2] : (opts && opts.dbName) || 'default';
+          console.log('\n🔒 MongoDB connection details (masked):');
+          console.log(`   URI: ${masked}`);
+          console.log(`   Hosts: ${hosts}`);
+          console.log(`   Database: ${dbName}`);
+          console.log(`   Mongoose readyState: ${mongoose.connection.readyState}\n`);
+        } catch (e) {
+          console.log('⚠️  Não foi possível extrair detalhes da URI do MongoDB:', e?.message || e);
+        }
+        return true;
       } catch (err) {
-        console.log('⚠️  Aviso: Não foi possível iniciar monitoramento:', err.message);
+        console.warn(`⚠️  Falha ao conectar MongoDB (attempt ${attempt}):`, err?.message || err);
+        if (attempt >= maxAttempts) {
+          console.error('\n❌ ERRO ao conectar MongoDB após tentativas:', err?.message || err);
+          return false;
+        }
+        console.log(`→ Reattempting in ${delay}ms...`);
+        await new Promise((res) => setTimeout(res, delay));
+        delay *= 2; // exponential backoff
       }
-    })
-    .catch((err) => {
-      console.log('\n❌ ERRO ao conectar MongoDB:', err.message);
-      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📋 ADICIONE ESTE IP NA WHITELIST DO MONGODB ATLAS:');
-      console.log(`   🌐 IP: ${publicIP}`);
-      console.log(`   🔌 Porta (servidor): ${PORT}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('\n🔧 Como adicionar na whitelist:');
-      console.log('   1. Acesse: https://cloud.mongodb.com/');
-      console.log('   2. Selecione seu Cluster');
-      console.log('   3. Vá em "Network Access" (Acesso à Rede)');
-      console.log('   4. Clique "ADD IP ADDRESS"');
-      console.log(`   5. Digite: ${publicIP}`);
-      console.log('   6. Clique "Confirm"');
-      console.log('\n💡 Outras verificações:');
-      console.log('   - String de conexão no .env (MONGO_URI)');
-      console.log('   - DNS funcionando (use Google DNS 8.8.8.8)');
-      console.log('\n⚠️  Servidor vai iniciar mesmo assim, mas sem banco de dados!\n');
+    }
+    return false;
+  }
+
+  const connected = await connectWithRetry(mongoUri, options, 4, 3000);
+
+  if (connected) {
+    console.log(`✓ IP ${publicIP} está whitelistado corretamente\n`);
+    // Attach connection lifecycle listeners
+    mongoose.connection.on('connected', () => {
+      console.log('📡 Mongoose event: connected');
     });
+    mongoose.connection.on('reconnected', () => {
+      console.log('🔁 Mongoose event: reconnected');
+    });
+    mongoose.connection.on('disconnected', () => {
+      console.log('⚠️  Mongoose event: disconnected');
+    });
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ Mongoose event: error', err?.message || err);
+    });
+  } else {
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📋 Possíveis causas e ações:');
+    console.log('   - Seu IP público não está na Network Access (whitelist) do MongoDB Atlas');
+    console.log('   - String de conexão está incorreta (verifique usuário/senha/cluster)');
+    console.log('   - Cluster está offline ou há problema de rede/DNS');
+    console.log('\n   → Acesse: https://cloud.mongodb.com/ e adicione o IP listado acima em Network Access');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log('⚠️  Servidor vai iniciar mesmo assim, mas sem banco de dados!\n');
+  }
 })();
 
 // **Inicializando Express**
@@ -91,6 +152,10 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 
 // Configuração de CORS adicional
 app.use((req, res, next) => {
@@ -133,7 +198,11 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 // Initialize Firebase Admin SDK for push notifications
-initializeFirebase();
+try {
+  initializeFirebase();
+} catch (err) {
+  console.error('⚠️  Firebase initialization failed:', err?.message || err);
+}
 
 // Middleware de erro
 app.use((err, req, res, next) => {
@@ -142,10 +211,23 @@ app.use((err, req, res, next) => {
 });
 
 // Configuração do servidor HTTP
-server.listen(PORT, () => {
-  console.log(`\n🚀 Servidor disponivel e escutando na porta ${PORT}`);
-  console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`✓ Acesse: http://localhost:${PORT}\n`);
-});
+try {
+  server.listen(PORT, () => {
+    console.log(`\n🚀 Servidor disponivel e escutando na porta ${PORT}`);
+    console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`✓ Acesse: http://localhost:${PORT}\n`);
+
+    // Start subscription monitoring after server is listening
+    try {
+      startSubscriptionMonitoring();
+      console.log('✓ Monitoramento de assinaturas iniciado\n');
+    } catch (err) {
+      console.log('⚠️  Aviso: Não foi possível iniciar monitoramento:', err?.message || err);
+    }
+  });
+} catch (err) {
+  console.error('❌ Erro ao iniciar servidor:', err?.message || err);
+  process.exit(1);
+}
 
 export { io };

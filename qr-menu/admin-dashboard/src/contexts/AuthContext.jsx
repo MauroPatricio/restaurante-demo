@@ -38,6 +38,8 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (credentials) => {
         const response = await authAPI.login(credentials);
+
+        console.log('Login response:', response.data);
         const { token, user } = response.data;
 
         localStorage.setItem('token', token);
@@ -62,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
-        isAuthenticated: !!user
+        isAuthenticated: !!token
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

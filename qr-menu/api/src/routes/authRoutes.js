@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Restaurant from '../models/Restaurant.js';
 import Subscription from '../models/Subscription.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -101,12 +102,12 @@ router.post('/login', async (req, res) => {
         // Check password
         const isValidPassword = await user.comparePassword(password);
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Invalid email or password' });
+            return res.status(401).json({ error: 'Password ou email invalido' });
         }
 
         // Check if user is active
         if (!user.active) {
-            return res.status(403).json({ error: 'Account is deactivated' });
+            return res.status(403).json({ error: 'Conta e desactivada' });
         }
 
         // Update last login
@@ -131,7 +132,7 @@ router.post('/login', async (req, res) => {
         }
 
         res.json({
-            message: 'Login successful',
+            message: 'Login feito com sucesso',
             token,
             user: user.toSafeObject(),
             subscription: subscriptionStatus
@@ -159,36 +160,32 @@ router.post('/refresh', async (req, res) => {
             { ignoreExpiration: true }
         );
 
-        // Generate new token
-        const newToken = generateToken(decoded.userId);
+        // Ensure user still exists and is active
+        const user = await User.findById(decoded.userId);
+        if (!user || !user.active) {
+            return res.status(403).json({ error: 'User not found or inactive' });
+        }
 
-        res.json({
-            token: newToken
-        });
+        // Generate new token
+        const newToken = generateToken(user._id);
+
+        res.json({ token: newToken });
     } catch (error) {
         console.error('Token refresh error:', error);
         res.status(403).json({ error: 'Invalid token' });
     }
 });
 
-// Update FCM token for push notifications
-router.post('/fcm-token', async (req, res) => {
+// Update FCM token for push notifications (protected)
+router.post('/fcm-token', authenticateToken, async (req, res) => {
     try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-
-        if (!token) {
-            return res.status(401).json({ error: 'Access token required' });
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         const { fcmToken } = req.body;
 
         if (!fcmToken) {
             return res.status(400).json({ error: 'FCM token required' });
         }
 
-        await User.findByIdAndUpdate(decoded.userId, { fcmToken });
+        await User.findByIdAndUpdate(req.user._id, { fcmToken });
 
         res.json({ message: 'FCM token updated successfully' });
     } catch (error) {
@@ -197,18 +194,10 @@ router.post('/fcm-token', async (req, res) => {
     }
 });
 
-// Get current user profile
-router.get('/me', async (req, res) => {
+// Get current user profile (protected)
+router.get('/me', authenticateToken, async (req, res) => {
     try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-
-        if (!token) {
-            return res.status(401).json({ error: 'Access token required' });
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        const user = await User.findById(decoded.userId).populate('restaurant');
+        const user = await User.findById(req.user._id).populate('restaurant');
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
