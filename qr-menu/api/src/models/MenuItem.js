@@ -24,41 +24,46 @@ const MenuItemSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  photo: {
-    type: String // URL or path to image
-  },
-  available: {
-    type: Boolean,
-    default: true
-  },
-  eta: {
-    type: Number, // minutes to prepare
-    default: 15
-  },
+  // --- New Attributes ---
+  sku: { type: String, unique: true, sparse: true },
+  subcategory: String, // e.g. "Sodas", "Beers"
+  ingredients: [String],
+  allergens: [String], // Gluten, Lactose, etc.
+  prepTime: { type: Number, default: 15 }, // minutes
+  featured: { type: Boolean, default: false }, // Chef's recommendation
+  photo: { type: String },
+  tags: [String], // Spicy, Vegan, Sugar-free
+  portionSize: String, // Small, Medium, Large
+  variablePrice: { type: Boolean, default: false },
+  costPrice: { type: Number, default: 0 }, // For margin calculation
+  stockControlled: { type: Boolean, default: false },
+  seasonal: String, // e.g. "Summer"
+
+  // Operational
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  highlightColor: String, // Hex code
+
+  // Existing fields
+  available: { type: Boolean, default: true },
+  eta: { type: Number, default: 15 }, // Keeping for backward compat, mapped to prepTime usually
   customizationOptions: [{
-    name: String, // e.g., "Size", "Spice Level"
+    name: String,
     type: { type: String, enum: ['single', 'multiple'] },
     required: { type: Boolean, default: false },
     options: [{
-      name: String, // e.g., "Large", "Medium", "Small"
+      name: String,
       priceModifier: { type: Number, default: 0 }
     }]
   }],
-  allergens: [String],
   nutritionalInfo: {
     calories: Number,
     protein: Number,
     carbs: Number,
     fat: Number
   },
-  popular: {
-    type: Boolean,
-    default: false
-  },
-  orderCount: {
-    type: Number,
-    default: 0
-  }
+  popular: { type: Boolean, default: false },
+  orderCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // Index for popular items queries

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4001/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -66,6 +66,7 @@ export const tableAPI = {
     getAll: (restaurantId) => api.get(`/tables/restaurant/${restaurantId}`),
     get: (id) => api.get(`/tables/${id}`),
     create: (data) => api.post('/tables', data),
+    update: (id, data) => api.patch(`/tables/${id}`, data),
     delete: (id) => api.delete(`/tables/${id}`)
 };
 

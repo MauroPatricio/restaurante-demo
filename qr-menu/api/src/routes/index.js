@@ -83,7 +83,10 @@ router.patch('/restaurants/:id', authenticateToken, authorizeRoles('owner', 'adm
 // Create table with QR code
 router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
   try {
-    const { restaurant, number } = req.body;
+    const {
+      restaurant, number, capacity, location, type, status,
+      accessibility, joinable, assignedWaiter, minConsumption
+    } = req.body;
 
     // Generate QR code data
     const qrData = JSON.stringify({
@@ -93,7 +96,10 @@ router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'mana
     });
 
     const qrCode = await QRCode.toDataURL(qrData);
-    const table = await Table.create({ restaurant, number, qrCode });
+    const table = await Table.create({
+      restaurant, number, qrCode, capacity, location, type, status,
+      accessibility, joinable, assignedWaiter, minConsumption
+    });
 
     res.status(201).json({
       message: 'Table created successfully',
@@ -131,6 +137,29 @@ router.get('/tables/:id', async (req, res) => {
   } catch (error) {
     console.error('Get table error:', error);
     res.status(500).json({ error: 'Failed to fetch table' });
+  }
+});
+
+// Update table
+router.patch('/tables/:id', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
+  try {
+    const table = await Table.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!table) {
+      return res.status(404).json({ error: 'Table not found' });
+    }
+
+    res.json({
+      message: 'Table updated successfully',
+      table
+    });
+  } catch (error) {
+    console.error('Update table error:', error);
+    res.status(500).json({ error: 'Failed to update table' });
   }
 });
 
@@ -409,6 +438,13 @@ router.get('/orders/restaurant/:restaurantId', authenticateToken, checkSubscript
 
     if (orderType) {
       query.orderType = orderType;
+    }
+
+    if (req.query.startDate && req.query.endDate) {
+      query.createdAt = {
+        $gte: new Date(req.query.startDate),
+        $lte: new Date(req.query.endDate)
+      };
     }
 
     const orders = await Order.find(query)

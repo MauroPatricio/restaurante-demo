@@ -9,6 +9,7 @@ import Tables from './pages/Tables';
 import Coupons from './pages/Coupons';
 import Feedback from './pages/Feedback';
 import Subscription from './pages/Subscription';
+import Payments from './pages/Payments';
 import './App.css';
 
 // Protected Route Component
@@ -44,6 +45,7 @@ function App() {
             <Route path="coupons" element={<Coupons />} />
             <Route path="feedback" element={<Feedback />} />
             <Route path="subscription" element={<Subscription />} />
+            <Route path="payments" element={<Payments />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
