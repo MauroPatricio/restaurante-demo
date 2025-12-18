@@ -21,15 +21,50 @@ const generateToken = (userId, restaurantId = null) => {
     );
 };
 
+import streamifier from 'streamifier';
+import cloudinary from '../config/cloudinary.js';
+import upload from '../middleware/upload.js';
+
+// Helper for stream upload
+const streamUpload = (req) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: 'restaurants' },
+            (error, result) => {
+                if (result) {
+                    resolve(result);
+                } else {
+                    reject(error);
+                }
+            }
+        );
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+    });
+};
+
+
 // Register new restaurant (owner + restaurant creation)
-router.post('/register', async (req, res) => {
+router.post('/register', upload.single('image'), async (req, res) => {
     try {
         const { name, email, password, phone, restaurantName, restaurantAddress } = req.body;
+        // console.log('Register Body:', req.body);
+        // console.log('Register File:', req.file);
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        let logoUrl = null;
+        if (req.file) {
+            try {
+                const result = await streamUpload(req);
+                logoUrl = result.secure_url;
+            } catch (uErr) {
+                console.error('Cloudinary Upload Error:', uErr);
+                // Depending on requirements, fail hard or soft. Let's soft fail but log it.
+            }
         }
 
         // Find Owner role
@@ -59,7 +94,8 @@ router.post('/register', async (req, res) => {
             address: restaurantAddress,
             owner: user._id,
             email: email,
-            phone: phone
+            phone: phone,
+            logo: logoUrl // Save Logo URL
         });
 
         // Create subscription (trial period - first month free)
@@ -69,8 +105,8 @@ router.post('/register', async (req, res) => {
         const subscription = await Subscription.create({
             restaurant: restaurant._id,
             status: 'trial',
-            currentPeriodStart: now,
             currentPeriodEnd: trialEnd,
+            currentPeriodStart: now,
             amount: 10000
         });
 
@@ -92,7 +128,8 @@ router.post('/register', async (req, res) => {
             user: user.toSafeObject(),
             restaurant: {
                 id: restaurant._id,
-                name: restaurant.name
+                name: restaurant.name,
+                logo: restaurant.logo
             },
             subscription: {
                 status: subscription.status,

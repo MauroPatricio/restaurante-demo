@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from 'axios'; // Still used externally or can remove if fully switched
+import { authAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Register() {
@@ -31,8 +32,14 @@ export default function Register() {
         setLoading(true);
 
         try {
+            // Create FormData
+            const data = new FormData();
+            Object.keys(formData).forEach(key => {
+                data.append(key, formData[key]);
+            });
+
             // Register
-            const response = await axios.post('http://localhost:4001/api/auth/register', formData);
+            const response = await authAPI.register(data);
 
             // Auto login with the returned token/user data or redirect to login
             // The register endpoint returns token and user data similar to login
@@ -92,6 +99,15 @@ export default function Register() {
                                     onChange={handleChange}
                                     required
                                     placeholder="City, Street 123"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="image">Restaurant Logo</label>
+                                <input
+                                    id="image"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
                                 />
                             </div>
                         </div>

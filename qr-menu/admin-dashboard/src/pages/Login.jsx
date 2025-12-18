@@ -114,7 +114,7 @@ export default function Login() {
                     </form>
 
                     <div className="login-footer">
-                        <p>Don't have an account? <Link to="/register" style={{ color: '#2563eb', fontWeight: 'bold' }}>Register here</Link></p>
+                        <p>Don't have an account? <Link to="/register" style={{ color: '#2563eb', fontWeight: 'bold' }}>Registre aqui</Link></p>
                     </div>
                 </div>
             </div>

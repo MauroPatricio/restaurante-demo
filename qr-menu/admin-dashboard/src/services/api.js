@@ -43,7 +43,9 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
     login: (credentials) => api.post('/auth/login', credentials),
-    register: (data) => api.post('/auth/register', data),
+    register: (data) => api.post('/auth/register', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     getProfile: () => api.get('/auth/me'),
     updateFCMToken: (token) => api.post('/auth/fcm-token', { fcmToken: token })
 };

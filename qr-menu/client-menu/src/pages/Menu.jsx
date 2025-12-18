@@ -120,7 +120,7 @@ const Menu = () => {
             {/* Hero Section */}
             <div className="relative h-48 bg-gray-900">
                 <img
-                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"
+                    src={restaurant?.logo || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"}
                     alt="Restaurant"
                     className="w-full h-full object-cover opacity-60"
                 />
