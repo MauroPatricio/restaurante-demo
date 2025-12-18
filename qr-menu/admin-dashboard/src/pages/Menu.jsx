@@ -234,6 +234,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
             // Process arrays
             const payload = {
                 ...formData,
+                sku: formData.sku?.trim() || undefined, // Send undefined if empty to avoid unique constraint error
                 ingredients: formData.ingredients.split(',').map(s => s.trim()).filter(Boolean),
                 tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean)
             };

@@ -82,7 +82,7 @@ const OrderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['mpesa', 'emola', 'bim', 'bci', 'cash', 'pending'],
+    enum: ['mpesa', 'emola', 'visa', 'cash', 'pending'], // Added 'visa' as generic card
     default: 'pending'
   },
   paymentStatus: {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
@@ -17,8 +17,15 @@ export default function Login() {
         setLoading(true);
 
         try {
-            await login({ email, password });
-            navigate('/dashboard');
+            const data = await login({ email, password });
+
+            // Check if user has restaurants and redirect accordingly
+            if (data.user?.restaurants && data.user.restaurants.length > 0) {
+                navigate('/select-restaurant', { state: { restaurants: data.user.restaurants } });
+            } else {
+                // Should technically not happen for Owner, but fallback
+                navigate('/dashboard');
+            }
         } catch (err) {
             setError(err.response?.data?.error || 'Login failed');
         } finally {
@@ -31,7 +38,7 @@ export default function Login() {
             <div className="login-left">
                 <div className="login-card">
                     <div className="login-header">
-                        <h1>🍽️ Restaurante Aura</h1>
+                        <h1>🍽️ Restaurante Digital</h1>
                         <p>Sistema de Gestao de Restaurante</p>
                     </div>
 
@@ -54,7 +61,7 @@ export default function Login() {
                             />
                         </div>
 
-                        <div className="form-group password-field" style={{position: 'relative'}}>
+                        <div className="form-group password-field" style={{ position: 'relative' }}>
                             <label htmlFor="password">Password</label>
                             <input
                                 id="password"
@@ -84,14 +91,14 @@ export default function Login() {
                             >
                                 {showPassword ? (
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                                        <path d="M3 3l18 18" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                        <path d="M10.58 10.58a3 3 0 0 0 4.24 4.24" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                        <path d="M14.12 14.12C12.88 15.36 11.12 16 9 16c-2.67 0-4.9-1.67-6.5-3.5C4.1 10.67 6.33 9 9 9c1.12 0 2.88.64 4.12 1.12" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M3 3l18 18" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M10.58 10.58a3 3 0 0 0 4.24 4.24" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M14.12 14.12C12.88 15.36 11.12 16 9 16c-2.67 0-4.9-1.67-6.5-3.5C4.1 10.67 6.33 9 9 9c1.12 0 2.88.64 4.12 1.12" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 ) : (
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                                        <path d="M2.46 12C3.73 7.59 7.6 4 12 4c4.4 0 8.27 3.59 9.54 8-1.27 4.41-5.14 8-9.54 8-4.4 0-8.27-3.59-9.54-8z" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                        <circle cx="12" cy="12" r="3" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M2.46 12C3.73 7.59 7.6 4 12 4c4.4 0 8.27 3.59 9.54 8-1.27 4.41-5.14 8-9.54 8-4.4 0-8.27-3.59-9.54-8z" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <circle cx="12" cy="12" r="3" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 )}
                             </button>
@@ -107,7 +114,7 @@ export default function Login() {
                     </form>
 
                     <div className="login-footer">
-                        <p>E a primeira vez? Contacte a equipa de suporte para registar o seu restaurante.</p>
+                        <p>Don't have an account? <Link to="/register" style={{ color: '#2563eb', fontWeight: 'bold' }}>Register here</Link></p>
                     </div>
                 </div>
             </div>

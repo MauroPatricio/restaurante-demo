@@ -131,6 +131,10 @@ async function getPublicIP() {
     mongoose.connection.on('error', (err) => {
       console.error('❌ Mongoose event: error', err?.message || err);
     });
+
+    // Seed roles
+    await (await import('./src/services/seeder.js')).seedRoles();
+
   } else {
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📋 Possíveis causas e ações:');
@@ -146,7 +150,7 @@ async function getPublicIP() {
 // **Inicializando Express**
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+const io = new Server(server, { cors: { origin: 'http://localhost:5173' } });
 
 // Middleware
 app.use(cors());
@@ -165,6 +169,7 @@ app.use((req, res, next) => {
 });
 
 // Rotas da API
+app.get('/health', (req, res) => res.status(200).send('OK'));
 app.use('/api', router);
 
 // Serve uploaded files
@@ -187,6 +192,11 @@ io.on('connection', (socket) => {
   socket.on('join-restaurant', (restaurantId) => {
     socket.join(`restaurant-${restaurantId}`);
     console.log(`Socket ${socket.id} joined restaurant ${restaurantId}`);
+  });
+
+  socket.on('join-order', (orderId) => {
+    socket.join(`order-${orderId}`);
+    console.log(`Socket ${socket.id} joined order ${orderId}`);
   });
 
   socket.on('disconnect', () => {

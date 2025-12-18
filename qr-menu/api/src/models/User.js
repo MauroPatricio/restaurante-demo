@@ -23,16 +23,20 @@ const UserSchema = new mongoose.Schema({
     required: true,
     select: false // Don't include password in queries by default
   },
-  restaurant: {
+  restaurants: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Restaurant',
     index: true
-  },
+  }],
   role: {
-    type: String,
-    enum: ['owner', 'admin', 'manager', 'waiter', 'kitchen', 'delivery'],
-    default: 'waiter',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Role',
+    required: true,
     index: true
+  },
+  isDefaultPassword: {
+    type: Boolean,
+    default: false
   },
   fcmToken: {
     type: String // Firebase Cloud Messaging token for push notifications

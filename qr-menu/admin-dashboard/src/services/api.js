@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -11,6 +11,8 @@ const api = axios.create({
 });
 
 // Request interceptor to add token
+api.healthCheck = () => axios.get(`${API_URL.replace('/api', '')}/health`);
+
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -102,6 +104,24 @@ export const subscriptionAPI = {
 export const deliveryAPI = {
     getAll: (restaurantId, params) => api.get(`/delivery/restaurant/${restaurantId}`, { params }),
     assign: (id, deliveryPersonId) => api.patch(`/delivery/${id}/assign`, { deliveryPersonId })
+};
+
+// User Management API
+export const usersAPI = {
+    getAll: () => api.get('/users'),
+    create: (data) => api.post('/users', data),
+    update: (id, data) => api.patch(`/users/${id}`, data),
+    delete: (id) => api.delete(`/users/${id}`),
+    resetPassword: (id) => api.post(`/users/${id}/reset-password`),
+    changePassword: (data) => api.post('/auth/change-password', data)
+};
+
+// Role Management API
+export const rolesAPI = {
+    getAll: () => api.get('/roles'),
+    create: (data) => api.post('/roles', data),
+    update: (id, data) => api.patch(`/roles/${id}`, data),
+    delete: (id) => api.delete(`/roles/${id}`)
 };
 
 export default api;

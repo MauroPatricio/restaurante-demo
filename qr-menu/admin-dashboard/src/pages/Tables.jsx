@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { tableAPI, orderAPI } from '../services/api';
-import { Plus, Trash2, QrCode, X, Printer, RefreshCw, Maximize, Edit2, Users, Receipt, UtensilsCrossed, Armchair, MapPin, BadgeCheck, User } from 'lucide-react';
+
+import { Plus, Trash2, QrCode, X, Printer, RefreshCw, Maximize, Edit2, Users, Receipt, UtensilsCrossed, Armchair, MapPin, BadgeCheck, User, Bell } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { useTranslation } from 'react-i18next';
+
+const SOCKET_URL = 'http://localhost:4001'; // Should be env var in production
+const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
 export default function Tables() {
     const { user } = useAuth();
@@ -13,7 +18,10 @@ export default function Tables() {
     const [showModal, setShowModal] = useState(false);
     const [showQRModal, setShowQRModal] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
+
     const [editingTable, setEditingTable] = useState(null); // ID of table being edited
+    const [activeAlerts, setActiveAlerts] = useState({}); // { [tableId]: { type, value, timestamp } }
+    const audioRef = useState(new Audio(ALERT_SOUND_URL))[0]; // Singleton audio instance
 
     // Initial Form State
     const initialFormState = {
@@ -34,9 +42,56 @@ export default function Tables() {
             fetchTables();
             fetchActiveOrders();
             const interval = setInterval(fetchActiveOrders, 30000); // Poll every 30s
-            return () => clearInterval(interval);
+
+            // Socket Setup
+            const socket = io(SOCKET_URL);
+            socket.emit('join-restaurant', user.restaurant._id || user.restaurant);
+
+            socket.on('new-order', (data) => {
+                const orderTableId = typeof data.order.table === 'object' ? data.order.table._id : data.order.table;
+                if (orderTableId) {
+                    setActiveAlerts(prev => ({
+                        ...prev,
+                        [orderTableId]: { type: 'order', value: 'New Order', timestamp: new Date() }
+                    }));
+                    fetchActiveOrders(); // Refresh orders
+                }
+            });
+
+            socket.on('table-alert', (data) => {
+                // data: { tableId, type, value, ... }
+                setActiveAlerts(prev => ({
+                    ...prev,
+                    [data.tableId]: { type: data.type, value: data.value, timestamp: new Date() }
+                }));
+            });
+
+            return () => {
+                clearInterval(interval);
+                socket.disconnect();
+            };
         }
     }, [user]);
+
+    // Sound Effect Logic
+    useEffect(() => {
+        const hasAlerts = Object.keys(activeAlerts).length > 0;
+        if (hasAlerts) {
+            audioRef.loop = true;
+            // Interaction might block auto-play, usually admins click somewhere first
+            audioRef.play().catch(e => console.warn("Audio play blocked", e));
+        } else {
+            audioRef.pause();
+            audioRef.currentTime = 0;
+        }
+    }, [activeAlerts]);
+
+    const handleAcknowledge = (tableId) => {
+        const newAlerts = { ...activeAlerts };
+        delete newAlerts[tableId];
+        setActiveAlerts(newAlerts);
+        // Optional: Call API to mark alert as handled if needed
+    };
 
     const fetchTables = async () => {
         try {
@@ -188,8 +243,39 @@ export default function Tables() {
                     const statusKey = getTableStatus(table);
                     const badgeClass = `status-badge ${statusKey}`; // map to css classes
 
+                    const alert = activeAlerts[table._id];
+                    const isBlinking = !!alert;
+                    const alertClass = alert?.type === 'order' ? 'table-alert-green' : (alert ? 'table-alert-red' : '');
+
+                    const getEmotionIcon = (val) => {
+                        if (val === 'happy') return '😋';
+                        if (val === 'waiting') return '✋';
+                        if (val === 'angry') return '😠';
+                        if (val === 'payment') return '💰';
+                        return '🔔';
+                    };
+
                     return (
-                        <div key={table._id} className="stat-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '200px', position: 'relative' }}>
+                        <div
+                            key={table._id}
+                            className={`stat-card ${isBlinking ? alertClass : ''}`}
+                            onClick={() => isBlinking && handleAcknowledge(table._id)} // Click to ack
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                minHeight: '200px',
+                                position: 'relative',
+                                cursor: isBlinking ? 'pointer' : 'default',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            {alert && (
+                                <div className="emotion-badge">
+                                    {alert.type === 'order' ? '📦' : getEmotionIcon(alert.value)}
+                                </div>
+                            )}
+
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
                                     <h3 style={{ fontSize: '1.5em', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>

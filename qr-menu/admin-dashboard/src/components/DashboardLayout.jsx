@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import api from '../services/api';
 import LanguageSwitcher from './LanguageSwitcher';
 import {
     LayoutDashboard,
@@ -19,7 +20,11 @@ import {
     Star,
     Banknote,
     Menu as MenuIcon,
-    X
+    X,
+    Users as UsersIcon,
+    Shield,
+    ShieldCheck,
+    FileText
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -27,6 +32,27 @@ export default function DashboardLayout() {
     const location = useLocation();
     const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isBackendConnected, setIsBackendConnected] = useState(true);
+
+    // Check backend connection
+    useState(() => {
+        const checkConnection = async () => {
+            try {
+                await api.healthCheck();
+                setIsBackendConnected(true);
+            } catch (error) {
+                console.error('Backend connection failed:', error);
+                setIsBackendConnected(false);
+            }
+        };
+
+        // Check immediately
+        checkConnection();
+
+        // Check every 10 seconds
+        const interval = setInterval(checkConnection, 10000);
+        return () => clearInterval(interval);
+    }, []);
 
     const isActive = (path) => location.pathname === path;
 
@@ -35,6 +61,7 @@ export default function DashboardLayout() {
 
     const menuItems = [
         { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
+        { icon: FileText, label: t('reports'), path: '/dashboard/reports' },
         { icon: ShoppingBag, label: t('orders'), path: '/dashboard/orders' },
         { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu' },
         { icon: QrCode, label: t('tables'), path: '/dashboard/tables' },
@@ -46,16 +73,61 @@ export default function DashboardLayout() {
         { icon: Settings, label: t('settings'), path: '/dashboard/settings' },
     ];
 
+    // Check permissions (assuming populated role object or legacy string check for safety)
+    const hasPermission = (perm) => {
+        if (!user?.role) return false;
+        // Handle if role is just a string (legacy/error)
+        if (typeof user.role === 'string') return ['owner', 'admin'].includes(user.role);
+
+        // Handle Role object
+        return user.role.isSystem && (user.role.permissions?.includes('all') || user.role.permissions?.includes(perm));
+    };
+
+    if (hasPermission('manage_staff')) {
+        menuItems.push(
+            { icon: UsersIcon, label: t('users'), path: '/dashboard/users' },
+            { icon: Shield, label: t('profiles'), path: '/dashboard/profiles' }
+        );
+    }
+
+    // Demo: Add System Admin link for Owner
+    if (user?.role?.name === 'Owner' || user?.role?.isSystem) {
+        menuItems.push({ icon: ShieldCheck, label: 'System Admin', path: '/system-admin' });
+        menuItems.unshift({ icon: LayoutDashboard, label: 'Owner Overview', path: '/owner-dashboard' });
+    }
+
     return (
         <div className="dashboard-layout">
+            {!isBackendConnected && (
+                <div style={{
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    padding: '12px',
+                    textAlign: 'center',
+                    fontWeight: '500',
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 9999,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                    ⚠️ Não consigo me conectar com a api/backend
+                </div>
+            )}
+
             {/* Mobile Overlay */}
             <div
                 className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
+                style={{ top: !isBackendConnected ? '48px' : '0' }}
                 onClick={closeSidebar}
             />
 
             {/* Sidebar */}
-            <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+            <aside
+                className={`sidebar ${sidebarOpen ? 'open' : ''}`}
+                style={{ top: !isBackendConnected ? '48px' : '0', height: !isBackendConnected ? 'calc(100vh - 48px)' : '100vh' }}
+            >
                 <div className="sidebar-header">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                         <div>
@@ -94,7 +166,10 @@ export default function DashboardLayout() {
             </aside>
 
             {/* Main Content */}
-            <div className="main-content">
+            <div
+                className="main-content"
+                style={{ marginTop: !isBackendConnected ? '48px' : '0', height: !isBackendConnected ? 'calc(100vh - 48px)' : '100vh' }}
+            >
                 {/* Header */}
                 <header className="header">
                     <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

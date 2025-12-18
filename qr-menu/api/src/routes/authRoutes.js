@@ -1,5 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import Role from '../models/Role.js'; // Import Role model
 import User from '../models/User.js';
 import Restaurant from '../models/Restaurant.js';
 import Subscription from '../models/Subscription.js';
@@ -8,9 +9,13 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 
 // Generate JWT token
-const generateToken = (userId) => {
+const generateToken = (userId, restaurantId = null) => {
+    const payload = { userId };
+    if (restaurantId) {
+        payload.restaurantId = restaurantId;
+    }
     return jwt.sign(
-        { userId },
+        payload,
         process.env.JWT_SECRET || 'your-secret-key',
         { expiresIn: '7d' }
     );
@@ -27,13 +32,25 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
+        // Find Owner role
+        let ownerRole = await Role.findOne({ name: 'Owner' });
+        // Fallback if not seeded yet (though seeding should handle this)
+        if (!ownerRole) {
+            ownerRole = await Role.create({
+                name: 'Owner',
+                description: 'Restaurant Owner',
+                permissions: ['all'],
+                isSystem: true
+            });
+        }
+
         // Create user (password will be automatically hashed by pre-save hook)
         const user = await User.create({
             name,
             email,
             password,
             phone,
-            role: 'owner'
+            role: ownerRole._id // Assign Role ID
         });
 
         // Create restaurant
@@ -61,8 +78,9 @@ router.post('/register', async (req, res) => {
         restaurant.subscription = subscription._id;
         await restaurant.save();
 
-        // Link restaurant to user
-        user.restaurant = restaurant._id;
+        // Link restaurant to user (SaaS: Add to array)
+        user.restaurants = [restaurant._id];
+        // user.restaurant = restaurant._id; // Deprecated
         await user.save();
 
         // Generate token
@@ -93,7 +111,7 @@ router.post('/login', async (req, res) => {
         const { email, password } = req.body;
 
         // Find user and include password field
-        const user = await User.findOne({ email }).select('+password').populate('restaurant');
+        const user = await User.findOne({ email }).select('+password').populate('restaurants').populate('role');
 
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
@@ -114,15 +132,54 @@ router.post('/login', async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
 
-        // Generate token
+        // Generate GLOBAL token (no restaurantId)
         const token = generateToken(user._id);
 
-        // Get subscription status if restaurant exists
+        res.json({
+            message: 'Login successful',
+            token, // Global token
+            user: {
+                ...user.toSafeObject(),
+                restaurants: user.restaurants // Send full list
+            },
+            isDefaultPassword: user.isDefaultPassword
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed', details: error.message });
+    }
+});
+
+// Select Restaurant (SaaS Flow)
+router.post('/select-restaurant', authenticateToken, async (req, res) => {
+    try {
+        const { restaurantId } = req.body;
+        const user = await User.findById(req.user._id).populate('restaurants');
+
+        if (!restaurantId) {
+            return res.status(400).json({ error: 'Restaurant ID required' });
+        }
+
+        // Verify ownership/membership
+        const isMember = user.restaurants.some(r => r._id.toString() === restaurantId) || user.role.name === 'Admin'; // Admin super-access optional
+
+        if (!isMember) {
+            return res.status(403).json({ error: 'You do not have access to this restaurant' });
+        }
+
+        const restaurant = await Restaurant.findById(restaurantId).populate('subscription');
+
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurant not found' });
+        }
+
+        // Generate SCOPE token (WITH restaurantId)
+        const scopedToken = generateToken(user._id, restaurantId);
+
         let subscriptionStatus = null;
-        if (user.restaurant) {
-            const restaurant = await Restaurant.findById(user.restaurant).populate('subscription');
-            if (restaurant && restaurant.subscription) {
-                const subscription = await Subscription.findById(restaurant.subscription);
+        if (restaurant.subscription) {
+            const subscription = await Subscription.findById(restaurant.subscription);
+            if (subscription) {
                 subscriptionStatus = {
                     status: subscription.status,
                     currentPeriodEnd: subscription.currentPeriodEnd,
@@ -132,14 +189,15 @@ router.post('/login', async (req, res) => {
         }
 
         res.json({
-            message: 'Login feito com sucesso',
-            token,
-            user: user.toSafeObject(),
+            message: 'Context switched',
+            token: scopedToken,
+            restaurant: restaurant,
             subscription: subscriptionStatus
         });
+
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed', details: error.message });
+        console.error('Select restaurant error:', error);
+        res.status(500).json({ error: 'Failed to switch context' });
     }
 });
 
@@ -197,7 +255,7 @@ router.post('/fcm-token', authenticateToken, async (req, res) => {
 // Get current user profile (protected)
 router.get('/me', authenticateToken, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).populate('restaurant');
+        const user = await User.findById(req.user._id).populate('restaurants').populate('role');
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -206,7 +264,38 @@ router.get('/me', authenticateToken, async (req, res) => {
         res.json({ user: user.toSafeObject() });
     } catch (error) {
         console.error('Get profile error:', error);
-        res.status(500).json({ error: 'Failed to fetch profile' });
+        res.status(500).json({ error: 'Failed to fetch profile', details: error.message });
+    }
+});
+
+// Change password (protected)
+router.post('/change-password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        // Use select('+password') to retrieve the password for comparison logic in user model/controller
+        // But here we can just findById. Because comparePassword uses instance's this.password
+        const user = await User.findById(req.user._id).select('+password');
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify current password
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Incorrect current password' });
+        }
+
+        // Set new password
+        user.password = newPassword;
+        user.isDefaultPassword = false; // Reset flag
+        await user.save();
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ error: 'Failed to change password' });
     }
 });
 

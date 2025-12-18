@@ -16,6 +16,9 @@ import subscriptionRoutes from './subscriptionRoutes.js';
 import feedbackRoutes from './feedbackRoutes.js';
 import couponRoutes from './couponRoutes.js';
 import deliveryRoutes from './deliveryRoutes.js';
+import userRoutes from './userRoutes.js';
+import roleRoutes from './roleRoutes.js';
+import analyticsRoutes from './analyticsRoutes.js';
 
 const router = express.Router();
 
@@ -26,6 +29,8 @@ router.use('/subscriptions', subscriptionRoutes);
 router.use('/feedback', feedbackRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/delivery', deliveryRoutes);
+router.use('/analytics', analyticsRoutes); // Mount analytics routes
+// ...
 
 // ============ RESTAURANT ROUTES ============
 
@@ -179,6 +184,57 @@ router.delete('/tables/:id', authenticateToken, authorizeRoles('owner', 'admin',
   }
 });
 
+// Lookup table by number (for public QR menu)
+router.get('/tables/lookup', async (req, res) => {
+  try {
+    const { restaurant, number } = req.query;
+    if (!restaurant || !number) {
+      return res.status(400).json({ error: 'Missing restaurant or number param' });
+    }
+
+    // Since number is Number type in DB, cast it
+    const table = await Table.findOne({ restaurant, number: parseInt(number) });
+
+    if (!table) return res.status(404).json({ error: 'Table not found' });
+
+    res.json({ table });
+  } catch (error) {
+    console.error('Table lookup error:', error);
+    res.status(500).json({ error: 'Failed to lookup table' });
+  }
+});
+
+// Send Alert/Reaction (Service Call)
+router.post('/tables/:id/alert', async (req, res) => {
+  try {
+    const { type, value, message } = req.body; // type: 'emotion' | 'call', value: 'angry' | 'waiting' | 'happy' 
+    const table = await Table.findById(req.params.id);
+
+    if (!table) return res.status(404).json({ error: 'Table not found' });
+
+    const io = req.app.get('io');
+    if (io) {
+      const payload = {
+        type,
+        value,
+        tableId: table._id,
+        tableNumber: table.number,
+        waiter: table.assignedWaiter,
+        timestamp: new Date(),
+        message
+      };
+
+      // Emit to restaurant room (Admin/Kitchen/Waiter dashboard)
+      io.to(`restaurant-${table.restaurant}`).emit('table-alert', payload);
+    }
+
+    res.json({ success: true, message: 'Alert sent' });
+  } catch (error) {
+    console.error('Table alert error:', error);
+    res.status(500).json({ error: 'Failed to send alert' });
+  }
+});
+
 // ============ MENU ITEM ROUTES ============
 
 // Get menu for a restaurant
@@ -279,7 +335,7 @@ router.delete('/menu-items/:id', authenticateToken, authorizeRoles('owner', 'adm
 // ============ ORDER ROUTES ============
 
 // Create order
-router.post('/orders', async (req, res) => {
+router.post('/orders', checkSubscription, async (req, res) => {
   try {
     const {
       restaurant,
@@ -291,8 +347,24 @@ router.post('/orders', async (req, res) => {
       orderType,
       deliveryAddress,
       couponCode,
-      notes
+      notes,
+      paymentMethod // Added paymentMethod
     } = req.body;
+
+    // Validate Subscription/Restaurant Status First
+    // (Middleware checkSubscription already handles the bulk, 
+    // but ensures we have req.restaurant context if needed)
+
+    // Validate table ownership
+    if (table) {
+      const tableData = await Table.findById(table);
+      if (!tableData) {
+        return res.status(404).json({ error: 'Table not found' });
+      }
+      if (tableData.restaurant.toString() !== restaurant) {
+        return res.status(400).json({ error: 'Table does not belong to this restaurant' });
+      }
+    }
 
     // Calculate subtotal
     let subtotal = 0;
@@ -520,6 +592,14 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
     // Send notifications based on status
     if (status === 'ready') {
       await sendOrderNotification(order, 'order-ready');
+    }
+
+    // Emit real-time update to specific order room
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`order-${order._id}`).emit('order-updated', order);
+      // Also emit to restaurant room (e.g., for Kitchen Display System)
+      io.to(`restaurant-${order.restaurant}`).emit('order-updated', order);
     }
 
     res.json({

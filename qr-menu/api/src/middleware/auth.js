@@ -13,8 +13,13 @@ export const authenticateToken = async (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
-        // Fetch user from database
-        const user = await User.findById(decoded.userId).select('-password');
+        // Extract restaurant scope if present
+        if (decoded.restaurantId) {
+            req.restaurantId = decoded.restaurantId;
+        }
+
+        // Fetch user from database and populate role
+        const user = await User.findById(decoded.userId).select('-password').populate('role');
 
         if (!user || !user.active) {
             return res.status(401).json({ error: 'User not found or inactive' });
@@ -31,17 +36,21 @@ export const authenticateToken = async (req, res, next) => {
 };
 
 // Middleware to check user roles
-export const authorizeRoles = (...roles) => {
+export const authorizeRoles = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
-        if (!roles.includes(req.user.role)) {
+        // Check if role exists and its name matches allowed roles
+        // We use case-insensitive check for robustness
+        const userRoleName = req.user.role?.name;
+
+        if (!userRoleName || !allowedRoles.some(role => role.toLowerCase() === userRoleName.toLowerCase())) {
             return res.status(403).json({
                 error: 'Insufficient permissions',
-                required: roles,
-                current: req.user.role
+                required: allowedRoles,
+                current: userRoleName
             });
         }
 
@@ -52,14 +61,22 @@ export const authorizeRoles = (...roles) => {
 // Middleware to check subscription status
 export const checkSubscription = async (req, res, next) => {
     try {
-        if (!req.user || !req.user.restaurant) {
-            return res.status(400).json({ error: 'Restaurant not associated with user' });
+        // Strict Check: Require restaurantId in token (Scope Token)
+        let restaurantId = req.restaurantId;
+
+        // Allow public access if restaurant ID is provided in body/query (for QR menu orders)
+        if (!restaurantId && (req.body.restaurant || req.query.restaurant)) {
+            restaurantId = req.body.restaurant || req.query.restaurant;
+        }
+
+        if (!restaurantId) {
+            return res.status(403).json({ error: 'Restaurant context required', code: 'NO_CONTEXT' });
         }
 
         const Restaurant = (await import('../models/Restaurant.js')).default;
         const Subscription = (await import('../models/Subscription.js')).default;
 
-        const restaurant = await Restaurant.findById(req.user.restaurant).populate('subscription');
+        const restaurant = await Restaurant.findById(restaurantId).populate('subscription');
 
         if (!restaurant) {
             return res.status(404).json({ error: 'Restaurant not found' });
