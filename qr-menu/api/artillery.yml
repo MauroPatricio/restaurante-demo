@@ -1,0 +1,123 @@
+config:
+  target: 'http://127.0.0.1:4000'
+  phases:
+    - duration: 30
+      arrivalRate: 2
+      name: "Warm-up"
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 20
+      name: "Ramp-up to sustained load"
+    - duration: 300
+      arrivalRate: 20
+      name: "Sustained load"
+    - duration: 60
+      arrivalRate: 40
+      name: "Spike test"
+  processor: "./load_test_processor.js"
+  
+scenarios:
+  # Scenario A: Guest Order Flow (Public - No Auth)
+  - name: "Guest Order Flow"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/menu/{{ restaurantId }}"
+          beforeRequest: "setRestaurantId"
+          capture:
+            - json: "$.items[0]._id"
+              as: "menuItemId"
+      - post:
+          url: "/api/orders"
+          json:
+            restaurant: "{{ restaurantId }}"
+            items:
+              - item: "{{ menuItemId }}"
+                qty: 2
+            customerName: "Load Test Guest"
+            phone: "849999999"
+            orderType: "dine-in"
+          capture:
+            - json: "$.order.id"
+              as: "orderId"
+      - think: 2
+      - get:
+          url: "/api/orders/{{ orderId }}"
+
+  # Scenario B: Restaurant Dashboard (Authenticated)
+  - name: "Restaurant Dashboard"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          beforeRequest: "setLoginCredentials"
+          json:
+            email: "{{ userEmail }}"
+            password: "{{ userPassword }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+            - json: "$.user.restaurants[0].id"
+              as: "restaurantId"
+      - post:
+          url: "/api/auth/select-restaurant"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            restaurantId: "{{ restaurantId }}"
+          capture:
+            - json: "$.token"
+              as: "scopedToken"
+      - get:
+          url: "/api/orders/restaurant/{{ restaurantId }}"
+          headers:
+            Authorization: "Bearer {{ scopedToken }}"
+          capture:
+            - json: "$.orders[0]._id"
+              as: "orderId"
+      - think: 1
+      - patch:
+          url: "/api/orders/{{ orderId }}"
+          headers:
+            Authorization: "Bearer {{ scopedToken }}"
+          json:
+            status: "preparing"
+
+  # Scenario C: Menu Management (Authenticated)
+  - name: "Menu Management"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          beforeRequest: "setLoginCredentials"
+          json:
+            email: "{{ userEmail }}"
+            password: "{{ userPassword }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+            - json: "$.user.restaurants[0].id"
+              as: "restaurantId"
+      - post:
+          url: "/api/auth/select-restaurant"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            restaurantId: "{{ restaurantId }}"
+          capture:
+            - json: "$.token"
+              as: "scopedToken"
+      - get:
+          url: "/api/menu/{{ restaurantId }}"
+          headers:
+            Authorization: "Bearer {{ scopedToken }}"
+          capture:
+            - json: "$.items[0]._id"
+              as: "menuItemId"
+      - think: 1
+      - patch:
+          url: "/api/menu-items/{{ menuItemId }}"
+          headers:
+            Authorization: "Bearer {{ scopedToken }}"
+          json:
+            price: 550

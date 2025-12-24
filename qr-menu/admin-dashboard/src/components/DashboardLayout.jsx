@@ -24,7 +24,8 @@ import {
     Users as UsersIcon,
     Shield,
     ShieldCheck,
-    FileText
+    FileText,
+    Package
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -61,6 +62,8 @@ export default function DashboardLayout() {
 
     const menuItems = [
         { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
+        { icon: UtensilsCrossed, label: t('kitchen_monitor') || 'Kitchen Display', path: '/dashboard/kitchen' },
+        { icon: User, label: t('waiter_mode') || 'Waiter Mode', path: '/dashboard/waiter' },
         { icon: FileText, label: t('reports'), path: '/dashboard/reports' },
         { icon: ShoppingBag, label: t('orders'), path: '/dashboard/orders' },
         { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu' },
@@ -70,6 +73,7 @@ export default function DashboardLayout() {
         { icon: Truck, label: t('delivery'), path: '/dashboard/delivery' },
         { icon: Star, label: t('feedback'), path: '/dashboard/feedback' },
         { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription' },
+        { icon: Package, label: t('stock_costs') || 'Stock & Costs', path: '/dashboard/stock' },
         { icon: Settings, label: t('settings'), path: '/dashboard/settings' },
     ];
 
@@ -130,9 +134,36 @@ export default function DashboardLayout() {
             >
                 <div className="sidebar-header">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                        <div>
-                            <h2>🍽️ QR Menu</h2>
-                            <p>{t('admin_panel')}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {user?.restaurant?.logo ? (
+                                <img
+                                    src={user.restaurant.logo}
+                                    alt="Restaurant Logo"
+                                    style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '8px',
+                                        objectFit: 'cover',
+                                        border: '1px solid #e5e7eb'
+                                    }}
+                                />
+                            ) : (
+                                <div style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '8px',
+                                    background: '#eff6ff',
+                                    color: '#2563eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '1.2rem'
+                                }}>🍽️</div>
+                            )}
+                            <div>
+                                <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{user?.restaurant?.name || 'QR Menu'}</h2>
+                                <p style={{ fontSize: '0.8rem', margin: 0, opacity: 0.7 }}>{t('admin_panel')}</p>
+                            </div>
                         </div>
                         <button onClick={closeSidebar} className="icon-btn" style={{ display: 'md:none' }}>
                             {/* Keep X only visible on mobile inside sidebar if needed, or rely on overlay */}

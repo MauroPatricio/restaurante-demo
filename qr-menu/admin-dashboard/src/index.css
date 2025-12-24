@@ -316,11 +316,7 @@ button:focus-visible {
   border: 1px solid var(--border-color);
 }
 
-display: grid;
-grid-template-columns: 2fr 1fr;
-gap: 1.5rem;
-margin-bottom: 2rem;
-}
+
 
 /* Real-time Notification Styles */
 
@@ -402,4 +398,86 @@ margin-bottom: 2rem;
   animation: bounce-alert 1s infinite;
   z-index: 10;
   border: 2px solid #fff;
+}
+
+/* --- Responsive Dashboard Utility Classes --- */
+
+/* Main Container with responsive padding */
+.dashboard-container {
+  padding: 32px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+}
+
+/* Header Response */
+.dashboard-header-responsive {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  /* Allow wrapping on small screens */
+  gap: 16px;
+}
+
+.dashboard-header-responsive h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header-responsive {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-header-responsive h1 {
+    font-size: 24px;
+  }
+
+  .dashboard-header-responsive .date-badge {
+    align-self: flex-start;
+  }
+}
+
+/* Stats Grid is already handled by .stats-grid, but ensuring gap is responsive */
+@media (max-width: 768px) {
+  .stats-grid {
+    gap: 16px !important;
+  }
+}
+
+/* Charts Grid: 2:1 on desktop, Stacked on Mobile */
+.charts-grid-2-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 1024px) {
+  .charts-grid-2-1 {
+    grid-template-columns: 1fr;
+    /* Stack on tablet/mobile */
+  }
+
+  .charts-grid-2-1>div {
+    min-height: 400px;
+    /* Ensure height when stacked */
+  }
+}
+
+/* Hide action buttons text on very small screens if needed */
+@media (max-width: 480px) {
+  .action-btn-text {
+    display: none;
+  }
 }

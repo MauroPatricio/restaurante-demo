@@ -17,17 +17,22 @@ export default function Login() {
         setLoading(true);
 
         try {
+            // Login now returns { token, user: { ..., restaurants: [...] } }
+            // The token is a GLOBAL token, not scoped to a restaurant yet.
             const data = await login({ email, password });
 
-            // Check if user has restaurants and redirect accordingly
-            if (data.user?.restaurants && data.user.restaurants.length > 0) {
-                navigate('/select-restaurant', { state: { restaurants: data.user.restaurants } });
+            // Check if user has associated restaurants OR needs to create one
+            // We redirect to select-restaurant in both cases:
+            // 1. Has restaurants -> Select one
+            // 2. No restaurants -> See 'Add New' button
+            if (data.user) {
+                navigate('/select-restaurant', { state: { restaurants: data.user.restaurants || [] } });
             } else {
-                // Should technically not happen for Owner, but fallback
-                navigate('/dashboard');
+                setError('Erro ao iniciar sessão: utilizador inválido.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Login failed');
+            console.error(err);
+            setError(err.response?.data?.error || 'Falha no login');
         } finally {
             setLoading(false);
         }

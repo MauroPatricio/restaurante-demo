@@ -24,11 +24,7 @@ export default function Subscription() {
         try {
             const [subRes, transRes] = await Promise.all([
                 subscriptionAPI.get(user.restaurant._id || user.restaurant),
-                // Assuming we add getTransactions to api.js or call directly
-                // For now, using axios with auth token if api helper missing
-                axios.get('http://localhost:4001/api/subscriptions/transactions/list', {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                })
+                subscriptionAPI.getHistory(user.restaurant._id || user.restaurant)
             ]);
             setSubscription(subRes.data.subscription);
             setTransactions(transRes.data.transactions);
@@ -189,12 +185,10 @@ function RenewModal({ onClose, t, onSuccess }) {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:4001/api/subscriptions/pay', {
+            await subscriptionAPI.createPayment({
                 amount,
                 method,
                 reference
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             alert('Payment request submitted! Waiting for admin approval.');
             onSuccess();

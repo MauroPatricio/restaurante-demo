@@ -8,6 +8,10 @@ import Coupon from '../models/Coupon.js';
 import QRCode from 'qrcode';
 import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
 import { sendOrderNotification } from '../services/firebaseService.js';
+import cache from '../services/cacheService.js';
+import upload from '../middleware/upload.js';
+import cloudinary from '../config/cloudinary.js';
+import streamifier from 'streamifier';
 
 // Import feature-specific routes
 import authRoutes from './authRoutes.js';
@@ -19,17 +23,21 @@ import deliveryRoutes from './deliveryRoutes.js';
 import userRoutes from './userRoutes.js';
 import roleRoutes from './roleRoutes.js';
 import analyticsRoutes from './analyticsRoutes.js';
+import restaurantRoutes from './restaurantRoutes.js'; // New Route
 
 const router = express.Router();
 
 // Mount feature routes
 router.use('/auth', authRoutes);
+router.use('/restaurants', restaurantRoutes); // New Route
 router.use('/payments', paymentRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/feedback', feedbackRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/delivery', deliveryRoutes);
 router.use('/analytics', analyticsRoutes); // Mount analytics routes
+router.use('/users', userRoutes);
+router.use('/roles', roleRoutes);
 // ...
 
 // ============ RESTAURANT ROUTES ============
@@ -55,9 +63,38 @@ router.get('/restaurants/:id', async (req, res) => {
 });
 
 // Update restaurant
-router.patch('/restaurants/:id', authenticateToken, authorizeRoles('owner', 'admin'), async (req, res) => {
+// Helper for stream upload
+const streamUpload = (req) => {
+  return new Promise((resolve, reject) => {
+    let stream = cloudinary.uploader.upload_stream(
+      { folder: 'restaurants' },
+      (error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(error);
+        }
+      }
+    );
+    streamifier.createReadStream(req.file.buffer).pipe(stream);
+  });
+};
+
+// Update restaurant
+router.patch('/restaurants/:id', authenticateToken, authorizeRoles('owner', 'admin'), upload.single('image'), async (req, res) => {
   try {
     const updates = req.body;
+
+    // Handle Image Upload if present
+    if (req.file) {
+      try {
+        const result = await streamUpload(req);
+        updates.logo = result.secure_url;
+      } catch (uErr) {
+        console.error('Cloudinary Upload Error:', uErr);
+        return res.status(500).json({ error: 'Image upload failed' });
+      }
+    }
 
     // Prevent changing owner and subscription fields via this route
     delete updates.owner;
@@ -72,6 +109,9 @@ router.patch('/restaurants/:id', authenticateToken, authorizeRoles('owner', 'adm
     if (!restaurant) {
       return res.status(404).json({ error: 'Restaurant not found' });
     }
+
+    // Invalidate restaurant cache
+    cache.delete(`restaurant:${req.params.id}`);
 
     res.json({
       message: 'Restaurant updated successfully',
@@ -112,7 +152,7 @@ router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'mana
     });
   } catch (error) {
     console.error('Create table error:', error);
-    res.status(500).json({ error: 'Failed to create table' });
+    res.status(500).json({ error: 'Failed to create table', details: error.message });
   }
 });
 
@@ -242,6 +282,15 @@ router.get('/menu/:restaurantId', async (req, res) => {
   try {
     const { category, available } = req.query;
 
+    // Create cache key based on query parameters
+    const cacheKey = `menu:${req.params.restaurantId}:${category || 'all'}:${available || 'all'}`;
+
+    // Check cache first
+    const cachedMenu = cache.get(cacheKey);
+    if (cachedMenu) {
+      return res.json({ items: cachedMenu, cached: true });
+    }
+
     const query = { restaurant: req.params.restaurantId };
 
     if (category) {
@@ -252,7 +301,14 @@ router.get('/menu/:restaurantId', async (req, res) => {
       query.available = available === 'true';
     }
 
-    const items = await MenuItem.find(query).sort({ category: 1, name: 1 });
+    // Use .lean() for read-only query and select only needed fields
+    const items = await MenuItem.find(query)
+      .select('name price category description available image allergens prepTime eta featured tags variablePrice customizationOptions')
+      .lean()
+      .sort({ category: 1, name: 1 });
+
+    // Cache for 10 minutes (menu items don't change frequently)
+    cache.set(cacheKey, items, 600);
 
     res.json({ items });
   } catch (error) {
@@ -283,6 +339,9 @@ router.post('/menu-items', authenticateToken, authorizeRoles('owner', 'admin', '
       restaurant: req.restaurant._id
     });
 
+    // Invalidate menu cache for this restaurant
+    cache.deletePattern(`menu:${req.restaurant._id}:*`);
+
     res.status(201).json({
       message: 'Menu item created successfully',
       menuItem
@@ -306,6 +365,9 @@ router.patch('/menu-items/:id', authenticateToken, authorizeRoles('owner', 'admi
       return res.status(404).json({ error: 'Menu item not found' });
     }
 
+    // Invalidate menu cache for this restaurant
+    cache.deletePattern(`menu:${menuItem.restaurant}:*`);
+
     res.json({
       message: 'Menu item updated successfully',
       menuItem
@@ -324,6 +386,9 @@ router.delete('/menu-items/:id', authenticateToken, authorizeRoles('owner', 'adm
     if (!menuItem) {
       return res.status(404).json({ error: 'Menu item not found' });
     }
+
+    // Invalidate menu cache for this restaurant
+    cache.deletePattern(`menu:${menuItem.restaurant}:*`);
 
     res.json({ message: 'Menu item deleted successfully' });
   } catch (error) {
@@ -355,9 +420,11 @@ router.post('/orders', checkSubscription, async (req, res) => {
     // (Middleware checkSubscription already handles the bulk, 
     // but ensures we have req.restaurant context if needed)
 
-    // Validate table ownership
+    // Validate table ownership (optimized with .lean() and field projection)
     if (table) {
-      const tableData = await Table.findById(table);
+      const tableData = await Table.findById(table)
+        .select('restaurant')
+        .lean();
       if (!tableData) {
         return res.status(404).json({ error: 'Table not found' });
       }
@@ -370,8 +437,16 @@ router.post('/orders', checkSubscription, async (req, res) => {
     let subtotal = 0;
     const populatedItems = [];
 
+    // Batch fetch all menu items at once (optimized)
+    const menuItemIds = items.map(i => i.item);
+    const menuItems = await MenuItem.find({ _id: { $in: menuItemIds } })
+      .select('_id name price available orderCount')
+      .lean();
+
+    const menuItemMap = new Map(menuItems.map(item => [item._id.toString(), item]));
+
     for (const orderItem of items) {
-      const menuItem = await MenuItem.findById(orderItem.item);
+      const menuItem = menuItemMap.get(orderItem.item);
       if (!menuItem) {
         return res.status(404).json({ error: `Menu item ${orderItem.item} not found` });
       }
@@ -398,14 +473,28 @@ router.post('/orders', checkSubscription, async (req, res) => {
       });
 
       subtotal += itemSubtotal;
-
-      // Increment order count
-      menuItem.orderCount += orderItem.qty;
-      await menuItem.save();
     }
 
-    // Get restaurant settings for tax and service charge
-    const restaurantData = await Restaurant.findById(restaurant);
+    // Batch update order counts (optimized)
+    const bulkOps = items.map(orderItem => ({
+      updateOne: {
+        filter: { _id: orderItem.item },
+        update: { $inc: { orderCount: orderItem.qty } }
+      }
+    }));
+    await MenuItem.bulkWrite(bulkOps);
+
+    // Get restaurant settings (optimized with cache and .lean())
+    const cacheKey = `restaurant:${restaurant}`;
+    let restaurantData = cache.get(cacheKey);
+
+    if (!restaurantData) {
+      restaurantData = await Restaurant.findById(restaurant)
+        .select('settings')
+        .lean();
+      cache.set(cacheKey, restaurantData, 600); // Cache for 10 minutes
+    }
+
     const taxRate = restaurantData?.settings?.taxRate || 0;
     const serviceChargeRate = restaurantData?.settings?.serviceChargeRate || 0;
 
@@ -479,8 +568,10 @@ router.post('/orders', checkSubscription, async (req, res) => {
       );
     }
 
-    // Send notification to kitchen
-    await sendOrderNotification(order, 'new-order');
+    // Send notification to kitchen (async - don't wait)
+    sendOrderNotification(order, 'new-order').catch(err => {
+      console.error('Failed to send order notification:', err);
+    });
 
     res.status(201).json({
       message: 'Order created successfully',
@@ -608,7 +699,7 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Update order error:', error);
-    res.status(500).json({ error: 'Failed to update order' });
+    res.status(500).json({ error: 'Failed to update order', details: error.message });
   }
 });
 

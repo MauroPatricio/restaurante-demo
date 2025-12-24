@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import Role from '../models/Role.js'; // Import Role model
 import User from '../models/User.js';
 import Restaurant from '../models/Restaurant.js';
+import UserRestaurantRole from '../models/UserRestaurantRole.js';
 import Subscription from '../models/Subscription.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -43,12 +44,12 @@ const streamUpload = (req) => {
 };
 
 
-// Register new restaurant (owner + restaurant creation)
+// Register new User (Owner) - Step 1
 router.post('/register', upload.single('image'), async (req, res) => {
     try {
-        const { name, email, password, phone, restaurantName, restaurantAddress } = req.body;
-        // console.log('Register Body:', req.body);
-        // console.log('Register File:', req.file);
+        console.log('🔹 HITTING NEW V2 REGISTER ENDPOINT');
+        console.log('🔹 Body:', req.body);
+        const { name, email, password, phone, address } = req.body;
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
@@ -56,85 +57,34 @@ router.post('/register', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        let logoUrl = null;
+        let avatarUrl = null;
         if (req.file) {
             try {
+                // Upload to Cloudinary (using existing streamUpload helper, maybe change folder if needed)
                 const result = await streamUpload(req);
-                logoUrl = result.secure_url;
+                avatarUrl = result.secure_url;
             } catch (uErr) {
                 console.error('Cloudinary Upload Error:', uErr);
-                // Depending on requirements, fail hard or soft. Let's soft fail but log it.
             }
         }
 
-        // Find Owner role
-        let ownerRole = await Role.findOne({ name: 'Owner' });
-        // Fallback if not seeded yet (though seeding should handle this)
-        if (!ownerRole) {
-            ownerRole = await Role.create({
-                name: 'Owner',
-                description: 'Restaurant Owner',
-                permissions: ['all'],
-                isSystem: true
-            });
-        }
-
-        // Create user (password will be automatically hashed by pre-save hook)
+        // Create User (Global Entity)
         const user = await User.create({
             name,
             email,
             password,
             phone,
-            role: ownerRole._id // Assign Role ID
+            address,
+            avatar: avatarUrl
         });
 
-        // Create restaurant
-        const restaurant = await Restaurant.create({
-            name: restaurantName,
-            address: restaurantAddress,
-            owner: user._id,
-            email: email,
-            phone: phone,
-            logo: logoUrl // Save Logo URL
-        });
-
-        // Create subscription (trial period - first month free)
-        const now = new Date();
-        const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
-        const subscription = await Subscription.create({
-            restaurant: restaurant._id,
-            status: 'trial',
-            currentPeriodEnd: trialEnd,
-            currentPeriodStart: now,
-            amount: 10000
-        });
-
-        // Link subscription to restaurant
-        restaurant.subscription = subscription._id;
-        await restaurant.save();
-
-        // Link restaurant to user (SaaS: Add to array)
-        user.restaurants = [restaurant._id];
-        // user.restaurant = restaurant._id; // Deprecated
-        await user.save();
-
-        // Generate token
+        // Generate GLOBAL token
         const token = generateToken(user._id);
 
         res.status(201).json({
-            message: 'Registration successful',
+            message: 'User registered successfully',
             token,
-            user: user.toSafeObject(),
-            restaurant: {
-                id: restaurant._id,
-                name: restaurant.name,
-                logo: restaurant.logo
-            },
-            subscription: {
-                status: subscription.status,
-                trialEndsAt: subscription.currentPeriodEnd
-            }
+            user: user.toSafeObject()
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -148,7 +98,7 @@ router.post('/login', async (req, res) => {
         const { email, password } = req.body;
 
         // Find user and include password field
-        const user = await User.findOne({ email }).select('+password').populate('restaurants').populate('role');
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
@@ -169,6 +119,19 @@ router.post('/login', async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
 
+        // Fetch User Contexts (Restaurants & Roles)
+        const userRoles = await UserRestaurantRole.find({ user: user._id, active: true })
+            .populate('restaurant')
+            .populate('role');
+
+        const accessibleRestaurants = userRoles.map(ur => ({
+            id: ur.restaurant._id,
+            name: ur.restaurant.name,
+            role: ur.role.name,
+            isDefault: ur.isDefault,
+            logo: ur.restaurant.logo
+        }));
+
         // Generate GLOBAL token (no restaurantId)
         const token = generateToken(user._id);
 
@@ -177,7 +140,7 @@ router.post('/login', async (req, res) => {
             token, // Global token
             user: {
                 ...user.toSafeObject(),
-                restaurants: user.restaurants // Send full list
+                restaurants: accessibleRestaurants
             },
             isDefaultPassword: user.isDefaultPassword
         });
@@ -191,16 +154,21 @@ router.post('/login', async (req, res) => {
 router.post('/select-restaurant', authenticateToken, async (req, res) => {
     try {
         const { restaurantId } = req.body;
-        const user = await User.findById(req.user._id).populate('restaurants');
 
         if (!restaurantId) {
             return res.status(400).json({ error: 'Restaurant ID required' });
         }
 
-        // Verify ownership/membership
-        const isMember = user.restaurants.some(r => r._id.toString() === restaurantId) || user.role.name === 'Admin'; // Admin super-access optional
+        // Verify access via UserRestaurantRole
+        const userRole = await UserRestaurantRole.findOne({
+            user: req.user._id,
+            restaurant: restaurantId,
+            active: true
+        }).populate('role');
 
-        if (!isMember) {
+        if (!userRole) {
+            // Check if user is system admin as fallback (optional, but good for superadmins)
+            // For now, strict check:
             return res.status(403).json({ error: 'You do not have access to this restaurant' });
         }
 
@@ -210,8 +178,9 @@ router.post('/select-restaurant', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Restaurant not found' });
         }
 
-        // Generate SCOPE token (WITH restaurantId)
-        const scopedToken = generateToken(user._id, restaurantId);
+        // Generate SCOPE token (WITH restaurantId and roleId)
+        // We might want to pass role Id or Name in the token payload for easier frontend checks
+        const scopedToken = generateToken(req.user._id, restaurantId);
 
         let subscriptionStatus = null;
         if (restaurant.subscription) {
@@ -229,6 +198,7 @@ router.post('/select-restaurant', authenticateToken, async (req, res) => {
             message: 'Context switched',
             token: scopedToken,
             restaurant: restaurant,
+            role: userRole.role.name, // Send the specific role for this context
             subscription: subscriptionStatus
         });
 

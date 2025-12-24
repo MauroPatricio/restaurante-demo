@@ -4,14 +4,16 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion } from 'framer-motion';
 import { Check, Clock, ChefHat, Truck, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { clsx } from 'clsx';
 
-const API_URL = 'http://localhost:4000/api';
-const SOCKET_URL = 'http://localhost:4000';
+const API_URL = 'http://localhost:4001/api';
+const SOCKET_URL = 'http://localhost:4001';
 
 const OrderStatus = () => {
     const { restaurantId, orderId } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -72,10 +74,10 @@ const OrderStatus = () => {
     );
 
     const steps = [
-        { status: 'pending', label: 'Order Placed', icon: Clock },
-        { status: 'preparing', label: 'Preparing', icon: ChefHat },
-        { status: 'ready', label: 'Ready', icon: Check },
-        { status: 'completed', label: 'Delivered', icon: Truck },
+        { status: 'pending', label: t('order_status_pending'), icon: Clock },
+        { status: 'preparing', label: t('order_status_preparing'), icon: ChefHat },
+        { status: 'ready', label: t('order_status_ready'), icon: Check },
+        { status: 'completed', label: t('order_status_delivered'), icon: Truck },
     ];
 
     const currentStepIndex = steps.findIndex(s => s.status === order?.status) || 0;
@@ -99,7 +101,7 @@ const OrderStatus = () => {
                         {steps[currentStepIndex]?.icon && React.createElement(steps[currentStepIndex].icon, { size: 32 })}
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-1 capitalize">
-                        {order.status === 'pending' ? 'Order Received' : order.status}
+                        {order.status === 'pending' ? t('order_status_pending') : t(`order_status_${order.status}`)}
                     </h2>
                     <p className="text-gray-500 text-sm">
                         Estimated ready: {new Date(order.estimatedReadyTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -155,8 +157,8 @@ const OrderStatus = () => {
                         <span className="text-sm font-mono text-gray-900">#{order._id.slice(-6).toUpperCase()}</span>
                     </div>
                     <div className="flex justify-between items-center border-t border-gray-100 pt-2">
-                        <span className="font-bold text-gray-900">Total</span>
-                        <span className="font-bold text-primary-600 text-lg">{order.total} MT</span>
+                        <span className="font-bold text-gray-900">{t('total')}</span>
+                        <span className="font-bold text-primary-600 text-lg">{order.total} {t('currency')}</span>
                     </div>
                 </div>
 
@@ -169,6 +171,93 @@ const OrderStatus = () => {
 
             </div>
         </div>
+// ... imports
+import { Star } from 'lucide-react';
+
+    // ... inside OrderStatus component
+
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+    const submitFeedback = async () => {
+        try {
+            await axios.post(`${API_URL}/feedback`, {
+                restaurant: restaurantId,
+                orderId: orderId, // Changed from order to orderId
+                rating,
+                comment,
+                customerName: order.customerName || 'Guest'
+            });
+            setFeedbackSubmitted(true);
+        } catch (error) {
+            console.error('Feedback failed:', error);
+            setError('Failed to submit feedback');
+        }
+    };
+
+    // ... inside return (after Order Summary Stub)
+
+    {/* Feedback Section */ }
+    {/* Show if valid status (e.g. ready or completed) and not yet submitted */ }
+    {
+        ['ready', 'completed'].includes(order.status) && !feedbackSubmitted && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center animate-in fade-in slide-in-from-bottom-4">
+                <h3 className="font-bold text-gray-900 mb-4">{t('rate_experience') || 'Rate your experience'}</h3>
+
+                <div className="flex justify-center gap-2 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                            key={star}
+                            onClick={() => setRating(star)}
+                            className="transition-transform hover:scale-110 focus:outline-none"
+                        >
+                            <Star
+                                size={32}
+                                fill={star <= rating ? "#FCD34D" : "none"}
+                                stroke={star <= rating ? "#FCD34D" : "#D1D5DB"}
+                            />
+                        </button>
+                    ))}
+                </div>
+
+                <textarea
+                    className="w-full p-3 border border-gray-200 rounded-xl mb-4 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+                    placeholder={t('leave_comment') || "Any comments?"}
+                    rows={3}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                />
+
+                <button
+                    onClick={submitFeedback}
+                    disabled={rating === 0}
+                    className="w-full py-3 bg-primary-600 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-700 transition-colors"
+                >
+                    {t('submit_feedback') || 'Send Feedback'}
+                </button>
+            </div>
+        )
+    }
+
+    {
+        feedbackSubmitted && (
+            <div className="bg-green-50 text-green-700 p-4 rounded-xl text-center border border-green-100">
+                <p className="font-bold">Thank you!</p>
+                <p className="text-sm">Your feedback helps us improve.</p>
+            </div>
+        )
+    }
+
+    <button
+        onClick={() => window.location.reload()}
+        className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center justify-center gap-2"
+    >
+        <RefreshCw size={16} /> Tap to refresh
+    </button>
+
+            </div >
+        </div >
     );
 };
 

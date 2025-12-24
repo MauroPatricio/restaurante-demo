@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Trash2, ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:4000/api';
-const SOCKET_URL = 'http://localhost:4000';
+const API_URL = 'http://localhost:4001/api';
+const SOCKET_URL = 'http://localhost:4001';
 
 const Cart = () => {
     const { restaurantId } = useParams();
     const navigate = useNavigate();
     const { cart, removeFromCart, updateQty, cartTotal, clearCart } = useCart();
+    const { t } = useTranslation();
 
     // Idempotency lock
     const submitLock = React.useRef(false);
@@ -105,7 +107,7 @@ const Cart = () => {
                 <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full">
                     <ArrowLeft size={24} className="text-gray-600" />
                 </button>
-                <h1 className="text-lg font-bold text-gray-900">Your Order</h1>
+                <h1 className="text-lg font-bold text-gray-900">{t('cart')}</h1>
             </div>
 
             <div className="p-4 space-y-4">
@@ -146,11 +148,11 @@ const Cart = () => {
                 <div className="bg-white p-4 rounded-xl shadow-sm space-y-2">
                     <div className="flex justify-between text-gray-600">
                         <span>Subtotal</span>
-                        <span>{cartTotal} MT</span>
+                        <span>{cartTotal} {t('currency')}</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-2 border-t text-gray-900">
-                        <span>Total</span>
-                        <span>{cartTotal} MT</span>
+                        <span>{t('total')}</span>
+                        <span>{cartTotal} {t('currency')}</span>
                     </div>
                 </div>
 
@@ -211,8 +213,8 @@ const Cart = () => {
                         disabled={loading}
                         className="w-full max-w-md mx-auto bg-black text-white p-4 rounded-xl font-bold flex items-center justify-between hover:bg-gray-900 transition-colors disabled:opacity-70 disabled:cursor-wait"
                     >
-                        <span>{loading ? 'Processing...' : 'Place Order'}</span>
-                        <span>{cartTotal} MT <ArrowRight className="inline ml-1" size={18} /></span>
+                        <span>{loading ? t('scanning') : t('confirm_order')}</span>
+                        <span>{cartTotal} {t('currency')} <ArrowRight className="inline ml-1" size={18} /></span>
                     </button>
                 </div>
             </div>

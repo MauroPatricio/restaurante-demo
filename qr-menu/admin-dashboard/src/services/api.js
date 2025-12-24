@@ -53,7 +53,13 @@ export const authAPI = {
 // Restaurant API
 export const restaurantAPI = {
     get: (id) => api.get(`/restaurants/${id}`),
-    update: (id, data) => api.patch(`/restaurants/${id}`, data)
+    update: (id, data) => {
+        const config = {};
+        if (data instanceof FormData) {
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        }
+        return api.patch(`/restaurants/${id}`, data, config);
+    }
 };
 
 // Menu API
@@ -99,7 +105,8 @@ export const feedbackAPI = {
 // Subscription API
 export const subscriptionAPI = {
     get: (restaurantId) => api.get(`/subscriptions/${restaurantId}`),
-    getHistory: (restaurantId) => api.get(`/subscriptions/${restaurantId}/history`)
+    getHistory: (restaurantId) => api.get(`/subscriptions/${restaurantId}/history`),
+    createPayment: (data) => api.post('/subscriptions/pay', data)
 };
 
 // Delivery API
@@ -124,6 +131,13 @@ export const rolesAPI = {
     create: (data) => api.post('/roles', data),
     update: (id, data) => api.patch(`/roles/${id}`, data),
     delete: (id) => api.delete(`/roles/${id}`)
+};
+// Analytics API
+export const analyticsAPI = {
+    getFinancial: (restaurantId, params) => api.get(`/analytics/${restaurantId}/financial`, { params }),
+    getSales: (restaurantId, params) => api.get(`/analytics/${restaurantId}/sales`, { params }),
+    getOperational: (restaurantId, params) => api.get(`/analytics/${restaurantId}/operational`, { params }),
+    getInventory: (restaurantId) => api.get(`/analytics/${restaurantId}/inventory`)
 };
 
 export default api;

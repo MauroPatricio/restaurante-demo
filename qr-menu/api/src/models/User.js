@@ -23,17 +23,11 @@ const UserSchema = new mongoose.Schema({
     required: true,
     select: false // Don't include password in queries by default
   },
-  restaurants: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Restaurant',
-    index: true
-  }],
-  role: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Role',
-    required: true,
-    index: true
+  address: { // New field for Owner registration
+    type: String
   },
+  // Legacy fields removed: role, restaurants (now handled by UserRestaurantRole)
+
   isDefaultPassword: {
     type: Boolean,
     default: false

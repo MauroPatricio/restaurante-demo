@@ -13,19 +13,39 @@ export const authenticateToken = async (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
-        // Extract restaurant scope if present
-        if (decoded.restaurantId) {
-            req.restaurantId = decoded.restaurantId;
-        }
+        // Import Role and UserRestaurantRole dynamically to avoid circular dependency issues if any
+        const UserRestaurantRole = (await import('../models/UserRestaurantRole.js')).default;
 
-        // Fetch user from database and populate role
-        const user = await User.findById(decoded.userId).select('-password').populate('role');
+        // Fetch user from database (role is no longer directly on user)
+        const user = await User.findById(decoded.userId).select('-password');
 
         if (!user || !user.active) {
             return res.status(401).json({ error: 'User not found or inactive' });
         }
 
         req.user = user;
+
+        // Extract restaurant scope if present
+        if (decoded.restaurantId) {
+            req.restaurantId = decoded.restaurantId; // Keep independent reference
+
+            // Fetch Context-Specific Role
+            const userRole = await UserRestaurantRole.findOne({
+                user: user._id,
+                restaurant: decoded.restaurantId,
+                active: true
+            }).populate('role');
+
+            if (userRole) {
+                // Attach role to user object for authorizeRoles middleware compatibility
+                req.user.role = userRole.role;
+                req.user.restaurant = decoded.restaurantId; // Attach active context ID
+            } else {
+                // Token has restaurantId but no active role found (revoked access?)
+                return res.status(403).json({ error: 'Access to this restaurant context is no longer valid' });
+            }
+        }
+
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
@@ -65,8 +85,8 @@ export const checkSubscription = async (req, res, next) => {
         let restaurantId = req.restaurantId;
 
         // Allow public access if restaurant ID is provided in body/query (for QR menu orders)
-        if (!restaurantId && (req.body.restaurant || req.query.restaurant)) {
-            restaurantId = req.body.restaurant || req.query.restaurant;
+        if (!restaurantId && (req.body.restaurant || req.query.restaurant || req.params.id || req.params.restaurantId)) {
+            restaurantId = req.body.restaurant || req.query.restaurant || req.params.id || req.params.restaurantId;
         }
 
         if (!restaurantId) {

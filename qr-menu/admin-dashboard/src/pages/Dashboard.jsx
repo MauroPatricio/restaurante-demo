@@ -1,84 +1,238 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
-// import { orderAPI, feedbackAPI } from '../services/api'; 
-import { analyticsAPI as analyticsService } from '../services/analytics';
-import { useTranslation } from 'react-i18next';
 import {
-    ShoppingBag,
-    DollarSign,
-    ChefHat,
-    Star
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    PieChart, Pie, Cell, Legend
+} from 'recharts';
+import {
+    Clock, Users, TrendingUp, AlertCircle,
+    CheckCircle, Coffee, Utensils
 } from 'lucide-react';
+
+const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
+
+const statCardStyle = {
+    background: 'white',
+    borderRadius: '16px',
+    padding: '24px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+    border: '1px solid rgba(0,0,0,0.02)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    flex: 1,
+    minWidth: '240px'
+};
+
+const iconBoxStyle = (color, bg) => ({
+    padding: '12px',
+    borderRadius: '12px',
+    color: color,
+    background: bg,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+});
+
+const sectionStyle = {
+    background: 'white',
+    borderRadius: '16px',
+    padding: '24px',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+    marginBottom: '24px',
+    border: '1px solid #f1f5f9'
+};
 
 export default function Dashboard() {
     const { user } = useAuth();
-    const { t } = useTranslation();
-    
-    // Hardcoded stats for visual verification since fetch is disabled
-    const stats = {
-        totalOrders: 150,
-        totalRevenue: 25000,
-        avgPrepTime: 12,
-        averageRating: 4.5
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        operational: { avgPrepTime: 0, peakHours: [] },
+        shifts: []
+    });
+    const restaurantId = user?.restaurant?._id || user?.restaurant;
+
+    useEffect(() => {
+        if (restaurantId) {
+            fetchDashboardData();
+            const interval = setInterval(fetchDashboardData, 30000);
+            return () => clearInterval(interval);
+        } else {
+            setLoading(false);
+        }
+    }, [restaurantId]);
+
+    const fetchDashboardData = async () => {
+        try {
+            const [restaurantStats, operationalReport] = await Promise.all([
+                analyticsAPI.getRestaurantStats(restaurantId),
+                analyticsAPI.getOperationalReport(restaurantId)
+            ]);
+
+            setStats({
+                operational: restaurantStats.data.operational,
+                shifts: operationalReport.data.shifts,
+                financial: restaurantStats.data.financial
+            });
+        } catch (error) {
+            console.error('Failed to fetch dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    if (loading) return (
+        <div className="loading-screen" style={{ minHeight: '80vh' }}>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+    );
+
+    if (!restaurantId) return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#64748b' }}>
+            Please select a restaurant to view the dashboard.
+        </div>
+    );
+
+    // Prepare Peak Hours Data for Chart
+    const peakHoursData = stats.operational.peakHours?.map(ph => ({
+        hour: ph.hour,
+        orders: ph.orders
+    })) || [];
+
+    // Prepare Shifts Data for Pie Chart
+    const shiftsData = stats.shifts?.map(s => ({
+        name: s._id,
+        value: s.orders
+    })) || [];
+
     return (
-        <div className="page-content space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">{t('overview')}</h2>
-            
-            {/* KPI Stats Grid */}
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+        <div className="dashboard-container" style={{ maxWidth: '100vw', padding: '24px' }}>
+            {/* Header */}
+            <div className="dashboard-header-responsive">
+                <div>
+                    <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1e293b', margin: 0 }}>Operational Dashboard</h1>
+                    <p style={{ color: '#64748b', marginTop: '8px', fontSize: '16px' }}>
+                        Real-time overview of restaurant operations
+                    </p>
+                </div>
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    background: '#ecfdf5', padding: '10px 20px', borderRadius: '50px',
+                    border: '1px solid #d1fae5', color: '#047857', fontSize: '14px', fontWeight: '600'
+                }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
+                    Live Updates
+                </div>
+            </div>
+
+            {/* KPI Cards */}
+            <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>
+                <div style={statCardStyle}>
                     <div>
-                        <p className="text-sm font-medium text-gray-500">{t('total_revenue')}</p>
-                        <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                            {stats.totalRevenue.toLocaleString()} MT
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Avg Prep Time</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
+                            {stats.operational.avgPrepTime} <span style={{ fontSize: '18px', color: '#94a3b8', fontWeight: '600' }}>min</span>
                         </h3>
                     </div>
-                    <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-                        <DollarSign size={24} />
+                    <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
+                        <Clock size={24} strokeWidth={2.5} />
                     </div>
                 </div>
 
-                <div className="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+                <div style={statCardStyle}>
                     <div>
-                        <p className="text-sm font-medium text-gray-500">{t('total_orders')}</p>
-                        <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                            {stats.totalOrders}
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Today's Orders</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
+                            {stats.financial?.orders || 0}
                         </h3>
                     </div>
-                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
-                        <ShoppingBag size={24} />
+                    <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
+                        <Utensils size={24} strokeWidth={2.5} />
                     </div>
                 </div>
 
-                <div className="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
-                     <div>
-                        <p className="text-sm font-medium text-gray-500">Kitchen Prep Time</p>
-                        <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                            {stats.avgPrepTime} min
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Avg Ticket</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
+                            {stats.financial?.avgTicket || 0} <span style={{ fontSize: '18px', color: '#94a3b8', fontWeight: '600' }}>MT</span>
                         </h3>
                     </div>
-                    <div className="p-3 bg-orange-50 text-orange-600 rounded-lg">
-                        <ChefHat size={24} />
+                    <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
+                        <TrendingUp size={24} strokeWidth={2.5} />
                     </div>
                 </div>
 
-                <div className="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+                <div style={statCardStyle}>
                     <div>
-                        <p className="text-sm font-medium text-gray-500">{t('average_rating')}</p>
-                        <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                             {stats.averageRating}
-                        </h3>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Staff Active</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>--</h3>
                     </div>
-                    <div className="p-3 bg-yellow-50 text-yellow-600 rounded-lg">
-                        <Star size={24} />
+                    <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
+                        <Users size={24} strokeWidth={2.5} />
                     </div>
                 </div>
             </div>
 
-            <div className="p-4 bg-yellow-50 text-yellow-800 rounded border border-yellow-200">
-                <p><strong>Note:</strong> Charts are temporarily disabled due to compatibility issues.</p>
+            {/* Charts Section */}
+            <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>
+                <div style={{ ...sectionStyle, flex: 2, minWidth: '400px', marginBottom: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>Peak Hours Activity</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#4f46e5' }}></span>
+                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Order Volume</span>
+                        </div>
+                    </div>
+                    <div style={{ height: '350px' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={peakHoursData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
+                                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} interval={2} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
+                                    cursor={{ stroke: '#4f46e5', strokeWidth: 1 }}
+                                />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <Area type="monotone" dataKey="orders" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorOrders)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div style={{ ...sectionStyle, flex: 1, minWidth: '300px', marginBottom: 0 }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>Orders by Shift</h3>
+                    <div style={{ height: '350px' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={shiftsData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={70}
+                                    outerRadius={90}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    cornerRadius={5}
+                                >
+                                    {shiftsData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} />
+                                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
             </div>
         </div>
     );

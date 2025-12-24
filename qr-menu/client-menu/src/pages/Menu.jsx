@@ -1,16 +1,19 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = 'http://localhost:4000/api';
+const API_URL = 'http://localhost:4001/api';
 
 const Menu = () => {
     const { restaurantId } = useParams();
     const [searchParams] = useSearchParams();
+    const { t } = useTranslation();
 
     // Logic: Get table from URL OR LocalStorage
     // This allows refresh to keep the session alive
@@ -49,7 +52,7 @@ const Menu = () => {
 
                 setRestaurant(restRes.data.restaurant);
                 setMenuItems(menuRes.data.items);
-                setCategories(['All', ...catRes.data.categories]);
+                setCategories(catRes.data.categories); // Assuming this was intended to be here
                 checkRestaurant(restaurantId);
 
                 if (tableNumber) {
@@ -134,7 +137,7 @@ const Menu = () => {
                     </motion.h1>
                     {tableNumber && (
                         <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-xs text-white font-medium border border-white/10">
-                            Table {tableNumber}
+                            {t('table')} {tableNumber}
                         </span>
                     )}
                 </div>
@@ -147,7 +150,7 @@ const Menu = () => {
                         <Search className="absolute left-3 top-2.5 text-gray-400 h-4 w-4" />
                         <input
                             type="text"
-                            placeholder="Search dishes..."
+                            placeholder={t('search_placeholder')}
                             className="w-full bg-gray-100/50 border border-gray-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-gray-400"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -167,7 +170,7 @@ const Menu = () => {
                                     : "bg-white text-gray-800 border border-gray-100 hover:bg-gray-50"
                             )}
                         >
-                            {cat}
+                            {cat === 'All' ? t('filter_all') : cat}
                         </button>
                     ))}
                 </div>
@@ -253,10 +256,10 @@ const Menu = () => {
                         >
                             <div className="flex items-center gap-3">
                                 <div className="bg-primary-500 text-white px-3 py-1 rounded-lg text-sm font-bold shadow-lg shadow-primary-500/20">{cartCount}</div>
-                                <span className="text-sm font-medium text-gray-200">View Order</span>
+                                <span className="text-sm font-medium text-gray-200">{t('total')}</span>
                             </div>
                             <span className="font-bold text-lg flex items-center gap-1">
-                                Go to Cart <ChevronDown className="rotate-[-90deg]" size={18} />
+                                {t('checkout')} <ChevronDown className="rotate-[-90deg]" size={18} />
                             </span>
                         </button>
                     </motion.div>

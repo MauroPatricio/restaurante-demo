@@ -2,6 +2,7 @@ import Order from '../models/Order.js';
 import Restaurant from '../models/Restaurant.js';
 import mongoose from 'mongoose';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
+import MenuItem from '../models/MenuItem.js';
 
 export const getOwnerStats = async (req, res) => {
     try {
@@ -223,5 +224,280 @@ export const getRestaurantStats = async (req, res) => {
     } catch (error) {
         console.error('Restaurant stats error:', error);
         res.status(500).json({ error: 'Failed to fetch restaurant stats' });
+    }
+};
+
+// -----------------------------------------------------------------------------
+// ADVANCED REPORTING CONTROLLERS
+// -----------------------------------------------------------------------------
+
+export const getFinancialReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        const query = {
+            restaurant: new mongoose.Types.ObjectId(id),
+            status: { $ne: 'cancelled' }
+        };
+
+        if (startDate && endDate) {
+            query.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        } else {
+            query.createdAt = { $gte: subDays(new Date(), 30) };
+        }
+
+        const revenueTrend = await Order.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    revenue: { $sum: '$total' },
+                    orders: { $count: {} },
+                    avgTicket: { $avg: '$total' }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        const summary = await Order.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$total' },
+                    totalOrders: { $count: {} },
+                    avgTicket: { $avg: '$total' }
+                }
+            }
+        ]);
+
+        const marginStats = await Order.aggregate([
+            { $match: query },
+            { $unwind: "$items" },
+            {
+                $lookup: {
+                    from: "menuitems",
+                    localField: "items.item",
+                    foreignField: "_id",
+                    as: "menuItemDetails"
+                }
+            },
+            { $unwind: { path: "$menuItemDetails", preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    revenue: "$items.subtotal",
+                    cost: { $multiply: [{ $ifNull: ["$menuItemDetails.costPrice", 0] }, "$items.quantity"] }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: "$revenue" },
+                    totalCost: { $sum: "$cost" }
+                }
+            }
+        ]);
+
+        const totalRevenue = summary[0]?.totalRevenue || 0;
+        const totalCost = marginStats[0]?.totalCost || 0;
+        const grossMargin = totalRevenue - totalCost;
+
+        res.json({
+            summary: {
+                totalRevenue,
+                totalOrders: summary[0]?.totalOrders || 0,
+                avgTicket: summary[0]?.avgTicket || 0,
+                totalCost,
+                grossMargin,
+                marginPercentage: totalRevenue > 0 ? (grossMargin / totalRevenue) * 100 : 0
+            },
+            trend: revenueTrend
+        });
+
+    } catch (error) {
+        console.error('Financial Report Error:', error);
+        res.status(500).json({ error: 'Failed to fetch financial report' });
+    }
+};
+
+export const getSalesReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        const query = {
+            restaurant: new mongoose.Types.ObjectId(id),
+            status: { $ne: 'cancelled' }
+        };
+
+        if (startDate && endDate) {
+            query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+        } else {
+            query.createdAt = { $gte: subDays(new Date(), 30) };
+        }
+
+        const salesByCategory = await Order.aggregate([
+            { $match: query },
+            { $unwind: "$items" },
+            {
+                $lookup: {
+                    from: "menuitems",
+                    localField: "items.item",
+                    foreignField: "_id",
+                    as: "product"
+                }
+            },
+            { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: { $ifNull: ["$product.category", "Uncategorized"] },
+                    revenue: { $sum: "$items.subtotal" },
+                    count: { $sum: "$items.quantity" }
+                }
+            },
+            { $sort: { revenue: -1 } }
+        ]);
+
+        const topItems = await Order.aggregate([
+            { $match: query },
+            { $unwind: "$items" },
+            {
+                $lookup: {
+                    from: "menuitems",
+                    localField: "items.item",
+                    foreignField: "_id",
+                    as: "product"
+                }
+            },
+            { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: { $ifNull: ["$product.name", "Unknown Item"] },
+                    revenue: { $sum: "$items.subtotal" },
+                    count: { $sum: "$items.quantity" },
+                    category: { $first: "$product.category" }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+        ]);
+
+        res.json({
+            byCategory: salesByCategory,
+            topItems: topItems
+        });
+
+    } catch (error) {
+        console.error('Sales Report Error:', error);
+        res.status(500).json({ error: 'Failed to fetch sales report' });
+    }
+};
+
+export const getOperationalReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        const query = {
+            restaurant: new mongoose.Types.ObjectId(id),
+            status: { $ne: 'cancelled' }
+        };
+
+        if (startDate && endDate) {
+            query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+        } else {
+            query.createdAt = { $gte: subDays(new Date(), 30) };
+        }
+
+        const shifts = await Order.aggregate([
+            { $match: query },
+            {
+                $project: {
+                    hour: { $hour: "$createdAt" },
+                    total: 1
+                }
+            },
+            {
+                $project: {
+                    shift: {
+                        $switch: {
+                            branches: [
+                                { case: { $and: [{ $gte: ["$hour", 6] }, { $lt: ["$hour", 12] }] }, then: "Morning" },
+                                { case: { $and: [{ $gte: ["$hour", 12] }, { $lt: ["$hour", 18] }] }, then: "Afternoon" }
+                            ],
+                            default: "Night"
+                        }
+                    },
+                    total: 1
+                }
+            },
+            {
+                $group: {
+                    _id: "$shift",
+                    revenue: { $sum: "$total" },
+                    orders: { $count: {} }
+                }
+            }
+        ]);
+
+        const busiestDays = await Order.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: { $dayOfWeek: "$createdAt" },
+                    revenue: { $sum: "$total" },
+                    orders: { $count: {} }
+                }
+            },
+            { $sort: { orders: -1 } }
+        ]);
+
+        res.json({
+            shifts,
+            busiestDays
+        });
+
+    } catch (error) {
+        console.error('Operational Report Error:', error);
+        res.status(500).json({ error: 'Failed to fetch operational report' });
+    }
+};
+
+
+
+export const getInventoryReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const items = await MenuItem.find({ restaurant: id });
+
+        const stockStatus = items.map(item => ({
+            _id: item._id,
+            name: item.name,
+            stock: item.stock || 0,
+            costPrice: item.costPrice || 0,
+            totalValue: (item.stock || 0) * (item.costPrice || 0),
+            status: (item.stock || 0) < 10 ? 'Low' : 'OK'
+        }));
+
+        const totalStockValue = stockStatus.reduce((sum, item) => sum + item.totalValue, 0);
+        const lowStockCount = stockStatus.filter(i => i.status === 'Low').length;
+
+        res.json({
+            summary: {
+                totalValue: totalStockValue,
+                lowStockCount: lowStockCount,
+                totalItems: items.length
+            },
+            items: stockStatus.sort((a, b) => a.stock - b.stock)
+        });
+
+    } catch (error) {
+        console.error('Inventory Report Error:', error);
+        res.status(500).json({ error: 'Failed to fetch inventory report' });
     }
 };

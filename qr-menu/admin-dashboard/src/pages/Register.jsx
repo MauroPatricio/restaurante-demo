@@ -1,22 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios'; // Still used externally or can remove if fully switched
 import { authAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
 
 export default function Register() {
     const [formData, setFormData] = useState({
-        restaurantName: '',
-        restaurantAddress: '',
         name: '', // Owner Name
+        address: '', // Owner Address
         phone: '',
         email: '',
-        password: ''
+        password: '',
+        confirmPassword: ''
     });
+    const [image, setImage] = useState(null); // Separate state for file
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth(); // We can potentially auto-login
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -29,33 +27,37 @@ export default function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (formData.password !== formData.confirmPassword) {
+            setError('As senhas não coincidem');
+            return;
+        }
+
         setLoading(true);
 
         try {
             // Create FormData
             const data = new FormData();
             Object.keys(formData).forEach(key => {
-                data.append(key, formData[key]);
+                if (key !== 'confirmPassword') {
+                    data.append(key, formData[key]);
+                }
             });
+
+            if (image) {
+                data.append('image', image);
+            }
 
             // Register
             const response = await authAPI.register(data);
 
-            // Auto login with the returned token/user data or redirect to login
-            // The register endpoint returns token and user data similar to login
             if (response.data.token) {
-                // We'd ideally need a way to set the auth context without calling the login API again, 
-                // but for simplicity/robustness, let's just use the login function or redirect.
-                // Since `login` context function usually calls the API, we might just redirect the user to login to be safe 
-                // OR we can rely on the fact that if we have the token we can store it.
-                // Let's redirect to login for now to ensure clean state initialization, 
-                // OR better, alert success and redirect.
-                alert('Registration successful! Please login.');
-                navigate('/');
+                alert('Conta criada com sucesso! Por favor faça login para criar o seu restaurante.');
+                navigate('/login');
             }
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.error || 'Registration failed');
+            setError(err.response?.data?.error || 'Falha no registo');
         } finally {
             setLoading(false);
         }
@@ -66,8 +68,8 @@ export default function Register() {
             <div className="register-left">
                 <div className="register-card">
                     <div className="register-header">
-                        <h1>🚀 Join Aura</h1>
-                        <p>Create your restaurant account</p>
+                        <h1>👤 Registo do Proprietário</h1>
+                        <p>Crie a sua conta de administrador</p>
                     </div>
 
                     {error && (
@@ -78,55 +80,52 @@ export default function Register() {
 
                     <form onSubmit={handleSubmit} className="register-form">
                         <div className="form-section">
-                            <h3>Restaurant Details</h3>
-                            <div className="form-group">
-                                <label htmlFor="restaurantName">Restaurant Name</label>
-                                <input
-                                    id="restaurantName"
-                                    type="text"
-                                    value={formData.restaurantName}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder="Tasty Bites"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="restaurantAddress">Address</label>
-                                <input
-                                    id="restaurantAddress"
-                                    type="text"
-                                    value={formData.restaurantAddress}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder="City, Street 123"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="image">Restaurant Logo</label>
-                                <input
-                                    id="image"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
-                                />
-                            </div>
-                        </div>
+                            <h3>Dados do Proprietário (Owner)</h3>
 
-                        <div className="form-section">
-                            <h3>Owner Details</h3>
+                            <div className="form-group center-upload">
+                                <label htmlFor="image" className="avatar-upload-label">
+                                    {image ? (
+                                        <img src={URL.createObjectURL(image)} alt="Preview" className="avatar-preview" />
+                                    ) : (
+                                        <div className="avatar-placeholder">
+                                            <span>📷</span>
+                                            <small>Foto de Perfil</small>
+                                        </div>
+                                    )}
+                                    <input
+                                        id="image"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden-input"
+                                        onChange={(e) => setImage(e.target.files[0])}
+                                    />
+                                </label>
+                            </div>
+
                             <div className="form-group">
-                                <label htmlFor="name">Full Name</label>
+                                <label htmlFor="name">Nome Completo</label>
                                 <input
                                     id="name"
                                     type="text"
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
-                                    placeholder="John Doe"
+                                    placeholder="Ex: João da Silva"
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="phone">Phone</label>
+                                <label htmlFor="address">Morada Pessoal</label>
+                                <input
+                                    id="address"
+                                    type="text"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="Ex: Rua dos Coqueiros, Nº 10"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="phone">Telefone</label>
                                 <input
                                     id="phone"
                                     type="text"
@@ -148,7 +147,7 @@ export default function Register() {
                                 />
                             </div>
                             <div className="form-group password-field" style={{ position: 'relative' }}>
-                                <label htmlFor="password">Password</label>
+                                <label htmlFor="password">Senha</label>
                                 <input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
@@ -156,6 +155,7 @@ export default function Register() {
                                     onChange={handleChange}
                                     required
                                     placeholder="••••••••"
+                                    minLength={6}
                                 />
                                 <button
                                     type="button"
@@ -173,6 +173,18 @@ export default function Register() {
                                     {showPassword ? '👁️' : '👁️‍🗨️'}
                                 </button>
                             </div>
+                            <div className="form-group password-field">
+                                <label htmlFor="confirmPassword">Confirmar Senha</label>
+                                <input
+                                    id="confirmPassword"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="••••••••"
+                                    minLength={6}
+                                />
+                            </div>
                         </div>
 
                         <button
@@ -181,12 +193,12 @@ export default function Register() {
                             disabled={loading}
                             style={{ marginTop: '20px' }}
                         >
-                            {loading ? 'Creating Account...' : 'Create Account'}
+                            {loading ? 'A criar conta...' : 'Criar Conta'}
                         </button>
                     </form>
 
                     <div className="register-footer">
-                        <p>Already have an account? <Link to="/">Sign In</Link></p>
+                        <p>Já tem uma conta? <Link to="/">Entrar</Link></p>
                     </div>
                 </div>
             </div>
@@ -200,26 +212,43 @@ export default function Register() {
             </div>
 
             <style>{`
-                .register-layout { display:flex; min-height:100vh; }
-                .register-left { flex:1; padding:40px; display:flex; justify-content:center; align-items:center; overflow-y: auto; }
-                .register-card { width:100%; max-width:500px; }
-                .register-right { flex:1; display:none; }
+                .register-layout { display: flex; min-height: 100vh; font-family: 'Inter', sans-serif; }
+                .register-left { flex: 1; padding: 40px; display: flex; justify-content: center; align-items: center; overflow-y: auto; background-color: #f8fafc; }
+                .register-card { width: 100%; max-width: 550px; background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+                .register-right { flex: 1; display: none; }
                 .register-header { margin-bottom: 30px; text-align: center; }
-                .form-section { margin-bottom: 20px; text-align: left; }
-                .form-section h3 { font-size: 1rem; color: #666; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 15px; }
-                .form-group { margin-bottom: 15px; }
-                .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
-                .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-                .btn-primary { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+                .register-header h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 8px; }
+                .register-header p { color: #64748b; }
+                
+                .form-section { margin-bottom: 24px; text-align: left; background: #fff; }
+                .form-section h3 { font-size: 0.95rem; font-weight: 600; color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
+                
+                .form-group { margin-bottom: 16px; }
+                .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.875rem; color: #475569; }
+                .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s; }
+                .form-group input:focus { outline: none; border-color: #2563eb; ring: 2px solid #2563eb33; }
+                
+                .btn-primary { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background 0.2s; }
                 .btn-primary:hover { background: #1d4ed8; }
-                .register-footer { margin-top: 20px; text-align: center; font-size: 0.9rem; }
+                .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+                
+                .register-footer { margin-top: 24px; text-align: center; font-size: 0.9rem; color: #64748b; }
                 .register-footer a { color: #2563eb; text-decoration: none; font-weight: 600; }
-                .error-message { background: #fee2e2; color: #dc2626; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9rem; }
+                .error-message { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; border: 1px solid #fecaca; }
                 
                 .responsive-image { width: 100%; height: 100%; object-fit: cover; }
 
-                @media (min-width: 900px) {
-                    .register-right { display:block; }
+                /* Avatar Upload Styles */
+                .center-upload { display: flex; justify-content: center; margin-bottom: 24px; }
+                .avatar-upload-label { cursor: pointer; transition: transform 0.2s; }
+                .avatar-upload-label:hover { transform: scale(1.05); }
+                .avatar-placeholder { width: 100px; height: 100px; border-radius: 50%; background: #f1f5f9; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; }
+                .avatar-placeholder span { font-size: 24px; margin-bottom: 4px; }
+                .avatar-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; }
+                .hidden-input { display: none; }
+
+                @media(min-width: 900px) {
+                    .register-right { display: block; }
                 }
             `}</style>
         </div>

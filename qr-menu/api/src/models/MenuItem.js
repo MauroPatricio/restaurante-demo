@@ -37,6 +37,7 @@ const MenuItemSchema = new mongoose.Schema({
   variablePrice: { type: Boolean, default: false },
   costPrice: { type: Number, default: 0 }, // For margin calculation
   stockControlled: { type: Boolean, default: false },
+  stock: { type: Number, default: 0 }, // Current inventory count
   seasonal: String, // e.g. "Summer"
 
   // Operational

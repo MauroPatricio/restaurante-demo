@@ -8,6 +8,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+
 import router from './src/routes/index.js';
 import { initializeFirebase } from './src/services/firebaseService.js';
 import { startSubscriptionMonitoring } from './src/services/scheduledJobs.js';
@@ -150,10 +154,67 @@ async function getPublicIP() {
 // **Inicializando Express**
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: 'http://localhost:5173' } });
+
+// Allow CORS for Client and Admin Dashboard
+const allowedOrigins = [
+  process.env.CLIENT_URL || 'http://localhost:5173',
+  process.env.ADMIN_URL || 'http://localhost:5173',
+  'http://localhost:5174' // Client Menu default
+];
+
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"]
+  }
+});
+
+// Security & Performance Middleware
+app.use(helmet());
+app.use(compression());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api', limiter); // Apply to API routes only
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // In development, allow all localhost origins
+    if (process.env.NODE_ENV !== 'production') {
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+    }
+
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+
+    // In production, reject; in development, allow but warn
+    if (process.env.NODE_ENV === 'production') {
+      return callback(new Error('Not allowed by CORS'), false);
+    }
+
+    console.warn('⚠️  CORS: Allowing unlisted origin in dev:', origin);
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
@@ -161,12 +222,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configuração de CORS adicional
+// Configuração de CORS adicional (Legacy/Redundant if `cors()` is configured, but keeping for safety if needed, simplified)
+/*
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  // Configured via cors() middleware above usually, but manual headers for debug:
+  // res.header("Access-Control-Allow-Origin", "*"); // DISABLED for hardening
   next();
 });
+*/
 
 // Rotas da API
 app.get('/health', (req, res) => res.status(200).send('OK'));
