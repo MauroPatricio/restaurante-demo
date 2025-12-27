@@ -3,12 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion } from 'framer-motion';
-import { Check, Clock, ChefHat, Truck, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
+import { Check, Clock, ChefHat, Truck, ArrowLeft, RefreshCw, AlertCircle, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { clsx } from 'clsx';
-
-const API_URL = 'http://localhost:4001/api';
-const SOCKET_URL = 'http://localhost:4001';
+import { API_URL, SOCKET_URL } from '../config/api';
 
 const OrderStatus = () => {
     const { restaurantId, orderId } = useParams();
@@ -17,6 +15,9 @@ const OrderStatus = () => {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
     // Initial Fetch
     useEffect(() => {
@@ -54,6 +55,22 @@ const OrderStatus = () => {
             socket.disconnect();
         };
     }, [orderId]);
+
+    const submitFeedback = async () => {
+        try {
+            await axios.post(`${API_URL}/feedback`, {
+                restaurant: restaurantId,
+                orderId: orderId,
+                rating,
+                comment,
+                customerName: order.customerName || 'Guest'
+            });
+            setFeedbackSubmitted(true);
+        } catch (error) {
+            console.error('Feedback failed:', error);
+            setError('Failed to submit feedback');
+        }
+    };
 
     if (loading) return (
         <div className="flex h-screen items-center justify-center bg-gray-50">
@@ -150,7 +167,7 @@ const OrderStatus = () => {
                     </div>
                 </div>
 
-                {/* Order Summary Stub */}
+                {/* Order Summary */}
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-bold text-gray-500">ORDER ID</span>
@@ -162,6 +179,52 @@ const OrderStatus = () => {
                     </div>
                 </div>
 
+                {/* Feedback Section */}
+                {['ready', 'completed'].includes(order.status) && !feedbackSubmitted && (
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
+                        <h3 className="font-bold text-gray-900 mb-4">{t('rate_experience') || 'Rate your experience'}</h3>
+
+                        <div className="flex justify-center gap-2 mb-4">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    onClick={() => setRating(star)}
+                                    className="transition-transform hover:scale-110 focus:outline-none"
+                                >
+                                    <Star
+                                        size={32}
+                                        fill={star <= rating ? "#FCD34D" : "none"}
+                                        stroke={star <= rating ? "#FCD34D" : "#D1D5DB"}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+
+                        <textarea
+                            className="w-full p-3 border border-gray-200 rounded-xl mb-4 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+                            placeholder={t('leave_comment') || "Any comments?"}
+                            rows={3}
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                        />
+
+                        <button
+                            onClick={submitFeedback}
+                            disabled={rating === 0}
+                            className="w-full py-3 bg-primary-600 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-700 transition-colors"
+                        >
+                            {t('submit_feedback') || 'Send Feedback'}
+                        </button>
+                    </div>
+                )}
+
+                {feedbackSubmitted && (
+                    <div className="bg-green-50 text-green-700 p-4 rounded-xl text-center border border-green-100">
+                        <p className="font-bold">Thank you!</p>
+                        <p className="text-sm">Your feedback helps us improve.</p>
+                    </div>
+                )}
+
                 <button
                     onClick={() => window.location.reload()}
                     className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center justify-center gap-2"
@@ -171,93 +234,6 @@ const OrderStatus = () => {
 
             </div>
         </div>
-// ... imports
-import { Star } from 'lucide-react';
-
-    // ... inside OrderStatus component
-
-    const [rating, setRating] = useState(0);
-    const [comment, setComment] = useState('');
-    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-
-    const submitFeedback = async () => {
-        try {
-            await axios.post(`${API_URL}/feedback`, {
-                restaurant: restaurantId,
-                orderId: orderId, // Changed from order to orderId
-                rating,
-                comment,
-                customerName: order.customerName || 'Guest'
-            });
-            setFeedbackSubmitted(true);
-        } catch (error) {
-            console.error('Feedback failed:', error);
-            setError('Failed to submit feedback');
-        }
-    };
-
-    // ... inside return (after Order Summary Stub)
-
-    {/* Feedback Section */ }
-    {/* Show if valid status (e.g. ready or completed) and not yet submitted */ }
-    {
-        ['ready', 'completed'].includes(order.status) && !feedbackSubmitted && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center animate-in fade-in slide-in-from-bottom-4">
-                <h3 className="font-bold text-gray-900 mb-4">{t('rate_experience') || 'Rate your experience'}</h3>
-
-                <div className="flex justify-center gap-2 mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                            key={star}
-                            onClick={() => setRating(star)}
-                            className="transition-transform hover:scale-110 focus:outline-none"
-                        >
-                            <Star
-                                size={32}
-                                fill={star <= rating ? "#FCD34D" : "none"}
-                                stroke={star <= rating ? "#FCD34D" : "#D1D5DB"}
-                            />
-                        </button>
-                    ))}
-                </div>
-
-                <textarea
-                    className="w-full p-3 border border-gray-200 rounded-xl mb-4 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
-                    placeholder={t('leave_comment') || "Any comments?"}
-                    rows={3}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                />
-
-                <button
-                    onClick={submitFeedback}
-                    disabled={rating === 0}
-                    className="w-full py-3 bg-primary-600 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-700 transition-colors"
-                >
-                    {t('submit_feedback') || 'Send Feedback'}
-                </button>
-            </div>
-        )
-    }
-
-    {
-        feedbackSubmitted && (
-            <div className="bg-green-50 text-green-700 p-4 rounded-xl text-center border border-green-100">
-                <p className="font-bold">Thank you!</p>
-                <p className="text-sm">Your feedback helps us improve.</p>
-            </div>
-        )
-    }
-
-    <button
-        onClick={() => window.location.reload()}
-        className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center justify-center gap-2"
-    >
-        <RefreshCw size={16} /> Tap to refresh
-    </button>
-
-            </div >
-        </div >
     );
 };
 

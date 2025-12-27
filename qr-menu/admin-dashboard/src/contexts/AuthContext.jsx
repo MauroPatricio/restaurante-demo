@@ -18,25 +18,46 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const loadUser = async () => {
             const token = localStorage.getItem('token');
+            const restaurantId = localStorage.getItem('restaurantId');
+
+            console.log('🔍 AuthContext - Loading user...');
+            console.log('  Token exists:', !!token);
+            console.log('  RestaurantId in storage:', restaurantId);
+
             if (token) {
                 try {
-                    // Assuming api.authAPI.getProfile exists
+                    // Call /auth/me to get full user profile with role
                     const { data } = await api.get('/auth/me');
-                    let currentUser = data.user;
+                    console.log('✅ /auth/me response:', data);
+                    console.log('  User:', data.user?.name);
+                    console.log('  Restaurant:', data.user?.restaurant?.name);
+                    console.log('  Restaurant active:', data.user?.restaurant?.active);
+                    console.log('  Restaurant logo:', data.user?.restaurant?.logo);
 
-                    // Attempt to restore restaurant context from localStorage
-                    const savedRestaurantId = localStorage.getItem('restaurantId');
-                    if (savedRestaurantId && currentUser.restaurants) {
-                        // Find the full restaurant object in the user's accessible list
-                        const activeDetails = currentUser.restaurants.find(r => r.id === savedRestaurantId || r._id === savedRestaurantId);
-                        if (activeDetails) {
-                            currentUser.restaurant = activeDetails;
+                    // If restaurant data is missing but restaurantId exists in localStorage,
+                    // fetch restaurant manually (happens when old token doesn't have restaurantId)
+                    if (!data.user?.restaurant && restaurantId) {
+                        console.log('⚠️  Restaurant not in token, fetching manually...');
+                        try {
+                            const restaurantRes = await api.get(`/restaurants/${restaurantId}`);
+                            console.log('✅ Restaurant fetched:', restaurantRes.data);
+                            data.user.restaurant = restaurantRes.data;
+
+                            // Also get user role for this restaurant
+                            const roleRes = await api.get(`/users/${data.user._id}/restaurants/${restaurantId}/role`);
+                            data.user.role = roleRes.data.role;
+                            data.user.subscription = restaurantRes.data.subscription;
+                        } catch (fetchError) {
+                            console.error('❌ Failed to fetch restaurant:', fetchError);
                         }
                     }
 
-                    setUser(currentUser);
+                    setUser(data.user);
                 } catch (error) {
+                    console.error('❌ Failed to load user:', error);
+                    console.error('  Error response:', error.response?.data);
                     localStorage.removeItem('token');
+                    localStorage.removeItem('restaurantId');
                     setUser(null);
                 }
             }
@@ -57,10 +78,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('restaurantId', restaurantId);
 
-        // Update user state with the selected restaurant context
+        // Update user state with the selected restaurant context and role
         setUser(prev => ({
             ...prev,
             restaurant: data.restaurant,
+            role: { name: data.role }, // Add role from backend response
             subscription: data.subscription
         }));
 

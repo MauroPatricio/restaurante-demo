@@ -5,7 +5,10 @@ import api from '../services/api';
 export default function CreateRestaurant() {
     const [formData, setFormData] = useState({
         name: '',
-        address: '',
+        street: '',
+        number: '',
+        neighborhood: '',
+        city: 'Maputo',
         phone: '',
         email: ''
     });
@@ -27,9 +30,18 @@ export default function CreateRestaurant() {
         setLoading(true);
 
         try {
+            // Construct full address from parts
+            const addressParts = [
+                formData.street,
+                formData.number,
+                formData.neighborhood,
+                formData.city
+            ].filter(Boolean);
+            const fullAddress = addressParts.join(', ');
+
             const data = new FormData();
             data.append('name', formData.name);
-            data.append('address', formData.address);
+            data.append('address', fullAddress);
             data.append('phone', formData.phone);
             data.append('email', formData.email);
 
@@ -104,16 +116,66 @@ export default function CreateRestaurant() {
                                 placeholder="Ex: Pizzaria do Zé"
                             />
                         </div>
+
+                        {/* Address Fields - Detailed */}
                         <div className="form-group">
-                            <label htmlFor="address">Endereço / Localização</label>
+                            <label htmlFor="street">Rua/Avenida</label>
                             <input
-                                id="address"
+                                id="street"
                                 type="text"
-                                value={formData.address}
-                                onChange={handleChange}
+                                value={formData.street || ''}
+                                onChange={(e) => setFormData({ ...formData, street: e.target.value })}
                                 required
-                                placeholder="Ex: Av. 24 de Julho, Maputo"
+                                placeholder="Ex: Av. 24 de Julho"
                             />
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="number">Número</label>
+                                <input
+                                    id="number"
+                                    type="text"
+                                    value={formData.number || ''}
+                                    onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                                    placeholder="Ex: 123"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="neighborhood">Bairro</label>
+                                <input
+                                    id="neighborhood"
+                                    type="text"
+                                    value={formData.neighborhood || ''}
+                                    onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                                    placeholder="Ex: Polana"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="city">Cidade</label>
+                            <select
+                                id="city"
+                                value={formData.city || 'Maputo'}
+                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                required
+                            >
+                                <option value="Maputo">Maputo</option>
+                                <option value="Matola">Matola</option>
+                                <option value="Beira">Beira</option>
+                                <option value="Nampula">Nampula</option>
+                                <option value="Tete">Tete</option>
+                                <option value="Quelimane">Quelimane</option>
+                                <option value="Chimoio">Chimoio</option>
+                                <option value="Nacala">Nacala</option>
+                                <option value="Pemba">Pemba</option>
+                                <option value="Inhambane">Inhambane</option>
+                                <option value="Xai-Xai">Xai-Xai</option>
+                                <option value="Lichinga">Lichinga</option>
+                            </select>
                         </div>
                         <div className="form-group">
                             <label htmlFor="phone">Telefone (Comercial)</label>
@@ -211,6 +273,12 @@ export default function CreateRestaurant() {
                 .image-overlay { position: absolute; inset: 0; background: linear-gradient(to top, #0f172a, transparent); opacity: 0.8; }
                 .image-content { position: absolute; bottom: 60px; left: 60px; right: 60px; color: white; z-index: 10; }
                 .image-content h2 { font-size: 2.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 16px; }
+                
+                /* Form row for side-by-side inputs */
+                .form-row { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
+                .form-row .form-group { margin-bottom: 0; }
+                .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer; transition: border-color 0.2s; }
+                .form-group select:focus { outline: none; border-color: #2563eb; ring: 2px solid #2563eb33; }
                 .image-content p { font-size: 1.1rem; color: #cbd5e1; }
 
                 @media(min-width: 900px) {

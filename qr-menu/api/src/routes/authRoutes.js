@@ -208,6 +208,37 @@ router.post('/select-restaurant', authenticateToken, async (req, res) => {
     }
 });
 
+// Get current user profile (with role if restaurant context exists)
+router.get('/me', authenticateToken, async (req, res) => {
+    try {
+        // req.user already has role populated by authenticateToken middleware if scoped token
+        // Fetch user contexts
+        const userRoles = await UserRestaurantRole.find({ user: req.user._id, active: true })
+            .populate('restaurant')
+            .populate('role');
+
+        const accessibleRestaurants = userRoles.map(ur => ({
+            id: ur.restaurant._id,
+            name: ur.restaurant.name,
+            role: ur.role.name,
+            isDefault: ur.isDefault,
+            logo: ur.restaurant.logo
+        }));
+
+        res.json({
+            user: {
+                ...req.user.toSafeObject(),
+                role: req.user.role, // Will be populated if using scoped token
+                restaurant: req.user.restaurant, // Will be present if using scoped token
+                restaurants: accessibleRestaurants
+            }
+        });
+    } catch (error) {
+        console.error('Get me error:', error);
+        res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+});
+
 // Refresh token
 router.post('/refresh', async (req, res) => {
     try {
@@ -303,6 +334,69 @@ router.post('/change-password', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Change password error:', error);
         res.status(500).json({ error: 'Failed to change password' });
+    }
+});
+
+// Get current user info
+router.get('/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Get user's restaurant associations
+        const userRestaurantRoles = await UserRestaurantRole.find({ user: user._id })
+            .populate('restaurant')
+            .populate('role');
+
+        // Format restaurants array
+        const restaurants = userRestaurantRoles.map(urr => ({
+            _id: urr.restaurant._id,
+            name: urr.restaurant.name,
+            role: urr.role.name
+        }));
+
+        // If restaurantId is in the token, get full restaurant details + role
+        let responseUser = {
+            ...user.toObject(),
+            restaurants
+        };
+
+        console.log('🔍 /auth/me - req.restaurantId:', req.restaurantId);
+        console.log('🔍 /auth/me - req.user.restaurant:', req.user.restaurant);
+
+        if (req.restaurantId) {
+            console.log('✅ restaurantId found in request, fetching restaurant...');
+            const currentRestaurant = await Restaurant.findById(req.restaurantId).populate('subscription');
+            const currentUserRole = await UserRestaurantRole.findOne({
+                user: req.user._id,
+                restaurant: req.restaurantId,
+                active: true
+            }).populate('role');
+
+            console.log('📊 currentRestaurant:', currentRestaurant ? currentRestaurant.name : 'null');
+            console.log('📊 currentUserRole:', currentUserRole ? currentUserRole.role.name : 'null');
+
+            if (currentRestaurant && currentUserRole) {
+                responseUser.restaurant = currentRestaurant;
+                responseUser.role = currentUserRole.role;
+                responseUser.subscription = currentRestaurant.subscription;
+                console.log('✅ Restaurant data added to response');
+            } else {
+                console.log('⚠️  Missing currentRestaurant or currentUserRole');
+            }
+        } else {
+            console.log('⚠️  No restaurantId in request - user.restaurant will be just the ID');
+        }
+
+        res.json({
+            user: responseUser
+        });
+    } catch (error) {
+        console.error('Get user info error:', error);
+        res.status(500).json({ error: 'Failed to get user info' });
     }
 });
 

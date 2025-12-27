@@ -12,33 +12,143 @@ import cache from '../services/cacheService.js';
 import upload from '../middleware/upload.js';
 import cloudinary from '../config/cloudinary.js';
 import streamifier from 'streamifier';
+import { generateQRCodeUrl } from '../utils/qrSecurity.js';
 
 // Import feature-specific routes
 import authRoutes from './authRoutes.js';
 import paymentRoutes from './paymentRoutes.js';
 import subscriptionRoutes from './subscriptionRoutes.js';
 import feedbackRoutes from './feedbackRoutes.js';
+import publicRoutes from './publicRoutes.js';
 import couponRoutes from './couponRoutes.js';
 import deliveryRoutes from './deliveryRoutes.js';
 import userRoutes from './userRoutes.js';
 import roleRoutes from './roleRoutes.js';
 import analyticsRoutes from './analyticsRoutes.js';
-import restaurantRoutes from './restaurantRoutes.js'; // New Route
+import restaurantRoutes from './restaurantRoutes.js';
+import categoryRoutes from './categories.js';
+import subcategoryRoutes from './subcategories.js';
+import menuItemRoutes from './menuItems.js';
 
 const router = express.Router();
 
+// Mount PUBLIC routes first (no authentication required)
+router.use('/public', publicRoutes);
+
 // Mount feature routes
 router.use('/auth', authRoutes);
-router.use('/restaurants', restaurantRoutes); // New Route
+router.use('/restaurants', restaurantRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/feedback', feedbackRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/delivery', deliveryRoutes);
-router.use('/analytics', analyticsRoutes); // Mount analytics routes
+router.use('/analytics', analyticsRoutes);
 router.use('/users', userRoutes);
 router.use('/roles', roleRoutes);
+router.use('/categories', categoryRoutes);
+router.use('/subcategories', subcategoryRoutes);
+router.use('/menu-items', menuItemRoutes);
 // ...
+
+// ============ PUBLIC MENU ROUTE ============
+
+/**
+ * @route   GET /api/public/menu/:restaurantId
+ * @desc    Get structured menu for a restaurant (public access)
+ * @access  Public
+ */
+router.get('/public/menu/:restaurantId', async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+    const cacheKey = `menu:${restaurantId}`;
+
+    // Check cache first
+    const cachedMenu = cache.get(cacheKey);
+    if (cachedMenu) {
+      return res.json(cachedMenu);
+    }
+
+    // Import models
+    const Category = (await import('../models/Category.js')).default;
+    const Subcategory = (await import('../models/Subcategory.js')).default;
+
+    // Get all active categories for the restaurant
+    const categories = await Category.find({
+      restaurant: restaurantId,
+      isActive: true
+    }).sort({ displayOrder: 1, name: 1 });
+
+    // Get all active subcategories for the restaurant
+    const subcategories = await Subcategory.find({
+      restaurant: restaurantId,
+      isActive: true
+    }).sort({ displayOrder: 1, name: 1 });
+
+    // Get all available menu items for the restaurant
+    const menuItems = await MenuItem.find({
+      restaurant: restaurantId,
+      available: true
+    })
+      .populate('category')
+      .populate('subcategory')
+      .sort({ category: 1, subcategory: 1, name: 1 });
+
+    // Structure the menu
+    const structuredMenu = categories.map(category => {
+      // Get subcategories for this category
+      const categorySubcategories = subcategories.filter(
+        sub => sub.category.toString() === category._id.toString()
+      );
+
+      // Get items for this category
+      const categoryItems = menuItems.filter(
+        item => item.category._id.toString() === category._id.toString()
+      );
+
+      // Group items by subcategory
+      const itemsBySubcategory = categorySubcategories.map(subcategory => ({
+        subcategory: {
+          _id: subcategory._id,
+          name: subcategory.name,
+          description: subcategory.description
+        },
+        items: categoryItems.filter(
+          item => item.subcategory?._id.toString() === subcategory._id.toString()
+        )
+      }));
+
+      // Items without subcategory
+      const itemsWithoutSubcategory = categoryItems.filter(item => !item.subcategory);
+
+      return {
+        category: {
+          _id: category._id,
+          name: category.name,
+          description: category.description,
+          displayOrder: category.displayOrder
+        },
+        subcategories: itemsBySubcategory,
+        items: itemsWithoutSubcategory
+      };
+    });
+
+    const response = {
+      restaurant: restaurantId,
+      menu: structuredMenu,
+      totalCategories: categories.length,
+      totalItems: menuItems.length
+    };
+
+    // Cache for 5 minutes
+    cache.set(cacheKey, response, 300);
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching public menu:', error);
+    res.status(500).json({ error: 'Failed to fetch menu' });
+  }
+});
 
 // ============ RESTAURANT ROUTES ============
 
@@ -133,18 +243,20 @@ router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'mana
       accessibility, joinable, assignedWaiter, minConsumption
     } = req.body;
 
-    // Generate QR code data
-    const qrData = JSON.stringify({
-      restaurantId: restaurant,
-      tableId: `TBL-${number}`,
-      type: 'table'
+    // Create table first to get the ID
+    const table = await Table.create({
+      restaurant, number, capacity, location, type, status,
+      accessibility, joinable, assignedWaiter, minConsumption,
+      qrCode: '' // Temporary empty string
     });
 
-    const qrCode = await QRCode.toDataURL(qrData);
-    const table = await Table.create({
-      restaurant, number, qrCode, capacity, location, type, status,
-      accessibility, joinable, assignedWaiter, minConsumption
-    });
+    // Generate QR code URL with table ID and security token
+    const qrUrl = generateQRCodeUrl(restaurant, table._id);
+    const qrCode = await QRCode.toDataURL(qrUrl);
+
+    // Update table with QR code
+    table.qrCode = qrCode;
+    await table.save();
 
     res.status(201).json({
       message: 'Table created successfully',
@@ -169,13 +281,40 @@ router.get('/tables/restaurant/:restaurantId', async (req, res) => {
   }
 });
 
+// Lookup table by number (for public QR menu) - MUST come before /tables/:id
+router.get('/tables/lookup', async (req, res) => {
+  try {
+    const { restaurant, number } = req.query;
+    if (!restaurant || !number) {
+      return res.status(400).json({ error: 'Missing restaurant or number param' });
+    }
+
+    // Since number is Number type in DB, cast it
+    const table = await Table.findOne({ restaurant, number: parseInt(number) });
+
+    if (!table) return res.status(404).json({ error: 'Table not found' });
+
+    res.json({ table });
+  } catch (error) {
+    console.error('Table lookup error:', error);
+    res.status(500).json({ error: 'Failed to lookup table' });
+  }
+});
+
 // Get single table
 router.get('/tables/:id', async (req, res) => {
   try {
-    const table = await Table.findById(req.params.id).populate('restaurant');
+    const table = await Table.findById(req.params.id)
+      .populate('restaurant')
+      .populate('assignedWaiterId', 'name email');
 
     if (!table) {
       return res.status(404).json({ error: 'Table not found' });
+    }
+
+    // Add waiter name to response if populated
+    if (table.assignedWaiterId) {
+      table.assignedWaiter = table.assignedWaiterId.name;
     }
 
     res.json({ table });
@@ -221,26 +360,6 @@ router.delete('/tables/:id', authenticateToken, authorizeRoles('owner', 'admin',
   } catch (error) {
     console.error('Delete table error:', error);
     res.status(500).json({ error: 'Failed to delete table' });
-  }
-});
-
-// Lookup table by number (for public QR menu)
-router.get('/tables/lookup', async (req, res) => {
-  try {
-    const { restaurant, number } = req.query;
-    if (!restaurant || !number) {
-      return res.status(400).json({ error: 'Missing restaurant or number param' });
-    }
-
-    // Since number is Number type in DB, cast it
-    const table = await Table.findOne({ restaurant, number: parseInt(number) });
-
-    if (!table) return res.status(404).json({ error: 'Table not found' });
-
-    res.json({ table });
-  } catch (error) {
-    console.error('Table lookup error:', error);
-    res.status(500).json({ error: 'Failed to lookup table' });
   }
 });
 
@@ -320,9 +439,22 @@ router.get('/menu/:restaurantId', async (req, res) => {
 // Get menu categories for a restaurant
 router.get('/menu/:restaurantId/categories', async (req, res) => {
   try {
-    const categories = await MenuItem.distinct('category', {
-      restaurant: req.params.restaurantId
+    // Get unique categories used by menu items for this restaurant
+    const items = await MenuItem.find({
+      restaurant: req.params.restaurantId,
+      available: true
+    }).populate('category').select('category');
+
+    // Extract unique categories
+    const categoryMap = new Map();
+    items.forEach(item => {
+      if (item.category && item.category._id) {
+        categoryMap.set(item.category._id.toString(), item.category);
+      }
     });
+
+    // Convert to array and add "All" option
+    const categories = [{ _id: 'All', name: 'All' }, ...Array.from(categoryMap.values())];
 
     res.json({ categories });
   } catch (error) {
@@ -330,6 +462,7 @@ router.get('/menu/:restaurantId/categories', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
+
 
 // Create menu item
 router.post('/menu-items', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {

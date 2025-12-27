@@ -1,11 +1,39 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usersAPI, rolesAPI } from '../services/api';
 import {
     Users, Plus, Search, MoreVertical, Mail, Phone, Shield,
-    CheckCircle, XCircle, Trash2, Edit2, Key
+    CheckCircle, XCircle, Trash2, Edit2, Key, Power
 } from 'lucide-react';
+
+// Modern styles matching Kitchen.jsx
+const cardStyle = {
+    background: 'white',
+    borderRadius: '16px',
+    padding: '24px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+    border: '1px solid rgba(0,0,0,0.02)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+};
+
+const statCardStyle = {
+    ...cardStyle,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    flex: 1,
+    minWidth: '200px'
+};
+
+const iconBoxStyle = (color, bg) => ({
+    padding: '12px',
+    borderRadius: '12px',
+    color: color,
+    background: bg,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+});
 
 export default function UserManagement() {
     const { user } = useAuth();
@@ -13,28 +41,33 @@ export default function UserManagement() {
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [togglingId, setTogglingId] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         phone: '',
         roleId: '',
-        password: ''
+        password: 'temp123'
     });
 
+    const restaurantId = user?.restaurant?._id || user?.restaurant;
+
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (restaurantId) {
+            fetchData();
+        }
+    }, [restaurantId]);
 
     const fetchData = async () => {
         try {
             const [usersRes, rolesRes] = await Promise.all([
-                usersAPI.getAll(),
+                usersAPI.getByRestaurant(restaurantId),
                 rolesAPI.getAll()
             ]);
-            setUsers(usersRes.data.users);
-            setRoles(rolesRes.data.roles || rolesRes.data); // Backstop if backend returns array directly
+            setUsers(usersRes.data.users || []);
+            setRoles(rolesRes.data.roles || rolesRes.data || []);
         } catch (error) {
-            console.error(error);
+            console.error('Failed to fetch data:', error);
         } finally {
             setLoading(false);
         }
@@ -43,13 +76,26 @@ export default function UserManagement() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await usersAPI.create(formData);
+            await usersAPI.createForRestaurant(restaurantId, formData);
             setShowModal(false);
             fetchData();
-            setFormData({ name: '', email: '', phone: '', roleId: '', password: '' });
+            setFormData({ name: '', email: '', phone: '', roleId: '', password: 'temp123' });
         } catch (error) {
             console.error('Failed to add user', error);
             alert(error.response?.data?.error || 'Failed to add user');
+        }
+    };
+
+    const handleToggleActive = async (userId) => {
+        setTogglingId(userId);
+        try {
+            await usersAPI.toggleActive(userId);
+            fetchData();
+        } catch (error) {
+            console.error('Failed to toggle user status:', error);
+            alert('Failed to toggle user status');
+        } finally {
+            setTogglingId(null);
         }
     };
 
@@ -60,120 +106,220 @@ export default function UserManagement() {
                 fetchData();
             } catch (error) {
                 console.error(error);
+                alert('Failed to delete user');
             }
         }
     };
 
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div style={{
+                    width: '48px',
+                    height: '48px',
+                    border: '4px solid #e5e7eb',
+                    borderTop: '4px solid #6366f1',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                }}></div>
+            </div>
+        );
+    }
+
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div style={{ padding: '24px', maxWidth: '100vw', minHeight: 'calc(100vh - 64px)', backgroundColor: '#f8fafc' }}>
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Users className="text-indigo-600" />
+                    <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
                         Team Management
                     </h1>
-                    <p className="text-slate-500 mt-1">Manage access and roles for your restaurant staff.</p>
+                    <p style={{ color: '#64748b', marginTop: '8px', fontSize: '16px' }}>
+                        Manage access and roles for your restaurant staff
+                    </p>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm font-medium"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '12px 24px',
+                        background: '#4f46e5',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#4338ca';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseOut={(e) => {
+                        e.currentTarget.style.background = '#4f46e5';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
                 >
                     <Plus size={20} />
                     Add Team Member
                 </button>
             </div>
 
-            {/* Stats Cards (Optional) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-slate-500 text-sm font-medium mb-1">Total Members</div>
-                    <div className="text-3xl font-bold text-slate-900">{users.length}</div>
+            {/* Stats Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                            Total Members
+                        </p>
+                        <h3 style={{ fontSize: '36px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                            {users.length}
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
+                        <Users size={24} />
+                    </div>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-slate-500 text-sm font-medium mb-1">Managers</div>
-                    <div className="text-3xl font-bold text-slate-900">{users.filter(u => u.role?.name === 'Manager').length}</div>
+
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                            Managers
+                        </p>
+                        <h3 style={{ fontSize: '36px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                            {users.filter(u => u.role?.name === 'Manager').length}
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
+                        <Shield size={24} />
+                    </div>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-slate-500 text-sm font-medium mb-1">Waiters</div>
-                    <div className="text-3xl font-bold text-slate-900">{users.filter(u => u.role?.name === 'Waiter').length}</div>
+
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                            Waiters
+                        </p>
+                        <h3 style={{ fontSize: '36px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                            {users.filter(u => u.role?.name === 'Waiter').length}
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
+                        <Users size={24} />
+                    </div>
                 </div>
             </div>
 
             {/* Users Table */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                {/* Toolbar */}
-                <div className="p-4 border-b border-slate-200 flex items-center gap-4">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search users..."
-                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
-                        />
-                    </div>
+            <div style={cardStyle}>
+                <div style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                        Staff Members
+                    </h3>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
-                                <th className="p-4">User</th>
-                                <th className="p-4">Role</th>
-                                <th className="p-4">Contact</th>
-                                <th className="p-4">Global Status</th>
-                                <th className="p-4 text-right">Actions</th>
+                            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>User</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Role</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Contact</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Status</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody>
                             {users.map((member) => (
-                                <tr key={member._id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                                <tr key={member._id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.2s ease' }}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '10px',
+                                                background: '#eef2ff',
+                                                color: '#4f46e5',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontWeight: '700',
+                                                fontSize: '16px'
+                                            }}>
                                                 {member.name.charAt(0)}
                                             </div>
                                             <div>
-                                                <div className="font-medium text-slate-900">{member.name}</div>
-                                                <div className="text-xs text-slate-500">{member.email}</div>
+                                                <div style={{ fontWeight: '600', color: '#1e293b' }}>{member.name}</div>
+                                                <div style={{ fontSize: '12px', color: '#64748b' }}>{member.email}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4">
-                                        <span className={`inline - flex items - center px - 2.5 py - 0.5 rounded - full text - xs font - medium border ${member.role?.name === 'Owner'
-                                                ? 'bg-purple-50 text-purple-700 border-purple-200'
-                                                : member.role?.name === 'Manager'
-                                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                                    : 'bg-green-50 text-green-700 border-green-200'
-                                            } `}>
+                                    <td style={{ padding: '16px' }}>
+                                        <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            padding: '4px 12px',
+                                            borderRadius: '20px',
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            backgroundColor: member.role?.name === 'Owner' ? '#f5f3ff' : member.role?.name === 'Manager' ? '#eff6ff' : '#ecfdf5',
+                                            color: member.role?.name === 'Owner' ? '#7c3aed' : member.role?.name === 'Manager' ? '#3b82f6' : '#059669',
+                                            border: `1px solid ${member.role?.name === 'Owner' ? '#e9d5ff' : member.role?.name === 'Manager' ? '#dbeafe' : '#d1fae5'}`
+                                        }}>
                                             {member.role?.name || 'Member'}
                                         </span>
                                     </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-col gap-1 text-sm text-slate-600">
-                                            <div className="flex items-center gap-2">
-                                                <Phone size={14} className="text-slate-400" />
-                                                {member.phone}
-                                            </div>
-                                        </div>
+                                    <td style={{ padding: '16px', color: '#64748b', fontSize: '14px' }}>
+                                        {member.phone || '-'}
                                     </td>
-                                    <td className="p-4">
-                                        <span className={`inline - flex items - center gap - 1.5 text - xs font - medium ${member.active ? 'text-emerald-600' : 'text-slate-500'} `}>
+                                    <td style={{ padding: '16px' }}>
+                                        <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            color: member.active ? '#059669' : '#64748b'
+                                        }}>
                                             {member.active ? <CheckCircle size={14} /> : <XCircle size={14} />}
                                             {member.active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
-                                    <td className="p-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Reset Password">
-                                                <Key size={18} />
-                                            </button>
-                                            <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Role">
-                                                <Edit2 size={18} />
+                                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                                            <button
+                                                onClick={() => handleToggleActive(member._id)}
+                                                disabled={togglingId === member._id}
+                                                style={{
+                                                    padding: '8px',
+                                                    background: member.active ? '#fef2f2' : '#ecfdf5',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    color: member.active ? '#dc2626' : '#059669',
+                                                    cursor: togglingId === member._id ? 'not-allowed' : 'pointer',
+                                                    opacity: togglingId === member._id ? 0.5 : 1
+                                                }}
+                                                title={member.active ? 'Deactivate' : 'Activate'}
+                                            >
+                                                <Power size={18} className={togglingId === member._id ? 'spinning' : ''} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(member._id)}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                style={{
+                                                    padding: '8px',
+                                                    background: '#fef2f2',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    color: '#dc2626',
+                                                    cursor: 'pointer'
+                                                }}
                                                 title="Remove from Restaurant"
                                             >
                                                 <Trash2 size={18} />
@@ -185,54 +331,126 @@ export default function UserManagement() {
                         </tbody>
                     </table>
                 </div>
+
+                {users.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>
+                        <Users size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
+                        <p>No team members found. Add your first member!</p>
+                    </div>
+                )}
             </div>
 
             {/* Add User Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-slate-900">Add Team Member</h2>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 50,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    backdropFilter: 'blur(4px)',
+                    padding: '16px'
+                }}>
+                    <div style={{
+                        background: 'white',
+                        width: '100%',
+                        maxWidth: '500px',
+                        borderRadius: '16px',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{
+                            padding: '24px',
+                            borderBottom: '1px solid #e2e8f0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                                Add Team Member
+                            </h2>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#64748b',
+                                    cursor: 'pointer'
+                                }}
+                            >
                                 <XCircle size={24} />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                    Full Name
+                                </label>
                                 <input
                                     type="text"
                                     required
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '8px',
+                                        fontSize: '14px'
+                                    }}
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                    Email
+                                </label>
                                 <input
                                     type="email"
                                     required
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '8px',
+                                        fontSize: '14px'
+                                    }}
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                    Phone
+                                </label>
                                 <input
                                     type="tel"
-                                    required
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '8px',
+                                        fontSize: '14px'
+                                    }}
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                    Role
+                                </label>
                                 <select
                                     required
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-white"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        background: 'white'
+                                    }}
                                     value={formData.roleId}
                                     onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                                 >
@@ -243,28 +461,59 @@ export default function UserManagement() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Initial Password</label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                    Initial Password
+                                </label>
                                 <input
                                     type="password"
                                     required
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '8px',
+                                        fontSize: '14px'
+                                    }}
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    placeholder="Temp password"
+                                    placeholder="Temporary password"
                                 />
+                                <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                                    User will be prompted to change on first login
+                                </p>
                             </div>
 
-                            <div className="pt-4 flex gap-3">
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px 16px',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '8px',
+                                        background: 'white',
+                                        color: '#475569',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px 16px',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        background: '#4f46e5',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
                                 >
                                     Add Member
                                 </button>
@@ -273,6 +522,16 @@ export default function UserManagement() {
                     </div>
                 </div>
             )}
+
+            <style>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .spinning {
+                    animation: spin 1s linear infinite;
+                }
+            `}</style>
         </div>
     );
 }

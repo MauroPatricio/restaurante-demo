@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 const TableSchema = new mongoose.Schema({
   restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' },
   number: Number,
@@ -14,8 +15,25 @@ const TableSchema = new mongoose.Schema({
   type: String, // e.g. "Round", "Square", "Booth"
   accessibility: { type: Boolean, default: false },
   joinable: { type: Boolean, default: false },
-  assignedWaiter: String,
+  assignedWaiter: String, // Legacy field - kept for compatibility
+  assignedWaiterId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   occupiedAt: Date,
   minConsumption: Number
-}, { timestamps: true });
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Virtual to populate waiter details
+TableSchema.virtual('waiter', {
+  ref: 'User',
+  localField: 'assignedWaiterId',
+  foreignField: '_id',
+  justOne: true
+});
+
 export default mongoose.model('Table', TableSchema);

@@ -33,9 +33,24 @@ export default function Settings() {
             const res = await restaurantAPI.get(restId);
             const data = res.data.restaurant;
             setRestaurant(data);
+
+            // Handle address - could be string or object
+            let addressString = '';
+            if (typeof data.address === 'string') {
+                addressString = data.address;
+            } else if (typeof data.address === 'object' && data.address !== null) {
+                // Convert object to string
+                const parts = [];
+                if (data.address.street) parts.push(data.address.street);
+                if (data.address.number) parts.push(data.address.number);
+                if (data.address.neighborhood) parts.push(data.address.neighborhood);
+                if (data.address.city) parts.push(data.address.city);
+                addressString = parts.join(', ');
+            }
+
             setFormData({
                 name: data.name || '',
-                address: data.address || '',
+                address: addressString,
                 phone: data.phone || '',
                 email: data.email || '',
                 image: null

@@ -1,18 +1,30 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { subscriptionAPI } from '../services/api';
-import { CreditCard, Calendar, CheckCircle, XCircle, X, History, Clock, Check, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios'; // We might need axios directly if api.js isn't updated yet
+import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import { subscriptionAPI } from '../services/api';
+import Loader from '../components/Loader';
+import {
+    CreditCard,
+    Calendar,
+    CheckCircle,
+    XCircle,
+    AlertTriangle,
+    Clock,
+    TrendingUp,
+    Check
+} from 'lucide-react';
 
 export default function Subscription() {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { subscription: contextSub, refreshSubscription } = useSubscription();
     const [subscription, setSubscription] = useState(null);
-    const [transactions, setTransactions] = useState([]);
+    const [paymentHistory, setPaymentHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [renewLoading, setRenewLoading] = useState(false);
     const [showRenewModal, setShowRenewModal] = useState(false);
+    const [renewSuccess, setRenewSuccess] = useState(false);
 
     useEffect(() => {
         if (user?.restaurant) {
@@ -22,283 +34,691 @@ export default function Subscription() {
 
     const fetchData = async () => {
         try {
-            const [subRes, transRes] = await Promise.all([
-                subscriptionAPI.get(user.restaurant._id || user.restaurant),
-                subscriptionAPI.getHistory(user.restaurant._id || user.restaurant)
-            ]);
-            setSubscription(subRes.data.subscription);
-            setTransactions(transRes.data.transactions);
+            const restaurantId = user.restaurant._id || user.restaurant.id || user.restaurant;
+            const { data } = await subscriptionAPI.get(restaurantId);
+            setSubscription(data);
+            setPaymentHistory(data.paymentHistory || []);
         } catch (error) {
-            console.error('Failed to fetch subscription data:', error);
+            console.error('Failed to fetch subscription:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    if (loading) {
-        return <div className="loading">Loading subscription...</div>;
-    }
+    const handleRenew = async () => {
+        setRenewLoading(true);
+        try {
+            const restaurantId = user.restaurant._id || user.restaurant.id || user.restaurant;
+            const { data } = await subscriptionAPI.renew({
+                restaurantId,
+                paymentMethod: 'manual',
+                amount: subscription.amount,
+                reference: `RENEW-${Date.now()}`
+            });
 
-    const statusColor = {
-        trial: 'blue',
-        active: 'green',
-        suspended: 'red',
-        cancelled: 'gray'
+            if (data.success) {
+                setRenewSuccess(true);
+                setTimeout(() => {
+                    setShowRenewModal(false);
+                    setRenewSuccess(false);
+                    fetchData();
+                    refreshSubscription();
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Renewal failed:', error);
+            alert(t('error_generic') || 'Erro ao renovar subscrição. Tente novamente.');
+        } finally {
+            setRenewLoading(false);
+        }
     };
 
-    const methodIcons = {
-        mpesa: '📱 M-Pesa',
-        emola: '📱 e-Mola',
-        bci: '🏦 BCI'
+    if (loading) {
+        return <Loader variant="page" size="large" message={t('loading_subscription')} />;
+    }
+
+    const getDaysUntilExpiry = () => {
+        if (!subscription?.currentPeriodEnd) return null;
+        const now = new Date();
+        const end = new Date(subscription.currentPeriodEnd);
+        const diffTime = end - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
+    const daysUntil = getDaysUntilExpiry();
+    const isExpired = daysUntil !== null && daysUntil <= 0;
+    const isExpiring = daysUntil !== null && daysUntil <= 7 && daysUntil > 0;
+
+    const getStatusConfig = () => {
+        if (isExpired) {
+            return {
+                label: t('subscription_status_expired'),
+                color: '#dc2626',
+                bgColor: '#fef2f2',
+                icon: XCircle
+            };
+        }
+        if (isExpiring) {
+            return {
+                label: t('subscription_status_expiring'),
+                color: '#f59e0b',
+                bgColor: '#fffbeb',
+                icon: AlertTriangle
+            };
+        }
+        if (subscription?.status === 'active') {
+            return {
+                label: t('subscription_status_active'),
+                color: '#059669',
+                bgColor: '#f0fdf4',
+                icon: CheckCircle
+            };
+        }
+        return {
+            label: subscription?.status || t('subscription_status_suspended'),
+            color: '#64748b',
+            bgColor: '#f8fafc',
+            icon: Clock
+        };
+    };
+
+    const statusConfig = getStatusConfig();
+    const StatusIcon = statusConfig.icon;
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-PT', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
+    const formatCurrency = (amount) => {
+        return `${amount?.toLocaleString() || '0'} MT`;
     };
 
     return (
-        <div className="page-container">
-            <div className="page-header">
+        <div style={styles.pageContainer}>
+            {/* Header */}
+            <div style={styles.header}>
                 <div>
-                    <h2>{t('subscription_management')}</h2>
-                    <p>{t('subscription_page_desc')}</p>
+                    <h1 style={styles.title}>{t('subscription_title')}</h1>
+                    <p style={styles.subtitle}>{t('subscription_subtitle')}</p>
                 </div>
             </div>
 
-            <div className="subscription-card">
-                <div className="subscription-header">
+            {/* Status Card */}
+            <div style={styles.statusCard}>
+                <div style={styles.statusCardLeft}>
+                    <div style={{
+                        ...styles.statusIconContainer,
+                        backgroundColor: statusConfig.bgColor
+                    }}>
+                        <StatusIcon size={32} color={statusConfig.color} />
+                    </div>
                     <div>
-                        <h3>{t('current_plan')}</h3>
-                        <p className="subscription-amount">15,000 MT / month</p>
+                        <p style={styles.statusLabel}>{t('status')}</p>
+                        <h2 style={{ ...styles.statusValue, color: statusConfig.color }}>
+                            {statusConfig.label}
+                        </h2>
                     </div>
-                    <span className={`status-badge ${statusColor[subscription?.status]}`}>
-                        {subscription?.status}
-                    </span>
                 </div>
 
-                <div className="subscription-details">
-                    <div className="detail-row">
-                        <div className="detail-label">
-                            <Calendar size={18} />
-                            <span>{t('current_period')}</span>
+                {/* Countdown */}
+                {daysUntil !== null && daysUntil > 0 && (
+                    <div style={styles.countdown}>
+                        <div style={styles.countdownNumber}>{daysUntil}</div>
+                        <div style={styles.countdownLabel}>
+                            {t('subscription_days_remaining')}
                         </div>
-                        <div className="detail-value">
-                            {subscription?.currentPeriodStart && format(new Date(subscription.currentPeriodStart), 'MMM dd, yyyy')}
-                            {' - '}
-                            {subscription?.currentPeriodEnd && format(new Date(subscription.currentPeriodEnd), 'MMM dd, yyyy')}
-                        </div>
-                    </div>
-
-                    <div className="detail-row">
-                        <div className="detail-label">
-                            {subscription?.isValid ? <CheckCircle size={18} className="text-green" /> : <XCircle size={18} className="text-red" />}
-                            <span>{t('status')}</span>
-                        </div>
-                        <div className="detail-value">
-                            {subscription?.isValid ? t('plan_active') : t('plan_suspended')}
-                        </div>
-                    </div>
-
-                    {!subscription?.isTrial && (
-                        <div className="trial-notice">
-                            <p>{t('trial_notice')}</p>
-                            <p>{t('trial_msg')} {subscription?.currentPeriodEnd && format(new Date(subscription.currentPeriodEnd), 'MMM dd, yyyy')}</p>
-                        </div>
-                    )}
-                </div>
-
-                {!subscription?.isValid && (
-                    <div className="subscription-warning">
-                        <h4>{t('subscription_suspended_title')}</h4>
-                        <p>{t('subscription_suspended_msg')}</p>
-                        <button className="btn-primary" onClick={() => setShowRenewModal(true)}>
-                            <CreditCard size={18} />
-                            {t('renew_subscription')}
-                        </button>
                     </div>
                 )}
-                {/* Also allow renewal even if valid, to extend */}
-                {subscription?.isValid && (
-                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
-                        <button className="btn-primary" onClick={() => setShowRenewModal(true)}>
-                            <CreditCard size={18} />
-                            {t('renew_subscription')}
-                        </button>
+
+                {isExpired && (
+                    <div style={{ ...styles.countdown, backgroundColor: '#fef2f2', borderColor: '#dc2626' }}>
+                        <div style={{ ...styles.countdownNumber, color: '#dc2626' }}>
+                            {Math.abs(daysUntil)}
+                        </div>
+                        <div style={{ ...styles.countdownLabel, color: '#dc2626' }}>
+                            {t('subscription_days_expired')}
+                        </div>
                     </div>
                 )}
             </div>
 
-            <div className="table-container" style={{ marginTop: '24px' }}>
-                <div style={{ padding: '16px', borderBottom: '1px solid #eee' }}>
-                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <History size={20} />
-                        Payment History
-                    </h3>
+            {/* Details Grid */}
+            <div style={styles.grid}>
+                {/* Subscription Details Card */}
+                <div style={styles.card}>
+                    <div style={styles.cardHeader}>
+                        <CreditCard size={24} color="#3b82f6" />
+                        <h3 style={styles.cardTitle}>{t('subscription_details_title')}</h3>
+                    </div>
+
+                    <div style={styles.cardBody}>
+                        <div style={styles.detailRow}>
+                            <span style={styles.detailLabel}>{t('subscription_plan')}</span>
+                            <span style={styles.detailValue}>Standard</span>
+                        </div>
+                        <div style={styles.detailRow}>
+                            <span style={styles.detailLabel}>{t('subscription_monthly_amount')}</span>
+                            <span style={{ ...styles.detailValue, fontWeight: '700', color: '#3b82f6' }}>
+                                {formatCurrency(subscription?.amount)}
+                            </span>
+                        </div>
+                        <div style={styles.detailRow}>
+                            <span style={styles.detailLabel}>{t('subscription_currency')}</span>
+                            <span style={styles.detailValue}>{subscription?.currency || 'MT'}</span>
+                        </div>
+                        <div style={styles.detailRow}>
+                            <span style={styles.detailLabel}>{t('subscription_period_start')}</span>
+                            <span style={styles.detailValue}>{formatDate(subscription?.currentPeriodStart)}</span>
+                        </div>
+                        <div style={styles.detailRow}>
+                            <span style={styles.detailLabel}>{t('subscription_period_end')}</span>
+                            <span style={styles.detailValue}>{formatDate(subscription?.currentPeriodEnd)}</span>
+                        </div>
+                    </div>
+
+                    <div style={styles.cardFooter}>
+                        <button
+                            style={isExpired ? styles.buttonPrimary : styles.buttonSecondary}
+                            onClick={() => setShowRenewModal(true)}
+                        >
+                            <CreditCard size={18} />
+                            {isExpired ? t('subscription_renew_now') : t('subscription_renew')}
+                        </button>
+                    </div>
                 </div>
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Method</th>
-                            <th>Reference</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transactions.length === 0 ? (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>No payment history found</td></tr>
-                        ) : (
-                            transactions.map(tx => (
-                                <tr key={tx._id}>
-                                    <td>{format(new Date(tx.createdAt), 'MMM dd, yyyy HH:mm')}</td>
-                                    <td>{methodIcons[tx.method] || tx.method}</td>
-                                    <td>{tx.reference}</td>
-                                    <td>{tx.amount?.toLocaleString()} MT</td>
-                                    <td>
-                                        <span className={`status-badge ${tx.status === 'approved' || tx.status === 'completed' ? 'active' : (tx.status === 'rejected' ? 'inactive' : 'pending')}`}>
-                                            {tx.status === 'pending' && <Clock size={12} style={{ marginRight: 4 }} />}
-                                            {tx.status}
-                                        </span>
-                                    </td>
+
+                {/* Stats Card */}
+                <div style={styles.card}>
+                    <div style={styles.cardHeader}>
+                        <TrendingUp size={24} color="#059669" />
+                        <h3 style={styles.cardTitle}>{t('subscription_stats_title')}</h3>
+                    </div>
+
+                    <div style={styles.cardBody}>
+                        <div style={styles.statItem}>
+                            <div style={styles.statLabel}>{t('subscription_stats_total_payments')}</div>
+                            <div style={styles.statValue}>{paymentHistory?.length || 0}</div>
+                        </div>
+                        <div style={styles.statItem}>
+                            <div style={styles.statLabel}>{t('subscription_stats_total_paid')}</div>
+                            <div style={styles.statValue}>
+                                {formatCurrency(
+                                    paymentHistory?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0
+                                )}
+                            </div>
+                        </div>
+                        <div style={styles.statItem}>
+                            <div style={styles.statLabel}>{t('subscription_stats_last_payment')}</div>
+                            <div style={styles.statValue}>
+                                {paymentHistory?.length > 0
+                                    ? formatDate(paymentHistory[paymentHistory.length - 1]?.date)
+                                    : 'N/A'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Payment History */}
+            <div style={styles.card}>
+                <div style={styles.cardHeader}>
+                    <Calendar size={24} color="#8b5cf6" />
+                    <h3 style={styles.cardTitle}>{t('subscription_payment_history')}</h3>
+                </div>
+
+                {paymentHistory?.length > 0 ? (
+                    <div style={styles.tableContainer}>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr style={styles.tableHeaderRow}>
+                                    <th style={styles.tableHeader}>{t('subscription_payment_date')}</th>
+                                    <th style={styles.tableHeader}>{t('subscription_payment_reference')}</th>
+                                    <th style={styles.tableHeader}>{t('subscription_payment_method')}</th>
+                                    <th style={styles.tableHeader}>{t('subscription_payment_amount')}</th>
+                                    <th style={styles.tableHeader}>{t('subscription_payment_status')}</th>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody>
+                                {paymentHistory.map((payment, index) => (
+                                    <tr key={index} style={styles.tableRow}>
+                                        <td style={styles.tableCell}>{formatDate(payment.date)}</td>
+                                        <td style={styles.tableCell}>
+                                            <code style={styles.code}>{payment.reference || 'N/A'}</code>
+                                        </td>
+                                        <td style={styles.tableCell}>
+                                            <span style={styles.methodBadge}>
+                                                {payment.method?.toUpperCase() || 'MANUAL'}
+                                            </span>
+                                        </td>
+                                        <td style={styles.tableCell}>
+                                            <strong>{formatCurrency(payment.amount)}</strong>
+                                        </td>
+                                        <td style={styles.tableCell}>
+                                            <span style={{
+                                                ...styles.statusBadge,
+                                                backgroundColor: payment.status === 'completed' ? '#f0fdf4' : '#fef2f2',
+                                                color: payment.status === 'completed' ? '#059669' : '#dc2626'
+                                            }}>
+                                                {payment.status === 'completed'
+                                                    ? t('subscription_payment_completed')
+                                                    : t('subscription_payment_pending')
+                                                }
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div style={styles.emptyState}>
+                        <Calendar size={48} color="#cbd5e1" />
+                        <p style={styles.emptyText}>{t('subscription_payment_empty')}</p>
+                    </div>
+                )}
             </div>
 
+            {/* Renewal Modal */}
             {showRenewModal && (
-                <RenewModal
-                    onClose={() => setShowRenewModal(false)}
-                    t={t}
-                    onSuccess={fetchData}
-                />
+                <div style={styles.modalOverlay} onClick={() => !renewLoading && setShowRenewModal(false)}>
+                    <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        {renewSuccess ? (
+                            <div style={styles.successContent}>
+                                <div style={styles.successIcon}>
+                                    <Check size={48} color="#ffffff" />
+                                </div>
+                                <h3 style={styles.successTitle}>{t('subscription_renew_success')}</h3>
+                                <p style={styles.successText}>
+                                    {t('subscription_renew_success')}
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <h3 style={styles.modalTitle}>{t('subscription_renew')}</h3>
+                                <p style={styles.modalText}>
+                                    {t('subscription_renew_confirm')}
+                                </p>
+
+                                <div style={styles.renewalDetails}>
+                                    <div style={styles.renewalRow}>
+                                        <span>{t('subscription_amount_label')}:</span>
+                                        <strong>{formatCurrency(subscription?.amount)}</strong>
+                                    </div>
+                                    <div style={styles.renewalRow}>
+                                        <span>{t('subscription_period_label')}:</span>
+                                        <strong>{t('subscription_period_30_days')}</strong>
+                                    </div>
+                                    <div style={styles.renewalRow}>
+                                        <span>{t('subscription_new_expiry_date')}:</span>
+                                        <strong>
+                                            {formatDate(
+                                                new Date(new Date().setMonth(new Date().getMonth() + 1))
+                                            )}
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                <div style={styles.modalActions}>
+                                    <button
+                                        style={styles.buttonCancel}
+                                        onClick={() => setShowRenewModal(false)}
+                                        disabled={renewLoading}
+                                    >
+                                        {t('cancel')}
+                                    </button>
+                                    <button
+                                        style={styles.buttonConfirm}
+                                        onClick={handleRenew}
+                                        disabled={renewLoading}
+                                    >
+                                        {renewLoading ? (
+                                            <Loader variant="inline" size="small" color="#ffffff" />
+                                        ) : (
+                                            <>
+                                                <Check size={18} />
+                                                {t('subscription_confirm_renewal')}
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
 }
 
-function RenewModal({ onClose, t, onSuccess }) {
-    const [loading, setLoading] = useState(false);
-    const [method, setMethod] = useState('mpesa'); // mpesa, emola, bci
-    const [reference, setReference] = useState('');
-    const [amount] = useState(15000); // Fixed for now
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            await subscriptionAPI.createPayment({
-                amount,
-                method,
-                reference
-            });
-            alert('Payment request submitted! Waiting for admin approval.');
-            onSuccess();
-            onClose();
-        } catch (error) {
-            alert('Failed to submit payment');
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h3>{t('renew_subscription')}</h3>
-                    <button onClick={onClose} className="icon-btn"><X size={20} /></button>
-                </div>
-                <form onSubmit={handleSubmit} className="modal-form">
-                    <div className="form-group">
-                        <label>Select Payment Method</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '15px' }}>
-                            <div
-                                onClick={() => setMethod('mpesa')}
-                                style={{
-                                    border: `2px solid ${method === 'mpesa' ? '#ef4444' : '#eee'}`,
-                                    padding: '10px', borderRadius: '8px', cursor: 'pointer', textAlign: 'center',
-                                    background: method === 'mpesa' ? '#fef2f2' : 'white'
-                                }}
-                            >
-                                <div style={{ fontWeight: 'bold', color: '#dc2626' }}>M-Pesa</div>
-                            </div>
-                            <div
-                                onClick={() => setMethod('emola')}
-                                style={{
-                                    border: `2px solid ${method === 'emola' ? '#fb923c' : '#eee'}`,
-                                    padding: '10px', borderRadius: '8px', cursor: 'pointer', textAlign: 'center',
-                                    background: method === 'emola' ? '#fff7ed' : 'white'
-                                }}
-                            >
-                                <div style={{ fontWeight: 'bold', color: '#ea580c' }}>e-Mola</div>
-                            </div>
-                            <div
-                                onClick={() => setMethod('bci')}
-                                style={{
-                                    border: `2px solid ${method === 'bci' ? '#2563eb' : '#eee'}`,
-                                    padding: '10px', borderRadius: '8px', cursor: 'pointer', textAlign: 'center',
-                                    background: method === 'bci' ? '#eff6ff' : 'white'
-                                }}
-                            >
-                                <div style={{ fontWeight: 'bold', color: '#1d4ed8' }}>BCI</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Amount (Monthly)</label>
-                        <input type="text" value="15,000 MT" disabled style={{ background: '#f8fafc' }} />
-                    </div>
-
-                    {method === 'mpesa' && (
-                        <div className="form-group">
-                            <label>M-Pesa Number</label>
-                            <input
-                                type="text"
-                                placeholder="841234567"
-                                required
-                                value={reference}
-                                onChange={e => setReference(e.target.value)}
-                            />
-                            <small>Enter the number you will pay from.</small>
-                        </div>
-                    )}
-
-                    {method === 'emola' && (
-                        <div className="form-group">
-                            <label>e-Mola Number</label>
-                            <input
-                                type="text"
-                                placeholder="861234567"
-                                required
-                                value={reference}
-                                onChange={e => setReference(e.target.value)}
-                            />
-                        </div>
-                    )}
-
-                    {method === 'bci' && (
-                        <div className="form-group">
-                            <label>Transaction Reference ID</label>
-                            <input
-                                type="text"
-                                placeholder="BCI Reference..."
-                                required
-                                value={reference}
-                                onChange={e => setReference(e.target.value)}
-                            />
-                            <small>Please transfer to account 123456789 and enter ref.</small>
-                        </div>
-                    )}
-
-                    <div className="modal-actions">
-                        <button type="button" onClick={onClose} className="btn-secondary">{t('cancel')}</button>
-                        <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? t('processing') : t('process_payment')}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
+const styles = {
+    pageContainer: {
+        padding: '32px',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        backgroundColor: '#f8fafc'
+    },
+    header: {
+        marginBottom: '32px'
+    },
+    title: {
+        fontSize: '32px',
+        fontWeight: '700',
+        color: '#0f172a',
+        marginBottom: '8px'
+    },
+    subtitle: {
+        fontSize: '16px',
+        color: '#64748b'
+    },
+    statusCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        padding: '32px',
+        marginBottom: '24px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    statusCardLeft: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '24px'
+    },
+    statusIconContainer: {
+        width: '80px',
+        height: '80px',
+        borderRadius: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    statusLabel: {
+        fontSize: '14px',
+        color: '#64748b',
+        marginBottom: '4px'
+    },
+    statusValue: {
+        fontSize: '28px',
+        fontWeight: '700'
+    },
+    countdown: {
+        textAlign: 'center',
+        padding: '20px',
+        backgroundColor: '#eff6ff',
+        borderRadius: '12px',
+        border: '2px solid #3b82f6',
+        minWidth: '140px'
+    },
+    countdownNumber: {
+        fontSize: '48px',
+        fontWeight: '700',
+        color: '#3b82f6',
+        lineHeight: '1'
+    },
+    countdownLabel: {
+        fontSize: '14px',
+        color: '#3b82f6',
+        marginTop: '8px',
+        fontWeight: '500'
+    },
+    grid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: '24px',
+        marginBottom: '24px'
+    },
+    card: {
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        overflow: 'hidden'
+    },
+    cardHeader: {
+        padding: '24px',
+        borderBottom: '1px solid #e2e8f0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+    },
+    cardTitle: {
+        fontSize: '18px',
+        fontWeight: '600',
+        color: '#0f172a'
+    },
+    cardBody: {
+        padding: '24px'
+    },
+    cardFooter: {
+        padding: '16px 24px',
+        borderTop: '1px solid #e2e8f0',
+        backgroundColor: '#f8fafc'
+    },
+    detailRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        padding: '12px 0',
+        borderBottom: '1px solid #f1f5f9'
+    },
+    detailLabel: {
+        fontSize: '14px',
+        color: '#64748b'
+    },
+    detailValue: {
+        fontSize: '14px',
+        color: '#0f172a',
+        fontWeight: '500'
+    },
+    statItem: {
+        padding: '16px',
+        backgroundColor: '#f8fafc',
+        borderRadius: '8px',
+        marginBottom: '12px'
+    },
+    statLabel: {
+        fontSize: '13px',
+        color: '#64748b',
+        marginBottom: '8px'
+    },
+    statValue: {
+        fontSize: '24px',
+        fontWeight: '700',
+        color: '#0f172a'
+    },
+    tableContainer: {
+        overflowX: 'auto'
+    },
+    table: {
+        width: '100%',
+        borderCollapse: 'collapse'
+    },
+    tableHeaderRow: {
+        backgroundColor: '#f8fafc'
+    },
+    tableHeader: {
+        padding: '16px',
+        textAlign: 'left',
+        fontSize: '13px',
+        fontWeight: '600',
+        color: '#64748b',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px'
+    },
+    tableRow: {
+        borderBottom: '1px solid #e2e8f0'
+    },
+    tableCell: {
+        padding: '16px',
+        fontSize: '14px',
+        color: '#0f172a'
+    },
+    code: {
+        backgroundColor: '#f1f5f9',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontFamily: 'monospace'
+    },
+    methodBadge: {
+        display: 'inline-block',
+        padding: '4px 12px',
+        backgroundColor: '#eff6ff',
+        color: '#3b82f6',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '600'
+    },
+    statusBadge: {
+        display: 'inline-block',
+        padding: '4px 12px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '600'
+    },
+    emptyState: {
+        padding: '64px 24px',
+        textAlign: 'center'
+    },
+    emptyText: {
+        marginTop: '16px',
+        color: '#94a3b8',
+        fontSize: '14px'
+    },
+    buttonPrimary: {
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        padding: '12px 24px',
+        backgroundColor: '#3b82f6',
+        color: '#ffffff',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        transition: 'all 0.2s'
+    },
+    buttonSecondary: {
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        padding: '12px 24px',
+        backgroundColor: '#f1f5f9',
+        color: '#475569',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        transition: 'all 0.2s'
+    },
+    modalOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000
+    },
+    modal: {
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        padding: '32px',
+        maxWidth: '500px',
+        width: '90%',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+    },
+    modalTitle: {
+        fontSize: '24px',
+        fontWeight: '700',
+        color: '#0f172a',
+        marginBottom: '8px'
+    },
+    modalText: {
+        fontSize: '14px',
+        color: '#64748b',
+        marginBottom: '24px'
+    },
+    renewalDetails: {
+        backgroundColor: '#f8fafc',
+        borderRadius: '8px',
+        padding: '16px',
+        marginBottom: '24px'
+    },
+    renewalRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        padding: '8px 0',
+        fontSize: '14px'
+    },
+    modalActions: {
+        display: 'flex',
+        gap: '12px'
+    },
+    buttonCancel: {
+        flex: 1,
+        padding: '12px 24px',
+        backgroundColor: '#f1f5f9',
+        color: '#475569',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer'
+    },
+    buttonConfirm: {
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        padding: '12px 24px',
+        backgroundColor: '#3b82f6',
+        color: '#ffffff',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer'
+    },
+    successContent: {
+        textAlign: 'center',
+        padding: '20px'
+    },
+    successIcon: {
+        width: '80px',
+        height: '80px',
+        backgroundColor: '#059669',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto 24px'
+    },
+    successTitle: {
+        fontSize: '24px',
+        fontWeight: '700',
+        color: '#0f172a',
+        marginBottom: '8px'
+    },
+    successText: {
+        fontSize: '14px',
+        color: '#64748b'
+    }
+};

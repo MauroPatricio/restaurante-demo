@@ -16,22 +16,36 @@ const MenuItemSchema = new mongoose.Schema({
     default: ''
   },
   category: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
     required: true,
+    index: true
+  },
+  subcategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subcategory',
     index: true
   },
   price: {
     type: Number,
     required: true
   },
+  // --- Image Fields ---
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  imagePublicId: {
+    type: String,
+    default: ''
+  },
   // --- New Attributes ---
   sku: { type: String, unique: true, sparse: true },
-  subcategory: String, // e.g. "Sodas", "Beers"
   ingredients: [String],
   allergens: [String], // Gluten, Lactose, etc.
   prepTime: { type: Number, default: 15 }, // minutes
   featured: { type: Boolean, default: false }, // Chef's recommendation
-  photo: { type: String },
+  photo: { type: String }, // Legacy field, use imageUrl instead
   tags: [String], // Spicy, Vegan, Sugar-free
   portionSize: String, // Small, Medium, Large
   variablePrice: { type: Boolean, default: false },

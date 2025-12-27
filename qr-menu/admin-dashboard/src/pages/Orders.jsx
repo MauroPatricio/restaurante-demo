@@ -87,6 +87,7 @@ export default function Orders() {
                                 <th>Date & Time</th>
                                 <th>Customer</th>
                                 <th>Type</th>
+                                <th>Table</th>
                                 <th>Items</th>
                                 <th>Total</th>
                                 <th>Payment</th>
@@ -106,6 +107,15 @@ export default function Orders() {
                                         </div>
                                     </td>
                                     <td><span className="badge">{order.orderType}</span></td>
+                                    <td>
+                                        {order.table ? (
+                                            <span className="font-semibold text-blue-600">
+                                                Mesa {order.table.number || order.table}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400">-</span>
+                                        )}
+                                    </td>
                                     <td>{order.items?.length || 0} items</td>
                                     <td className="font-semibold">{order.total} MT</td>
                                     <td>

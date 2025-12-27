@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Trash2, ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
-
-const API_URL = 'http://localhost:4001/api';
-const SOCKET_URL = 'http://localhost:4001';
+import { API_URL, SOCKET_URL } from '../config/api';
 
 const Cart = () => {
     const { restaurantId } = useParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { cart, removeFromCart, updateQty, cartTotal, clearCart } = useCart();
     const { t } = useTranslation();
 
     // Idempotency lock
     const submitLock = React.useRef(false);
+
+    // Get table from URL or localStorage
+    const tableNumber = searchParams.get('table') || localStorage.getItem(`table-ref-${restaurantId}`);
 
     const [customerName, setCustomerName] = useState('');
     const [phone, setPhone] = useState('');
@@ -50,6 +52,15 @@ const Cart = () => {
                 orderType: 'dine-in'
             };
 
+            // Add table if available
+            if (tableNumber) {
+                orderData.table = tableNumber;
+                console.log('📍 Sending order with table ID:', tableNumber);
+            } else {
+                console.warn('⚠️ No table number found!');
+            }
+
+            console.log('📦 Order data being sent:', orderData);
             const res = await axios.post(`${API_URL}/orders`, orderData);
 
             setSuccess(true);

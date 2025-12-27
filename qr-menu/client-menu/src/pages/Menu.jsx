@@ -7,8 +7,7 @@ import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefH
 import axios from 'axios';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const API_URL = 'http://localhost:4001/api';
+import { API_URL } from '../config/api';
 
 const Menu = () => {
     const { restaurantId } = useParams();
@@ -57,7 +56,8 @@ const Menu = () => {
 
                 if (tableNumber) {
                     try {
-                        const tableRes = await axios.get(`${API_URL}/tables/lookup?restaurant=${restaurantId}&number=${tableNumber}`);
+                        // tableNumber from URL is actually the table ID
+                        const tableRes = await axios.get(`${API_URL}/tables/${tableNumber}`);
                         setTableInfo(tableRes.data.table);
                     } catch (e) {
                         console.warn("Table not found or err", e);
@@ -75,7 +75,7 @@ const Menu = () => {
     }, [restaurantId]);
 
     const filteredItems = menuItems.filter(item => {
-        const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
+        const matchesCategory = activeCategory === 'All' || item.category === activeCategory || item.category?._id === activeCategory;
         const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.description?.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
@@ -120,25 +120,64 @@ const Menu = () => {
     return (
         <div className="bg-gray-50 min-h-screen pb-32 max-w-md mx-auto shadow-2xl overflow-hidden relative font-sans">
 
-            {/* Hero Section */}
-            <div className="relative h-48 bg-gray-900">
+            {/* Enhanced Hero Section with Table Info */}
+            <div className="relative h-56 bg-gray-900">
                 <img
                     src={restaurant?.logo || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"}
                     alt="Restaurant"
                     className="w-full h-full object-cover opacity-60"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pt-12">
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent pt-16">
                     <motion.h1
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-2xl font-bold text-white leading-tight"
+                        className="text-2xl font-bold text-white leading-tight mb-2"
                     >
                         {restaurant?.name}
                     </motion.h1>
-                    {tableNumber && (
-                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-xs text-white font-medium border border-white/10">
-                            {t('table')} {tableNumber}
-                        </span>
+
+                    {/* Table and Waiter Info */}
+                    {tableInfo && (
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur-sm border border-white/20">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span className="text-white font-bold text-sm">Mesa {tableInfo.number}</span>
+                            </div>
+                            {tableInfo.assignedWaiter && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10">
+                                    <User size={14} className="text-white/80" />
+                                    <span className="text-white/70 text-xs font-medium">Garçom:</span>
+                                    <span className="text-white/90 text-xs font-bold">{tableInfo.assignedWaiter}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Quick Action Buttons */}
+                    {tableInfo && (
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleReaction('call', 'general', 'Customer called waiter')}
+                                className="flex-1 flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-all active:scale-95"
+                            >
+                                <ChefHat size={16} />
+                                Chamar Garçom
+                            </button>
+                            <button
+                                onClick={() => handleReaction('emotion', 'happy', 'Customer is satisfied')}
+                                className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-xl shadow-lg transition-all active:scale-95"
+                                title="Satisfeito"
+                            >
+                                😊
+                            </button>
+                            <button
+                                onClick={() => handleReaction('emotion', 'angry', 'Customer is dissatisfied')}
+                                className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg font-bold text-xl shadow-lg transition-all active:scale-95"
+                                title="Insatisfeito"
+                            >
+                                😞
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -161,16 +200,16 @@ const Menu = () => {
                 <div className="flex gap-2 overflow-x-auto px-3 pb-2 scrollbar-none hide-scrollbar">
                     {categories.map(cat => (
                         <button
-                            key={cat}
-                            onClick={() => setActiveCategory(cat)}
+                            key={cat._id || cat}
+                            onClick={() => setActiveCategory(cat._id || cat)}
                             className={clsx(
                                 "px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300",
-                                activeCategory === cat
+                                activeCategory === (cat._id || cat)
                                     ? "bg-primary-600 text-white shadow-lg shadow-primary-500/30 scale-105"
                                     : "bg-white text-gray-800 border border-gray-100 hover:bg-gray-50"
                             )}
                         >
-                            {cat === 'All' ? t('filter_all') : cat}
+                            {cat.name || (cat === 'All' ? t('filter_all') : cat)}
                         </button>
                     ))}
                 </div>
@@ -265,55 +304,6 @@ const Menu = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* Actions / Floating Button */}
-            {tableInfo && (
-                <>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="fixed bottom-24 right-4 z-20"
-                    >
-                        <button
-                            onClick={() => setShowReactions(!showReactions)}
-                            className="bg-gray-900 text-white p-4 rounded-full shadow-lg shadow-gray-400/50 hover:scale-110 active:scale-95 transition-all"
-                        >
-                            {showReactions ? <div className="text-xl">✖</div> : <ChefHat size={24} />}
-                        </button>
-                    </motion.div>
-
-                    <AnimatePresence>
-                        {showReactions && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                                className="fixed bottom-40 right-4 z-20 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 w-64 origin-bottom-right"
-                            >
-                                <div className="mb-3 border-b pb-2">
-                                    <p className="font-bold text-gray-900 text-sm">Reviewing your table:</p>
-                                    <p className="text-xs text-gray-500">Waiter: <span className="font-bold text-primary-600">{tableInfo.assignedWaiter || 'Staff'}</span></p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <button
-                                        onClick={() => handleReaction('call', 'general', 'Customer called waiter')}
-                                        className="w-full bg-primary-50 text-primary-700 p-3 rounded-xl flex items-center gap-3 hover:bg-primary-100 font-bold text-sm"
-                                    >
-                                        <User size={18} /> Call Waiter
-                                    </button>
-                                    <button
-                                        onClick={() => handleReaction('emotion', 'waiting', 'Customer is waiting too long')}
-                                        className="w-full bg-orange-50 text-orange-700 p-3 rounded-xl flex items-center gap-3 hover:bg-orange-100 font-bold text-sm"
-                                    >
-                                        <AlertTriangle size={18} /> Waiting too long
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </>
-            )}
 
             {/* Alert Notification Toast */}
             <AnimatePresence>

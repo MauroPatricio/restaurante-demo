@@ -5,7 +5,10 @@ import { authAPI } from '../services/api';
 export default function Register() {
     const [formData, setFormData] = useState({
         name: '', // Owner Name
-        address: '', // Owner Address
+        street: '',
+        number: '',
+        neighborhood: '',
+        city: 'Maputo',
         phone: '',
         email: '',
         password: '',
@@ -28,7 +31,7 @@ export default function Register() {
         e.preventDefault();
         setError('');
 
-        if (formData.password !== formData.confirmPassword) {
+        if (formData.password.trim() !== formData.confirmPassword.trim()) {
             setError('As senhas não coincidem');
             return;
         }
@@ -36,13 +39,27 @@ export default function Register() {
         setLoading(true);
 
         try {
+            // Construct full address from parts
+            const addressParts = [
+                formData.street,
+                formData.number,
+                formData.neighborhood,
+                formData.city
+            ].filter(Boolean);
+            const fullAddress = addressParts.join(', ');
+
             // Create FormData
             const data = new FormData();
             Object.keys(formData).forEach(key => {
-                if (key !== 'confirmPassword') {
-                    data.append(key, formData[key]);
+                if (key !== 'confirmPassword' && key !== 'street' && key !== 'number' && key !== 'neighborhood' && key !== 'city') {
+                    // Trim text values before appending
+                    const value = typeof formData[key] === 'string' ? formData[key].trim() : formData[key];
+                    data.append(key, value);
                 }
             });
+
+            // Append constructed address
+            data.append('address', fullAddress);
 
             if (image) {
                 data.append('image', image);
@@ -113,16 +130,64 @@ export default function Register() {
                                     placeholder="Ex: João da Silva"
                                 />
                             </div>
+
+                            {/* Address Fields - Detailed */}
                             <div className="form-group">
-                                <label htmlFor="address">Morada Pessoal</label>
+                                <label htmlFor="street">Rua/Avenida</label>
                                 <input
-                                    id="address"
+                                    id="street"
                                     type="text"
-                                    value={formData.address}
+                                    value={formData.street}
                                     onChange={handleChange}
                                     required
-                                    placeholder="Ex: Rua dos Coqueiros, Nº 10"
+                                    placeholder="Ex: Rua dos Coqueiros"
                                 />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="number">Número</label>
+                                    <input
+                                        id="number"
+                                        type="text"
+                                        value={formData.number}
+                                        onChange={handleChange}
+                                        placeholder="10"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="neighborhood">Bairro</label>
+                                    <input
+                                        id="neighborhood"
+                                        type="text"
+                                        value={formData.neighborhood}
+                                        onChange={handleChange}
+                                        placeholder="Ex: Sommerschield"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="city">Cidade</label>
+                                <select
+                                    id="city"
+                                    value={formData.city}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="Maputo">Maputo</option>
+                                    <option value="Matola">Matola</option>
+                                    <option value="Beira">Beira</option>
+                                    <option value="Nampula">Nampula</option>
+                                    <option value="Tete">Tete</option>
+                                    <option value="Quelimane">Quelimane</option>
+                                    <option value="Chimoio">Chimoio</option>
+                                    <option value="Nacala">Nacala</option>
+                                    <option value="Pemba">Pemba</option>
+                                    <option value="Inhambane">Inhambane</option>
+                                    <option value="Xai-Xai">Xai-Xai</option>
+                                    <option value="Lichinga">Lichinga</option>
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label htmlFor="phone">Telefone</label>
@@ -246,6 +311,12 @@ export default function Register() {
                 .avatar-placeholder span { font-size: 24px; margin-bottom: 4px; }
                 .avatar-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; }
                 .hidden-input { display: none; }
+                
+                /* Form row for side-by-side inputs */
+                .form-row { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
+               .form-row .form-group { margin-bottom: 0; }
+                .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer; transition: border-color 0.2s; }
+                .form-group select:focus { outline: none; border-color: #2563eb; ring: 2px solid #2563eb33; }
 
                 @media(min-width: 900px) {
                     .register-right { display: block; }

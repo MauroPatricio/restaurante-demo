@@ -29,7 +29,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 5000;
 
 // Função para obter IP público
 async function getPublicIP() {
@@ -159,7 +159,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   process.env.ADMIN_URL || 'http://localhost:5173',
-  'http://localhost:5174' // Client Menu default
+  'http://localhost:5174', // Client Menu alternative
+  'http://localhost:5175'  // Client Menu actual port
 ];
 
 const io = new Server(server, {
@@ -170,18 +171,29 @@ const io = new Server(server, {
 });
 
 // Security & Performance Middleware
-app.use(helmet());
+// In development, use more permissive helmet settings
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet());
+} else {
+  app.use(helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false
+  }));
+}
 app.use(compression());
 
-// Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  message: 'Too many requests from this IP, please try again after 15 minutes'
-});
-app.use('/api', limiter); // Apply to API routes only
+// Rate Limiting (disabled in development)
+if (process.env.NODE_ENV === 'production') {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+  });
+  app.use('/api', limiter);
+}
 
 // Middleware
 app.use(cors({
@@ -189,25 +201,17 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    // In development, allow all localhost origins
+    // In development, allow ALL origins
     if (process.env.NODE_ENV !== 'production') {
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        return callback(null, true);
-      }
+      return callback(null, true);
     }
 
-    // Check if origin is in allowed list
+    // In production, check allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
 
-    // In production, reject; in development, allow but warn
-    if (process.env.NODE_ENV === 'production') {
-      return callback(new Error('Not allowed by CORS'), false);
-    }
-
-    console.warn('⚠️  CORS: Allowing unlisted origin in dev:', origin);
-    return callback(null, true);
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -217,6 +221,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
@@ -233,6 +238,18 @@ app.use((req, res, next) => {
 
 // Rotas da API
 app.get('/health', (req, res) => res.status(200).send('OK'));
+
+// Authenticated health check with more details
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    version: '1.0.0'
+  });
+});
+
 app.use('/api', router);
 
 // Serve uploaded files
@@ -284,23 +301,28 @@ app.use((err, req, res, next) => {
 });
 
 // Configuração do servidor HTTP
-try {
-  server.listen(PORT, () => {
-    console.log(`\n🚀 Servidor disponivel e escutando na porta ${PORT}`);
-    console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`✓ Acesse: http://localhost:${PORT}\n`);
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    server.listen(PORT, () => {
+      console.log(`\n🚀 Servidor disponivel e escutando na porta ${PORT}`);
+      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`✓ Acesse: http://localhost:${PORT}\n`);
 
-    // Start subscription monitoring after server is listening
-    try {
-      startSubscriptionMonitoring();
-      console.log('✓ Monitoramento de assinaturas iniciado\n');
-    } catch (err) {
-      console.log('⚠️  Aviso: Não foi possível iniciar monitoramento:', err?.message || err);
-    }
-  });
-} catch (err) {
-  console.error('❌ Erro ao iniciar servidor:', err?.message || err);
-  process.exit(1);
+      // Start subscription monitoring after server is listening
+      try {
+        startSubscriptionMonitoring();
+        console.log('✓ Monitoramento de assinaturas iniciado\n');
+      } catch (err) {
+        console.log('⚠️  Aviso: Não foi possível iniciar monitoramento:', err?.message || err);
+      }
+    });
+  } catch (err) {
+    console.error('❌ Erro ao iniciar servidor:', err?.message || err);
+    process.exit(1);
+  }
 }
 
 export { io };
+export default app;
+

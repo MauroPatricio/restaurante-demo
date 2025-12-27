@@ -211,4 +211,79 @@ router.get('/:reference', authenticateToken, async (req, res) => {
     }
 });
 
+// Renew subscription (manual approval for now - Owner confirms payment)
+router.post('/renew-subscription', authenticateToken, async (req, res) => {
+    try {
+        const { restaurantId, paymentMethod, reference, amount } = req.body;
+
+        if (!restaurantId) {
+            return res.status(400).json({ error: 'Restaurant ID required' });
+        }
+
+        // Import models
+        const Subscription = (await import('../models/Subscription.js')).default;
+        const Restaurant = (await import('../models/Restaurant.js')).default;
+
+        // Find subscription
+        const restaurant = await Restaurant.findById(restaurantId).populate('subscription');
+        if (!restaurant || !restaurant.subscription) {
+            return res.status(404).json({ error: 'Subscription not found' });
+        }
+
+        const subscription = await Subscription.findById(restaurant.subscription);
+
+        // Calculate new period (1 month from now or from previous end date)
+        const now = new Date();
+        const currentEnd = new Date(subscription.currentPeriodEnd);
+        const newStart = currentEnd > now ? currentEnd : now;
+        const newEnd = new Date(newStart);
+        newEnd.setMonth(newEnd.getMonth() + 1);
+
+        // Update subscription
+        subscription.status = 'active';
+        subscription.currentPeriodStart = newStart;
+        subscription.currentPeriodEnd = newEnd;
+        subscription.graceEndDate = null; // Clear grace period
+
+        // Add payment to history
+        subscription.paymentHistory.push({
+            date: new Date(),
+            amount: amount || subscription.amount,
+            method: paymentMethod || 'manual',
+            reference: reference || `MAN-${Date.now()}`,
+            status: 'completed'
+        });
+
+        // Reset reminder flags
+        subscription.remindersSent = {
+            sevenDays: false,
+            threeDays: false,
+            oneDay: false,
+            overdue: false
+        };
+
+        await subscription.save();
+
+        res.json({
+            success: true,
+            message: 'Subscrição renovada com sucesso!',
+            subscription: {
+                status: subscription.status,
+                currentPeriodStart: subscription.currentPeriodStart,
+                currentPeriodEnd: subscription.currentPeriodEnd,
+                amount: subscription.amount,
+                isValid: subscription.isValid()
+            }
+        });
+
+    } catch (error) {
+        console.error('Subscription renewal error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to renew subscription',
+            details: error.message
+        });
+    }
+});
+
 export default router;

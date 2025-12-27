@@ -8,6 +8,7 @@ router.use(authenticateToken);
 
 // Existing route
 router.get('/:restaurantId', getSubscription);
+router.get('/:restaurantId/history', getTransactions); // Get history for specific restaurant
 
 // New routes
 router.post('/pay', createTransaction);

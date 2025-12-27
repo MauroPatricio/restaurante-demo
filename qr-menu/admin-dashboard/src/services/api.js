@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -10,8 +10,8 @@ const api = axios.create({
     }
 });
 
-// Request interceptor to add token
-api.healthCheck = () => axios.get(`${API_URL.replace('/api', '')}/health`);
+// Health check function - uses full URL to bypass /api prefix
+api.healthCheck = () => axios.get('http://localhost:5000/health');
 
 api.interceptors.request.use(
     (config) => {
@@ -34,7 +34,22 @@ api.interceptors.response.use(
             // Token expired or invalid
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            localStorage.removeItem('restaurantId');
             window.location.href = '/login';
+        } else if (error.response?.status === 402) {
+            // Subscription expired - Payment Required
+            const errorData = error.response.data;
+
+            // Store subscription error info for display
+            if (errorData.subscription) {
+                sessionStorage.setItem('subscriptionError', JSON.stringify(errorData.subscription));
+            }
+
+            // Redirect to subscription page
+            // Only redirect if not already on subscription page
+            if (!window.location.pathname.includes('/subscription')) {
+                window.location.href = '/dashboard/subscription';
+            }
         }
         return Promise.reject(error);
     }
@@ -59,7 +74,8 @@ export const restaurantAPI = {
             config.headers = { 'Content-Type': 'multipart/form-data' };
         }
         return api.patch(`/restaurants/${id}`, data, config);
-    }
+    },
+    toggleActive: (id) => api.patch(`/restaurants/${id}/toggle-active`)
 };
 
 // Menu API
@@ -106,7 +122,8 @@ export const feedbackAPI = {
 export const subscriptionAPI = {
     get: (restaurantId) => api.get(`/subscriptions/${restaurantId}`),
     getHistory: (restaurantId) => api.get(`/subscriptions/${restaurantId}/history`),
-    createPayment: (data) => api.post('/subscriptions/pay', data)
+    createPayment: (data) => api.post('/subscriptions/pay', data),
+    renew: (data) => api.post('/payments/renew-subscription', data)
 };
 
 // Delivery API
@@ -118,9 +135,12 @@ export const deliveryAPI = {
 // User Management API
 export const usersAPI = {
     getAll: () => api.get('/users'),
+    getByRestaurant: (restaurantId, params) => api.get(`/users/restaurant/${restaurantId}`, { params }),
     create: (data) => api.post('/users', data),
+    createForRestaurant: (restaurantId, data) => api.post(`/users/restaurant/${restaurantId}`, data),
     update: (id, data) => api.patch(`/users/${id}`, data),
     delete: (id) => api.delete(`/users/${id}`),
+    toggleActive: (id) => api.patch(`/users/${id}/toggle-active`),
     resetPassword: (id) => api.post(`/users/${id}/reset-password`),
     changePassword: (data) => api.post('/auth/change-password', data)
 };
@@ -140,4 +160,45 @@ export const analyticsAPI = {
     getInventory: (restaurantId) => api.get(`/analytics/${restaurantId}/inventory`)
 };
 
+// Category API
+export const categoryAPI = {
+    getAll: (restaurantId, includeInactive = false) => api.get(`/categories/${restaurantId}`, {
+        params: { includeInactive }
+    }),
+    get: (id) => api.get(`/categories/detail/${id}`),
+    create: (data) => api.post('/categories', data),
+    update: (id, data) => api.put(`/categories/${id}`, data),
+    delete: (id) => api.delete(`/categories/${id}`),
+    reorder: (categories) => api.patch('/categories/reorder', { categories })
+};
+
+// Subcategory API
+export const subcategoryAPI = {
+    getByCategory: (categoryId, includeInactive = false) => api.get(`/subcategories/category/${categoryId}`, {
+        params: { includeInactive }
+    }),
+    getByRestaurant: (restaurantId, includeInactive = false) => api.get(`/subcategories/restaurant/${restaurantId}`, {
+        params: { includeInactive }
+    }),
+    get: (id) => api.get(`/subcategories/${id}`),
+    create: (data) => api.post('/subcategories', data),
+    update: (id, data) => api.put(`/subcategories/${id}`, data),
+    delete: (id) => api.delete(`/subcategories/${id}`),
+    reorder: (subcategories) => api.patch('/subcategories/reorder', { subcategories })
+};
+
+// Upload API
+export const uploadAPI = {
+    uploadImage: async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        return api.post('/menu-items/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    }
+};
+
 export default api;
+
+

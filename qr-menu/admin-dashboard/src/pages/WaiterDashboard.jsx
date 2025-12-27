@@ -377,7 +377,7 @@ export default function WaiterDashboard() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {tables.map(table => {
                                 const isMyTable = table.assignedWaiter === user?.name;
                                 const statusConfig = {
@@ -391,8 +391,8 @@ export default function WaiterDashboard() {
                                     <div
                                         key={table._id}
                                         style={{
-                                            padding: '24px',
-                                            borderRadius: '16px',
+                                            padding: '20px',
+                                            borderRadius: '12px',
                                             border: `2px solid ${config.border}`,
                                             background: config.bg,
                                             color: config.text,
@@ -401,9 +401,9 @@ export default function WaiterDashboard() {
                                             transition: 'all 0.3s ease',
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            aspectRatio: '1',
+                                            alignItems: 'flex-start',
+                                            justifyContent: 'space-between',
+                                            minHeight: '140px',
                                             boxShadow: config.shadow
                                         }}
                                         onMouseEnter={(e) => {
@@ -415,7 +415,7 @@ export default function WaiterDashboard() {
                                             e.currentTarget.style.boxShadow = config.shadow;
                                         }}
                                     >
-                                        <div className="text-4xl font-black mb-2">{table.number}</div>
+                                        <div className="text-2xl font-bold mb-2">{table.number}</div>
 
                                         <div style={{
                                             display: 'flex',
@@ -477,7 +477,7 @@ export default function WaiterDashboard() {
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 @keyframes pulse {
                     0%, 100% {
                         opacity: 1;
@@ -488,9 +488,6 @@ export default function WaiterDashboard() {
                 }
                 .table-location {
                     opacity: 0 !important;
-                }
-                div:hover .table-location {
-                    opacity: 1 !important;
                 }
             `}</style>
         </div>

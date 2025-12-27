@@ -131,4 +131,63 @@ export const checkSubscription = async (req, res, next) => {
     }
 };
 
-export default { authenticateToken, authorizeRoles, checkSubscription };
+// Middleware to enforce subscription blocking (blocks all features except payment/subscription routes)
+export const enforceSubscription = (options = {}) => {
+    return async (req, res, next) => {
+        try {
+            // Define allowed paths that don't require valid subscription
+            const allowedPaths = options.allowedPaths || [
+                '/subscription',
+                '/payment',
+                '/auth/me',
+                '/auth/logout',
+                '/auth/select-restaurant'
+            ];
+
+            // Check if current path is in allowed list
+            const isAllowedPath = allowedPaths.some(path => req.path.includes(path));
+
+            if (isAllowedPath) {
+                return next();
+            }
+
+            // Check if subscription exists and is attached to request
+            if (!req.subscription) {
+                return res.status(403).json({
+                    error: 'NO_SUBSCRIPTION',
+                    message: 'Nenhuma subscrição encontrada para este restaurante.',
+                    code: 'NO_SUBSCRIPTION'
+                });
+            }
+
+            // Check if subscription is valid
+            if (!req.subscription.isValid()) {
+                const daysExpired = req.subscription.getDaysExpired();
+                const isInGrace = req.subscription.isInGracePeriod();
+
+                return res.status(402).json({ // 402 Payment Required
+                    error: 'SUBSCRIPTION_EXPIRED',
+                    message: isInGrace
+                        ? 'Subscrição em período de graça. Renove para evitar bloqueio.'
+                        : 'Subscrição expirada. Renove para continuar.',
+                    subscription: {
+                        status: req.subscription.status,
+                        endDate: req.subscription.currentPeriodEnd,
+                        daysExpired,
+                        isInGrace,
+                        graceEndDate: req.subscription.graceEndDate
+                    },
+                    allowedActions: ['view_subscription', 'make_payment']
+                });
+            }
+
+            // Subscription is valid, proceed
+            next();
+        } catch (error) {
+            console.error('Enforce subscription error:', error);
+            res.status(500).json({ error: 'Failed to check subscription enforcement' });
+        }
+    };
+};
+
+export default { authenticateToken, authorizeRoles, checkSubscription, enforceSubscription };

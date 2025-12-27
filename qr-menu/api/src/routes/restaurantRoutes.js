@@ -109,4 +109,43 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
     }
 });
 
+// Toggle restaurant active status (Owner only)
+router.patch('/:id/toggle-active', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+
+        // Find restaurant
+        const restaurant = await Restaurant.findById(id);
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurant not found' });
+        }
+
+        // Check if user is owner
+        const ownerRole = await Role.findOne({ name: 'Owner' });
+        const userRole = await UserRestaurantRole.findOne({
+            user: userId,
+            restaurant: id,
+            role: ownerRole._id
+        });
+
+        if (!userRole && restaurant.owner.toString() !== userId.toString()) {
+            return res.status(403).json({ error: 'Only restaurant owners can toggle active status' });
+        }
+
+        // Toggle active status
+        restaurant.active = !restaurant.active;
+        await restaurant.save();
+
+        res.json({
+            message: `Restaurant ${restaurant.active ? 'activated' : 'deactivated'} successfully`,
+            active: restaurant.active
+        });
+
+    } catch (error) {
+        console.error('Toggle Restaurant Active Error:', error);
+        res.status(500).json({ error: 'Failed to toggle restaurant status', details: error.message });
+    }
+});
+
 export default router;

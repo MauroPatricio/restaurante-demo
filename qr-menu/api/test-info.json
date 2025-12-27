@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-12-26T21:48:06.898Z",
+  "credentials": {
+    "email": "demo1766785675829@test.com",
+    "password": "Demo@123"
+  },
+  "ids": {
+    "restaurant": "694f028d86cdb8629816936d",
+    "table": "694f029686cdb862981693cf",
+    "categories": [
+      "694f029186cdb86298169391",
+      "694f029186cdb86298169397",
+      "694f029286cdb8629816939d"
+    ]
+  },
+  "links": {
+    "admin": "http://localhost:5173",
+    "clientWithTable": "http://localhost:5175/menu/694f028d86cdb8629816936d?table=694f029686cdb862981693cf",
+    "clientDirect": "http://localhost:5175/menu/694f028d86cdb8629816936d"
+  }
+}

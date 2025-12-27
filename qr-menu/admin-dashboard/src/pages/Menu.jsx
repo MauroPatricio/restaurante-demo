@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuAPI } from '../services/api';
+import { menuAPI, categoryAPI, subcategoryAPI, uploadAPI } from '../services/api';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ImageUpload from '../components/ImageUpload';
 
 export default function Menu() {
     const { user } = useAuth();
@@ -14,17 +15,19 @@ export default function Menu() {
     const [editItem, setEditItem] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const restaurantId = user?.restaurant?._id || user?.restaurant;
+
     useEffect(() => {
-        if (user?.restaurant) {
+        if (restaurantId) {
             fetchMenu();
             fetchCategories();
         }
-    }, [user, filter]);
+    }, [restaurantId, filter]);
 
     const fetchMenu = async () => {
         try {
             const params = filter !== 'all' ? { category: filter } : {};
-            const response = await menuAPI.getAll(user.restaurant._id || user.restaurant, params);
+            const response = await menuAPI.getAll(restaurantId, params);
             setItems(response.data.items || []);
         } catch (error) {
             console.error('Failed to fetch menu:', error);
@@ -35,7 +38,7 @@ export default function Menu() {
 
     const fetchCategories = async () => {
         try {
-            const response = await menuAPI.getCategories(user.restaurant._id || user.restaurant);
+            const response = await categoryAPI.getAll(restaurantId);
             setCategories(response.data.categories || []);
         } catch (error) {
             console.error('Failed to fetch categories:', error);
@@ -57,7 +60,6 @@ export default function Menu() {
 
     const handleToggleAvailability = async (item) => {
         try {
-            // Optimistic update
             const updatedItems = items.map(i =>
                 i._id === item._id ? { ...i, available: !i.available } : i
             );
@@ -67,7 +69,7 @@ export default function Menu() {
         } catch (error) {
             console.error('Failed to toggle availability:', error);
             alert('Failed to update status');
-            fetchMenu(); // Revert on error
+            fetchMenu();
         }
     };
 
@@ -100,11 +102,11 @@ export default function Menu() {
                     </button>
                     {categories.map(cat => (
                         <button
-                            key={cat}
-                            onClick={() => setFilter(cat)}
-                            className={`filter-btn ${filter === cat ? 'active' : ''}`}
+                            key={cat._id}
+                            onClick={() => setFilter(cat._id)}
+                            className={`filter-btn ${filter === cat._id ? 'active' : ''}`}
                         >
-                            {cat}
+                            {cat.name}
                         </button>
                     ))}
                 </div>
@@ -117,9 +119,9 @@ export default function Menu() {
                 <div className="menu-grid">
                     {items.map(item => (
                         <div key={item._id} className={`menu-card ${!item.available ? 'unavailable' : ''}`}>
-                            {item.photo && (
+                            {(item.imageUrl || item.photo) && (
                                 <div className="menu-card-image">
-                                    <img src={item.photo} alt={item.name} />
+                                    <img src={item.imageUrl || item.photo} alt={item.name} />
                                     {!item.available && <div className="overlay">{t('unavailable')}</div>}
                                 </div>
                             )}
@@ -131,7 +133,8 @@ export default function Menu() {
                                 <p className="menu-card-description">{item.description}</p>
                                 <div className="menu-card-meta" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                                        <span className="badge">{item.category}</span>
+                                        <span className="badge">{item.category?.name || item.category}</span>
+                                        {item.subcategory && <span className="badge" style={{ background: '#e0f2fe' }}>{item.subcategory?.name || item.subcategory}</span>}
                                         {item.featured && <span className="badge" style={{ background: '#ffeb3b', color: '#000' }}>{t('featured')}</span>}
                                         {item.seasonal && <span className="badge" style={{ background: '#e0f2fe', color: '#000' }}>{item.seasonal}</span>}
                                         {item.tags && item.tags.slice(0, 2).map(tag => (
@@ -181,6 +184,8 @@ export default function Menu() {
                 <MenuItemModal
                     item={editItem}
                     t={t}
+                    restaurantId={restaurantId}
+                    categories={categories}
                     onClose={() => {
                         setShowModal(false);
                         setEditItem(null);
@@ -198,17 +203,18 @@ export default function Menu() {
 }
 
 // Menu Item Modal Component
-function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
+function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categories }) {
     const [activeTab, setActiveTab] = useState('general');
+    const [subcategories, setSubcategories] = useState([]);
     const [formData, setFormData] = useState({
         name: item?.name || '',
         description: item?.description || '',
-        category: item?.category || '',
-        subcategory: item?.subcategory || '',
+        category: item?.category?._id || item?.category || '',
+        subcategory: item?.subcategory?._id || item?.subcategory || '',
         price: item?.price || '',
-        photo: item?.photo || '',
+        imageUrl: item?.imageUrl || item?.photo || '',
+        imagePublicId: item?.imagePublicId || '',
         available: item?.available ?? true,
-        // New Fields
         sku: item?.sku || '',
         ingredients: item?.ingredients?.join(', ') || '',
         allergens: item?.allergens || [],
@@ -222,19 +228,63 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
         tags: item?.tags?.join(', ') || ''
     });
     const [loading, setLoading] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
-    // Helper for Selects
     const allergenOptions = ['Gluten', 'Lactose', 'Peanuts', 'Seafood', 'Soy', 'Eggs'];
+
+    // Fetch subcategories when category changes
+    useEffect(() => {
+        if (formData.category) {
+            fetchSubcategories(formData.category);
+        } else {
+            setSubcategories([]);
+        }
+    }, [formData.category]);
+
+    const fetchSubcategories = async (categoryId) => {
+        try {
+            const { data } = await subcategoryAPI.getByCategory(categoryId);
+            setSubcategories(data.subcategories || []);
+        } catch (error) {
+            console.error('Failed to fetch subcategories:', error);
+        }
+    };
+
+    const handleImageUpload = async (file) => {
+        try {
+            setUploadingImage(true);
+            const { data } = await uploadAPI.uploadImage(file);
+            setFormData(prev => ({
+                ...prev,
+                imageUrl: data.imageUrl,
+                imagePublicId: data.imagePublicId
+            }));
+            return data;
+        } catch (error) {
+            console.error('Upload failed:', error);
+            throw new Error('Failed to upload image');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setFormData(prev => ({
+            ...prev,
+            imageUrl: '',
+            imagePublicId: ''
+        }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            // Process arrays
             const payload = {
                 ...formData,
-                sku: formData.sku?.trim() || undefined, // Send undefined if empty to avoid unique constraint error
+                restaurant: restaurantId,
+                sku: formData.sku?.trim() || undefined,
                 ingredients: formData.ingredients.split(',').map(s => s.trim()).filter(Boolean),
                 tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean)
             };
@@ -246,7 +296,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
             }
             onSave();
         } catch (error) {
-            alert('Failed to save menu item');
+            alert(error.response?.data?.message || 'Failed to save menu item');
             console.error(error);
         } finally {
             setLoading(false);
@@ -265,7 +315,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', width: '95%' }}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '900px', width: '95%' }}>
                 <div className="modal-header">
                     <h3>{item ? t('edit') : t('add_item')}</h3>
                     <button onClick={onClose} className="icon-btn">
@@ -311,23 +361,30 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
 
                             <div className="form-group">
                                 <label>Category *</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.category}
-                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
                                     required
-                                    placeholder="e.g. Main Course"
-                                />
+                                >
+                                    <option value="">Select a category</option>
+                                    {categories.map(cat => (
+                                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="form-group">
                                 <label>{t('subcategory')}</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.subcategory}
                                     onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                                    placeholder="e.g. Pasta"
-                                />
+                                    disabled={!formData.category || subcategories.length === 0}
+                                >
+                                    <option value="">None</option>
+                                    {subcategories.map(sub => (
+                                        <option key={sub._id} value={sub._id}>{sub.name}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="form-group">
@@ -361,12 +418,11 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
                             </div>
 
                             <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label>Photo URL</label>
-                                <input
-                                    type="url"
-                                    value={formData.photo}
-                                    onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
-                                    placeholder="https://"
+                                <label>Product Image</label>
+                                <ImageUpload
+                                    onImageUpload={handleImageUpload}
+                                    currentImage={formData.imageUrl}
+                                    onRemove={handleRemoveImage}
                                 />
                             </div>
                         </div>
@@ -530,8 +586,8 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t }) {
                             <button type="button" onClick={onClose} className="btn-secondary">
                                 Cancel
                             </button>
-                            <button type="submit" className="btn-primary" disabled={loading}>
-                                {loading ? 'Saving...' : 'Save'}
+                            <button type="submit" className="btn-primary" disabled={loading || uploadingImage}>
+                                {loading ? 'Saving...' : uploadingImage ? 'Uploading...' : 'Save'}
                             </button>
                         </div>
                     </div>

@@ -19,7 +19,10 @@ export default function Login() {
         try {
             // Login now returns { token, user: { ..., restaurants: [...] } }
             // The token is a GLOBAL token, not scoped to a restaurant yet.
-            const data = await login({ email, password });
+            const data = await login({
+                email: email.trim(),
+                password: password.trim()
+            });
 
             // Check if user has associated restaurants OR needs to create one
             // We redirect to select-restaurant in both cases:

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { tableAPI, orderAPI } from '../services/api';
+import { tableAPI, orderAPI, usersAPI } from '../services/api';
 
 import { Plus, Trash2, QrCode, X, Printer, RefreshCw, Maximize, Edit2, Users, Receipt, UtensilsCrossed, Armchair, MapPin, BadgeCheck, User, Bell } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useTranslation } from 'react-i18next';
 
-const SOCKET_URL = 'http://localhost:4001'; // Should be env var in production
+const SOCKET_URL = 'http://localhost:4000'; // Should be env var in production
 const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
 export default function Tables() {
@@ -22,6 +22,7 @@ export default function Tables() {
     const [editingTable, setEditingTable] = useState(null); // ID of table being edited
     const [activeAlerts, setActiveAlerts] = useState({}); // { [tableId]: { type, value, timestamp } }
     const audioRef = useState(new Audio(ALERT_SOUND_URL))[0]; // Singleton audio instance
+    const [waiters, setWaiters] = useState([]); // List of available waiters
 
     // Initial Form State
     const initialFormState = {
@@ -32,7 +33,8 @@ export default function Tables() {
         status: 'free',
         accessibility: false,
         joinable: false,
-        assignedWaiter: '',
+        assignedWaiter: '', // Legacy - keep for compatibility
+        assignedWaiterId: '', // New field for User reference
         minConsumption: 0
     };
     const [formData, setFormData] = useState(initialFormState);
@@ -104,6 +106,17 @@ export default function Tables() {
         }
     };
 
+    const fetchWaiters = async () => {
+        try {
+            const restaurantId = user.restaurant._id || user.restaurant;
+            const { data } = await usersAPI.getByRestaurant(restaurantId, { role: 'Waiter', active: 'true' });
+            setWaiters(data.users || []);
+        } catch (error) {
+            console.error('Failed to fetch waiters:', error);
+            setWaiters([]);
+        }
+    };
+
     const fetchActiveOrders = async () => {
         try {
             const statuses = ['pending', 'confirmed', 'preparing', 'ready'];
@@ -122,6 +135,7 @@ export default function Tables() {
     const handleOpenCreate = () => {
         setEditingTable(null);
         setFormData(initialFormState);
+        fetchWaiters(); // Load waiters when opening modal
         setShowModal(true);
     };
 
@@ -135,9 +149,11 @@ export default function Tables() {
             status: table.status || 'free',
             accessibility: table.accessibility || false,
             joinable: table.joinable || false,
-            assignedWaiter: table.assignedWaiter || '',
+            assignedWaiter: table.assignedWaiter || '', // Legacy
+            assignedWaiterId: table.assignedWaiterId || '', // New field
             minConsumption: table.minConsumption || 0
         });
+        fetchWaiters(); // Load waiters when opening modal
         setShowModal(true);
     };
 
@@ -393,13 +409,18 @@ export default function Tables() {
                             </div>
                             {/* Waiter */}
                             <div className="form-group">
-                                <label>{t('waiter')}</label>
-                                <input
-                                    type="text"
-                                    value={formData.assignedWaiter}
-                                    onChange={e => setFormData({ ...formData, assignedWaiter: e.target.value })}
-                                    placeholder="Name or ID"
-                                />
+                                <label>{t('waiter') || 'Atendente'}</label>
+                                <select
+                                    value={formData.assignedWaiterId}
+                                    onChange={e => setFormData({ ...formData, assignedWaiterId: e.target.value })}
+                                >
+                                    <option value="">{t('select_waiter') || 'Selecione um atendente'}</option>
+                                    {waiters.map(waiter => (
+                                        <option key={waiter._id} value={waiter._id}>
+                                            {waiter.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             {/* Min Consumption */}
                             <div className="form-group">
