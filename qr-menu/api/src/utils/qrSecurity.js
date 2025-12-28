@@ -68,7 +68,7 @@ export const validateTableToken = (token, restaurantId, tableId, expiryHours = n
  */
 export const generateQRCodeUrl = (restaurantId, tableId) => {
     const token = generateTableToken(restaurantId, tableId);
-    const baseUrl = process.env.CLIENT_MENU_URL || 'http://localhost:5173';
+    const baseUrl = process.env.CLIENT_MENU_URL || 'http://192.168.88.33:5175';
 
-    return `${baseUrl}/menu?r=${restaurantId}&t=${tableId}&token=${token}`;
+    return `${baseUrl}/menu/${restaurantId}?table=${tableId}&token=${token}`;
 };

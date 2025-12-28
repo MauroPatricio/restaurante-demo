@@ -61,6 +61,12 @@ const Cart = () => {
             }
 
             console.log('📦 Order data being sent:', orderData);
+
+            // Save customer phone to localStorage for order history tracking
+            if (phone) {
+                localStorage.setItem(`customer-phone-${restaurantId}`, phone);
+            }
+
             const res = await axios.post(`${API_URL}/orders`, orderData);
 
             setSuccess(true);

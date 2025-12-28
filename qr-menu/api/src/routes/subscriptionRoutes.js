@@ -1,18 +1,32 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { getSubscription, createTransaction, getTransactions, reviewTransaction } from '../controllers/subscriptionController.js';
+import isAdmin from '../middleware/isAdmin.js';
+import {
+    getSubscription,
+    createTransaction,
+    getTransactions,
+    reviewTransaction,
+    getAllSubscriptions,
+    updateStatus,
+    getAuditLogs
+} from '../controllers/subscriptionController.js';
 
 const router = express.Router();
 
 router.use(authenticateToken);
 
-// Existing route
-router.get('/:restaurantId', getSubscription);
-router.get('/:restaurantId/history', getTransactions); // Get history for specific restaurant
+// Admin-only routes (must be before other routes to avoid conflicts)
+router.get('/admin/all', isAdmin, getAllSubscriptions);
+router.patch('/admin/:id/status', isAdmin, updateStatus);
+router.get('/admin/audit-logs', isAdmin, getAuditLogs);
 
-// New routes
+// Existing routes
+router.get('/:restaurantId', getSubscription);
+router.get('/:restaurantId/history', getTransactions);
+
+// Payment routes
 router.post('/pay', createTransaction);
-router.get('/transactions/list', getTransactions); // List all or filter
-router.patch('/transactions/:id/review', reviewTransaction); // Approve/Reject
+router.get('/transactions/list', getTransactions);
+router.patch('/transactions/:id/review', reviewTransaction);
 
 export default router;

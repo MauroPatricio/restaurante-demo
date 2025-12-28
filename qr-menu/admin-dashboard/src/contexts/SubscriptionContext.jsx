@@ -19,6 +19,13 @@ export const SubscriptionProvider = ({ children }) => {
     const { user } = useAuth();
 
     const checkSubscription = async () => {
+        // Skip for system admin
+        if (user?.role?.isSystem) {
+            setIsBlocked(false);
+            setLoading(false);
+            return;
+        }
+
         if (!user?.restaurant?.id && !user?.restaurant?._id) {
             setLoading(false);
             return;
@@ -28,10 +35,11 @@ export const SubscriptionProvider = ({ children }) => {
             const restaurantId = user.restaurant.id || user.restaurant._id;
             const { data } = await api.get(`/subscriptions/${restaurantId}`);
 
-            setSubscription(data);
+            setSubscription(data.subscription || data);
 
             // Check if blocked based on subscription status
-            const blocked = !data.isValid && (data.status === 'expired' || data.status === 'suspended' || data.status === 'cancelled');
+            const blockedStatuses = ['suspended', 'cancelled', 'expired'];
+            const blocked = blockedStatuses.includes(data.subscription?.status || data.status);
             setIsBlocked(blocked);
         } catch (error) {
             console.error('Failed to fetch subscription:', error);

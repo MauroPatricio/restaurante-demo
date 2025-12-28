@@ -28,6 +28,7 @@ import './App.css';
 
 import UserManagement from './pages/UserManagement';
 import Profiles from './pages/Profiles';
+import Subscriptions from './pages/Subscriptions';
 import ChangePassword from './pages/ChangePassword';
 import Settings from './pages/Settings';
 import Categories from './pages/Categories';
@@ -111,6 +112,7 @@ function AppContent() {
           <Route path="reports" element={<Reports />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="profiles" element={<Profiles />} />
+          <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="system-admin" element={<SystemAdmin />} />
           <Route path="settings" element={<Settings />} />
         </Route>

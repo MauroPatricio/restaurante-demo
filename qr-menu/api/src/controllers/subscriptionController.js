@@ -1,6 +1,7 @@
 import Subscription from '../models/Subscription.js';
 import SubscriptionTransaction from '../models/SubscriptionTransaction.js';
 import Restaurant from '../models/Restaurant.js';
+import AuditLog from '../models/AuditLog.js';
 
 // Get current subscription
 export const getSubscription = async (req, res) => {
@@ -59,22 +60,11 @@ export const createTransaction = async (req, res) => {
 // Get transactions (History or Pending)
 export const getTransactions = async (req, res) => {
     try {
-        const { restaurantId } = req.query; // If admin, can filter. If user, enforced.
+        const { restaurantId } = req.query;
         const { status } = req.query;
 
         let query = {};
 
-        // Security check: If not "admin" (assumed flag/role), enforce own restaurant
-        // For this demo, we check if user role is NOT 'admin' (SaaS admin)
-        // Since we don't have a SaaS admin role yet, we rely on the client to request correct data, 
-        // but typically we'd force `query.restaurant = req.user.restaurant` for normal users.
-
-        // Simulating SaaS Admin check: assuming a specific email or header? 
-        // For simplicity: If req.user.restaurant is present AND not requesting 'superuser' view, filter by it.
-        // In a real app, check req.user.role === 'super_admin'
-        
-        // If query has 'all=true', we assume it's the System Admin Page access
-        // (In production, strictly check role)
         if (req.user.restaurant && req.query.view !== 'admin_all') {
             query.restaurant = req.user.restaurant;
         }
@@ -100,7 +90,7 @@ export const getTransactions = async (req, res) => {
 export const reviewTransaction = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, rejectionReason } = req.body; // 'approved' or 'rejected'
+        const { status, rejectionReason } = req.body;
         const userId = req.user.userId;
 
         const transaction = await SubscriptionTransaction.findById(id);
@@ -131,10 +121,9 @@ export const reviewTransaction = async (req, res) => {
                 newEnd.setDate(newEnd.getDate() + 30);
 
                 subscription.currentPeriodEnd = newEnd;
-                subscription.status = 'active'; // Unlock features
-                subscription.isValid = true; // Helper property stored if useful, but 'isValid' logic is dynamic in model
+                subscription.status = 'active';
+                subscription.isValid = true;
 
-                // Also add to embedded history if we want to keep it consistent
                 subscription.paymentHistory.push({
                     date: new Date(),
                     amount: transaction.amount,
@@ -151,5 +140,169 @@ export const reviewTransaction = async (req, res) => {
     } catch (error) {
         console.error('Review transaction error:', error);
         res.status(500).json({ error: 'Failed to process transaction' });
+    }
+};
+
+// ============================================
+// ADMIN-ONLY METHODS
+// ============================================
+
+// Get all subscriptions (Admin only)
+export const getAllSubscriptions = async (req, res) => {
+    try {
+        const { status, search, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+        let query = {};
+
+        // Filter by status
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        const subscriptions = await Subscription.find(query)
+            .populate('restaurant', 'name email phone owner')
+            .populate({
+                path: 'restaurant',
+                populate: {
+                    path: 'owner',
+                    select: 'name email'
+                }
+            })
+            .sort({ [sortBy]: order === 'asc' ? 1 : -1 });
+
+        // Apply search filter if provided
+        let filteredSubscriptions = subscriptions;
+        if (search) {
+            const searchLower = search.toLowerCase();
+            filteredSubscriptions = subscriptions.filter(sub =>
+                sub.restaurant?.name?.toLowerCase().includes(searchLower) ||
+                sub.restaurant?.email?.toLowerCase().includes(searchLower)
+            );
+        }
+
+        // Add computed fields
+        const enrichedSubscriptions = filteredSubscriptions.map(sub => ({
+            ...sub.toObject(),
+            daysUntilExpiry: sub.getDaysUntilExpiry(),
+            isExpired: sub.isExpired(),
+            isValid: sub.isValid()
+        }));
+
+        res.json({
+            success: true,
+            count: enrichedSubscriptions.length,
+            subscriptions: enrichedSubscriptions
+        });
+    } catch (error) {
+        console.error('Get all subscriptions error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch subscriptions'
+        });
+    }
+};
+
+// Update subscription status (Admin only)
+export const updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, reason } = req.body;
+        const userId = req.user.id;
+
+        // Validate status
+        const validStatuses = ['trial', 'active', 'suspended', 'cancelled', 'expired'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+            });
+        }
+
+        // Find subscription
+        const subscription = await Subscription.findById(id).populate('restaurant', 'name');
+        if (!subscription) {
+            return res.status(404).json({
+                success: false,
+                message: 'Subscription not found'
+            });
+        }
+
+        const oldStatus = subscription.status;
+
+        // Update status
+        subscription.status = status;
+        await subscription.save();
+
+        // Create audit log
+        await AuditLog.log({
+            userId: userId,
+            action: 'subscription_status_change',
+            targetModel: 'Subscription',
+            targetId: subscription._id,
+            changes: {
+                oldValue: oldStatus,
+                newValue: status
+            },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            restaurantId: subscription.restaurant._id
+        });
+
+        res.json({
+            success: true,
+            message: `Subscription status updated from ${oldStatus} to ${status}`,
+            subscription: {
+                ...subscription.toObject(),
+                isValid: subscription.isValid(),
+                isActive: subscription.isActive()
+            }
+        });
+    } catch (error) {
+        console.error('Update subscription status error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update subscription status'
+        });
+    }
+};
+
+// Get audit logs for subscriptions (Admin only)
+export const getAuditLogs = async (req, res) => {
+    try {
+        const { subscriptionId, limit = 50, page = 1 } = req.query;
+
+        let query = { targetModel: 'Subscription' };
+
+        // Filter by specific subscription if provided
+        if (subscriptionId) {
+            query.targetId = subscriptionId;
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const logs = await AuditLog.find(query)
+            .populate('user', 'name email')
+            .sort({ timestamp: -1 })
+            .limit(parseInt(limit))
+            .skip(skip);
+
+        const total = await AuditLog.countDocuments(query);
+
+        res.json({
+            success: true,
+            logs,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                pages: Math.ceil(total / parseInt(limit))
+            }
+        });
+    } catch (error) {
+        console.error('Get audit logs error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch audit logs'
+        });
     }
 };

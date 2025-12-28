@@ -38,6 +38,9 @@ const Menu = () => {
     const [tableInfo, setTableInfo] = useState(null);
     const [showReactions, setShowReactions] = useState(false);
     const [alertMessage, setAlertMessage] = useState(null);
+    const [showOrdersModal, setShowOrdersModal] = useState(false);
+    const [customerOrders, setCustomerOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
 
     useEffect(() => {
         const fetchMenu = async () => {
@@ -81,6 +84,36 @@ const Menu = () => {
         return matchesCategory && matchesSearch;
     });
 
+    // Fetch customer orders based on stored phone
+    const fetchCustomerOrders = async () => {
+        const savedPhone = localStorage.getItem(`customer-phone-${restaurantId}`);
+        if (!savedPhone) {
+            setCustomerOrders([]);
+            return;
+        }
+
+        setLoadingOrders(true);
+        try {
+            const response = await axios.get(`${API_URL}/orders/restaurant/${restaurantId}`, {
+                params: { phone: savedPhone }
+            });
+            // Filter orders by phone on client side if API doesn't support it
+            const filteredOrders = (response.data.orders || []).filter(order => order.phone === savedPhone);
+            setCustomerOrders(filteredOrders);
+        } catch (error) {
+            console.error('Failed to fetch customer orders:', error);
+            setCustomerOrders([]);
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
+    // Open orders modal
+    const openOrdersModal = () => {
+        setShowOrdersModal(true);
+        fetchCustomerOrders();
+    };
+
     const handleReaction = async (type, value, msg) => {
         if (!tableInfo) return;
         try {
@@ -113,7 +146,7 @@ const Menu = () => {
     if (error) return (
         <div className="flex h-screen items-center justify-center text-red-500 gap-2 bg-gray-50 flex-col p-4 text-center">
             <AlertCircle size={48} className="mb-2 opacity-50" />
-            <p>{error}</p>
+            <p>{t('failed_to_load')}</p>
         </div>
     );
 
@@ -146,7 +179,7 @@ const Menu = () => {
                             {tableInfo.assignedWaiter && (
                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10">
                                     <User size={14} className="text-white/80" />
-                                    <span className="text-white/70 text-xs font-medium">Garçom:</span>
+                                    <span className="text-white/70 text-xs font-medium">{t('waiter')}:</span>
                                     <span className="text-white/90 text-xs font-bold">{tableInfo.assignedWaiter}</span>
                                 </div>
                             )}
@@ -161,24 +194,38 @@ const Menu = () => {
                                 className="flex-1 flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-all active:scale-95"
                             >
                                 <ChefHat size={16} />
-                                Chamar Garçom
+                                {t('call_waiter')}
                             </button>
                             <button
                                 onClick={() => handleReaction('emotion', 'happy', 'Customer is satisfied')}
                                 className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-xl shadow-lg transition-all active:scale-95"
-                                title="Satisfeito"
+                                title={t('satisfied')}
                             >
                                 😊
                             </button>
                             <button
                                 onClick={() => handleReaction('emotion', 'angry', 'Customer is dissatisfied')}
                                 className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg font-bold text-xl shadow-lg transition-all active:scale-95"
-                                title="Insatisfeito"
+                                title={t('dissatisfied')}
                             >
                                 😞
                             </button>
                         </div>
                     )}
+
+                    {/* Floating Orders Button */}
+                    <button
+                        onClick={openOrdersModal}
+                        className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 border border-white/20"
+                        title={t('my_orders')}
+                    >
+                        <ShoppingBag size={20} className="text-gray-700" />
+                        {customerOrders.length > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                                {customerOrders.length}
+                            </span>
+                        )}
+                    </button>
                 </div>
             </div>
 
@@ -274,8 +321,8 @@ const Menu = () => {
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Search className="text-gray-300" size={24} />
                         </div>
-                        <p className="text-gray-500 font-medium">No items found</p>
-                        <p className="text-xs text-gray-400 mt-1">Try changing your search or category</p>
+                        <p className="text-gray-500 font-medium">{t('no_items_found')}</p>
+                        <p className="text-xs text-gray-400 mt-1">{t('try_changing_search')}</p>
                     </div>
                 )}
             </div>
@@ -315,6 +362,127 @@ const Menu = () => {
                         className="fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-xl z-50 text-sm font-bold flex items-center gap-2"
                     >
                         <MessageCircle size={16} /> {alertMessage}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Orders History Modal */}
+            <AnimatePresence>
+                {showOrdersModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+                        onClick={() => setShowOrdersModal(false)}
+                    >
+                        <motion.div
+                            initial={{ y: '100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: '100%', opacity: 0 }}
+                            transition={{ type: 'spring', damping: 25 }}
+                            className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6 shadow-lg">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <ShoppingBag size={24} />
+                                        <h2 className="text-xl font-bold">{t('my_orders')}</h2>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowOrdersModal(false)}
+                                        className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Modal Content */}
+                            <div className="overflow-y-auto max-h-[calc(80vh-88px)] p-6">
+                                {loadingOrders ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                                            className="rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"
+                                        />
+                                    </div>
+                                ) : customerOrders.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <ShoppingBag size={32} className="text-gray-300" />
+                                        </div>
+                                        <p className="text-gray-600 font-semibold mb-1">{t('no_orders_yet')}</p>
+                                        <p className="text-sm text-gray-400">{t('make_first_order')}</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {customerOrders.map((order) => (
+                                            <motion.div
+                                                key={order._id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 hover:border-primary-300 transition-colors"
+                                            >
+                                                {/* Order Header */}
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 mb-1">
+                                                            {t('order_id')} #{order._id.slice(-6).toUpperCase()}
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-gray-700">
+                                                            {new Date(order.createdAt).toLocaleString('pt-PT', {
+                                                                day: '2-digit',
+                                                                month: 'short',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                    <span className={clsx(
+                                                        'px-3 py-1 rounded-full text-xs font-bold',
+                                                        order.status === 'pending' && 'bg-yellow-100 text-yellow-700',
+                                                        order.status === 'preparing' && 'bg-blue-100 text-blue-700',
+                                                        order.status === 'ready' && 'bg-green-100 text-green-700',
+                                                        order.status === 'delivered' && 'bg-gray-100 text-gray-700'
+                                                    )}>
+                                                        {t(`order_status_${order.status}`)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Order Items */}
+                                                <div className="space-y-2 mb-3">
+                                                    {order.items?.slice(0, 3).map((item, idx) => (
+                                                        <div key={idx} className="flex items-center gap-2 text-sm">
+                                                            <span className="w-6 h-6 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-xs font-bold">
+                                                                {item.qty}
+                                                            </span>
+                                                            <span className="text-gray-700">{item.item?.name || 'Item'}</span>
+                                                        </div>
+                                                    ))}
+                                                    {order.items?.length > 3 && (
+                                                        <p className="text-xs text-gray-500 pl-8">
+                                                            +{order.items.length - 3} {t('items')}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Order Total */}
+                                                <div className="flex items-center justify-between pt-3 border-t border-gray-300">
+                                                    <span className="text-sm font-semibold text-gray-600">{t('total')}</span>
+                                                    <span className="text-lg font-bold text-primary-600">
+                                                        {order.total?.toFixed(2)} {t('currency')}
+                                                    </span>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>

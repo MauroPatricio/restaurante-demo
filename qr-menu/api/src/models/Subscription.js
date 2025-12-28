@@ -104,4 +104,23 @@ SubscriptionSchema.methods.isInGracePeriod = function () {
   return this.status === 'suspended' && now < this.graceEndDate;
 };
 
+// Method to check and update if expired
+SubscriptionSchema.methods.checkExpiration = async function () {
+  const now = new Date();
+
+  // Only update if currently active or trial and past end date
+  if ((this.status === 'active' || this.status === 'trial') && now > this.currentPeriodEnd) {
+    this.status = 'expired';
+    await this.save();
+    return true; // Was expired and updated
+  }
+
+  return false; // Not expired or already expired
+};
+
+// Method to check if subscription is active (not suspended, cancelled, or expired)
+SubscriptionSchema.methods.isActive = function () {
+  return this.status === 'active' || this.status === 'trial';
+};
+
 export default mongoose.model('Subscription', SubscriptionSchema);

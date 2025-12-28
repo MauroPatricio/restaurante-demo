@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useTranslation } from 'react-i18next';
@@ -33,14 +33,23 @@ import {
     CreditCard as CreditCardIcon
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
+import SubscriptionBlocker from './SubscriptionBlocker';
 
 export default function DashboardLayout() {
     const { user, logout } = useAuth();
     const { subscription, isBlocked } = useSubscription();
     const { isBackendConnected } = useConnectivity();
     const location = useLocation();
+    const navigate = useNavigate();
     const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Redirect to subscription page if blocked and not already there
+    useEffect(() => {
+        if (isBlocked && !location.pathname.includes('/subscription')) {
+            navigate('/dashboard/subscription', { replace: true });
+        }
+    }, [isBlocked, location.pathname, navigate]);
 
     // Helper: Get restaurant data - handles both object and ID-only cases
     const getRestaurantData = () => {
@@ -132,7 +141,12 @@ export default function DashboardLayout() {
         menuItems.push({ icon: Shield, label: t('profiles'), path: '/dashboard/profiles' });
     }
 
-    // Add System Admin link for Owner
+    // Add Subscriptions Management for Admin (system-wide role)
+    if (user?.role?.name === 'Admin' && user?.role?.isSystem) {
+        menuItems.push({ icon: CreditCardIcon, label: 'Subscriptions', path: '/dashboard/subscriptions' });
+    }
+
+    // Add System Admin link for Owner or Admin
     if (user?.role?.name === 'Owner' || user?.role?.isSystem) {
         menuItems.push({ icon: ShieldCheck, label: t('system_admin'), path: '/system-admin' });
     }
@@ -469,7 +483,14 @@ export default function DashboardLayout() {
 
                 {/* Page Content */}
                 <main className="page-content">
-                    <Outlet />
+                    {isBlocked && !location.pathname.includes('/subscription') ? (
+                        <SubscriptionBlocker
+                            status={subscription?.status || 'expired'}
+                            subscription={subscription}
+                        />
+                    ) : (
+                        <Outlet />
+                    )}
                 </main>
             </div>
         </div>

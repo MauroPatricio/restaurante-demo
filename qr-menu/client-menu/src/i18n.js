@@ -32,7 +32,22 @@ const resources = {
             "order_status_pending": "Pending",
             "order_status_preparing": "Preparing",
             "order_status_ready": "Ready",
-            "order_status_delivered": "Delivered"
+            "order_status_delivered": "Delivered",
+            "waiter": "Waiter",
+            "call_waiter": "Call Waiter",
+            "satisfied": "Satisfied",
+            "dissatisfied": "Dissatisfied",
+            "loading": "Loading...",
+            "failed_to_load": "Failed to load menu. Please scan QR Code again.",
+            "no_items_found": "No items found",
+            "try_changing_search": "Try changing your search or category",
+            "my_orders": "My Orders",
+            "order_history": "Order History",
+            "no_orders_yet": "No orders yet",
+            "make_first_order": "Make your first order!",
+            "order_id": "Order",
+            "items": "items",
+            "status": "Status"
         }
     },
     pt: {
@@ -64,7 +79,22 @@ const resources = {
             "order_status_pending": "Pendente",
             "order_status_preparing": "Preparando",
             "order_status_ready": "Pronto",
-            "order_status_delivered": "Entregue"
+            "order_status_delivered": "Entregue",
+            "waiter": "Garçom",
+            "call_waiter": "Chamar Garçom",
+            "satisfied": "Satisfeito",
+            "dissatisfied": "Insatisfeito",
+            "loading": "Carregando...",
+            "failed_to_load": "Falha ao carregar menu. Por favor escaneie o QR Code novamente.",
+            "no_items_found": "Nenhum item encontrado",
+            "try_changing_search": "Tente mudar sua busca ou categoria",
+            "my_orders": "Meus Pedidos",
+            "order_history": "Histórico de Pedidos",
+            "no_orders_yet": "Nenhum pedido ainda",
+            "make_first_order": "Faça seu primeiro pedido!",
+            "order_id": "Pedido",
+            "items": "itens",
+            "status": "Status"
         }
     },
     es: {
@@ -96,7 +126,22 @@ const resources = {
             "order_status_pending": "Pendiente",
             "order_status_preparing": "Preparando",
             "order_status_ready": "Listo",
-            "order_status_delivered": "Entregado"
+            "order_status_delivered": "Entregado",
+            "waiter": "Camarero",
+            "call_waiter": "Llamar Camarero",
+            "satisfied": "Satisfecho",
+            "dissatisfied": "Insatisfecho",
+            "loading": "Cargando...",
+            "failed_to_load": "Error al cargar el menú. Por favor escanee el código QR nuevamente.",
+            "no_items_found": "No se encontraron artículos",
+            "try_changing_search": "Intente cambiar su búsqueda o categoría",
+            "my_orders": "Mis Pedidos",
+            "order_history": "Historial de Pedidos",
+            "no_orders_yet": "Aún no hay pedidos",
+            "make_first_order": "¡Haz tu primer pedido!",
+            "order_id": "Pedido",
+            "items": "artículos",
+            "status": "Estado"
         }
     }
 };
