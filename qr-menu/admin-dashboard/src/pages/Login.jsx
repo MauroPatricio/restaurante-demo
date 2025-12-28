@@ -47,7 +47,7 @@ export default function Login() {
                 <div className="login-card">
                     <div className="login-header">
                         <h1>🍽️ Restaurante Digital</h1>
-                        <p>Sistema de Gestao de Restaurante</p>
+                        <p>Sistema de Gestão de Restaurantes</p>
                     </div>
 
                     {error && (
@@ -65,7 +65,7 @@ export default function Login() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                placeholder="your@email.com"
+                                placeholder="seuemail@email.com"
                             />
                         </div>
 
@@ -124,6 +124,10 @@ export default function Login() {
                     <div className="login-footer">
                         <p>Don't have an account? <Link to="/register" style={{ color: '#2563eb', fontWeight: 'bold' }}>Registre aqui</Link></p>
                     </div>
+
+                    <div className="developer-credit">
+                        <p>Desenvolvido por Nhiquela Serviços e Consultoria, LDA</p>
+                    </div>
                 </div>
             </div>
 
@@ -140,12 +144,39 @@ export default function Login() {
                 .login-left { flex:1 1 480px; max-width:520px; }
                 .login-right { flex:1 1 520px; display:none; align-items:center; justify-content:center; }
                 .responsive-restaurant-image { width:100%; height:auto; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
+                
+                .developer-credit {
+                    margin-top: 2rem;
+                    padding: 0.75rem 1rem;
+                    text-align: center;
+                    background-color: #f3e8ff;
+                    border-radius: 8px;
+                    border: 1px solid #e9d5ff;
+                }
+                
+                .developer-credit p {
+                    margin: 0;
+                    font-size: 0.875rem;
+                    color: #7c3aed;
+                    font-weight: 500;
+                    letter-spacing: 0.01em;
+                }
+                
                 @media (min-width: 900px) {
                     .login-right { display:flex; }
                 }
                 @media (max-width: 899px) {
                     .login-layout { flex-direction:column; }
                     .login-left { max-width:720px; }
+                }
+                @media (max-width: 640px) {
+                    .developer-credit {
+                        margin-top: 1.5rem;
+                        padding: 0.625rem 0.75rem;
+                    }
+                    .developer-credit p {
+                        font-size: 0.8125rem;
+                    }
                 }
             `}</style>
         </div>
