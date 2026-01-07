@@ -3,6 +3,7 @@ import Subcategory from '../models/Subcategory.js';
 import Category from '../models/Category.js';
 import MenuItem from '../models/MenuItem.js';
 import { authenticateToken } from '../middleware/auth.js';
+import cache from '../services/cacheService.js';
 
 const router = express.Router();
 
@@ -68,6 +69,9 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), async 
         });
 
         await subcategory.save();
+
+        // Clear menu cache
+        cache.deletePattern(`menu:${restaurantId}*`);
 
         // Populate category info
         await subcategory.populate('category');
@@ -223,6 +227,9 @@ router.put('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), asyn
         await subcategory.save();
         await subcategory.populate('category');
 
+        // Clear menu cache
+        cache.deletePattern(`menu:${restaurantId}*`);
+
         res.json({
             message: 'Subcategory updated successfully',
             subcategory
@@ -269,6 +276,9 @@ router.delete('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), a
         subcategory.isActive = false;
         await subcategory.save();
 
+        // Clear menu cache
+        cache.deletePattern(`menu:${restaurantId}*`);
+
         res.json({
             message: 'Subcategory deleted successfully',
             subcategory
@@ -303,6 +313,9 @@ router.patch('/reorder', authenticateToken, authorizeRoles(['owner', 'manager'])
         );
 
         await Promise.all(updatePromises);
+
+        // Clear menu cache
+        cache.deletePattern(`menu:${restaurantId}*`);
 
         res.json({ message: 'Subcategories reordered successfully' });
     } catch (error) {

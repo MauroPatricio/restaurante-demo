@@ -6,6 +6,19 @@ export default defineConfig({
     plugins: [react()],
     server: {
         port: 5175, // Avoid conflict with admin (5173/5174)
-        host: true
+        host: true,
+        proxy: {
+            '/api': {
+                target: 'http://localhost:5000',
+                changeOrigin: true,
+                secure: false
+            },
+            '/socket.io': {
+                target: 'http://localhost:5000',
+                ws: true,
+                changeOrigin: true,
+                secure: false
+            }
+        }
     }
 })

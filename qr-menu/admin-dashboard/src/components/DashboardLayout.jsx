@@ -34,11 +34,15 @@ import {
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
 import SubscriptionBlocker from './SubscriptionBlocker';
+import SubscriptionAlert from './SubscriptionAlert';
+import { useSocket } from '../contexts/SocketContext';
+import WaiterCallAlerts from './WaiterCallAlerts';
 
 export default function DashboardLayout() {
     const { user, logout } = useAuth();
     const { subscription, isBlocked } = useSubscription();
     const { isBackendConnected } = useConnectivity();
+    const { pendingAlerts } = useSocket();
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -91,9 +95,6 @@ export default function DashboardLayout() {
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
     const closeSidebar = () => setSidebarOpen(false);
 
-    // Build menu items array
-    const menuItems = [];
-
     // Check if user is Owner or Manager
     const isOwnerOrManager = user?.role?.name === 'Owner' || user?.role?.name === 'Manager' || user?.role?.isSystem;
 
@@ -104,52 +105,91 @@ export default function DashboardLayout() {
         return user.role.isSystem && (user.role.permissions?.includes('all') || user.role.permissions?.includes(perm));
     };
 
-    // Add Owner Overview for Owners
-    if (user?.role?.name === 'Owner' || user?.role?.isSystem) {
-        menuItems.push({ icon: LayoutDashboard, label: t('owner_overview'), path: '/owner-dashboard' });
-    }
+    // Build menu items with permission-based filtering
+    const menuItems = [
+        // Owner Overview
+        {
+            icon: LayoutDashboard,
+            label: t('owner_overview'),
+            path: '/owner-dashboard',
+            show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name)
+        },
+        // Waiter Dashboard (for those who can take orders)
+        {
+            icon: LayoutDashboard,
+            label: t('waiter_dashboard') || 'My Tables',
+            path: '/dashboard/waiter',
+            show: hasPermission('take_orders')
+        },
+        // Manager Dashboard (for those with management permissions)
+        {
+            icon: LayoutDashboard,
+            label: t('dashboard'),
+            path: '/dashboard',
+            show: hasPermission('view_reports') || hasPermission('manage_settings')
+        },
+        // Kitchen Monitor (for those who update status)
+        {
+            icon: UtensilsCrossed,
+            label: t('kitchen_monitor'),
+            path: '/dashboard/kitchen',
+            show: hasPermission('update_order_status')
+        },
 
-    // Core menu items (available for everyone)
-    menuItems.push(
-        { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
-        { icon: UtensilsCrossed, label: t('kitchen_monitor'), path: '/dashboard/kitchen' },
-        { icon: User, label: t('waiter_mode'), path: '/dashboard/waiter' },
-        { icon: FileText, label: t('reports'), path: '/dashboard/reports' },
-        { icon: ShoppingBag, label: t('orders'), path: '/dashboard/orders' },
-        { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu' },
-        { icon: Folder, label: t('categories'), path: '/dashboard/categories' },
-        { icon: FolderTree, label: t('subcategories'), path: '/dashboard/subcategories' },
-        { icon: QrCode, label: t('tables'), path: '/dashboard/tables' },
-        { icon: Banknote, label: t('payments'), path: '/dashboard/payments' },
-        { icon: Tag, label: t('coupons'), path: '/dashboard/coupons' },
-        { icon: Truck, label: t('delivery'), path: '/dashboard/delivery' },
-        { icon: Star, label: t('feedback'), path: '/dashboard/feedback' },
-        { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription' },
-        { icon: Package, label: t('stock_costs'), path: '/dashboard/stock' }
-    );
+        // Reports
+        {
+            icon: FileText,
+            label: t('reports'),
+            path: '/dashboard/reports',
+            show: hasPermission('view_reports')
+        },
 
-    // Add Users menu item for Owners and Managers
-    if (isOwnerOrManager) {
-        menuItems.push({ icon: UsersIcon, label: t('users'), path: '/dashboard/users' });
-    }
+        // Orders (Full list management)
+        {
+            icon: ShoppingBag,
+            label: t('orders'),
+            path: '/dashboard/orders',
+            show: hasPermission('manage_orders')
+        },
 
-    // Add Settings for everyone
-    menuItems.push({ icon: Settings, label: t('settings'), path: '/dashboard/settings' });
+        // Menu Management
+        { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu', show: hasPermission('manage_menu') },
+        { icon: Folder, label: t('categories'), path: '/dashboard/categories', show: hasPermission('manage_menu') },
+        { icon: FolderTree, label: t('subcategories'), path: '/dashboard/subcategories', show: hasPermission('manage_menu') },
 
-    // Add Profiles for those with manage_staff permission
-    if (hasPermission('manage_staff')) {
-        menuItems.push({ icon: Shield, label: t('profiles'), path: '/dashboard/profiles' });
-    }
+        // Tables
+        { icon: QrCode, label: t('tables'), path: '/dashboard/tables', show: hasPermission('manage_tables') },
 
-    // Add Subscriptions Management for Admin (system-wide role)
-    if (user?.role?.name === 'Admin' && user?.role?.isSystem) {
-        menuItems.push({ icon: CreditCardIcon, label: 'Subscriptions', path: '/dashboard/subscriptions' });
-    }
+        // Payments (Settings/Admin)
+        { icon: Banknote, label: t('payments'), path: '/dashboard/payments', show: hasPermission('manage_settings') },
 
-    // Add System Admin link for Owner or Admin
-    if (user?.role?.name === 'Owner' || user?.role?.isSystem) {
-        menuItems.push({ icon: ShieldCheck, label: t('system_admin'), path: '/system-admin' });
-    }
+        // Coupons (Settings/Admin)
+        { icon: Tag, label: t('coupons'), path: '/dashboard/coupons', show: hasPermission('manage_settings') },
+
+        // Delivery
+        { icon: Truck, label: t('delivery'), path: '/dashboard/delivery', show: hasPermission('view_delivery_orders') || hasPermission('manage_orders') },
+
+        // Feedback (Settings/Admin)
+        { icon: Star, label: t('feedback'), path: '/dashboard/feedback', show: hasPermission('manage_settings') },
+
+        // Subscription (Owner/Admin)
+        { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
+
+        // Stock (Settings/Admin)
+        { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings') },
+
+        // Users (Staff Management)
+        { icon: UsersIcon, label: t('users'), path: '/dashboard/users', show: hasPermission('manage_staff') },
+
+        // Settings (Settings Management)
+        { icon: Settings, label: t('settings'), path: '/dashboard/settings', show: hasPermission('manage_settings') },
+
+        // Profiles (Staff Management)
+        { icon: Shield, label: t('profiles'), path: '/dashboard/profiles', show: hasPermission('manage_staff') },
+
+        // System Admin
+        { icon: ShieldCheck, label: t('system_admin'), path: '/system-admin', show: user?.role?.isSystem && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) }
+    ].filter(item => item.show);
 
     // Calculate days until expiry for banner
     const getDaysUntilExpiry = () => {
@@ -310,8 +350,10 @@ export default function DashboardLayout() {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         fontSize: '1.5rem',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                    }}>🍽️</div>
+                                        fontWeight: '700',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                        textTransform: 'uppercase'
+                                    }}>{restaurantData?.name?.charAt(0) || 'R'}</div>
                                 )}
                                 {/* Restaurant Active/Inactive Status Indicator */}
                                 <div
@@ -471,6 +513,30 @@ export default function DashboardLayout() {
 
                     <div className="header-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <LanguageSwitcher />
+
+                        {/* New Orders Badge */}
+                        {pendingAlerts.length > 0 && (
+                            <Link
+                                to="/dashboard/orders"
+                                className="icon-btn urgent-badge"
+                                style={{
+                                    position: 'relative',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    textDecoration: 'none',
+                                    color: 'white',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '700'
+                                }}
+                            >
+                                <ShoppingBag size={18} />
+                                <span>{pendingAlerts.length} {t('new_orders') || 'Novos'}</span>
+                            </Link>
+                        )}
+
                         <button className="icon-btn">
                             <Bell size={20} />
                         </button>
@@ -483,6 +549,11 @@ export default function DashboardLayout() {
 
                 {/* Page Content */}
                 <main className="page-content">
+                    {/* Subscription Expiration Alert */}
+                    {subscription && !isBlocked && (
+                        <SubscriptionAlert subscription={subscription} />
+                    )}
+
                     {isBlocked && !location.pathname.includes('/subscription') ? (
                         <SubscriptionBlocker
                             status={subscription?.status || 'expired'}
@@ -492,6 +563,9 @@ export default function DashboardLayout() {
                         <Outlet />
                     )}
                 </main>
+
+                {/* Waiter Call Alerts - Real-time notifications */}
+                <WaiterCallAlerts />
             </div>
         </div>
     );

@@ -1,6 +1,28 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Create axios instance with auth interceptor
+const api = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+
+// Add auth token to requests
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 // Admin-only API calls for subscription management
 const subscriptionAPI = {
@@ -21,12 +43,12 @@ const subscriptionAPI = {
             params.append('order', filters.order);
         }
 
-        return axios.get(`${API_URL}/subscriptions/admin/all?${params.toString()}`);
+        return api.get(`/subscriptions/admin/all?${params.toString()}`);
     },
 
     // Update subscription status (admin only)
     updateStatus: async (subscriptionId, status, reason = '') => {
-        return axios.patch(`${API_URL}/subscriptions/admin/${subscriptionId}/status`, {
+        return api.patch(`/subscriptions/admin/${subscriptionId}/status`, {
             status,
             reason
         });
@@ -42,7 +64,7 @@ const subscriptionAPI = {
             params.append('subscriptionId', subscriptionId);
         }
 
-        return axios.get(`${API_URL}/subscriptions/admin/audit-logs?${params.toString()}`);
+        return api.get(`/subscriptions/admin/audit-logs?${params.toString()}`);
     }
 };
 

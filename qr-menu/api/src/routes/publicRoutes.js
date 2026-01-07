@@ -3,6 +3,7 @@ import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
 import Order from '../models/Order.js';
 import { validateTableToken } from '../utils/qrSecurity.js';
+import { occupyTable } from '../controllers/tableStateController.js';
 
 const router = express.Router();
 
@@ -74,10 +75,11 @@ router.get('/menu/validate', async (req, res) => {
             });
         }
 
-        if (!table.active || table.status === 'disabled') {
+        // Check if table is closed
+        if (table.status === 'closed') {
             return res.status(403).json({
-                error: 'Table inactive',
-                message: 'Mesa inválida ou indisponível. Contacte o atendimento.'
+                error: 'Table closed',
+                message: 'Esta mesa encontra-se temporariamente indisponível.'
             });
         }
 
@@ -159,7 +161,7 @@ router.get('/menu/:restaurantId', async (req, res) => {
  */
 router.post('/orders', async (req, res) => {
     try {
-        const { restaurantId, tableId, token, items, customerName, notes } = req.body;
+        const { restaurantId, tableId, token, items, customerName, phone, paymentMethod, notes } = req.body;
 
         // Validate token
         if (!validateTableToken(token, restaurantId, tableId)) {
@@ -195,34 +197,79 @@ router.post('/orders', async (req, res) => {
             });
         }
 
-        if (!table || !table.active) {
-            return res.status(403).json({
-                error: 'Table unavailable',
-                message: 'Mesa não disponível'
+        if (!table) {
+            return res.status(404).json({
+                error: 'Table not found',
+                message: 'Mesa não encontrada.'
             });
         }
 
-        // Calculate total
-        const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        // Check if table is available for orders
+        if (table.status === 'closed') {
+            return res.status(400).json({
+                error: 'Table closed',
+                message: 'Esta mesa está atualmente fechada e indisponível para pedidos'
+            });
+        }
+
+        if (table.status === 'cleaning') {
+            return res.status(400).json({
+                error: 'Table being cleaned',
+                message: 'Esta mesa está sendo limpa. Por favor, aguarde um momento.'
+            });
+        }
+
+        // Occupy table and create/get session
+        let session;
+        if (table.status === 'free' || !table.currentSessionId) {
+            session = await occupyTable(tableId, null, restaurantId); // null userId for client orders
+        } else {
+            session = { _id: table.currentSessionId };
+        }
+
+        // Calculate total and normalize items for schema compatibility
+        let calculatedTotal = 0;
+        const normalizedItems = (items || []).map(item => {
+            const qty = item.quantity || item.qty || 1;
+            const price = item.price || 0;
+            const subtotal = price * qty;
+            calculatedTotal += subtotal;
+
+            return {
+                item: item.item,
+                qty: qty,
+                itemPrice: price,
+                subtotal: subtotal,
+                customizations: item.customizations || []
+            };
+        });
 
         // Create order
         const order = await Order.create({
             restaurant: restaurantId,
             table: tableId,
+            tableSession: session._id, // Link to session
             tableNumber: table.number,
-            items,
-            total,
+            items: normalizedItems,
+            total: calculatedTotal,
             customerName: customerName || 'Cliente',
+            phone: phone || '800000000', // Ensure phone is present as it is required in schema
+            paymentMethod: paymentMethod || 'pending',
             notes,
             status: 'pending',
             type: 'dine-in',
             source: 'qr-menu'
         });
 
-        // Update table status to occupied
-        if (table.status === 'free') {
-            table.status = 'occupied';
-            await table.save();
+        // Emit socket event for the dashboard
+        if (req.io) {
+            req.io.to(`restaurant-${restaurantId}`).emit('order:new', {
+                orderId: order._id,
+                tableNumber: table.number,
+                total: order.total,
+                customerName: order.customerName,
+                itemsCount: normalizedItems.length
+            });
         }
 
         res.status(201).json({
@@ -241,6 +288,33 @@ router.post('/orders', async (req, res) => {
             error: 'Failed to create order',
             message: 'Erro ao criar pedido. Por favor, tente novamente.'
         });
+    }
+});
+
+/**
+ * Get order history for a customer
+ * GET /api/public/orders/history?phone=xxx&restaurant=xxx
+ */
+router.get('/orders/history', async (req, res) => {
+    try {
+        const { phone, restaurant } = req.query;
+
+        if (!phone || !restaurant) {
+            return res.status(400).json({ error: 'Phone and restaurant are required' });
+        }
+
+        const orders = await Order.find({
+            restaurant,
+            phone
+        })
+            .sort({ createdAt: -1 })
+            .populate('items.item', 'name price')
+            .limit(20);
+
+        res.json({ orders });
+    } catch (error) {
+        console.error('Get history error:', error);
+        res.status(500).json({ error: 'Failed to fetch history' });
     }
 });
 

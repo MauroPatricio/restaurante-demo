@@ -24,6 +24,7 @@ import StockDashboard from './pages/StockDashboard';
 import Delivery from './pages/Delivery';
 import Reports from './pages/Reports';
 import ManagerDashboard from './pages/ManagerDashboard';
+import { SocketProvider } from './contexts/SocketContext';
 import './App.css';
 
 import UserManagement from './pages/UserManagement';
@@ -33,6 +34,8 @@ import ChangePassword from './pages/ChangePassword';
 import Settings from './pages/Settings';
 import Categories from './pages/Categories';
 import Subcategories from './pages/Subcategories';
+
+import DashboardRedirect from './components/DashboardRedirect';
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -59,9 +62,11 @@ function App() {
     <AuthProvider>
       <SubscriptionProvider>
         <ConnectivityProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
+          <SocketProvider>
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </SocketProvider>
         </ConnectivityProvider>
       </SubscriptionProvider>
     </AuthProvider>
@@ -94,7 +99,7 @@ function AppContent() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<ManagerDashboard />} />
+          <Route index element={<DashboardRedirect />} />
           <Route path="analytics" element={<Dashboard />} />
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="waiter" element={<WaiterDashboard />} />

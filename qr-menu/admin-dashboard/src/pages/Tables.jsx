@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import { tableAPI, orderAPI, usersAPI } from '../services/api';
 
-import { Plus, Trash2, QrCode, X, Printer, RefreshCw, Maximize, Edit2, Users, Receipt, UtensilsCrossed, Armchair, MapPin, BadgeCheck, User, Bell } from 'lucide-react';
-import { io } from 'socket.io-client';
+import { Plus, Trash2, QrCode, X, Printer, RefreshCw, Maximize, Edit2, Users, Receipt, UtensilsCrossed, Armchair, MapPin, BadgeCheck, User, Bell, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
-const SOCKET_URL = 'http://localhost:4000'; // Should be env var in production
-const ALERT_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
+import TableSessionModal from '../components/TableSessionModal';
+import '../styles/TableSessionModal.css';
 
 export default function Tables() {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const { pendingAlerts, acknowledgeOrderAlert } = useSocket();
     const [tables, setTables] = useState([]);
     const [activeOrders, setActiveOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showQRModal, setShowQRModal] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
+    const [showSessionModal, setShowSessionModal] = useState(false);
+    const [sessionData, setSessionData] = useState(null);
 
     const [editingTable, setEditingTable] = useState(null); // ID of table being edited
-    const [activeAlerts, setActiveAlerts] = useState({}); // { [tableId]: { type, value, timestamp } }
-    const audioRef = useState(new Audio(ALERT_SOUND_URL))[0]; // Singleton audio instance
     const [waiters, setWaiters] = useState([]); // List of available waiters
 
     // Initial Form State
@@ -43,57 +43,14 @@ export default function Tables() {
         if (user?.restaurant) {
             fetchTables();
             fetchActiveOrders();
+            fetchWaiters(); // Load waiters for ID lookup
             const interval = setInterval(fetchActiveOrders, 30000); // Poll every 30s
-
-            // Socket Setup
-            const socket = io(SOCKET_URL);
-            socket.emit('join-restaurant', user.restaurant._id || user.restaurant);
-
-            socket.on('new-order', (data) => {
-                const orderTableId = typeof data.order.table === 'object' ? data.order.table._id : data.order.table;
-                if (orderTableId) {
-                    setActiveAlerts(prev => ({
-                        ...prev,
-                        [orderTableId]: { type: 'order', value: 'New Order', timestamp: new Date() }
-                    }));
-                    fetchActiveOrders(); // Refresh orders
-                }
-            });
-
-            socket.on('table-alert', (data) => {
-                // data: { tableId, type, value, ... }
-                setActiveAlerts(prev => ({
-                    ...prev,
-                    [data.tableId]: { type: data.type, value: data.value, timestamp: new Date() }
-                }));
-            });
 
             return () => {
                 clearInterval(interval);
-                socket.disconnect();
             };
         }
     }, [user]);
-
-    // Sound Effect Logic
-    useEffect(() => {
-        const hasAlerts = Object.keys(activeAlerts).length > 0;
-        if (hasAlerts) {
-            audioRef.loop = true;
-            // Interaction might block auto-play, usually admins click somewhere first
-            audioRef.play().catch(e => console.warn("Audio play blocked", e));
-        } else {
-            audioRef.pause();
-            audioRef.currentTime = 0;
-        }
-    }, [activeAlerts]);
-
-    const handleAcknowledge = (tableId) => {
-        const newAlerts = { ...activeAlerts };
-        delete newAlerts[tableId];
-        setActiveAlerts(newAlerts);
-        // Optional: Call API to mark alert as handled if needed
-    };
 
     const fetchTables = async () => {
         try {
@@ -141,6 +98,12 @@ export default function Tables() {
 
     const handleOpenEdit = (table) => {
         setEditingTable(table._id);
+
+        // Robust ID extraction handles populated objects or direct IDs
+        const existingWaiterId = (typeof table.assignedWaiter === 'object' ? table.assignedWaiter?._id : table.assignedWaiter)
+            || table.assignedWaiterId
+            || '';
+
         setFormData({
             number: table.number,
             capacity: table.capacity,
@@ -149,8 +112,8 @@ export default function Tables() {
             status: table.status || 'free',
             accessibility: table.accessibility || false,
             joinable: table.joinable || false,
-            assignedWaiter: table.assignedWaiter || '', // Legacy
-            assignedWaiterId: table.assignedWaiterId || '', // New field
+            assignedWaiter: existingWaiterId, // Sync legacy
+            assignedWaiterId: existingWaiterId, // New field
             minConsumption: table.minConsumption || 0
         });
         fetchWaiters(); // Load waiters when opening modal
@@ -162,7 +125,10 @@ export default function Tables() {
         try {
             const payload = {
                 restaurant: user.restaurant._id || user.restaurant,
-                ...formData
+                ...formData,
+                // Ensure both fields are synced to avoid legacy issues
+                assignedWaiter: formData.assignedWaiterId,
+                assignedWaiterId: formData.assignedWaiterId
             };
 
             if (editingTable) {
@@ -205,6 +171,34 @@ export default function Tables() {
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.print();
+    };
+
+    const handleViewSession = async (table) => {
+        try {
+            // Acknowledge alert when viewing session
+            acknowledgeOrderAlert(table.number);
+
+            const response = await tableAPI.getCurrentSession(table._id);
+            setSelectedTable(table);
+            setSessionData(response.data);
+            setShowSessionModal(true);
+        } catch (error) {
+            console.error('Failed to fetch session:', error);
+            alert('Failed to load table session');
+        }
+    };
+
+    const handleFreeTable = async (tableId) => {
+        try {
+            await tableAPI.freeTable(tableId);
+            alert('Mesa liberada com sucesso!');
+            setShowSessionModal(false);
+            fetchTables();
+            fetchActiveOrders();
+        } catch (error) {
+            console.error('Failed to free table:', error);
+            alert(error.response?.data?.message || 'Failed to free table');
+        }
     };
 
     const getTableStatus = (table) => {
@@ -257,44 +251,38 @@ export default function Tables() {
             <div className="stats-grid">
                 {tables.map(table => {
                     const statusKey = getTableStatus(table);
-                    const badgeClass = `status-badge ${statusKey}`; // map to css classes
+                    const badgeClass = `status-badge ${statusKey}`;
 
-                    const alert = activeAlerts[table._id];
-                    const isBlinking = !!alert;
-                    const alertClass = alert?.type === 'order' ? 'table-alert-green' : (alert ? 'table-alert-red' : '');
-
-                    const getEmotionIcon = (val) => {
-                        if (val === 'happy') return '😋';
-                        if (val === 'waiting') return '✋';
-                        if (val === 'angry') return '😠';
-                        if (val === 'payment') return '💰';
-                        return '🔔';
-                    };
+                    // Check if this table has a pending global alert
+                    const hasAlert = pendingAlerts.some(a =>
+                        a.tableNumber === table.number ||
+                        a.tableNumber === String(table.number)
+                    );
 
                     return (
                         <div
                             key={table._id}
-                            className={`stat-card ${isBlinking ? alertClass : ''}`}
-                            onClick={() => isBlinking && handleAcknowledge(table._id)} // Click to ack
+                            className={`stat-card ${hasAlert ? 'blink-urgent' : ''}`}
+                            onClick={() => hasAlert && acknowledgeOrderAlert(table.number)}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'space-between',
                                 minHeight: '200px',
                                 position: 'relative',
-                                cursor: isBlinking ? 'pointer' : 'default',
+                                cursor: hasAlert ? 'pointer' : 'default',
                                 transition: 'all 0.3s'
                             }}
                         >
-                            {alert && (
-                                <div className="emotion-badge">
-                                    {alert.type === 'order' ? '📦' : getEmotionIcon(alert.value)}
+                            {hasAlert && (
+                                <div className="emotion-badge urgent-badge">
+                                    📦
                                 </div>
                             )}
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
-                                    <h3 style={{ fontSize: '1.5em', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h3 style={{ fontSize: '1.5em', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
                                         {t('table')} {table.number}
                                         {table.accessibility && <Armchair size={16} title={t('accessibility')} color="#4f46e5" />}
                                     </h3>
@@ -304,11 +292,24 @@ export default function Tables() {
                                     <p style={{ color: '#888', fontSize: '0.85em', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <MapPin size={14} /> {table.location || '-'}
                                     </p>
-                                    {table.assignedWaiter && (
-                                        <p style={{ color: '#4f46e5', fontSize: '0.85em', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <User size={14} /> {table.assignedWaiter}
-                                        </p>
-                                    )}
+                                    <p style={{ fontSize: '0.85em', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ fontWeight: 600, color: '#666' }}>Estado: </span>
+                                        <span className={`badge ${table.status === 'occupied' ? 'badge-danger' :
+                                            table.status === 'free' ? 'badge-success' : 'badge-warning'
+                                            }`} style={{ padding: '2px 6px', fontSize: '0.75rem' }}>
+                                            {t(table.status) || table.status}
+                                        </span>
+                                    </p>
+                                    <p style={{ color: '#4f46e5', fontSize: '0.85em', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <User size={14} />
+                                        {table.assignedWaiter ? (
+                                            typeof table.assignedWaiter === 'object'
+                                                ? table.assignedWaiter.name
+                                                : (waiters.find(w => w._id === table.assignedWaiter)?.name || table.assignedWaiter)
+                                        ) : (
+                                            <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>{t('no_waiter') || 'Sem Garçom'}</span>
+                                        )}
+                                    </p>
                                 </div>
                                 <div className={badgeClass} style={{ textTransform: 'capitalize' }}>
                                     {t(statusKey) || statusKey}
@@ -316,6 +317,9 @@ export default function Tables() {
                             </div>
 
                             <div className="table-actions" style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
+                                <button onClick={() => handleViewSession(table)} className="btn-small" style={{ flex: 1, justifyContent: 'center' }} title="Ver Pedidos">
+                                    <Eye size={16} />
+                                </button>
                                 <button onClick={() => openQR(table)} className="btn-small" style={{ flex: 1, justifyContent: 'center' }} title={t('show_qr')}>
                                     <Maximize size={16} />
                                 </button>
@@ -323,7 +327,7 @@ export default function Tables() {
                                     <Edit2 size={16} />
                                 </button>
                                 <button onClick={() => handleDelete(table._id)} className="btn-small btn-danger" style={{ flex: 0, padding: '0 10px' }} title={t('delete')}>
-                                    <Trash2 size={16} />
+                                    <Trash2 size={16} color="#dc2626" />
                                 </button>
                             </div>
 
@@ -477,6 +481,9 @@ export default function Tables() {
                             {selectedTable.location ? `${selectedTable.location} - ` : ''}
                             {selectedTable.type}
                         </p>
+                        <div style={{ marginBottom: '1.5rem', fontSize: '0.75rem', color: '#666', fontStyle: 'italic' }}>
+                            Desenvolvido por Nhiquela Servicos e Consultoria, LDA
+                        </div>
                         <div className="modal-actions" style={{ justifyContent: 'center' }}>
                             <button onClick={printQR} className="btn-primary">
                                 <Printer size={18} />
@@ -485,7 +492,23 @@ export default function Tables() {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+
+            {/* Table Session Modal */}
+            {
+                showSessionModal && sessionData && (
+                    <TableSessionModal
+                        table={sessionData.table}
+                        session={sessionData.session}
+                        orders={sessionData.orders}
+                        stats={sessionData.stats}
+                        onClose={() => setShowSessionModal(false)}
+                        onFreeTable={handleFreeTable}
+                        canFree={['manager', 'waiter', 'owner'].includes(user?.role)}
+                    />
+                )
+            }
+        </div >
     );
 }

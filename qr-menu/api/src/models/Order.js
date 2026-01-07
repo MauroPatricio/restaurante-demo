@@ -11,6 +11,11 @@ const OrderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Table'
   },
+  tableSession: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TableSession',
+    index: true
+  },
   orderType: {
     type: String,
     enum: ['dine-in', 'takeaway', 'delivery'],

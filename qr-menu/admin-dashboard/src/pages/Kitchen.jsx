@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { orderAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils } from 'lucide-react';
+import { useSocket } from '../contexts/SocketContext';
+import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -40,10 +41,17 @@ const iconBoxStyle = (color, bg) => ({
 const Kitchen = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { pendingAlerts, acknowledgeOrderAlert } = useSocket();
     const restaurantId = user?.restaurant?._id || user?.restaurant?.id || localStorage.getItem('restaurantId');
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [audioEnabled, setAudioEnabled] = useState(false);
+    const [audio] = useState(() => {
+        const a = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        a.loop = true;
+        return a;
+    });
 
     useEffect(() => {
         if (!restaurantId) {
@@ -55,7 +63,24 @@ const Kitchen = () => {
         return () => clearInterval(interval);
     }, [restaurantId]);
 
-    const [audio] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
+    // Audio Alert Logic
+    useEffect(() => {
+        const hasPendingAlerts = pendingAlerts.length > 0;
+
+        if (hasPendingAlerts && audioEnabled) {
+            audio.play().catch(e => {
+                console.log('Audio play blocked:', e);
+                setAudioEnabled(false);
+            });
+        } else {
+            audio.pause();
+            audio.currentTime = 0;
+        }
+
+        return () => {
+            audio.pause();
+        };
+    }, [pendingAlerts, audioEnabled, audio]);
 
     const fetchOrders = async () => {
         if (!restaurantId) return;
@@ -63,13 +88,6 @@ const Kitchen = () => {
             const { data } = await orderAPI.getAll(restaurantId, { status: 'pending,preparing' });
 
             const ordersArray = Array.isArray(data?.orders) ? data.orders : (Array.isArray(data) ? data : []);
-
-            const currentPending = ordersArray.filter(o => o.status === 'pending');
-            const previousPendingCount = orders.filter(o => o.status === 'pending').length;
-
-            if (currentPending.length > previousPendingCount) {
-                audio.play().catch(e => console.log('Audio play blocked:', e));
-            }
 
             setOrders(ordersArray.filter(o => ['pending', 'preparing'].includes(o.status)));
         } catch (error) {
@@ -83,6 +101,8 @@ const Kitchen = () => {
     const updateStatus = async (orderId, newStatus) => {
         try {
             await orderAPI.updateStatus(orderId, newStatus);
+            // Acknowledge the alert for this order when status changes
+            acknowledgeOrderAlert(orderId);
             fetchOrders();
         } catch (error) {
             console.error('Failed to update order status:', error);
@@ -143,13 +163,30 @@ const Kitchen = () => {
                         {t('live_kitchen_desc') || 'Real-time order management'} • {new Date().toLocaleDateString()}
                     </p>
                 </div>
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    background: '#ecfdf5', padding: '10px 20px', borderRadius: '50px',
-                    border: '1px solid #d1fae5', color: '#047857', fontSize: '14px', fontWeight: '600'
-                }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
-                    {t('live_updates') || 'Live Updates'} (10s)
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <button
+                        onClick={() => setAudioEnabled(!audioEnabled)}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            background: audioEnabled ? '#dcfce7' : '#fee2e2',
+                            padding: '10px 20px', borderRadius: '50px',
+                            border: `1px solid ${audioEnabled ? '#bbf7d0' : '#fecaca'}`,
+                            color: audioEnabled ? '#166534' : '#991b1b',
+                            fontSize: '14px', fontWeight: '600', cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                        {audioEnabled ? 'Áudio Ligado' : 'Áudio Desligado'}
+                    </button>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        background: '#ecfdf5', padding: '10px 20px', borderRadius: '50px',
+                        border: '1px solid #d1fae5', color: '#047857', fontSize: '14px', fontWeight: '600'
+                    }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
+                        {t('live_updates') || 'Live Updates'} (10s)
+                    </div>
                 </div>
             </div>
 

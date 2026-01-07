@@ -104,6 +104,7 @@ router.post('/restaurant/:restaurantId', authorizeRoles('Owner', 'Manager'), asy
             user: user._id,
             restaurant: restaurantId,
             role: roleId,
+            active: true, // Explicitly set active
             isDefault: true
         });
 

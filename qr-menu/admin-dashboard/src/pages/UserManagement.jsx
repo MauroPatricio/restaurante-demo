@@ -47,7 +47,7 @@ export default function UserManagement() {
         email: '',
         phone: '',
         roleId: '',
-        password: 'temp123'
+        password: 'password123'
     });
 
     const restaurantId = user?.restaurant?._id || user?.restaurant;

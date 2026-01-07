@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Menu from './pages/Menu';
 import Cart from './pages/Cart';
 import OrderStatus from './pages/OrderStatus';
+import OrderHistory from './pages/OrderHistory';
+import { NotificationProvider } from './context/NotificationContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -107,22 +110,27 @@ function QRRedirect() {
 function App() {
     return (
         <CartProvider>
-            <BrowserRouter>
-                <div className="min-h-screen bg-gray-50">
-                    <Routes>
-                        <Route path="/menu" element={<QRRedirect />} />
-                        <Route path="/menu/:restaurantId" element={<Menu />} />
-                        <Route path="/menu/:restaurantId/cart" element={<Cart />} />
-                        <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
-                        <Route path="/" element={<div className="min-h-screen flex items-center justify-center">
-                            <div className="text-center">
-                                <h1 className="text-2xl font-bold text-gray-800 mb-2">QR Menu</h1>
-                                <p className="text-gray-600">Por favor, escaneie um QR Code da mesa</p>
-                            </div>
-                        </div>} />
-                    </Routes>
-                </div>
-            </BrowserRouter>
+            <ThemeProvider>
+                <NotificationProvider>
+                    <BrowserRouter>
+                        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                            <Routes>
+                                <Route path="/menu" element={<QRRedirect />} />
+                                <Route path="/menu/:restaurantId" element={<Menu />} />
+                                <Route path="/menu/:restaurantId/cart" element={<Cart />} />
+                                <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
+                                <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
+                                <Route path="/" element={<div className="min-h-screen flex items-center justify-center">
+                                    <div className="text-center">
+                                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">QR Menu</h1>
+                                        <p className="text-gray-600 dark:text-gray-400">Por favor, escaneie um QR Code da mesa</p>
+                                    </div>
+                                </div>} />
+                            </Routes>
+                        </div>
+                    </BrowserRouter>
+                </NotificationProvider>
+            </ThemeProvider>
         </CartProvider>
     );
 }

@@ -29,6 +29,16 @@ import restaurantRoutes from './restaurantRoutes.js';
 import categoryRoutes from './categories.js';
 import subcategoryRoutes from './subcategories.js';
 import menuItemRoutes from './menuItems.js';
+import waiterCallRoutes from './waiterCallRoutes.js';
+import clientReactionRoutes from './clientReactionRoutes.js';
+
+// Table State Management
+import {
+  getTableCurrentSession,
+  freeTable,
+  getTableSessionHistory
+} from '../controllers/tableStateController.js';
+import { validateAndOccupyTable, canFreeTable } from '../middleware/tableValidation.js';
 
 const router = express.Router();
 
@@ -49,6 +59,14 @@ router.use('/roles', roleRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
 router.use('/menu-items', menuItemRoutes);
+router.use('/waiter-calls', waiterCallRoutes);
+router.use('/client-reactions', clientReactionRoutes);
+
+// ============ TABLE STATE MANAGEMENT ROUTES ============
+router.get('/tables/:id/current-session', authenticateToken, getTableCurrentSession);
+router.post('/tables/:id/free', authenticateToken, canFreeTable, freeTable);
+router.get('/tables/:id/session-history', authenticateToken, authorizeRoles(['manager', 'waiter', 'owner']), getTableSessionHistory);
+
 // ...
 
 // ============ PUBLIC MENU ROUTE ============
@@ -272,6 +290,7 @@ router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'mana
 router.get('/tables/restaurant/:restaurantId', async (req, res) => {
   try {
     const tables = await Table.find({ restaurant: req.params.restaurantId })
+      .populate('assignedWaiterId', 'name email') // Populate waiter info
       .sort({ number: 1 });
 
     res.json({ tables });
@@ -315,6 +334,13 @@ router.get('/tables/:id', async (req, res) => {
     // Add waiter name to response if populated
     if (table.assignedWaiterId) {
       table.assignedWaiter = table.assignedWaiterId.name;
+    } else if (table.assignedWaiter && mongoose.Types.ObjectId.isValid(table.assignedWaiter)) {
+      // Logic to resolve ID if it's stored in the legacy string field
+      const User = (await import('../models/User.js')).default;
+      const waiterUser = await User.findById(table.assignedWaiter).select('name');
+      if (waiterUser) {
+        table.assignedWaiter = waiterUser.name;
+      }
     }
 
     res.json({ table });
@@ -422,7 +448,7 @@ router.get('/menu/:restaurantId', async (req, res) => {
 
     // Use .lean() for read-only query and select only needed fields
     const items = await MenuItem.find(query)
-      .select('name price category description available image allergens prepTime eta featured tags variablePrice customizationOptions')
+      .select('name price category subcategory description available imageUrl photo imagePublicId allergens prepTime sku eta featured tags variablePrice customizationOptions portionSize costPrice stockControlled stock seasonal')
       .lean()
       .sort({ category: 1, name: 1 });
 
@@ -464,76 +490,13 @@ router.get('/menu/:restaurantId/categories', async (req, res) => {
 });
 
 
-// Create menu item
-router.post('/menu-items', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
-  try {
-    const menuItem = await MenuItem.create({
-      ...req.body,
-      restaurant: req.restaurant._id
-    });
-
-    // Invalidate menu cache for this restaurant
-    cache.deletePattern(`menu:${req.restaurant._id}:*`);
-
-    res.status(201).json({
-      message: 'Menu item created successfully',
-      menuItem
-    });
-  } catch (error) {
-    console.error('Create menu item error:', error);
-    res.status(500).json({ error: 'Failed to create menu item' });
-  }
-});
-
-// Update menu item
-router.patch('/menu-items/:id', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
-  try {
-    const menuItem = await MenuItem.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!menuItem) {
-      return res.status(404).json({ error: 'Menu item not found' });
-    }
-
-    // Invalidate menu cache for this restaurant
-    cache.deletePattern(`menu:${menuItem.restaurant}:*`);
-
-    res.json({
-      message: 'Menu item updated successfully',
-      menuItem
-    });
-  } catch (error) {
-    console.error('Update menu item error:', error);
-    res.status(500).json({ error: 'Failed to update menu item' });
-  }
-});
-
-// Delete menu item
-router.delete('/menu-items/:id', authenticateToken, authorizeRoles('owner', 'admin', 'manager'), checkSubscription, async (req, res) => {
-  try {
-    const menuItem = await MenuItem.findByIdAndDelete(req.params.id);
-
-    if (!menuItem) {
-      return res.status(404).json({ error: 'Menu item not found' });
-    }
-
-    // Invalidate menu cache for this restaurant
-    cache.deletePattern(`menu:${menuItem.restaurant}:*`);
-
-    res.json({ message: 'Menu item deleted successfully' });
-  } catch (error) {
-    console.error('Delete menu item error:', error);
-    res.status(500).json({ error: 'Failed to delete menu item' });
-  }
-});
+// Menu Item routes are now fully handled in ./menuItems.js
+// Duplicate routes removed to avoid shadowing and confusion.
 
 // ============ ORDER ROUTES ============
 
 // Create order
-router.post('/orders', checkSubscription, async (req, res) => {
+router.post('/orders', checkSubscription, validateAndOccupyTable, async (req, res) => {
   try {
     const {
       restaurant,
@@ -674,6 +637,7 @@ router.post('/orders', checkSubscription, async (req, res) => {
     const order = await Order.create({
       restaurant,
       table,
+      tableSession: req.tableSession?._id, // Link to table session
       orderType: orderType || 'dine-in',
       items: populatedItems,
       subtotal,

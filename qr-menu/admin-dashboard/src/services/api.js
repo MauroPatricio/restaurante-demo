@@ -82,8 +82,12 @@ export const restaurantAPI = {
 export const menuAPI = {
     getAll: (restaurantId, params) => api.get(`/menu/${restaurantId}`, { params }),
     getCategories: (restaurantId) => api.get(`/menu/${restaurantId}/categories`),
-    create: (data) => api.post('/menu-items', data),
-    update: (id, data) => api.patch(`/menu-items/${id}`, data),
+    create: (data) => {
+        return api.post('/menu-items', data);
+    },
+    update: (id, data) => {
+        return api.patch(`/menu-items/${id}`, data);
+    },
     delete: (id) => api.delete(`/menu-items/${id}`)
 };
 
@@ -93,7 +97,11 @@ export const tableAPI = {
     get: (id) => api.get(`/tables/${id}`),
     create: (data) => api.post('/tables', data),
     update: (id, data) => api.patch(`/tables/${id}`, data),
-    delete: (id) => api.delete(`/tables/${id}`)
+    delete: (id) => api.delete(`/tables/${id}`),
+    // Table Session Management
+    getCurrentSession: (id) => api.get(`/tables/${id}/current-session`),
+    freeTable: (id) => api.post(`/tables/${id}/free`),
+    getSessionHistory: (id, params) => api.get(`/tables/${id}/session-history`, { params })
 };
 
 // Order API

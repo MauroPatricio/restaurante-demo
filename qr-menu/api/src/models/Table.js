@@ -21,7 +21,20 @@ const TableSchema = new mongoose.Schema({
     ref: 'User'
   },
   occupiedAt: Date,
-  minConsumption: Number
+  minConsumption: Number,
+  // Table Session Management
+  currentSessionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TableSession'
+  },
+  lastStatusChange: {
+    type: Date,
+    default: Date.now
+  },
+  statusChangedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

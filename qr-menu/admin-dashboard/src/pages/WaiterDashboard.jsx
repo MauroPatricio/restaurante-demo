@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import { tableAPI, orderAPI } from '../services/api';
 import {
     User, Users, Bell, CheckCircle, Clock, MapPin,
     UtensilsCrossed, AlertTriangle, Coffee, Loader2, TrendingUp
 } from 'lucide-react';
-import { io } from 'socket.io-client';
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
-
-const SOCKET_URL = 'http://localhost:4000';
 
 // Modern Card Styles
 const cardStyle = {
@@ -44,9 +42,9 @@ const iconBoxStyle = (color, bg) => ({
 export default function WaiterDashboard() {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const { pendingAlerts, acknowledgeOrderAlert, activeCalls } = useSocket();
     const [tables, setTables] = useState([]);
     const [readyOrders, setReadyOrders] = useState([]);
-    const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Robust ID retrieval
@@ -61,29 +59,8 @@ export default function WaiterDashboard() {
         fetchData();
         const interval = setInterval(fetchData, 15000);
 
-        const socket = io(SOCKET_URL);
-        socket.emit('join-restaurant', restaurantId);
-
-        socket.on('table-alert', (data) => {
-            const newAlert = {
-                id: Date.now(),
-                tableId: data.tableId,
-                type: data.type || 'service',
-                message: data.value === 'payment' ? t('payment_request') : t('service_call', 'Call for Service'),
-                timestamp: new Date()
-            };
-            setAlerts(prev => [newAlert, ...prev]);
-        });
-
-        socket.on('order-status-updated', (data) => {
-            if (data.status === 'ready') {
-                fetchReadyOrders();
-            }
-        });
-
         return () => {
             clearInterval(interval);
-            socket.disconnect();
         };
     }, [restaurantId]);
 
@@ -115,7 +92,7 @@ export default function WaiterDashboard() {
     };
 
     const dismissAlert = (id) => {
-        setAlerts(prev => prev.filter(a => a.id !== id));
+        // This function seems to be unused now that we use activeCalls/pendingAlerts from socket
     };
 
     const markOrderServed = async (orderId) => {
@@ -182,7 +159,7 @@ export default function WaiterDashboard() {
                             {t('active_alerts') || 'Chamadas Ativas'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {alerts.length}
+                            {activeCalls.length}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
@@ -262,18 +239,18 @@ export default function WaiterDashboard() {
                             <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Bell className="text-red-500" size={20} /> {t('table_calls') || 'Chamadas'}
                             </h2>
-                            {alerts.length > 0 && <span className="bg-red-100 text-red-600 text-xs px-3 py-1 rounded-full font-bold">{alerts.length}</span>}
+                            {activeCalls.length > 0 && <span className="bg-red-100 text-red-600 text-xs px-3 py-1 rounded-full font-bold">{activeCalls.length}</span>}
                         </div>
 
-                        {alerts.length === 0 ? (
+                        {activeCalls.length === 0 ? (
                             <div className="text-center py-12 text-slate-400">
                                 <Bell className="mx-auto h-12 w-12 mb-3 opacity-20" />
                                 <p className="text-sm font-medium">{t('no_active_calls') || 'Nenhuma chamada ativa'}</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {alerts.map(alert => (
-                                    <div key={alert.id} style={{
+                                {activeCalls.map(call => (
+                                    <div key={call.callId} style={{
                                         padding: '16px',
                                         background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
                                         border: '2px solid #fecaca',
@@ -286,15 +263,15 @@ export default function WaiterDashboard() {
                                         <div>
                                             <div className="font-bold text-red-700 text-lg flex items-center gap-2">
                                                 <Coffee size={18} />
-                                                {t('table') || 'Mesa'} {tables.find(t => t._id === alert.tableId)?.number || '?'}
+                                                {t('table') || 'Mesa'} {call.tableNumber || '?'}
                                             </div>
-                                            <div className="text-sm text-red-600 font-medium mt-1">{alert.message}</div>
+                                            <div className="text-sm text-red-600 font-medium mt-1">{call.type === 'payment' ? 'Solicitou Fechamento' : 'Chamou Garçom'}</div>
                                             <div className="text-xs text-red-400 mt-2 flex items-center gap-1">
-                                                <Clock size={12} /> {formatDistanceToNow(alert.timestamp, { addSuffix: true, locale: pt })}
+                                                <Clock size={12} /> {formatDistanceToNow(new Date(call.timestamp), { addSuffix: true, locale: pt })}
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => dismissAlert(alert.id)}
+                                            onClick={() => acknowledgeOrderAlert(call.tableNumber)}
                                             className="px-4 py-2 bg-white text-red-600 text-xs font-bold rounded-lg shadow-sm hover:bg-red-50 transition-all border-2 border-red-200"
                                         >
                                             {t('dismiss') || 'Dispensar'}
@@ -386,14 +363,16 @@ export default function WaiterDashboard() {
                                     cleaning: { bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '#93c5fd', text: '#1e40af', shadow: '0 4px 15px rgba(59, 130, 246, 0.2)' }
                                 };
                                 const config = statusConfig[table.status] || statusConfig.free;
+                                const hasAlert = pendingAlerts.some(a => a.tableNumber === table.number || a.tableNumber === String(table.number));
 
                                 return (
                                     <div
                                         key={table._id}
+                                        className={hasAlert ? 'blink-urgent' : ''}
                                         style={{
                                             padding: '20px',
                                             borderRadius: '12px',
-                                            border: `2px solid ${config.border}`,
+                                            border: hasAlert ? '2px solid #ef4444' : `2px solid ${config.border}`,
                                             background: config.bg,
                                             color: config.text,
                                             position: 'relative',
@@ -404,18 +383,22 @@ export default function WaiterDashboard() {
                                             alignItems: 'flex-start',
                                             justifyContent: 'space-between',
                                             minHeight: '140px',
-                                            boxShadow: config.shadow
+                                            boxShadow: hasAlert ? '0 0 20px rgba(239, 68, 68, 0.4)' : config.shadow
                                         }}
+                                        onClick={() => hasAlert && acknowledgeOrderAlert(table.number)}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.transform = 'translateY(-8px) scale(1.05)';
-                                            e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.15)';
+                                            if (!hasAlert) e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.15)';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                            e.currentTarget.style.boxShadow = config.shadow;
+                                            e.currentTarget.style.boxShadow = hasAlert ? '0 0 20px rgba(239, 68, 68, 0.4)' : config.shadow;
                                         }}
                                     >
-                                        <div className="text-2xl font-bold mb-2">{table.number}</div>
+                                        <div className="text-2xl font-bold mb-2" style={{ color: '#000' }}>
+                                            {t('table')} {table.number}
+                                            {hasAlert && <span className="ml-2">📦</span>}
+                                        </div>
 
                                         <div style={{
                                             display: 'flex',
@@ -432,7 +415,7 @@ export default function WaiterDashboard() {
                                         </div>
 
                                         <div className="mt-3 text-xs uppercase tracking-widest font-bold opacity-70">
-                                            {t(table.status) || table.status}
+                                            Estado: {t(table.status) || table.status}
                                         </div>
 
                                         {isMyTable && (
@@ -458,7 +441,7 @@ export default function WaiterDashboard() {
                                             fontSize: '10px',
                                             fontWeight: '600',
                                             color: config.text,
-                                            opacity: 0,
+                                            opacity: 0.8,
                                             transition: 'opacity 0.3s ease'
                                         }} className="table-location">
                                             {table.location || t('main_hall') || 'Salão Principal'}

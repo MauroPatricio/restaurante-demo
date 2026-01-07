@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { motion } from 'framer-motion';
-import { Check, Clock, ChefHat, Truck, ArrowLeft, RefreshCw, AlertCircle, Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Clock, ChefHat, Truck, ArrowLeft, RefreshCw, AlertCircle, Star, Copy, CheckCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { API_URL, SOCKET_URL } from '../config/api';
 
@@ -18,6 +18,9 @@ const OrderStatus = () => {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+    const location = useLocation();
+    const [justSubmitted, setJustSubmitted] = useState(location.state?.justSubmitted || false);
+    const [copied, setCopied] = useState(false);
 
     // Initial Fetch
     useEffect(() => {
@@ -103,14 +106,45 @@ const OrderStatus = () => {
     return (
         <div className="min-h-screen bg-gray-50 font-sans pb-10">
             {/* Header */}
-            <div className="bg-white p-4 sticky top-0 z-10 shadow-sm flex items-center gap-4">
-                <button onClick={() => navigate(`/menu/${restaurantId}`)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <ArrowLeft size={24} className="text-gray-600" />
+            <div className="bg-white p-4 sticky top-0 z-10 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate(`/menu/${restaurantId}`)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <ArrowLeft size={24} className="text-gray-600" />
+                    </button>
+                    <h1 className="text-lg font-bold text-gray-900">{t('order_status') || 'Status do Pedido'}</h1>
+                </div>
+                <button onClick={() => window.location.reload()} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-primary-600">
+                    <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
                 </button>
-                <h1 className="text-lg font-bold text-gray-900">Order Status</h1>
             </div>
 
             <div className="max-w-md mx-auto p-4 space-y-6">
+
+                {/* Success Message for New Orders */}
+                <AnimatePresence>
+                    {justSubmitted && (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: -20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                            className="bg-green-600 text-white p-4 rounded-2xl shadow-lg mb-6 flex items-start gap-4"
+                        >
+                            <div className="bg-white/20 p-2 rounded-full">
+                                <Check size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg leading-tight">Pedido submetido com sucesso!</h3>
+                                <p className="text-white/80 text-sm mt-1">O ID do seu pedido é <strong>#{order?._id.slice(-6).toUpperCase()}</strong>. Você pode acompanhar o progresso abaixo.</p>
+                                <button
+                                    onClick={() => setJustSubmitted(false)}
+                                    className="mt-2 text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-lg"
+                                >
+                                    Entendi
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Status Card */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
@@ -170,12 +204,29 @@ const OrderStatus = () => {
                 {/* Order Summary */}
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-bold text-gray-500">ORDER ID</span>
-                        <span className="text-sm font-mono text-gray-900">#{order._id.slice(-6).toUpperCase()}</span>
+                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">ID DO PEDIDO</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-mono font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-lg border border-gray-200">
+                                #{order._id.slice(-6).toUpperCase()}
+                            </span>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`#${order._id.slice(-6).toUpperCase()}`);
+                                    setCopied(true);
+                                    setTimeout(() => setCopied(false), 2000);
+                                }}
+                                className={clsx(
+                                    "p-2 rounded-lg transition-all",
+                                    copied ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-400 hover:text-gray-600"
+                                )}
+                            >
+                                {copied ? <CheckCheck size={18} /> : <Copy size={18} />}
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center border-t border-gray-100 pt-2">
+                    <div className="flex justify-between items-center border-t border-gray-100 pt-3 mt-1">
                         <span className="font-bold text-gray-900">{t('total')}</span>
-                        <span className="font-bold text-primary-600 text-lg">{order.total} {t('currency')}</span>
+                        <span className="font-bold text-primary-600 text-lg">{order.total} {t('currency') || 'MT'}</span>
                     </div>
                 </div>
 

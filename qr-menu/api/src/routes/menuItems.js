@@ -4,6 +4,7 @@ import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { upload, uploadImage, deleteImage } from '../services/uploadService.js';
+import cache from '../services/cacheService.js';
 
 const router = express.Router();
 
@@ -50,16 +51,25 @@ router.post('/upload-image', authenticateToken, authorizeRoles(['owner', 'manage
  * @desc    Create a new menu item
  * @access  Private (Owner, Manager)
  */
-router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), async (req, res) => {
+/**
+ * @route   POST /api/menu-items
+ * @desc    Create a new menu item
+ * @access  Private (Owner, Manager)
+ */
+router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), upload.single('image'), async (req, res) => {
     try {
+        console.log('DEBUG: Creating Menu Item');
+        console.log('DEBUG: req.file:', req.file);
+        console.log('DEBUG: req.body:', req.body);
+
         const {
             name,
             description,
             category,
             subcategory,
             price,
-            imageUrl,
-            imagePublicId,
+            // imageUrl, // Handled via req.file or req.body
+            // imagePublicId,
             sku,
             ingredients,
             allergens,
@@ -103,15 +113,31 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), async 
             }
         }
 
+        let finalImageUrl = req.body.imageUrl || '';
+        let finalImagePublicId = req.body.imagePublicId || '';
+
+        // Handle Image Upload if file present
+        if (req.file) {
+            try {
+                const imageData = await uploadImage(req.file);
+                finalImageUrl = imageData.url;
+                finalImagePublicId = imageData.publicId;
+            } catch (uErr) {
+                console.error('Image upload failed during creation:', uErr);
+                // Proceed without image or return error? Let's return error to be safe
+                return res.status(500).json({ message: 'Failed to upload image', error: uErr.message });
+            }
+        }
+
         const menuItem = new MenuItem({
             restaurant: restaurantId,
             name,
             description,
             category,
-            subcategory,
+            subcategory: subcategory || null,
             price,
-            imageUrl,
-            imagePublicId,
+            imageUrl: finalImageUrl,
+            imagePublicId: finalImagePublicId,
             sku,
             ingredients,
             allergens,
@@ -132,12 +158,32 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), async 
         // Populate category and subcategory
         await menuItem.populate('category subcategory');
 
+        console.log('--------------------------------------------------');
+        console.log('✅ NEW PRODUCT IMAGE URL SAVED:', menuItem.imageUrl);
+        console.log('--------------------------------------------------');
+
+        // Clear menu cache for this restaurant
+        const cachePattern = `menu:${restaurantId}*`;
+        cache.deletePattern(cachePattern);
+        console.log(`🧹 Cache cleared (Broad) for restaurant: ${restaurantId}`);
+
         res.status(201).json({
             message: 'Menu item created successfully',
             menuItem
         });
     } catch (error) {
-        console.error('Error creating menu item:', error);
+        console.error('❌ Error creating menu item:', error);
+
+        // Handle Duplicate Key Errors (e.g., SKU)
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern || {})[0] || 'field';
+            const value = error.keyValue ? error.keyValue[field] : '';
+            return res.status(400).json({
+                message: `Duplicate value for ${field}: ${value}. Please use a unique value.`,
+                error: 'DuplicateKeyError'
+            });
+        }
+
         res.status(500).json({ message: 'Failed to create menu item', error: error.message });
     }
 });
@@ -196,12 +242,16 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/menu-items/:id
+ * @route   PATCH /api/menu-items/:id
  * @desc    Update a menu item
  * @access  Private (Owner, Manager)
  */
-router.put('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), async (req, res) => {
+router.patch('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), upload.single('image'), async (req, res) => {
     try {
+        console.log(`DEBUG: Updating Menu Item ${req.params.id}`);
+        console.log('DEBUG: req.file:', req.file);
+        console.log('DEBUG: req.body:', req.body);
+
         const restaurantId = req.user.restaurant?._id || req.user.restaurant;
         const menuItem = await MenuItem.findById(req.params.id);
 
@@ -220,8 +270,8 @@ router.put('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), asyn
             category,
             subcategory,
             price,
-            imageUrl,
-            imagePublicId,
+            // imageUrl,
+            // imagePublicId,
             available,
             sku,
             ingredients,
@@ -259,19 +309,40 @@ router.put('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), asyn
             }
         }
 
-        // If image is being changed, delete old image
-        if (imageUrl && imageUrl !== menuItem.imageUrl && menuItem.imagePublicId) {
-            await deleteImage(menuItem.imagePublicId);
+        let newImageUrl = req.body.imageUrl;
+        let newImagePublicId = req.body.imagePublicId;
+
+        // Handle Image Update
+        if (req.file) {
+            try {
+                const imageData = await uploadImage(req.file);
+                newImageUrl = imageData.url;
+                newImagePublicId = imageData.publicId;
+
+                // Delete old image if exists
+                if (menuItem.imagePublicId) {
+                    await deleteImage(menuItem.imagePublicId);
+                }
+            } catch (uErr) {
+                console.error('Image upload failed during update:', uErr);
+                return res.status(500).json({ message: 'Failed to upload image', error: uErr.message });
+            }
+        } else if (newImageUrl === '') {
+            // If explicitly cleared (though logic depends on how frontend sends it)
+            // Frontend sends imageUrl: '' via handleRemoveImage
+            if (menuItem.imagePublicId) {
+                await deleteImage(menuItem.imagePublicId);
+            }
         }
 
         // Update fields
         if (name) menuItem.name = name;
         if (description !== undefined) menuItem.description = description;
         if (category) menuItem.category = category;
-        if (subcategory !== undefined) menuItem.subcategory = subcategory;
+        if (subcategory !== undefined) menuItem.subcategory = subcategory === '' ? null : subcategory;
         if (price !== undefined) menuItem.price = price;
-        if (imageUrl !== undefined) menuItem.imageUrl = imageUrl;
-        if (imagePublicId !== undefined) menuItem.imagePublicId = imagePublicId;
+        if (newImageUrl !== undefined) menuItem.imageUrl = newImageUrl;
+        if (newImagePublicId !== undefined) menuItem.imagePublicId = newImagePublicId;
         if (available !== undefined) menuItem.available = available;
         if (sku !== undefined) menuItem.sku = sku;
         if (ingredients !== undefined) menuItem.ingredients = ingredients;
@@ -291,12 +362,32 @@ router.put('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), asyn
         await menuItem.save();
         await menuItem.populate('category subcategory');
 
+        console.log('--------------------------------------------------');
+        console.log('✅ UPDATED PRODUCT IMAGE URL SAVED:', menuItem.imageUrl);
+        console.log('--------------------------------------------------');
+
+        // Clear menu cache for this restaurant
+        const cachePattern = `menu:${restaurantId}*`;
+        cache.deletePattern(cachePattern);
+        console.log(`🧹 Cache cleared (Broad) for restaurant: ${restaurantId}`);
+
         res.json({
             message: 'Menu item updated successfully',
             menuItem
         });
     } catch (error) {
-        console.error('Error updating menu item:', error);
+        console.error('❌ Error updating menu item:', error);
+
+        // Handle Duplicate Key Errors (e.g., SKU)
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern || {})[0] || 'field';
+            const value = error.keyValue ? error.keyValue[field] : '';
+            return res.status(400).json({
+                message: `Duplicate value for ${field}: ${value}. Please use a unique value.`,
+                error: 'DuplicateKeyError'
+            });
+        }
+
         res.status(500).json({ message: 'Failed to update menu item', error: error.message });
     }
 });
@@ -309,27 +400,41 @@ router.put('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), asyn
 router.delete('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), async (req, res) => {
     try {
         const restaurantId = req.user.restaurant?._id || req.user.restaurant;
+        console.log(`🗑️ Attempting to delete Menu Item: ${req.params.id}`);
+        console.log(`👤 User Restaurant ID: ${restaurantId}`);
+
         const menuItem = await MenuItem.findById(req.params.id);
 
         if (!menuItem) {
+            console.warn(`⚠️ Menu item ${req.params.id} not found in DB`);
             return res.status(404).json({ message: 'Menu item not found' });
         }
 
+        console.log(`🏠 Item belongs to Restaurant: ${menuItem.restaurant}`);
+
         // Verify menu item belongs to user's restaurant
         if (menuItem.restaurant.toString() !== restaurantId.toString()) {
+            console.error(`❌ Permission Denied: Item ${menuItem._id} (Rest: ${menuItem.restaurant}) does not match User Rest: ${restaurantId}`);
             return res.status(403).json({ message: 'Access denied' });
         }
 
         // Delete image from Cloudinary if exists
         if (menuItem.imagePublicId) {
+            console.log(`🖼️ Deleting image from Cloudinary: ${menuItem.imagePublicId}`);
             await deleteImage(menuItem.imagePublicId);
         }
 
         await menuItem.deleteOne();
+        console.log(`✅ Menu item ${req.params.id} deleted successfully`);
+
+        // Clear menu cache for this restaurant
+        const cachePattern = `menu:${restaurantId}*`;
+        cache.deletePattern(cachePattern);
+        console.log(`🧹 Cache cleared (Broad) for restaurant: ${restaurantId}`);
 
         res.json({ message: 'Menu item deleted successfully' });
     } catch (error) {
-        console.error('Error deleting menu item:', error);
+        console.error('❌ Error deleting menu item:', error);
         res.status(500).json({ message: 'Failed to delete menu item', error: error.message });
     }
 });

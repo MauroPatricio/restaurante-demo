@@ -124,13 +124,16 @@ router.post('/login', async (req, res) => {
             .populate('restaurant')
             .populate('role');
 
-        const accessibleRestaurants = userRoles.map(ur => ({
-            id: ur.restaurant._id,
-            name: ur.restaurant.name,
-            role: ur.role.name,
-            isDefault: ur.isDefault,
-            logo: ur.restaurant.logo
-        }));
+        const accessibleRestaurants = userRoles.map(ur => {
+            if (!ur.restaurant || !ur.role) return null;
+            return {
+                id: ur.restaurant._id,
+                name: ur.restaurant.name,
+                role: ur.role.name,
+                isDefault: ur.isDefault,
+                logo: ur.restaurant.logo
+            };
+        }).filter(Boolean);
 
         // Generate GLOBAL token (no restaurantId)
         const token = generateToken(user._id);
@@ -208,103 +211,6 @@ router.post('/select-restaurant', authenticateToken, async (req, res) => {
     }
 });
 
-// Get current user profile (with role if restaurant context exists)
-router.get('/me', authenticateToken, async (req, res) => {
-    try {
-        // req.user already has role populated by authenticateToken middleware if scoped token
-        // Fetch user contexts
-        const userRoles = await UserRestaurantRole.find({ user: req.user._id, active: true })
-            .populate('restaurant')
-            .populate('role');
-
-        const accessibleRestaurants = userRoles.map(ur => ({
-            id: ur.restaurant._id,
-            name: ur.restaurant.name,
-            role: ur.role.name,
-            isDefault: ur.isDefault,
-            logo: ur.restaurant.logo
-        }));
-
-        res.json({
-            user: {
-                ...req.user.toSafeObject(),
-                role: req.user.role, // Will be populated if using scoped token
-                restaurant: req.user.restaurant, // Will be present if using scoped token
-                restaurants: accessibleRestaurants
-            }
-        });
-    } catch (error) {
-        console.error('Get me error:', error);
-        res.status(500).json({ error: 'Failed to fetch user profile' });
-    }
-});
-
-// Refresh token
-router.post('/refresh', async (req, res) => {
-    try {
-        const authHeader = req.headers['authorization'];
-        const oldToken = authHeader && authHeader.split(' ')[1];
-
-        if (!oldToken) {
-            return res.status(401).json({ error: 'Token required' });
-        }
-
-        // Verify old token (allow expired tokens for refresh)
-        const decoded = jwt.verify(
-            oldToken,
-            process.env.JWT_SECRET || 'your-secret-key',
-            { ignoreExpiration: true }
-        );
-
-        // Ensure user still exists and is active
-        const user = await User.findById(decoded.userId);
-        if (!user || !user.active) {
-            return res.status(403).json({ error: 'User not found or inactive' });
-        }
-
-        // Generate new token
-        const newToken = generateToken(user._id);
-
-        res.json({ token: newToken });
-    } catch (error) {
-        console.error('Token refresh error:', error);
-        res.status(403).json({ error: 'Invalid token' });
-    }
-});
-
-// Update FCM token for push notifications (protected)
-router.post('/fcm-token', authenticateToken, async (req, res) => {
-    try {
-        const { fcmToken } = req.body;
-
-        if (!fcmToken) {
-            return res.status(400).json({ error: 'FCM token required' });
-        }
-
-        await User.findByIdAndUpdate(req.user._id, { fcmToken });
-
-        res.json({ message: 'FCM token updated successfully' });
-    } catch (error) {
-        console.error('FCM token update error:', error);
-        res.status(500).json({ error: 'Failed to update FCM token' });
-    }
-});
-
-// Get current user profile (protected)
-router.get('/me', authenticateToken, async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).populate('restaurants').populate('role');
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.json({ user: user.toSafeObject() });
-    } catch (error) {
-        console.error('Get profile error:', error);
-        res.status(500).json({ error: 'Failed to fetch profile', details: error.message });
-    }
-});
 
 // Change password (protected)
 router.post('/change-password', authenticateToken, async (req, res) => {
@@ -355,7 +261,8 @@ router.get('/me', authenticateToken, async (req, res) => {
         const restaurants = userRestaurantRoles.map(urr => ({
             _id: urr.restaurant._id,
             name: urr.restaurant.name,
-            role: urr.role.name
+            role: urr.role.name,
+            logo: urr.restaurant.logo
         }));
 
         // If restaurantId is in the token, get full restaurant details + role
@@ -378,17 +285,25 @@ router.get('/me', authenticateToken, async (req, res) => {
 
             console.log('📊 currentRestaurant:', currentRestaurant ? currentRestaurant.name : 'null');
             console.log('📊 currentUserRole:', currentUserRole ? currentUserRole.role.name : 'null');
+            console.log('📊 role.isSystem:', currentUserRole?.role?.isSystem);
 
             if (currentRestaurant && currentUserRole) {
                 responseUser.restaurant = currentRestaurant;
-                responseUser.role = currentUserRole.role;
+                responseUser.role = currentUserRole.role; // Full role object with isSystem
                 responseUser.subscription = currentRestaurant.subscription;
                 console.log('✅ Restaurant data added to response');
+                console.log('✅ Role with isSystem:', responseUser.role.isSystem);
             } else {
                 console.log('⚠️  Missing currentRestaurant or currentUserRole');
             }
         } else {
-            console.log('⚠️  No restaurantId in request - user.restaurant will be just the ID');
+            console.log('⚠️  No restaurantId in request');
+            // Even without restaurant context, try to get the first role
+            if (userRestaurantRoles.length > 0) {
+                const firstRole = userRestaurantRoles[0].role;
+                responseUser.role = firstRole; // Include role with isSystem
+                console.log('✅ Using first role:', firstRole.name, 'isSystem:', firstRole.isSystem);
+            }
         }
 
         res.json({

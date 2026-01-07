@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { menuAPI, categoryAPI, subcategoryAPI, uploadAPI } from '../services/api';
-import { Plus, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ImageUpload from '../components/ImageUpload';
 
@@ -46,15 +46,35 @@ export default function Menu() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm(t('confirm_delete') || 'Are you sure?')) return false;
+        console.log(`🗑️ UI: Requesting delete for item ID: ${id}`);
+        if (!confirm(t('confirm_delete') || 'Are you sure?')) {
+            console.log('❌ UI: Delete cancelled by user');
+            return false;
+        }
+
+        // Optimistic UI update: remove item immediately
+        const originalItems = [...items];
+        setItems(items.filter(item => item._id !== id));
 
         try {
             await menuAPI.delete(id);
-            fetchMenu();
+            console.log(`✅ UI: Item ${id} deleted successfully from server`);
+            // Don't fetch menu again - rely on optimistic update
             return true;
         } catch (error) {
-            alert('Failed to delete item');
-            return false;
+            console.error('Delete error:', error);
+
+            // Handle 404 - item already deleted
+            if (error.response?.status === 404) {
+                // Item already deleted, keep it removed from UI
+                console.log('Item already deleted on server, cleaning up UI...');
+                return true;
+            } else {
+                // Restore items on other errors
+                setItems(originalItems);
+                alert(error.response?.data?.message || 'Failed to delete item');
+                return false;
+            }
         }
     };
 
@@ -119,12 +139,16 @@ export default function Menu() {
                 <div className="menu-grid">
                     {items.map(item => (
                         <div key={item._id} className={`menu-card ${!item.available ? 'unavailable' : ''}`}>
-                            {(item.imageUrl || item.photo) && (
-                                <div className="menu-card-image">
+                            <div className="menu-card-image">
+                                {(item.imageUrl || item.photo) ? (
                                     <img src={item.imageUrl || item.photo} alt={item.name} />
-                                    {!item.available && <div className="overlay">{t('unavailable')}</div>}
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="placeholder-image">
+                                        <ImageIcon size={48} color="#cbd5e1" />
+                                    </div>
+                                )}
+                                {!item.available && <div className="overlay">{t('unavailable')}</div>}
+                            </div>
                             <div className="menu-card-content">
                                 <div className="menu-card-header">
                                     <h3>{item.name}</h3>
@@ -133,8 +157,16 @@ export default function Menu() {
                                 <p className="menu-card-description">{item.description}</p>
                                 <div className="menu-card-meta" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                                        <span className="badge">{item.category?.name || item.category}</span>
-                                        {item.subcategory && <span className="badge" style={{ background: '#e0f2fe' }}>{item.subcategory?.name || item.subcategory}</span>}
+                                        <span className="badge">
+                                            {typeof item.category === 'object' ? item.category.name : (categories.find(c => c._id === item.category)?.name || item.category)}
+                                        </span>
+                                        {item.subcategory && (
+                                            <span className="badge" style={{ background: '#e0f2fe', fontSize: '0.75rem', fontWeight: '500' }}>
+                                                {typeof item.subcategory === 'object'
+                                                    ? item.subcategory.name
+                                                    : (categories.flatMap(c => c.subcategories || []).find(s => s._id === item.subcategory)?.name || 'Subcategoria')}
+                                            </span>
+                                        )}
                                         {item.featured && <span className="badge" style={{ background: '#ffeb3b', color: '#000' }}>{t('featured')}</span>}
                                         {item.seasonal && <span className="badge" style={{ background: '#e0f2fe', color: '#000' }}>{item.seasonal}</span>}
                                         {item.tags && item.tags.slice(0, 2).map(tag => (
@@ -162,9 +194,16 @@ export default function Menu() {
                                         <Edit size={16} />
                                         {t('edit')}
                                     </button>
-                                    <button onClick={() => handleDelete(item._id)} className="btn-small btn-danger">
-                                        <Trash2 size={16} />
-                                        {t('delete')}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(item._id);
+                                        }}
+                                        className="btn-small btn-danger"
+                                        title={t('delete') || 'Delete'}
+                                        style={{ padding: '8px' }}
+                                    >
+                                        <Trash2 size={16} color="#dc2626" />
                                     </button>
                                 </div>
                             </div>
@@ -250,19 +289,39 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
         }
     };
 
+    const [imageFile, setImageFile] = useState(null);
+
     const handleImageUpload = async (file) => {
+        setUploadingImage(true);
         try {
-            setUploadingImage(true);
-            const { data } = await uploadAPI.uploadImage(file);
+            // Local preview for immediate feedback
+            const previewUrl = URL.createObjectURL(file);
             setFormData(prev => ({
                 ...prev,
-                imageUrl: data.imageUrl,
-                imagePublicId: data.imagePublicId
+                imageUrl: previewUrl
             }));
-            return data;
+
+            // Actual upload
+            console.log('📤 Uploading image to Cloudinary...');
+            const response = await uploadAPI.uploadImage(file);
+            const { imageUrl, imagePublicId } = response.data;
+
+            console.log('✅ Image uploaded successfully:', imageUrl);
+
+            setFormData(prev => ({
+                ...prev,
+                imageUrl,
+                imagePublicId
+            }));
+            setImageFile(null); // Clear local file state as it's now on the server
         } catch (error) {
-            console.error('Upload failed:', error);
-            throw new Error('Failed to upload image');
+            console.error('Failed to upload image:', error);
+            alert('Falha ao carregar imagem. Por favor, tente novamente.');
+            // Revert preview on failure
+            setFormData(prev => ({
+                ...prev,
+                imageUrl: item?.imageUrl || item?.photo || ''
+            }));
         } finally {
             setUploadingImage(false);
         }
@@ -274,30 +333,57 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
             imageUrl: '',
             imagePublicId: ''
         }));
+        setImageFile(null);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (uploadingImage) {
+            alert('Aguarde o carregamento da imagem...');
+            return;
+        }
         setLoading(true);
 
         try {
-            const payload = {
+            // Since image is already uploaded to Cloudinary, we can send a clean JSON object
+            const submitData = {
                 ...formData,
                 restaurant: restaurantId,
-                sku: formData.sku?.trim() || undefined,
                 ingredients: formData.ingredients.split(',').map(s => s.trim()).filter(Boolean),
-                tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean)
+                tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean),
+                // Ensure subcategory is null if empty string to avoid Mongoose errors
+                subcategory: formData.subcategory || null
             };
 
+            let response;
             if (item) {
-                await menuAPI.update(item._id, payload);
+                response = await menuAPI.update(item._id, submitData);
+                console.log('✅ Menu Item Updated:', response.data.menuItem);
             } else {
-                await menuAPI.create(payload);
+                response = await menuAPI.create(submitData);
+                console.log('✅ Menu Item Created:', response.data.menuItem);
             }
+
+            if (response.data.menuItem?.imageUrl) {
+                console.log('🔗 Saved Image URL:', response.data.menuItem.imageUrl);
+            }
+
+            console.log('📦 Saved Object Summary:');
+            console.table({
+                ID: response.data.menuItem._id,
+                Nome: response.data.menuItem.name,
+                Preço: response.data.menuItem.price,
+                Categoria: response.data.menuItem.category?.name || response.data.menuItem.category,
+                URL_Imagem: response.data.menuItem.imageUrl ? response.data.menuItem.imageUrl.substring(0, 50) + '...' : 'N/A'
+            });
+
+            // "Apresentar o item gravado" - Show success toast/alert
+            alert(`✅ Item "${response.data.menuItem.name}" gravado com sucesso!`);
+
             onSave();
         } catch (error) {
+            console.error('Save error:', error);
             alert(error.response?.data?.message || 'Failed to save menu item');
-            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -419,11 +505,81 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
 
                             <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                 <label>Product Image</label>
-                                <ImageUpload
-                                    onImageUpload={handleImageUpload}
-                                    currentImage={formData.imageUrl}
-                                    onRemove={handleRemoveImage}
-                                />
+                                {/* Register.jsx Philosophy: Direct Image Input & Preview */}
+                                <div className="center-upload" style={{ justifyContent: 'flex-start' }}>
+                                    <label htmlFor="image-upload" className="avatar-upload-label" style={{ display: 'block', width: 'fit-content' }}>
+                                        {imageFile ? (
+                                            <img
+                                                src={URL.createObjectURL(imageFile)}
+                                                alt="Preview"
+                                                className="avatar-preview"
+                                                style={{ width: '150px', height: '150px', borderRadius: '12px', objectFit: 'cover', border: '2px solid #2563eb' }}
+                                            />
+                                        ) : formData.imageUrl ? (
+                                            <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                <img
+                                                    src={formData.imageUrl}
+                                                    alt="Current"
+                                                    className="avatar-preview"
+                                                    style={{ width: '150px', height: '150px', borderRadius: '12px', objectFit: 'cover', border: '1px solid #cbd5e1' }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        handleRemoveImage();
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '-5px',
+                                                        right: '-5px',
+                                                        background: '#ef4444',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="avatar-placeholder" style={{
+                                                width: '150px',
+                                                height: '150px',
+                                                borderRadius: '12px',
+                                                background: '#f1f5f9',
+                                                border: '2px dashed #cbd5e1',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#64748b',
+                                                cursor: 'pointer'
+                                            }}>
+                                                <ImageIcon size={32} />
+                                                <small style={{ marginTop: '8px' }}>Upload Photo</small>
+                                            </div>
+                                        )}
+                                        <input
+                                            id="image-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden-input"
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                    handleImageUpload(e.target.files[0]);
+                                                }
+                                            }}
+                                            style={{ display: 'none' }}
+                                        />
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -571,7 +727,9 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                         {item && (
                             <button
                                 type="button"
-                                onClick={async () => {
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     const success = await onDelete(item._id);
                                     if (success) onClose();
                                 }}
@@ -587,7 +745,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                 Cancel
                             </button>
                             <button type="submit" className="btn-primary" disabled={loading || uploadingImage}>
-                                {loading ? 'Saving...' : uploadingImage ? 'Uploading...' : 'Save'}
+                                {loading ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>

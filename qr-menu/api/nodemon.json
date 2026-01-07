@@ -1,0 +1,27 @@
+{
+    "watch": [
+        "src",
+        "index.js",
+        ".env"
+    ],
+    "ext": "js,json",
+    "ignore": [
+        "node_modules",
+        "tests",
+        "uploads",
+        "*.log",
+        "*.test.js"
+    ],
+    "delay": 1000,
+    "verbose": true,
+    "execMap": {
+        "js": "node"
+    },
+    "env": {
+        "NODE_ENV": "development"
+    },
+    "events": {
+        "restart": "echo 🔄 API reiniciada devido a alterações nos arquivos...",
+        "crash": "echo ⚠️ API crashou - aguardando alterações..."
+    }
+}

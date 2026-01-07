@@ -15,6 +15,7 @@ import rateLimit from 'express-rate-limit';
 import router from './src/routes/index.js';
 import { initializeFirebase } from './src/services/firebaseService.js';
 import { startSubscriptionMonitoring } from './src/services/scheduledJobs.js';
+import { setupWaiterCallHandlers } from './src/socket/waiterCallHandlers.js';
 
 // Carregando variáveis de ambiente
 dotenv.config();
@@ -222,6 +223,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Make Socket.IO instance available in req for controllers
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
@@ -283,6 +290,9 @@ io.on('connection', (socket) => {
     console.log('Socket disconnected:', socket.id);
   });
 });
+
+// Setup Waiter Call Socket.IO handlers
+setupWaiterCallHandlers(io);
 
 // Make io available globally for real-time updates
 app.set('io', io);

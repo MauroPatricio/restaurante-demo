@@ -77,14 +77,35 @@ export const AuthProvider = ({ children }) => {
         const { data } = await api.post('/auth/select-restaurant', { restaurantId });
         localStorage.setItem('token', data.token);
         localStorage.setItem('restaurantId', restaurantId);
-
-        // Update user state with the selected restaurant context and role
-        setUser(prev => ({
-            ...prev,
+        localStorage.setItem('user', JSON.stringify({
+            ...user,
             restaurant: data.restaurant,
-            role: { name: data.role }, // Add role from backend response
+            role: data.role, // This should be the full role object from backend
             subscription: data.subscription
         }));
+
+        // Call /auth/me to get the FULL role object with isSystem
+        try {
+            const meResponse = await api.get('/auth/me');
+            console.log('✅ /auth/me after selectRestaurant:', meResponse.data);
+            console.log('  Role:', meResponse.data.user?.role);
+            console.log('  isSystem:', meResponse.data.user?.role?.isSystem);
+
+            // Update user state with complete role object including isSystem
+            setUser(meResponse.data.user);
+
+            // Also update localStorage
+            localStorage.setItem('user', JSON.stringify(meResponse.data.user));
+        } catch (error) {
+            console.error('❌ Failed to get /auth/me after selectRestaurant:', error);
+            // Fallback: use data from select-restaurant
+            setUser(prev => ({
+                ...prev,
+                restaurant: data.restaurant,
+                role: data.role,
+                subscription: data.subscription
+            }));
+        }
 
         return data;
     };

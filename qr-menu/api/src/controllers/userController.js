@@ -162,6 +162,17 @@ export const deleteUser = async (req, res) => {
             return res.status(404).json({ error: 'User not found in this restaurant' });
         }
 
+        // Check if user has any other associations
+        const remainingRoles = await UserRestaurantRole.countDocuments({ user: id });
+
+        if (remainingRoles === 0) {
+            // User is now an orphan (not associated with any restaurant)
+            // Safe to delete the global user record
+            await User.findByIdAndDelete(id);
+            console.log(`Global user ${id} deleted as they have no remaining restaurant associations.`);
+            return res.json({ message: 'User deleted completely (Global account removed)' });
+        }
+
         res.json({ message: 'User removed from restaurant successfully' });
     } catch (error) {
         console.error('Delete user error:', error);
