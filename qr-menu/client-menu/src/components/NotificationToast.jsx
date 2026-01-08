@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle, ChefHat, Clock, X, Info } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const statusConfig = {
     pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-50', label: 'Pendente' },
@@ -15,13 +15,27 @@ const statusConfig = {
 
 export default function NotificationToast({ notification, onClose }) {
     const navigate = useNavigate();
-    const { restaurantId } = useParams();
 
     if (!notification) return null;
 
-    const { orderId, status, message } = notification;
-    const config = statusConfig[status] || { icon: Info, color: 'text-primary-500', bg: 'bg-primary-50', label: status };
+    const { orderId, status, message, restaurantId } = notification;
+
+    const config =
+        statusConfig[status] || {
+            icon: Info,
+            color: 'text-primary-500',
+            bg: 'bg-primary-50',
+            label: status,
+        };
+
     const Icon = config.icon;
+
+    const handleClick = () => {
+        if (orderId && restaurantId) {
+            navigate(`/menu/${restaurantId}/status/${orderId}`);
+        }
+        onClose();
+    };
 
     return (
         <AnimatePresence>
@@ -32,25 +46,23 @@ export default function NotificationToast({ notification, onClose }) {
                 className="fixed top-0 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-sm"
             >
                 <div
-                    onClick={() => {
-                        if (orderId && restaurantId) navigate(`/menu/${restaurantId}/status/${orderId}`);
-                        onClose();
-                    }}
+                    onClick={handleClick}
                     className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-4 cursor-pointer active:scale-95 transition-all overflow-hidden relative"
                 >
-                    {/* Progress pulse bar */}
+                    {/* Progress bar */}
                     <motion.div
                         initial={{ width: '0%' }}
                         animate={{ width: '100%' }}
                         transition={{ duration: 5, ease: 'linear' }}
-                        className={`absolute bottom-0 left-0 h-1 ${config.bg.replace('bg-', 'bg-')}`}
-                        style={{ backgroundColor: 'currentColor', opacity: 0.2 }}
+                        className={`absolute bottom-0 left-0 h-1 ${config.bg}`}
+                        style={{ opacity: 0.25 }}
                     />
 
                     <div className="flex gap-4 items-start">
                         <div className={`p-3 rounded-xl ${config.bg} ${config.color}`}>
                             <Icon size={24} />
                         </div>
+
                         <div className="flex-1 pr-6">
                             <h4 className="font-bold text-gray-900 dark:text-white text-sm">
                                 Atualização do Pedido #{orderId?.slice(-6).toUpperCase()}
@@ -62,6 +74,7 @@ export default function NotificationToast({ notification, onClose }) {
                                 Toque para ver detalhes
                             </div>
                         </div>
+
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();

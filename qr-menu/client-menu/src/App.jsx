@@ -109,10 +109,9 @@ function QRRedirect() {
 
 function App() {
     return (
-        <CartProvider>
-            <ThemeProvider>
-                <NotificationProvider>
-                    <BrowserRouter>
+            <CartProvider>
+                <ThemeProvider>
+                    <NotificationProvider>
                         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                             <Routes>
                                 <Route path="/menu" element={<QRRedirect />} />
@@ -128,10 +127,9 @@ function App() {
                                 </div>} />
                             </Routes>
                         </div>
-                    </BrowserRouter>
-                </NotificationProvider>
-            </ThemeProvider>
-        </CartProvider>
+                    </NotificationProvider>
+                </ThemeProvider>
+            </CartProvider>
     );
 }
 
