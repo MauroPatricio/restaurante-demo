@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { useSound } from '../hooks/useSound';
 
 const SocketContext = createContext(null);
 
@@ -22,6 +23,9 @@ export const SocketProvider = ({ children }) => {
         const saved = localStorage.getItem(`pending-alerts-${restaurant._id}`);
         return saved ? JSON.parse(saved) : [];
     });
+
+    // Sound notification for new orders
+    const { play: playOrderSound } = useSound('/sounds/bell.mp3');
 
     // Save alerts to localStorage whenever they change
     useEffect(() => {
@@ -79,6 +83,10 @@ export const SocketProvider = ({ children }) => {
         // New Order Alert
         newSocket.on('order:new', (data) => {
             console.log('🔔 New order received:', data);
+
+            // Play notification sound
+            playOrderSound();
+
             setPendingAlerts(prev => {
                 // Avoid duplicates
                 if (prev.some(a => a.orderId === data.orderId)) return prev;

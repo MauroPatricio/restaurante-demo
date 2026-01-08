@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { createWaiterCall } from '../services/waiterCallAPI';
+import { useSound } from '../hooks/useSound';
 import './WaiterCallButton.css';
 
-export default function WaiterCallButton({ tableId }) {
+export default function WaiterCallButton({ tableId, className = '', variant = 'floating' }) {
     const [calling, setCalling] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [lastCallTime, setLastCallTime] = useState(null);
+
+    // Sound notification for calling waiter
+    const { play: playCallSound } = useSound('/sounds/bell2.mp3');
 
     const COOLDOWN_MS = 30000; // 30 seconds cooldown
 
@@ -32,6 +36,10 @@ export default function WaiterCallButton({ tableId }) {
 
         try {
             await createWaiterCall(tableId, 'call');
+
+            // Play sound on successful call
+            playCallSound();
+
             setShowConfirmation(true);
             setLastCallTime(Date.now());
 
@@ -56,13 +64,15 @@ export default function WaiterCallButton({ tableId }) {
         return null;
     }
 
+    const baseClass = variant === 'floating' ? 'waiter-call-button' : 'waiter-call-button-inline';
+
     return (
         <>
-            {/* Floating Button */}
+            {/* Call Button */}
             <button
                 onClick={handleCallWaiter}
                 disabled={calling || !canCall()}
-                className={`waiter-call-button ${calling ? 'calling' : ''} ${!canCall() ? 'cooldown' : ''}`}
+                className={`${baseClass} ${calling ? 'calling' : ''} ${!canCall() ? 'cooldown' : ''} ${className}`}
                 aria-label="Chamar Garçom"
             >
                 <Bell size={24} className="bell-icon" />

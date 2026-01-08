@@ -325,21 +325,25 @@ router.get('/tables/:id', async (req, res) => {
   try {
     const table = await Table.findById(req.params.id)
       .populate('restaurant')
-      .populate('assignedWaiterId', 'name email');
+      .populate('assignedWaiterId', 'name email avatar'); // Added avatar
 
     if (!table) {
       return res.status(404).json({ error: 'Table not found' });
     }
 
-    // Add waiter name to response if populated
+    // Add waiter details
     if (table.assignedWaiterId) {
       table.assignedWaiter = table.assignedWaiterId.name;
+      table.waiterPhoto = table.assignedWaiterId.avatar;
+      table.waiterStatus = 'online'; // TODO: Implement real presence
     } else if (table.assignedWaiter && mongoose.Types.ObjectId.isValid(table.assignedWaiter)) {
       // Logic to resolve ID if it's stored in the legacy string field
       const User = (await import('../models/User.js')).default;
-      const waiterUser = await User.findById(table.assignedWaiter).select('name');
+      const waiterUser = await User.findById(table.assignedWaiter).select('name avatar');
       if (waiterUser) {
         table.assignedWaiter = waiterUser.name;
+        table.waiterPhoto = waiterUser.avatar;
+        table.waiterStatus = 'online';
       }
     }
 

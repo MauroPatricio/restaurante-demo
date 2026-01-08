@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { API_URL, SOCKET_URL } from '../config/api';
+import { formatTime } from '../utils/dateUtils';
 
 const OrderStatus = () => {
     const { restaurantId, orderId } = useParams();
@@ -155,7 +156,7 @@ const OrderStatus = () => {
                         {order.status === 'pending' ? t('order_status_pending') : t(`order_status_${order.status}`)}
                     </h2>
                     <p className="text-gray-500 text-sm">
-                        Estimated ready: {new Date(order.estimatedReadyTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        Estimated ready: {formatTime(order.estimatedReadyTime)}
                     </p>
                 </div>
 

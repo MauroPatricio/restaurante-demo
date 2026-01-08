@@ -131,20 +131,38 @@ export default function Orders() {
                                     <td>
                                         <div className="action-buttons">
                                             {order.status === 'pending' && (
-                                                <button
-                                                    onClick={() => updateOrderStatus(order._id, 'confirmed')}
-                                                    className="btn-small btn-primary"
-                                                >
-                                                    Confirm
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => updateOrderStatus(order._id, 'confirmed')}
+                                                        className="btn-small btn-primary"
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                    <button
+                                                        onClick={() => updateOrderStatus(order._id, 'cancelled')}
+                                                        className="btn-small btn-danger"
+                                                        style={{ marginLeft: '8px', background: '#ef4444', color: 'white', border: 'none' }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </>
                                             )}
                                             {order.status === 'confirmed' && (
-                                                <button
-                                                    onClick={() => updateOrderStatus(order._id, 'preparing')}
-                                                    className="btn-small btn-primary"
-                                                >
-                                                    Start Preparing
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => updateOrderStatus(order._id, 'preparing')}
+                                                        className="btn-small btn-primary"
+                                                    >
+                                                        Start Preparing
+                                                    </button>
+                                                    <button
+                                                        onClick={() => updateOrderStatus(order._id, 'cancelled')}
+                                                        className="btn-small btn-danger"
+                                                        style={{ marginLeft: '8px', background: '#ef4444', color: 'white', border: 'none' }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </>
                                             )}
                                             {order.status === 'preparing' && (
                                                 <button

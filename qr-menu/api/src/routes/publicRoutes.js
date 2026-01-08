@@ -163,8 +163,24 @@ router.post('/orders', async (req, res) => {
     try {
         const { restaurantId, tableId, token, items, customerName, phone, paymentMethod, notes } = req.body;
 
+        console.log('📦 Order submission attempt:', {
+            restaurantId,
+            tableId,
+            token: token ? `${token.substring(0, 20)}...` : 'MISSING',
+            itemsCount: items?.length,
+            customerName
+        });
+
         // Validate token
-        if (!validateTableToken(token, restaurantId, tableId)) {
+        const isValidToken = validateTableToken(token, restaurantId, tableId);
+        console.log('🔐 Token validation result:', isValidToken);
+
+        if (!isValidToken) {
+            console.warn('❌ Token validation failed:', {
+                restaurantId,
+                tableId,
+                tokenProvided: !!token
+            });
             return res.status(403).json({
                 error: 'Invalid token',
                 message: 'Token inválido. Por favor, escaneie o QR Code novamente.'
@@ -183,19 +199,37 @@ router.post('/orders', async (req, res) => {
         const restaurant = await Restaurant.findById(restaurantId).populate('subscription');
         const table = await Table.findById(tableId);
 
+        console.log('🏪 Restaurant check:', {
+            found: !!restaurant,
+            active: restaurant?.active,
+            hasSubscription: !!restaurant?.subscription,
+            subscriptionStatus: restaurant?.subscription?.status
+        });
+
         if (!restaurant || !restaurant.active) {
+            console.warn('❌ Restaurant unavailable:', {
+                found: !!restaurant,
+                active: restaurant?.active
+            });
             return res.status(403).json({
                 error: 'Restaurant unavailable',
                 message: 'Restaurante não disponível no momento'
             });
         }
 
-        if (!restaurant.subscription || restaurant.subscription.status !== 'active') {
+        if (!restaurant.subscription || !['active', 'trial'].includes(restaurant.subscription.status)) {
+            console.warn('❌ Subscription issue:', {
+                hasSubscription: !!restaurant.subscription,
+                status: restaurant.subscription?.status,
+                expected: 'active or trial'
+            });
             return res.status(403).json({
                 error: 'Subscription expired',
                 message: 'Não é possível fazer pedidos no momento'
             });
         }
+
+        console.log('✅ All validations passed, creating order...');
 
         if (!table) {
             return res.status(404).json({

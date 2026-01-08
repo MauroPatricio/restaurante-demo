@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNotification } from '../context/NotificationContext';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
@@ -11,6 +12,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import WaiterCallButton from '../components/WaiterCallButton';
 import ReactionButtons from '../components/ReactionButtons';
 import { createWaiterCall, createClientReaction } from '../services/waiterCallAPI';
+import { formatDate, formatTime } from '../utils/dateUtils';
 
 const Menu = () => {
     const { restaurantId } = useParams();
@@ -52,31 +54,31 @@ const Menu = () => {
     const [customerOrders, setCustomerOrders] = useState([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
 
+    // Real-time Context
+    const { joinRestaurantRoom, joinTableRoom, lastMenuUpdate, lastTableUpdate, isOnline } = useNotification();
+
+    // Join Rooms
+    useEffect(() => {
+        if (restaurantId) joinRestaurantRoom(restaurantId);
+        if (tableNumber) joinTableRoom(tableNumber);
+    }, [restaurantId, tableNumber, joinRestaurantRoom, joinTableRoom]);
+
+    // Fetch Menu (Re-fetches on lastMenuUpdate)
     useEffect(() => {
         const fetchMenu = async () => {
             try {
                 setLoading(true);
+                const t = Date.now(); // Cache buster
                 const [restRes, menuRes, catRes] = await Promise.all([
                     axios.get(`${API_URL}/restaurants/${restaurantId}`),
-                    axios.get(`${API_URL}/menu/${restaurantId}?available=true`),
+                    axios.get(`${API_URL}/menu/${restaurantId}?available=true&_t=${t}`),
                     axios.get(`${API_URL}/menu/${restaurantId}/categories`)
                 ]);
 
                 setRestaurant(restRes.data.restaurant);
                 setMenuItems(menuRes.data.items);
-                // Add 'All' category at the beginning
                 setCategories(['All', ...(catRes.data.categories || [])]);
                 checkRestaurant(restaurantId);
-
-                if (tableNumber) {
-                    try {
-                        // tableNumber from URL is actually the table ID
-                        const tableRes = await axios.get(`${API_URL}/tables/${tableNumber}`);
-                        setTableInfo(tableRes.data.table);
-                    } catch (e) {
-                        console.warn("Table not found or err", e);
-                    }
-                }
             } catch (err) {
                 console.error(err);
                 setError('Failed to load menu. Please scan QR Code again.');
@@ -86,7 +88,22 @@ const Menu = () => {
         };
 
         if (restaurantId) fetchMenu();
-    }, [restaurantId]);
+    }, [restaurantId, lastMenuUpdate]);
+
+    // Separate Table Fetch (Re-fetches on lastTableUpdate)
+    useEffect(() => {
+        const fetchTableInfo = async () => {
+            if (tableNumber) {
+                try {
+                    const tableRes = await axios.get(`${API_URL}/tables/${tableNumber}?_t=${Date.now()}`);
+                    setTableInfo(tableRes.data.table);
+                } catch (e) {
+                    console.warn("Table not found or err", e);
+                }
+            }
+        };
+        fetchTableInfo();
+    }, [tableNumber, lastTableUpdate]);
 
     const filteredItems = menuItems.filter(item => {
         // Get the category ID from the item (handle both string and object)
@@ -188,9 +205,15 @@ const Menu = () => {
                     <motion.h1
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-2xl font-bold text-white leading-tight mb-2"
+                        className="text-2xl font-bold text-white leading-tight mb-2 flex items-center gap-3"
                     >
                         {restaurant?.name}
+                        {restaurant && (
+                            <span
+                                className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)] ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}
+                                title={isOnline ? 'Conectado' : 'Desconectado'}
+                            />
+                        )}
                     </motion.h1>
 
                     {/* Table and Waiter Info */}
@@ -201,13 +224,33 @@ const Menu = () => {
                                 <span className="text-white font-bold text-sm">{t('table')} {tableInfo.number}</span>
                                 <span className="text-white/60 text-xs ml-1 border-l border-white/20 pl-2">Estado: {t(tableInfo.status) || tableInfo.status}</span>
                             </div>
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10">
-                                <User size={14} className="text-white/80" />
-                                <span className="text-white/70 text-xs font-medium">{t('waiter')}:</span>
-                                <span className="text-white/90 text-xs font-bold">
-                                    {tableInfo.assignedWaiter || "Garçom não atribuído"}
-                                </span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 min-w-[140px]">
+                                {tableInfo.waiterPhoto ? (
+                                    <img src={tableInfo.waiterPhoto} alt="Waiter" className="w-8 h-8 rounded-full object-cover border-2 border-white/20" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                                        <User size={16} className="text-white/80" />
+                                    </div>
+                                )}
+                                <div className="flex flex-col leading-tight">
+                                    <span className="text-white/60 text-[10px] uppercase font-bold flex items-center gap-1.5">
+                                        {t('waiter')}
+                                        {tableInfo.assignedWaiter && (
+                                            <span className={`w-1.5 h-1.5 rounded-full ${tableInfo.waiterStatus === 'online' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]' : 'bg-gray-400'}`}></span>
+                                        )}
+                                    </span>
+                                    <span className="text-white font-bold text-xs truncate max-w-[100px]">
+                                        {tableInfo.assignedWaiter || "Não atribuído"}
+                                    </span>
+                                </div>
                             </div>
+
+                            {/* Inline Call Waiter Button */}
+                            <WaiterCallButton
+                                tableId={tableInfo._id}
+                                variant="inline"
+                                className="!py-1.5 !px-3 !text-xs !bg-white/10 !backdrop-blur-sm !border !border-white/10 hover:!bg-white/20 !shadow-none"
+                            />
                         </div>
                     )}
 
@@ -451,11 +494,11 @@ const Menu = () => {
                                                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">#{order._id.slice(-6).toUpperCase()}</span>
                                                             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                                                             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                                                {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                {formatTime(order.createdAt)}
                                                             </span>
                                                         </div>
                                                         <p className="text-xs text-gray-400">
-                                                            {new Date(order.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short' })}
+                                                            {formatDate(order.createdAt, { day: 'numeric', month: 'short' })}
                                                         </p>
                                                     </div>
                                                     <span className={clsx(
@@ -527,6 +570,9 @@ const Menu = () => {
 
             {/* Institutional Footer Only */}
             <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-4 z-10 border-t border-gray-200 dark:border-gray-800 transition-colors duration-200">
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium text-center mb-1">
+                    Última atualização do menu: {formatTime(lastMenuUpdate)}
+                </p>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold text-center uppercase tracking-widest">
                     Desenvolvido por Nhiquela Serviços e Consultoria, LDA
                 </p>

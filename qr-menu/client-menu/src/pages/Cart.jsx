@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../config/api';
 import WaiterCallButton from '../components/WaiterCallButton';
 import ReactionButtons from '../components/ReactionButtons';
+import { useSound } from '../hooks/useSound';
+import bellSound from '../sound/bell.mp3';
 
 const Cart = () => {
     const { restaurantId } = useParams();
@@ -33,6 +35,9 @@ const Cart = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+
+    // Sound notification for successful order submission
+    const { play: playSuccessSound } = useSound(bellSound);
 
     // Auto-redirect if cart is empty
     useEffect(() => {
@@ -92,6 +97,10 @@ const Cart = () => {
 
             if (response.status === 201) {
                 const orderData = response.data.order;
+
+                // Play success sound
+                playSuccessSound();
+
                 // Store phone for history lookup
                 if (phone.trim()) {
                     localStorage.setItem(`customer-phone-${restaurantId}`, phone.trim());
@@ -155,7 +164,7 @@ const Cart = () => {
                 <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t('cart_empty') || 'Seu carrinho está vazio'}</h2>
                 <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-xs">{t('cart_empty_msg') || 'Adicione itens deliciosos do menu para começar seu pedido!'}</p>
                 <button
-                    onClick={() => navigate(`/ menu / ${restaurantId} `)}
+                    onClick={() => navigate(`/menu/${restaurantId}`)}
                     className="text-primary-600 dark:text-primary-400 font-bold flex items-center gap-2 hover:underline"
                 >
                     <ArrowLeft size={20} /> Browse Menu

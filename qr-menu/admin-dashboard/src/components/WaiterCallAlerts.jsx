@@ -2,10 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, X, Check, Clock } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 import './WaiterCallAlerts.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function WaiterCallAlerts() {
     const { activeCalls, acknowledgeCall: localAcknowledge, removeCall } = useSocket();
@@ -69,7 +67,7 @@ export default function WaiterCallAlerts() {
 
     const handleAcknowledge = async (callId) => {
         try {
-            await axios.post(`${API_URL}/waiter-calls/${callId}/acknowledge`);
+            await api.post(`/waiter-calls/${callId}/acknowledge`);
             localAcknowledge(callId);
         } catch (error) {
             console.error('Failed to acknowledge call:', error);
@@ -79,7 +77,7 @@ export default function WaiterCallAlerts() {
 
     const handleResolve = async (callId) => {
         try {
-            await axios.post(`${API_URL}/waiter-calls/${callId}/resolve`);
+            await api.post(`/waiter-calls/${callId}/resolve`);
             removeCall(callId);
         } catch (error) {
             console.error('Failed to resolve call:', error);

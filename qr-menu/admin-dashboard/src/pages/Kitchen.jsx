@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { orderAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
-import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX } from 'lucide-react';
+import { useSound } from '../hooks/useSound';
+import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -41,46 +42,68 @@ const iconBoxStyle = (color, bg) => ({
 const Kitchen = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
-    const { pendingAlerts, acknowledgeOrderAlert } = useSocket();
+    const { socket, acknowledgeOrderAlert } = useSocket(); // Get socket and ack method
     const restaurantId = user?.restaurant?._id || user?.restaurant?.id || localStorage.getItem('restaurantId');
 
     const [orders, setOrders] = useState([]);
+    const [cancelledOrders, setCancelledOrders] = useState([]); // Track cancelled orders temporarily
     const [loading, setLoading] = useState(true);
     const [audioEnabled, setAudioEnabled] = useState(false);
-    const [audio] = useState(() => {
-        const a = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        a.loop = true;
-        return a;
-    });
 
+    // Use shared sound hook
+    const { play: playOrderSound } = useSound('/sounds/bell.mp3');
+
+    // Initial Fetch and Polling Fallback
     useEffect(() => {
         if (!restaurantId) {
             setLoading(false);
             return;
         }
         fetchOrders();
-        const interval = setInterval(fetchOrders, 10000);
+        // Keep polling as backup (every 30s)
+        const interval = setInterval(fetchOrders, 30000);
         return () => clearInterval(interval);
     }, [restaurantId]);
 
-    // Audio Alert Logic
+    // Real-time Updates & Sound
     useEffect(() => {
-        const hasPendingAlerts = pendingAlerts.length > 0;
+        if (!socket || !restaurantId) return;
 
-        if (hasPendingAlerts && audioEnabled) {
-            audio.play().catch(e => {
-                console.log('Audio play blocked:', e);
-                setAudioEnabled(false);
-            });
-        } else {
-            audio.pause();
-            audio.currentTime = 0;
-        }
+        const handleNewOrder = (data) => {
+            console.log('Kitchen: New order received', data);
+            fetchOrders();
+            if (audioEnabled) {
+                playOrderSound();
+            }
+        };
+
+        const handleOrderUpdate = (data) => {
+            console.log('Kitchen: Order updated', data);
+
+            // Check if cancelled
+            if (data.status === 'cancelled') {
+                setCancelledOrders(prev => {
+                    if (prev.find(o => o._id === data._id)) return prev;
+                    return [...prev, { ...data, cancelledAt: Date.now() }];
+                });
+
+                // Remove from display after 10 seconds
+                setTimeout(() => {
+                    setCancelledOrders(prev => prev.filter(o => o._id !== data._id));
+                }, 10000);
+            }
+
+            fetchOrders();
+        };
+
+        socket.on('order:new', handleNewOrder);
+        socket.on('order-updated', handleOrderUpdate);
 
         return () => {
-            audio.pause();
+            socket.off('order:new', handleNewOrder);
+            socket.off('order-updated', handleOrderUpdate);
         };
-    }, [pendingAlerts, audioEnabled, audio]);
+    }, [socket, restaurantId, audioEnabled, playOrderSound]);
 
     const fetchOrders = async () => {
         if (!restaurantId) return;
@@ -189,6 +212,44 @@ const Kitchen = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Cancelled Orders Notification Banner */}
+            {cancelledOrders.length > 0 && (
+                <div style={{
+                    marginBottom: '32px',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '16px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                }}>
+                    <h3 style={{ margin: 0, color: '#991b1b', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <XCircle size={20} /> Pedidos Cancelados Recentemente
+                    </h3>
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        {cancelledOrders.map(order => (
+                            <div key={order._id} style={{
+                                background: 'white',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #fecaca',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                textDecoration: 'line-through',
+                                color: '#ef4444',
+                                opacity: 0.8
+                            }}>
+                                <span style={{ fontWeight: 'bold' }}>#{order.orderNumber || order._id.substr(-4)}</span>
+                                <span style={{ fontSize: '14px' }}>Mesa {order.tableNumber || '?'}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* KPI Cards */}
             <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>
@@ -440,36 +501,60 @@ const Kitchen = () => {
                                     {/* Actions */}
                                     <div>
                                         {status === 'pending' && (
-                                            <button
-                                                onClick={() => updateStatus(order._id, 'preparing')}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '14px',
-                                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '10px',
-                                                    fontWeight: '700',
-                                                    fontSize: '14px',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.3s ease',
-                                                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '8px'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.transform = 'translateY(0)';
-                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-                                                }}
-                                            >
-                                                <ChefHat size={18} /> Start Cooking
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => updateStatus(order._id, 'preparing')}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '14px',
+                                                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '10px',
+                                                        fontWeight: '700',
+                                                        fontSize: '14px',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.3s ease',
+                                                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: '8px'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.transform = 'translateY(0)';
+                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                                                    }}
+                                                >
+                                                    <ChefHat size={18} /> Start Cooking
+                                                </button>
+                                                <button
+                                                    onClick={() => updateStatus(order._id, 'cancelled')}
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: '10px',
+                                                        padding: '10px',
+                                                        background: '#fee2e2',
+                                                        color: '#dc2626',
+                                                        border: 'none',
+                                                        borderRadius: '10px',
+                                                        fontWeight: '700',
+                                                        fontSize: '14px',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.3s ease',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: '8px'
+                                                    }}
+                                                >
+                                                    <XCircle size={18} /> Cancel Order
+                                                </button>
+                                            </>
                                         )}
                                         {status === 'preparing' && (
                                             <button

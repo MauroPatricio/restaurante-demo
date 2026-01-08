@@ -176,3 +176,49 @@
 .dark .confirmation-message {
     color: #a0aec0;
 }
+
+/* Inline Waiter Call Button */
+.waiter-call-button-inline {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);
+    transition: all 0.3s ease;
+}
+
+.waiter-call-button-inline:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.waiter-call-button-inline:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.waiter-call-button-inline:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+}
+
+.waiter-call-button-inline.calling {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.waiter-call-button-inline .bell-icon {
+    width: 18px;
+    height: 18px;
+    animation: ring 2s ease-in-out infinite;
+}
+
+.waiter-call-button-inline.calling .bell-icon {
+    animation: ring 0.5s ease-in-out infinite;
+}

@@ -30,13 +30,27 @@ export const generateTableToken = (restaurantId, tableId) => {
  */
 export const validateTableToken = (token, restaurantId, tableId, expiryHours = null) => {
     try {
+        console.log('🔍 Validating token:', {
+            tokenLength: token?.length,
+            restaurantId,
+            tableId,
+            expiryHours
+        });
+
         const [tokenHash, timestamp] = token.split('.');
+
+        console.log('🔍 Token parts:', {
+            hashLength: tokenHash?.length,
+            timestamp,
+            timestampAge: timestamp ? `${Math.floor((Date.now() - parseInt(timestamp)) / 1000 / 60)} minutes` : 'N/A'
+        });
 
         // Check expiry if specified
         if (expiryHours) {
             const tokenAge = Date.now() - parseInt(timestamp);
             const maxAge = expiryHours * 60 * 60 * 1000;
             if (tokenAge > maxAge) {
+                console.warn('⏰ Token expired:', { tokenAge, maxAge });
                 return false;
             }
         }
@@ -49,13 +63,22 @@ export const validateTableToken = (token, restaurantId, tableId, expiryHours = n
             .update(payload)
             .digest('hex');
 
+        console.log('🔍 Hash comparison:', {
+            providedHashStart: tokenHash?.substring(0, 10),
+            expectedHashStart: expectedHash?.substring(0, 10),
+            match: tokenHash === expectedHash
+        });
+
         // Use constant-time comparison to prevent timing attacks
-        return crypto.timingSafeEqual(
+        const isValid = crypto.timingSafeEqual(
             Buffer.from(tokenHash),
             Buffer.from(expectedHash)
         );
+
+        console.log('✅ Token validation result:', isValid);
+        return isValid;
     } catch (error) {
-        console.error('Token validation error:', error);
+        console.error('❌ Token validation error:', error.message);
         return false;
     }
 };

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ArrowLeft, Clock, DollarSign, ShoppingBag, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { API_URL } from '../config/api';
+import { formatDateTime } from '../utils/dateUtils';
 
 const OrderHistory = () => {
     const { restaurantId } = useParams();
@@ -94,7 +95,7 @@ const OrderHistory = () => {
                                     </div>
                                     <p className="text-[10px] text-gray-400 flex items-center gap-1 font-medium">
                                         <Clock size={10} />
-                                        {new Date(order.createdAt).toLocaleDateString()} • {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {formatDateTime(order.createdAt)}
                                     </p>
                                 </div>
                                 <div className="text-right">
