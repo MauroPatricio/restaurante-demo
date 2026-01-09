@@ -5,7 +5,7 @@ import User from '../models/User.js';
 // Create a waiter call
 export const createWaiterCall = async (req, res) => {
     try {
-        const { tableId, type = 'call' } = req.body;
+        const { tableId, type = 'call', customerName } = req.body;
 
         if (!tableId) {
             return res.status(400).json({ error: 'Table ID is required' });
@@ -67,6 +67,7 @@ export const createWaiterCall = async (req, res) => {
             metadata: {
                 tableNumber: table.number,
                 waiterName: waiterName,
+                customerName: customerName || 'Cliente',
                 restaurantName: table.restaurant.name
             }
         });
@@ -81,6 +82,7 @@ export const createWaiterCall = async (req, res) => {
                 tableId: table._id,
                 tableNumber: table.number,
                 waiterName: waiterCall.metadata.waiterName,
+                customerName: waiterCall.metadata.customerName,
                 type: waiterCall.type,
                 createdAt: waiterCall.createdAt
             });
@@ -177,7 +179,28 @@ export const resolveCall = async (req, res) => {
         // Resolve the call
         await call.resolve(userId);
 
-        // Emit Socket.IO event
+        // Associate waiter with table as requested
+        const table = await Table.findById(call.table);
+        if (table) {
+            table.assignedWaiterId = userId;
+            // Also update legacy field if it's used
+            const waiterUser = await User.findById(userId).select('name');
+            if (waiterUser) {
+                table.assignedWaiter = waiterUser.name;
+            }
+            await table.save();
+
+            // Emit table update
+            if (req.io) {
+                req.io.to(`restaurant:${call.restaurant}`).emit('table:update', {
+                    tableId: table._id,
+                    status: table.status,
+                    assignedWaiter: table.assignedWaiter
+                });
+            }
+        }
+
+        // Emit Socket.IO event for call resolution
         if (req.io) {
             req.io.to(`restaurant:${call.restaurant}`).emit('waiter:call:resolved', {
                 callId: call._id,

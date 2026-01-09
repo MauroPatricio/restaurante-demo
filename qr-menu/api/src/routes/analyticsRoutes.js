@@ -5,7 +5,9 @@ import {
     getFinancialReport,
     getSalesReport,
     getOperationalReport,
-    getInventoryReport
+    getInventoryReport,
+    getCustomerAnalytics,
+    getHallAnalytics
 } from '../controllers/analyticsController.js';
 import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
 
@@ -23,5 +25,7 @@ router.get('/:id/financial', authenticateToken, checkSubscription, getFinancialR
 router.get('/:id/sales', authenticateToken, checkSubscription, getSalesReport);
 router.get('/:id/operational', authenticateToken, checkSubscription, getOperationalReport);
 router.get('/:id/inventory', authenticateToken, checkSubscription, getInventoryReport);
+router.get('/:id/customers', authenticateToken, checkSubscription, getCustomerAnalytics);
+router.get('/:id/hall', authenticateToken, checkSubscription, getHallAnalytics);
 
 export default router;

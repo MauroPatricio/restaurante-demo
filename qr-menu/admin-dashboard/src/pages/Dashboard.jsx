@@ -10,6 +10,7 @@ import {
     Clock, Users, TrendingUp, AlertCircle,
     CheckCircle, Coffee, Utensils
 } from 'lucide-react';
+import WaiterCallsModal from '../components/WaiterCallsModal';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -54,6 +55,7 @@ export default function Dashboard() {
         operational: { avgPrepTime: 0, peakHours: [] },
         shifts: []
     });
+    const [isCallsModalOpen, setIsCallsModalOpen] = useState(false);
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
     const fetchDashboardData = async () => {
@@ -103,13 +105,15 @@ export default function Dashboard() {
         socket.on('order:new', handleRealtimeUpdate);
         socket.on('order-updated', handleRealtimeUpdate);
         socket.on('waiter:call', handleRealtimeUpdate);
-        socket.on('waiter:update', handleRealtimeUpdate);
+        socket.on('waiter:call:acknowledged', handleRealtimeUpdate);
+        socket.on('waiter:call:resolved', handleRealtimeUpdate);
 
         return () => {
             socket.off('order:new', handleRealtimeUpdate);
             socket.off('order-updated', handleRealtimeUpdate);
             socket.off('waiter:call', handleRealtimeUpdate);
-            socket.off('waiter:update', handleRealtimeUpdate);
+            socket.off('waiter:call:acknowledged', handleRealtimeUpdate);
+            socket.off('waiter:call:resolved', handleRealtimeUpdate);
         };
     }, [socket, restaurantId]);
 
@@ -214,7 +218,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* 5. Active Waiter Calls */}
-                <div style={statCardStyle}>
+                <div
+                    style={{ ...statCardStyle, cursor: 'pointer' }}
+                    onClick={() => setIsCallsModalOpen(true)}
+                >
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Waiter Calls</p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: (realtime.activeWaiterCalls > 0) ? '#ef4444' : '#94a3b8', margin: '8px 0 0 0' }}>
@@ -226,6 +233,12 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            <WaiterCallsModal
+                isOpen={isCallsModalOpen}
+                onClose={() => setIsCallsModalOpen(false)}
+                restaurantId={restaurantId}
+            />
 
             {/* Charts Section */}
             <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>

@@ -416,7 +416,7 @@ router.post('/tables/:id/alert', async (req, res) => {
       };
 
       // Emit to restaurant room (Admin/Kitchen/Waiter dashboard)
-      io.to(`restaurant-${table.restaurant}`).emit('table-alert', payload);
+      io.to(`restaurant:${table.restaurant}`).emit('table-alert', payload);
     }
 
     res.json({ success: true, message: 'Alert sent' });
@@ -679,7 +679,7 @@ router.post('/orders', checkSubscription, validateAndOccupyTable, async (req, re
     // Emit real-time update to restaurant room
     const io = req.app.get('io');
     if (io) {
-      io.to(`restaurant-${restaurant}`).emit('order:new', order);
+      io.to(`restaurant:${restaurant}`).emit('order:new', order);
     }
 
     res.status(201).json({
@@ -809,7 +809,7 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
     if (io) {
       io.to(`order-${order._id}`).emit('order-updated', order);
       // Also emit to restaurant room (e.g., for Kitchen Display System)
-      io.to(`restaurant-${order.restaurant}`).emit('order-updated', order);
+      io.to(`restaurant:${order.restaurant}`).emit('order-updated', order);
     }
 
     res.json({

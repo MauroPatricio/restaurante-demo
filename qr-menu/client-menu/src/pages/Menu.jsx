@@ -207,7 +207,8 @@ const Menu = () => {
         if (!tableInfo) return;
         try {
             if (type === 'call') {
-                await createWaiterCall(tableInfo._id, 'call');
+                const customerName = localStorage.getItem(`customer-name-${restaurantId}`) || '';
+                await createWaiterCall(tableInfo._id, 'call', customerName);
                 setAlertMessage('Garçom a caminho');
             } else if (type === 'emotion') {
                 const reactionType = value === 'happy' ? 'satisfied' : 'dissatisfied';

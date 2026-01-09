@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
-import { tableAPI, orderAPI } from '../services/api';
+import { tableAPI, orderAPI, waiterCallAPI } from '../services/api';
 import {
     User, Users, Bell, CheckCircle, Clock, MapPin,
     UtensilsCrossed, AlertTriangle, Coffee, Loader2, TrendingUp
@@ -64,21 +64,38 @@ export default function WaiterDashboard() {
         };
     }, [restaurantId]);
 
-    // Listen for Order Updates to refresh Ready list
+    // Real-time Event Listeners
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !restaurantId) return;
 
-        const handleOrderUpdate = (data) => {
-            if (data.status === 'ready' || data.status === 'completed') {
-                fetchReadyOrders();
-            }
+        const handleRealtimeUpdate = (data) => {
+            console.log('Waiter: Realtime update received', data);
+            fetchData();
         };
 
-        socket.on('order-updated', handleOrderUpdate);
+        // Orders
+        socket.on('order:new', handleRealtimeUpdate);
+        socket.on('order-updated', handleRealtimeUpdate);
+
+        // Waiter Calls (Handled by Context for list, but we refresh data for tables status)
+        socket.on('waiter:call', handleRealtimeUpdate);
+        socket.on('waiter:call:acknowledged', handleRealtimeUpdate);
+        socket.on('waiter:call:resolved', handleRealtimeUpdate);
+
+        // Table updates if any
+        socket.on('table:update', handleRealtimeUpdate);
+        socket.on('table-alert', handleRealtimeUpdate);
+
         return () => {
-            socket.off('order-updated', handleOrderUpdate);
+            socket.off('order:new', handleRealtimeUpdate);
+            socket.off('order-updated', handleRealtimeUpdate);
+            socket.off('waiter:call', handleRealtimeUpdate);
+            socket.off('waiter:call:acknowledged', handleRealtimeUpdate);
+            socket.off('waiter:call:resolved', handleRealtimeUpdate);
+            socket.off('table:update', handleRealtimeUpdate);
+            socket.off('table-alert', handleRealtimeUpdate);
         };
-    }, [socket]);
+    }, [socket, restaurantId]);
 
     const fetchData = () => {
         fetchTables();
@@ -277,16 +294,28 @@ export default function WaiterDashboard() {
                                                 <Coffee size={18} />
                                                 {t('table') || 'Mesa'} {call.tableNumber || '?'}
                                             </div>
-                                            <div className="text-sm text-red-600 font-medium mt-1">{call.type === 'payment' ? 'Solicitou Fechamento' : 'Chamou Garçom'}</div>
+                                            <div className="text-sm text-red-800 font-bold mt-1">
+                                                <User size={14} className="inline mr-1" />
+                                                {call.customerName || 'Cliente'}
+                                            </div>
+                                            <div className="text-sm text-red-600 font-medium mt-1">{call.type === 'payment' || call.type === 'payment_request' ? 'Solicitou Fechamento' : 'Chamou Garçom'}</div>
                                             <div className="text-xs text-red-400 mt-2 flex items-center gap-1">
-                                                <Clock size={12} /> {formatDistanceToNow(new Date(call.timestamp), { addSuffix: true, locale: pt })}
+                                                <Clock size={12} /> {formatDistanceToNow(new Date(call.createdAt || call.timestamp), { addSuffix: true, locale: pt })}
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => removeCall(call.callId)}
-                                            className="px-4 py-2 bg-white text-red-600 text-xs font-bold rounded-lg shadow-sm hover:bg-red-50 transition-all border-2 border-red-200"
+                                            onClick={async () => {
+                                                try {
+                                                    await waiterCallAPI.resolve(call.callId);
+                                                    // Socket will trigger clean up
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert('Falha ao atender mesa');
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-red-700 transition-all"
                                         >
-                                            {t('dismiss') || 'Dispensar'}
+                                            {t('attend') || 'Atender Mesa'}
                                         </button>
                                     </div>
                                 ))}

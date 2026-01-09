@@ -49,6 +49,7 @@ const WaiterCallSchema = new mongoose.Schema({
     metadata: {
         tableNumber: String,
         waiterName: String,
+        customerName: String,
         restaurantName: String
     }
 }, {
@@ -90,7 +91,11 @@ WaiterCallSchema.statics.getActiveCalls = function (restaurantId, waiterId = nul
     };
 
     if (waiterId) {
-        query.waiter = waiterId;
+        query.$or = [
+            { waiter: waiterId },
+            { waiter: null },
+            { waiter: { $exists: false } }
+        ];
     }
 
     return this.find(query)

@@ -101,7 +101,8 @@ const Cart = () => {
                 // Play success sound
                 playSuccessSound();
 
-                // Store phone for history lookup
+                // Store details for history lookup
+                localStorage.setItem(`customer-name-${restaurantId}`, customerName.trim());
                 if (phone.trim()) {
                     localStorage.setItem(`customer-phone-${restaurantId}`, phone.trim());
                 }

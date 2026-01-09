@@ -7,7 +7,8 @@ export const createWaiterCall = async (tableId, type = 'call') => {
     try {
         const response = await axios.post(`${API_URL}/waiter-calls`, {
             tableId,
-            type
+            type,
+            customerName
         });
         return response.data;
     } catch (error) {

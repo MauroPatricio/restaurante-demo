@@ -113,13 +113,15 @@ const Kitchen = () => {
 
         // Listen to waiter calls too, as strictly requested "same philosophy" implies showing waiter calls
         socket.on('waiter:call', handleRealtimeUpdate);
-        socket.on('waiter:update', handleRealtimeUpdate);
+        socket.on('waiter:call:acknowledged', handleRealtimeUpdate);
+        socket.on('waiter:call:resolved', handleRealtimeUpdate);
 
         return () => {
             socket.off('order:new', handleNewOrder);
             socket.off('order-updated', handleRealtimeUpdate);
             socket.off('waiter:call', handleRealtimeUpdate);
-            socket.off('waiter:update', handleRealtimeUpdate);
+            socket.off('waiter:call:acknowledged', handleRealtimeUpdate);
+            socket.off('waiter:call:resolved', handleRealtimeUpdate);
         };
     }, [socket, restaurantId, audioEnabled, playOrderSound]);
 

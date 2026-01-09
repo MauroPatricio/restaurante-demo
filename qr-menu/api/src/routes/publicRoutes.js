@@ -297,7 +297,7 @@ router.post('/orders', async (req, res) => {
 
         // Emit socket event for the dashboard
         if (req.io) {
-            req.io.to(`restaurant-${restaurantId}`).emit('order:new', {
+            req.io.to(`restaurant:${restaurantId}`).emit('order:new', {
                 orderId: order._id,
                 tableNumber: table.number,
                 total: order.total,

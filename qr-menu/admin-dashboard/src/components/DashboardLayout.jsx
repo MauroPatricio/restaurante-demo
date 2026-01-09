@@ -7,6 +7,7 @@ import api from '../services/api';
 import LanguageSwitcher from './LanguageSwitcher';
 import {
     LayoutDashboard,
+    LayoutGrid,
     ShoppingBag,
     UtensilsCrossed,
     QrCode,
@@ -144,6 +145,13 @@ export default function DashboardLayout() {
             label: t('clients') || 'Clientes',
             path: '/dashboard/clients',
             show: hasPermission('view_reports') || hasPermission('manage_orders')
+        },
+        // Hall (New Module)
+        {
+            icon: LayoutGrid,
+            label: t('hall') || 'Salão',
+            path: '/dashboard/hall',
+            show: hasPermission('view_reports') || hasPermission('manage_tables')
         },
         // Orders (Full list management)
         {

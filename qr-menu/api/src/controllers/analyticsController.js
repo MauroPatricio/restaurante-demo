@@ -3,8 +3,9 @@ import Restaurant from '../models/Restaurant.js';
 import mongoose from 'mongoose';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
 import MenuItem from '../models/MenuItem.js';
-
 import WaiterCall from '../models/WaiterCall.js';
+import Table from '../models/Table.js';
+import TableSession from '../models/TableSession.js';
 
 export const getOwnerStats = async (req, res) => {
     try {
@@ -542,5 +543,154 @@ export const getInventoryReport = async (req, res) => {
     } catch (error) {
         console.error('Inventory Report Error:', error);
         res.status(500).json({ error: 'Failed to fetch inventory report' });
+    }
+};
+
+export const getCustomerAnalytics = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const restaurantId = new mongoose.Types.ObjectId(id);
+
+        const basicStats = await Order.aggregate([
+            { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' } } },
+            {
+                $group: {
+                    _id: "$phone",
+                    name: { $first: "$customerName" },
+                    totalSpent: { $sum: "$total" },
+                    orderCount: { $count: {} },
+                    lastVisit: { $max: "$createdAt" },
+                    firstVisit: { $min: "$createdAt" }
+                }
+            },
+            { $sort: { totalSpent: -1 } }
+        ]);
+
+        const favorites = await Order.aggregate([
+            { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' } } },
+            { $unwind: "$items" },
+            {
+                $group: {
+                    _id: { phone: "$phone", item: "$items.item" },
+                    count: { $sum: "$items.qty" }
+                }
+            },
+            { $sort: { count: -1 } },
+            {
+                $group: {
+                    _id: "$_id.phone",
+                    favoriteItemId: { $first: "$_id.item" },
+                    favoriteItemCount: { $first: "$count" }
+                }
+            }
+        ]);
+
+        // Populate favorite item names
+        await MenuItem.populate(favorites, { path: 'favoriteItemId', select: 'name' });
+
+        const customers = basicStats.map(c => {
+            const fav = favorites.find(f => f._id === c._id);
+            return {
+                ...c,
+                phone: c._id,
+                favoriteItem: fav?.favoriteItemId?.name || 'Vários',
+                isRecurring: c.orderCount > 1
+            };
+        });
+
+        const totalCustomers = customers.length;
+        const recurringCustomers = customers.filter(c => c.isRecurring).length;
+
+        res.json({
+            summary: {
+                totalCustomers,
+                recurringCustomers,
+                loyaltyRate: totalCustomers > 0 ? (recurringCustomers / totalCustomers * 100).toFixed(1) : 0
+            },
+            customers
+        });
+    } catch (error) {
+        console.error('Customer analytics error:', error);
+        res.status(500).json({ error: 'Failed to fetch customer analytics' });
+    }
+};
+
+export const getHallAnalytics = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const restaurantId = new mongoose.Types.ObjectId(id);
+
+        // 1. Get current Table statuses
+        const tables = await Table.find({ restaurant: restaurantId })
+            .populate('currentSessionId')
+            .lean();
+
+        // 2. Aggregate Historical Table Performance
+        const tablePerformance = await TableSession.aggregate([
+            { $match: { restaurant: restaurantId, status: 'closed', endedAt: { $exists: true } } },
+            {
+                $project: {
+                    table: 1,
+                    duration: { $divide: [{ $subtract: ["$endedAt", "$startedAt"] }, 1000 * 60] } // minutes
+                }
+            },
+            {
+                $group: {
+                    _id: "$table",
+                    avgDuration: { $avg: "$duration" },
+                    totalSessions: { $count: {} }
+                }
+            }
+        ]);
+
+        // 3. Get total orders and calls per table (Today/Active)
+        const today = startOfDay(new Date());
+        const activeOrdersByTable = await Order.aggregate([
+            { $match: { restaurant: restaurantId, createdAt: { $gte: today }, status: { $ne: 'cancelled' } } },
+            { $group: { _id: "$table", count: { $count: {} } } }
+        ]);
+
+        const activeCallsByTable = await WaiterCall.aggregate([
+            { $match: { restaurant: restaurantId, createdAt: { $gte: today } } },
+            { $group: { _id: "$table", count: { $count: {} } } }
+        ]);
+
+        // Merge Data
+        const hallData = tables.map(t => {
+            const perf = tablePerformance.find(p => p._id.toString() === t._id.toString());
+            const orders = activeOrdersByTable.find(o => o._id?.toString() === t._id.toString());
+            const calls = activeCallsByTable.find(c => c._id?.toString() === t._id.toString());
+
+            return {
+                ...t,
+                avgDuration: perf ? Math.round(perf.avgDuration) : 0,
+                totalSessions: perf ? perf.totalSessions : 0,
+                ordersToday: orders ? orders.count : 0,
+                callsToday: calls ? calls.count : 0
+            };
+        });
+
+        const totalTables = hallData.length;
+        const occupiedCount = hallData.filter(t => t.status === 'occupied').length;
+        const freeCount = hallData.filter(t => t.status === 'free').length;
+        const waitingCount = hallData.filter(t => t.status === 'cleaning' || t.status === 'reserved').length;
+
+        const avgTurnover = tablePerformance.length > 0
+            ? Math.round(tablePerformance.reduce((acc, curr) => acc + curr.avgDuration, 0) / tablePerformance.length)
+            : 0;
+
+        res.json({
+            summary: {
+                totalTables,
+                occupiedCount,
+                freeCount,
+                waitingCount,
+                avgTurnover // in minutes
+            },
+            tables: hallData
+        });
+    } catch (error) {
+        console.error('Hall analytics error:', error);
+        res.status(500).json({ error: 'Failed to fetch hall analytics' });
     }
 };

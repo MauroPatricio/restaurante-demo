@@ -276,11 +276,6 @@ if (!fs.existsSync(receiptsDir)) {
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
 
-  socket.on('join-restaurant', (restaurantId) => {
-    socket.join(`restaurant-${restaurantId}`);
-    console.log(`Socket ${socket.id} joined restaurant ${restaurantId}`);
-  });
-
   socket.on('join-order', (orderId) => {
     socket.join(`order-${orderId}`);
     console.log(`Socket ${socket.id} joined order ${orderId}`);

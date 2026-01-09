@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { createWaiterCall } from '../services/waiterCallAPI';
 import { useSound } from '../hooks/useSound';
+import { useParams } from 'react-router-dom';
 import './WaiterCallButton.css';
 
 export default function WaiterCallButton({ tableId, className = '', variant = 'floating' }) {
+    const { restaurantId } = useParams();
     const [calling, setCalling] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [lastCallTime, setLastCallTime] = useState(null);
@@ -35,7 +37,8 @@ export default function WaiterCallButton({ tableId, className = '', variant = 'f
         setCalling(true);
 
         try {
-            await createWaiterCall(tableId, 'call');
+            const customerName = localStorage.getItem(`customer-name-${restaurantId}`) || '';
+            await createWaiterCall(tableId, 'call', customerName);
 
             // Play sound on successful call
             playCallSound();

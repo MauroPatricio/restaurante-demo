@@ -165,7 +165,9 @@ export const analyticsAPI = {
     getFinancial: (restaurantId, params) => api.get(`/analytics/${restaurantId}/financial`, { params }),
     getSales: (restaurantId, params) => api.get(`/analytics/${restaurantId}/sales`, { params }),
     getOperational: (restaurantId, params) => api.get(`/analytics/${restaurantId}/operational`, { params }),
-    getInventory: (restaurantId) => api.get(`/analytics/${restaurantId}/inventory`)
+    getInventory: (restaurantId) => api.get(`/analytics/${restaurantId}/inventory`),
+    getCustomers: (restaurantId, params) => api.get(`/analytics/${restaurantId}/customers`, { params }),
+    getHall: (restaurantId, params) => api.get(`/analytics/${restaurantId}/hall`, { params })
 };
 
 // Category API
@@ -210,6 +212,14 @@ export const uploadAPI = {
 // Client API
 export const clientAPI = {
     getAll: (restaurantId) => api.get('/clients', { params: { restaurantId } })
+};
+
+export const waiterCallAPI = {
+    getActive: (restaurantId, waiterId = null) => api.get('/waiter-calls/active', {
+        params: { restaurantId, waiterId }
+    }),
+    resolve: (id) => api.post(`/waiter-calls/${id}/resolve`),
+    acknowledge: (id) => api.post(`/waiter-calls/${id}/acknowledge`)
 };
 
 export default api;
