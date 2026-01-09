@@ -30,7 +30,9 @@ import {
     Folder,
     FolderTree,
     AlertCircle,
-    CreditCard as CreditCardIcon
+    CreditCard as CreditCardIcon,
+    Volume2,
+    VolumeX
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
 import SubscriptionBlocker from './SubscriptionBlocker';
@@ -42,7 +44,7 @@ export default function DashboardLayout() {
     const { user, logout } = useAuth();
     const { subscription, isBlocked } = useSubscription();
     const { isBackendConnected } = useConnectivity();
-    const { pendingAlerts } = useSocket();
+    const { pendingCount, isRinging, stopRinging, toggleAudio, audioEnabled } = useSocket();
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -57,14 +59,11 @@ export default function DashboardLayout() {
 
     // Helper: Get restaurant data - handles both object and ID-only cases
     const getRestaurantData = () => {
-        // If user.restaurant is an object with properties, use it directly
         if (user?.restaurant && typeof user.restaurant === 'object' && user.restaurant.name) {
             return user.restaurant;
         }
 
-        // If user.restaurant is just an ID (string), get data from user.restaurants array
         if (user?.restaurants && user.restaurants.length > 0) {
-            // Try to find the matching restaurant by ID
             if (typeof user.restaurant === 'string') {
                 const match = user.restaurants.find(r => r.id === user.restaurant || r._id === user.restaurant);
                 if (match) return {
@@ -72,24 +71,21 @@ export default function DashboardLayout() {
                     id: match.id || match._id,
                     name: match.name,
                     logo: match.logo,
-                    active: match.active !== undefined ? match.active : true // Default to true if not specified
+                    active: match.active !== undefined ? match.active : true
                 };
             }
-            // Fallback to first restaurant
             return {
                 _id: user.restaurants[0].id || user.restaurants[0]._id,
                 id: user.restaurants[0].id || user.restaurants[0]._id,
                 name: user.restaurants[0].name,
                 logo: user.restaurants[0].logo,
-                active: true // We don't have this in the restaurants array, default to true
+                active: true
             };
         }
-
         return null;
     };
 
     const restaurantData = getRestaurantData();
-
     const isActive = (path) => location.pathname === path;
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -125,7 +121,7 @@ export default function DashboardLayout() {
         {
             icon: LayoutDashboard,
             label: t('dashboard'),
-            path: '/dashboard',
+            path: '/dashboard/analytics',
             show: hasPermission('view_reports') || hasPermission('manage_settings')
         },
         // Kitchen Monitor (for those who update status)
@@ -135,7 +131,6 @@ export default function DashboardLayout() {
             path: '/dashboard/kitchen',
             show: hasPermission('update_order_status')
         },
-
         // Reports
         {
             icon: FileText,
@@ -143,55 +138,49 @@ export default function DashboardLayout() {
             path: '/dashboard/reports',
             show: hasPermission('view_reports')
         },
-
+        // Clients (New Module)
+        {
+            icon: UsersIcon,
+            label: t('clients') || 'Clientes',
+            path: '/dashboard/clients',
+            show: hasPermission('view_reports') || hasPermission('manage_orders')
+        },
         // Orders (Full list management)
         {
             icon: ShoppingBag,
             label: t('orders'),
             path: '/dashboard/orders',
-            show: hasPermission('manage_orders')
+            show: hasPermission('manage_orders'),
+            isOrders: true // Mark for special handling
         },
-
         // Menu Management
         { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu', show: hasPermission('manage_menu') },
         { icon: Folder, label: t('categories'), path: '/dashboard/categories', show: hasPermission('manage_menu') },
         { icon: FolderTree, label: t('subcategories'), path: '/dashboard/subcategories', show: hasPermission('manage_menu') },
-
         // Tables
         { icon: QrCode, label: t('tables'), path: '/dashboard/tables', show: hasPermission('manage_tables') },
-
         // Payments (Settings/Admin)
         { icon: Banknote, label: t('payments'), path: '/dashboard/payments', show: hasPermission('manage_settings') },
-
         // Coupons (Settings/Admin)
         { icon: Tag, label: t('coupons'), path: '/dashboard/coupons', show: hasPermission('manage_settings') },
-
         // Delivery
         { icon: Truck, label: t('delivery'), path: '/dashboard/delivery', show: hasPermission('view_delivery_orders') || hasPermission('manage_orders') },
-
         // Feedback (Settings/Admin)
         { icon: Star, label: t('feedback'), path: '/dashboard/feedback', show: hasPermission('manage_settings') },
-
         // Subscription (Owner/Admin)
         { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
-
         // Stock (Settings/Admin)
         { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings') },
-
         // Users (Staff Management)
         { icon: UsersIcon, label: t('users'), path: '/dashboard/users', show: hasPermission('manage_staff') },
-
         // Settings (Settings Management)
         { icon: Settings, label: t('settings'), path: '/dashboard/settings', show: hasPermission('manage_settings') },
-
         // Profiles (Staff Management)
         { icon: Shield, label: t('profiles'), path: '/dashboard/profiles', show: hasPermission('manage_staff') },
-
         // System Admin
         { icon: ShieldCheck, label: t('system_admin'), path: '/system-admin', show: user?.role?.isSystem && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) }
     ].filter(item => item.show);
 
-    // Calculate days until expiry for banner
     const getDaysUntilExpiry = () => {
         if (!subscription?.currentPeriodEnd) return null;
         const now = new Date();
@@ -205,19 +194,39 @@ export default function DashboardLayout() {
     const showWarningBanner = subscription && (daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0);
     const showExpiredBanner = isBlocked || (daysUntilExpiry !== null && daysUntilExpiry <= 0);
 
-    // Calculate dynamic top offset for content based on banners
     let bannerOffset = 0;
     if (!isBackendConnected) {
-        bannerOffset += 48; // Connectivity banner height
+        bannerOffset += 48;
     }
     if (showExpiredBanner && isOwnerOrManager) {
-        bannerOffset += 60; // Expired banner height
+        bannerOffset += 60;
     } else if (showWarningBanner && isOwnerOrManager) {
-        bannerOffset += 48; // Warning banner height
+        bannerOffset += 48;
     }
 
     return (
         <div className="dashboard-layout">
+            <style>{`
+                @keyframes urgent-pulse {
+                    0% { background-color: rgba(220, 38, 38, 0.1); }
+                    50% { background-color: rgba(220, 38, 38, 0.3); }
+                    100% { background-color: rgba(220, 38, 38, 0.1); }
+                }
+                .nav-item.blink-urgent {
+                    animation: urgent-pulse 1s infinite;
+                    border-left: 4px solid #dc2626;
+                }
+                .nav-badge {
+                    background: #10b981;
+                    color: white;
+                    font-size: 0.75rem;
+                    padding: 2px 8px;
+                    border-radius: 999px;
+                    margin-left: auto;
+                    font-weight: bold;
+                }
+            `}</style>
+
             {!isBackendConnected && (
                 <div style={{
                     backgroundColor: '#ef4444',
@@ -355,7 +364,7 @@ export default function DashboardLayout() {
                                         textTransform: 'uppercase'
                                     }}>{restaurantData?.name?.charAt(0) || 'R'}</div>
                                 )}
-                                {/* Restaurant Active/Inactive Status Indicator */}
+                                {/* Status Indicator */}
                                 <div
                                     onClick={async () => {
                                         if (isOwnerOrManager) {
@@ -363,17 +372,10 @@ export default function DashboardLayout() {
                                                 const restaurantId = restaurantData?._id || restaurantData?.id;
                                                 const response = await fetch(`http://localhost:5000/api/restaurants/${restaurantId}/toggle-active`, {
                                                     method: 'PATCH',
-                                                    headers: {
-                                                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                                    }
+                                                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                                                 });
-                                                if (response.ok) {
-                                                    // Refresh page to update status
-                                                    window.location.reload();
-                                                }
-                                            } catch (error) {
-                                                console.error('Failed to toggle restaurant status:', error);
-                                            }
+                                                if (response.ok) window.location.reload();
+                                            } catch (error) { console.error('Failed to toggle:', error); }
                                         }
                                     }}
                                     title={isOwnerOrManager ? (restaurantData?.active ? 'Clique para desativar' : 'Clique para ativar') : (restaurantData?.active ? 'Restaurante Ativo' : 'Restaurante Inativo')}
@@ -391,79 +393,25 @@ export default function DashboardLayout() {
                                         cursor: isOwnerOrManager ? 'pointer' : 'default',
                                         transition: 'transform 0.2s ease'
                                     }}
-                                    onMouseEnter={(e) => isOwnerOrManager && (e.target.style.transform = 'scale(1.2)')}
-                                    onMouseLeave={(e) => isOwnerOrManager && (e.target.style.transform = 'scale(1)')}
-                                ></div>
+                                />
                             </div>
 
-                            {/* Restaurant Info */}
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <h2 style={{
-                                    fontSize: '1.1rem',
-                                    margin: 0,
-                                    fontWeight: '600',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                }}>
+                                <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {restaurantData?.name || 'QR Menu'}
                                 </h2>
-                                <p style={{
-                                    fontSize: '0.75rem',
-                                    margin: 0,
-                                    opacity: 0.7,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
-                                }}>
+                                <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.7, display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     {t('admin_panel')}
-                                    <span
-                                        onClick={async () => {
-                                            if (isOwnerOrManager) {
-                                                try {
-                                                    const restaurantId = restaurantData?._id || restaurantData?.id;
-                                                    const response = await fetch(`http://localhost:5000/api/restaurants/${restaurantId}/toggle-active`, {
-                                                        method: 'PATCH',
-                                                        headers: {
-                                                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                                        }
-                                                    });
-                                                    if (response.ok) {
-                                                        window.location.reload();
-                                                    }
-                                                } catch (error) {
-                                                    console.error('Failed to toggle restaurant status:', error);
-                                                }
-                                            }
-                                        }}
-                                        title={isOwnerOrManager ? 'Clique para alterar status' : ''}
-                                        style={{
-                                            fontSize: '0.7rem',
-                                            padding: '2px 6px',
-                                            borderRadius: '4px',
-                                            background: restaurantData?.active
-                                                ? 'rgba(16, 185, 129, 0.15)'
-                                                : 'rgba(239, 68, 68, 0.15)',
-                                            color: restaurantData?.active ? '#10b981' : '#ef4444',
-                                            fontWeight: '600',
-                                            marginLeft: '4px',
-                                            cursor: isOwnerOrManager ? 'pointer' : 'default',
-                                            transition: 'all 0.2s ease',
-                                            userSelect: 'none'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (isOwnerOrManager) {
-                                                e.target.style.opacity = '0.8';
-                                                e.target.style.transform = 'scale(1.05)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (isOwnerOrManager) {
-                                                e.target.style.opacity = '1';
-                                                e.target.style.transform = 'scale(1)';
-                                            }
-                                        }}
-                                    >
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        background: restaurantData?.active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                        color: restaurantData?.active ? '#10b981' : '#ef4444',
+                                        fontWeight: '600',
+                                        marginLeft: '4px',
+                                        userSelect: 'none'
+                                    }}>
                                         {restaurantData?.active ? t('active') || 'Ativo' : t('inactive') || 'Inativo'}
                                     </span>
                                 </p>
@@ -475,15 +423,24 @@ export default function DashboardLayout() {
                 <nav className="sidebar-nav">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
+                        const isOrders = item.isOrders === true;
+                        const shouldBlink = isOrders && isRinging;
+
                         return (
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                onClick={closeSidebar}
-                                className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+                                onClick={() => {
+                                    closeSidebar();
+                                    if (isOrders) stopRinging();
+                                }}
+                                className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''}`}
                             >
                                 <Icon size={20} />
                                 <span>{item.label}</span>
+                                {isOrders && pendingCount > 0 && (
+                                    <span className="nav-badge">{pendingCount}</span>
+                                )}
                             </Link>
                         );
                     })}
@@ -512,34 +469,18 @@ export default function DashboardLayout() {
                     </div>
 
                     <div className="header-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        {/* Audio Toggle */}
+                        <button
+                            className="icon-btn"
+                            onClick={toggleAudio}
+                            title={audioEnabled ? "Silenciar" : "Ativar Som"}
+                            style={{ opacity: audioEnabled ? 1 : 0.5 }}
+                        >
+                            {audioEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                        </button>
+
                         <LanguageSwitcher />
 
-                        {/* New Orders Badge */}
-                        {pendingAlerts.length > 0 && (
-                            <Link
-                                to="/dashboard/orders"
-                                className="icon-btn urgent-badge"
-                                style={{
-                                    position: 'relative',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    textDecoration: 'none',
-                                    color: 'white',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '700'
-                                }}
-                            >
-                                <ShoppingBag size={18} />
-                                <span>{pendingAlerts.length} {t('new_orders') || 'Novos'}</span>
-                            </Link>
-                        )}
-
-                        <button className="icon-btn">
-                            <Bell size={20} />
-                        </button>
                         <div className="user-menu">
                             <User size={20} />
                             <span>{user?.email}</span>
@@ -570,3 +511,6 @@ export default function DashboardLayout() {
         </div>
     );
 }
+
+
+

@@ -33,7 +33,7 @@ const RestaurantSelection = () => {
             navigate('/dashboard');
         } catch (err) {
             console.error(err);
-            setError('Falha ao entrar no restaurante. Tente novamente.');
+            setError('Falha ao entrar no estabelecimento. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -53,7 +53,7 @@ const RestaurantSelection = () => {
             ));
         } catch (err) {
             console.error('Failed to toggle restaurant status:', err);
-            alert('Falha ao alterar status do restaurante');
+            alert('Falha ao alterar status do estabelecimento');
         } finally {
             setTogglingId(null);
         }
@@ -75,7 +75,7 @@ const RestaurantSelection = () => {
                             <Building2 size={28} />
                         </div>
                         <h1>Bem-vindo de volta</h1>
-                        <p>Selecione um restaurante para gerir</p>
+                        <p>Selecione um estabelecimento para gerir</p>
                     </div>
 
                     {error && (
@@ -101,7 +101,7 @@ const RestaurantSelection = () => {
 
                         {/* Separator */}
                         <div className="separator">
-                            <span>Seus Restaurantes</span>
+                            <span>Seus estabelecimentos</span>
                         </div>
 
                         {/* Restaurants List */}
@@ -141,7 +141,7 @@ const RestaurantSelection = () => {
                                                 onClick={(e) => handleToggleActive(e, restaurantId)}
                                                 disabled={isToggling}
                                                 className={`toggle-btn ${isActive ? 'active' : 'inactive'}`}
-                                                title={isActive ? 'Desativar restaurante' : 'Ativar restaurante'}
+                                                title={isActive ? 'Desativar estabelecimento' : 'Ativar estabelecimento'}
                                             >
                                                 <Power size={16} className={isToggling ? 'spinning' : ''} />
                                             </button>
@@ -155,7 +155,7 @@ const RestaurantSelection = () => {
                                 className="add-new-btn"
                             >
                                 <PlusCircle size={20} />
-                                <span>Adicionar Novo Restaurante</span>
+                                <span>Adicionar Novo estabelecimento</span>
                             </button>
                         </div>
                     </div>

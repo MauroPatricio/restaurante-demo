@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
@@ -47,6 +48,7 @@ const sectionStyle = {
 
 export default function Dashboard() {
     const { user } = useAuth();
+    const { socket } = useSocket();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         operational: { avgPrepTime: 0, peakHours: [] },
@@ -54,27 +56,20 @@ export default function Dashboard() {
     });
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
-    useEffect(() => {
-        if (restaurantId) {
-            fetchDashboardData();
-            const interval = setInterval(fetchDashboardData, 30000);
-            return () => clearInterval(interval);
-        } else {
-            setLoading(false);
-        }
-    }, [restaurantId]);
-
     const fetchDashboardData = async () => {
         try {
+            // Use today's date for 'today's' stats
+            const today = new Date().toISOString().split('T')[0];
             const [restaurantStats, operationalReport] = await Promise.all([
-                analyticsAPI.getRestaurantStats(restaurantId),
+                analyticsAPI.getRestaurantStats(restaurantId, { startDate: today, endDate: today }),
                 analyticsAPI.getOperationalReport(restaurantId)
             ]);
 
             setStats({
                 operational: restaurantStats.data.operational,
                 shifts: operationalReport.data.shifts,
-                financial: restaurantStats.data.financial
+                financial: restaurantStats.data.financial,
+                realtime: restaurantStats.data.realtime || {}
             });
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
@@ -82,6 +77,41 @@ export default function Dashboard() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (restaurantId) {
+            fetchDashboardData();
+
+            // Backup polling
+            const interval = setInterval(fetchDashboardData, 30000);
+            return () => clearInterval(interval);
+        } else {
+            setLoading(false);
+        }
+    }, [restaurantId]);
+
+    // Real-time Event Listeners
+    useEffect(() => {
+        if (!socket || !restaurantId) return;
+
+        const handleRealtimeUpdate = (data) => {
+            console.log('Dashboard: Realtime update received', data);
+            fetchDashboardData();
+        };
+
+        // Listen for all events that affect these stats
+        socket.on('order:new', handleRealtimeUpdate);
+        socket.on('order-updated', handleRealtimeUpdate);
+        socket.on('waiter:call', handleRealtimeUpdate);
+        socket.on('waiter:update', handleRealtimeUpdate);
+
+        return () => {
+            socket.off('order:new', handleRealtimeUpdate);
+            socket.off('order-updated', handleRealtimeUpdate);
+            socket.off('waiter:call', handleRealtimeUpdate);
+            socket.off('waiter:update', handleRealtimeUpdate);
+        };
+    }, [socket, restaurantId]);
 
     if (loading) return (
         <div className="loading-screen" style={{ minHeight: '80vh' }}>
@@ -107,6 +137,8 @@ export default function Dashboard() {
         value: s.orders
     })) || [];
 
+    const { realtime = {} } = stats;
+
     return (
         <div className="dashboard-container" style={{ maxWidth: '100vw', padding: '24px' }}>
             {/* Header */}
@@ -128,24 +160,13 @@ export default function Dashboard() {
             </div>
 
             {/* KPI Cards */}
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '32px', width: '100%' }}>
+                {/* 1. Active Orders */}
                 <div style={statCardStyle}>
                     <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Avg Prep Time</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {stats.operational.avgPrepTime} <span style={{ fontSize: '18px', color: '#94a3b8', fontWeight: '600' }}>min</span>
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
-                        <Clock size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                <div style={statCardStyle}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Today's Orders</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {stats.financial?.orders || 0}
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Orders</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#3b82f6', margin: '8px 0 0 0' }}>
+                            {realtime.activeOrders || 0}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
@@ -153,24 +174,54 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* 2. Pending Orders */}
                 <div style={statCardStyle}>
                     <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Avg Ticket</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {stats.financial?.avgTicket || 0} <span style={{ fontSize: '18px', color: '#94a3b8', fontWeight: '600' }}>MT</span>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Pending</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#f59e0b', margin: '8px 0 0 0' }}>
+                            {realtime.pendingOrders || 0}
                         </h3>
                     </div>
-                    <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
-                        <TrendingUp size={24} strokeWidth={2.5} />
+                    <div style={iconBoxStyle('#f59e0b', '#fffbeb')}>
+                        <AlertCircle size={24} strokeWidth={2.5} />
                     </div>
                 </div>
 
+                {/* 3. Completed (Today) */}
                 <div style={statCardStyle}>
                     <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Staff Active</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>--</h3>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Completed (Today)</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', margin: '8px 0 0 0' }}>
+                            {realtime.completedOrders || 0}
+                        </h3>
                     </div>
-                    <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
+                    <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
+                        <CheckCircle size={24} strokeWidth={2.5} />
+                    </div>
+                </div>
+
+                {/* 4. Occupied Tables */}
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Live Tables</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#6366f1', margin: '8px 0 0 0' }}>
+                            {realtime.occupiedTables || 0}
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#6366f1', '#e0e7ff')}>
+                        <Coffee size={24} strokeWidth={2.5} />
+                    </div>
+                </div>
+
+                {/* 5. Active Waiter Calls */}
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Waiter Calls</p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: (realtime.activeWaiterCalls > 0) ? '#ef4444' : '#94a3b8', margin: '8px 0 0 0' }}>
+                            {realtime.activeWaiterCalls || 0}
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
                         <Users size={24} strokeWidth={2.5} />
                     </div>
                 </div>

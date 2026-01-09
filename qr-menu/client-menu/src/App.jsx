@@ -19,8 +19,8 @@ function QRRedirect() {
 
     useEffect(() => {
         const validateQR = async () => {
-            const restaurantId = searchParams.get('r');
-            const tableId = searchParams.get('t');
+            const restaurantId = searchParams.get('r') || searchParams.get('restaurant');
+            const tableId = searchParams.get('t') || searchParams.get('table');
             const token = searchParams.get('token');
 
             // Check if all required parameters are present
@@ -55,7 +55,8 @@ function QRRedirect() {
                     }));
 
                     // Redirect to menu
-                    navigate(`/menu/${restaurantId}?t=${tableId}&token=${token}`);
+                    const finalTable = searchParams.get('t') || searchParams.get('table');
+                    navigate(`/menu/${restaurantId}?t=${finalTable}&token=${token}`);
                 } else {
                     setError('QR Code inválido');
                     setLoading(false);
@@ -109,27 +110,27 @@ function QRRedirect() {
 
 function App() {
     return (
-            <CartProvider>
-                <ThemeProvider>
-                    <NotificationProvider>
-                        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                            <Routes>
-                                <Route path="/menu" element={<QRRedirect />} />
-                                <Route path="/menu/:restaurantId" element={<Menu />} />
-                                <Route path="/menu/:restaurantId/cart" element={<Cart />} />
-                                <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
-                                <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
-                                <Route path="/" element={<div className="min-h-screen flex items-center justify-center">
-                                    <div className="text-center">
-                                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">QR Menu</h1>
-                                        <p className="text-gray-600 dark:text-gray-400">Por favor, escaneie um QR Code da mesa</p>
-                                    </div>
-                                </div>} />
-                            </Routes>
-                        </div>
-                    </NotificationProvider>
-                </ThemeProvider>
-            </CartProvider>
+        <CartProvider>
+            <ThemeProvider>
+                <NotificationProvider>
+                    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                        <Routes>
+                            <Route path="/menu" element={<QRRedirect />} />
+                            <Route path="/menu/:restaurantId" element={<Menu />} />
+                            <Route path="/menu/:restaurantId/cart" element={<Cart />} />
+                            <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
+                            <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
+                            <Route path="/" element={<div className="min-h-screen flex items-center justify-center">
+                                <div className="text-center">
+                                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">QR Menu</h1>
+                                    <p className="text-gray-600 dark:text-gray-400">Por favor, escaneie um QR Code da mesa</p>
+                                </div>
+                            </div>} />
+                        </Routes>
+                    </div>
+                </NotificationProvider>
+            </ThemeProvider>
+        </CartProvider>
     );
 }
 

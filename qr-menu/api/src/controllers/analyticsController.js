@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
 import MenuItem from '../models/MenuItem.js';
 
+import WaiterCall from '../models/WaiterCall.js';
+
 export const getOwnerStats = async (req, res) => {
     try {
         const ownerId = req.user._id;
@@ -91,6 +93,40 @@ export const getRestaurantStats = async (req, res) => {
                 $gte: subDays(new Date(), 30)
             };
         }
+
+        // REAL-TIME KPIS (Snapshot of now)
+        // 1. Active Orders: 'pending', 'confirmed', 'preparing'
+        const activeOrdersCount = await Order.countDocuments({
+            restaurant: id,
+            status: { $in: ['pending', 'confirmed', 'preparing'] }
+        });
+
+        // 2. Pending Orders: 'pending', 'confirmed'
+        const pendingOrdersCount = await Order.countDocuments({
+            restaurant: id,
+            status: { $in: ['pending', 'confirmed'] }
+        });
+
+        // 3. Completed Orders: 'ready', 'completed' (Matching the date filter of the report, typically today)
+        const completedOrdersCount = await Order.countDocuments({
+            restaurant: id,
+            status: { $in: ['ready', 'completed'] },
+            createdAt: query.createdAt // Apply same date filter
+        });
+
+        // 4. Occupied Tables: Count distinct tables in active/open orders
+        const occupiedTablesResult = await Order.distinct('table', {
+            restaurant: id,
+            status: { $in: ['pending', 'confirmed', 'preparing', 'ready'] } // 'ready' means they haven't paid/left yet usually
+        });
+        const occupiedTablesCount = occupiedTablesResult.length;
+
+        // 5. Active Waiter Calls
+        const activeWaiterCallsCount = await WaiterCall.countDocuments({
+            restaurant: id,
+            status: { $in: ['pending', 'acknowledged'] }
+        });
+
 
         // 1. Financial Stats
         const financialStats = await Order.aggregate([
@@ -205,6 +241,13 @@ export const getRestaurantStats = async (req, res) => {
         });
 
         res.json({
+            realtime: {
+                activeOrders: activeOrdersCount,
+                pendingOrders: pendingOrdersCount,
+                completedOrders: completedOrdersCount,
+                occupiedTables: occupiedTablesCount,
+                activeWaiterCalls: activeWaiterCallsCount
+            },
             financial: {
                 revenue: financialStats[0]?.totalRevenue || 0,
                 orders: financialStats[0]?.totalOrders || 0,

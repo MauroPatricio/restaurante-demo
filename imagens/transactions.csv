@@ -1,0 +1,7 @@
+Order ID,Date,Customer,Amount,Method,Payment Status
+6960029d8508962ffc0f03d8,2026-01-08 21:16,Cipriano,200,cash,paid
+695fff498508962ffc0efa80,2026-01-08 21:02,Mauro,140,mpesa,paid
+695ffac08508962ffc0ef448,2026-01-08 20:43,Teste,140,cash,paid
+695ff8d98508962ffc0eefed,2026-01-08 20:35,Mauro,140,mpesa,pending
+695ff48ca65e3c1063a4c56e,2026-01-08 20:16,Mmk,140,cash,pending
+695ff482a65e3c1063a4c52a,2026-01-08 20:16,Ye,140,cash,pending

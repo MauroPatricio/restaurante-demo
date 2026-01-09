@@ -11,7 +11,7 @@ import '../styles/TableSessionModal.css';
 export default function Tables() {
     const { user } = useAuth();
     const { t } = useTranslation();
-    const { pendingAlerts, acknowledgeOrderAlert } = useSocket();
+    const { activeCalls, removeCall } = useSocket();
     const [tables, setTables] = useState([]);
     const [activeOrders, setActiveOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -175,8 +175,11 @@ export default function Tables() {
 
     const handleViewSession = async (table) => {
         try {
-            // Acknowledge alert when viewing session
-            acknowledgeOrderAlert(table.number);
+            // Check for any active calls for this table and dismiss them
+            const call = activeCalls.find(c => c.tableNumber === table.number || c.tableNumber === String(table.number));
+            if (call) {
+                removeCall(call.callId);
+            }
 
             const response = await tableAPI.getCurrentSession(table._id);
             setSelectedTable(table);
@@ -254,16 +257,16 @@ export default function Tables() {
                     const badgeClass = `status-badge ${statusKey}`;
 
                     // Check if this table has a pending global alert
-                    const hasAlert = pendingAlerts.some(a =>
-                        a.tableNumber === table.number ||
-                        a.tableNumber === String(table.number)
+                    const call = activeCalls.find(a =>
+                        Number(a.tableNumber) === Number(table.number)
                     );
+                    const hasAlert = !!call;
 
                     return (
                         <div
                             key={table._id}
                             className={`stat-card ${hasAlert ? 'blink-urgent' : ''}`}
-                            onClick={() => hasAlert && acknowledgeOrderAlert(table.number)}
+                            onClick={() => hasAlert && removeCall(call.callId)}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',

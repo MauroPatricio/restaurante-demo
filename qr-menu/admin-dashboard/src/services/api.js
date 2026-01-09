@@ -108,7 +108,7 @@ export const tableAPI = {
 export const orderAPI = {
     getAll: (restaurantId, params) => api.get(`/orders/restaurant/${restaurantId}`, { params }),
     get: (id) => api.get(`/orders/${id}`),
-    updateStatus: (id, status) => api.patch(`/orders/${id}`, { status })
+    updateStatus: (id, status, paymentStatus) => api.patch(`/orders/${id}`, { status, paymentStatus })
 };
 
 // Coupon API
@@ -205,6 +205,11 @@ export const uploadAPI = {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     }
+};
+
+// Client API
+export const clientAPI = {
+    getAll: (restaurantId) => api.get('/clients', { params: { restaurantId } })
 };
 
 export default api;

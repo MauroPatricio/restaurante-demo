@@ -14,7 +14,7 @@ export const createWaiterCall = async (req, res) => {
         // Get table details
         const table = await Table.findById(tableId)
             .populate('restaurant', 'name')
-            .populate('assignedWaiter', 'name');
+            .populate('assignedWaiterId', 'name');
 
         if (!table) {
             return res.status(404).json({ error: 'Table not found' });
@@ -33,15 +33,40 @@ export const createWaiterCall = async (req, res) => {
             });
         }
 
+        // Determine waiter info (handle both legacy String and new ObjectId)
+        let waiterId = table.assignedWaiterId?._id;
+        let waiterName = 'Unassigned';
+
+        if (table.assignedWaiterId?.name) {
+            waiterName = table.assignedWaiterId.name;
+        } else if (table.assignedWaiter) {
+            // Legacy field fallback
+            // Check if legacy field holds an ObjectId string
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(table.assignedWaiter);
+
+            if (isObjectId) {
+                // Try to resolve the user
+                const waiterUser = await User.findById(table.assignedWaiter).select('name');
+                if (waiterUser) {
+                    waiterName = waiterUser.name;
+                    waiterId = waiterUser._id; // Also fix the ID if we found it here
+                } else {
+                    waiterName = table.assignedWaiter; // Keep the ID string if user not found
+                }
+            } else {
+                waiterName = table.assignedWaiter; // It's likely just a name string
+            }
+        }
+
         // Create the call
         const waiterCall = await WaiterCall.create({
             table: tableId,
-            waiter: table.assignedWaiter?._id,
+            waiter: waiterId,
             restaurant: table.restaurant._id,
             type,
             metadata: {
                 tableNumber: table.number,
-                waiterName: table.assignedWaiter?.name || 'Unassigned',
+                waiterName: waiterName,
                 restaurantName: table.restaurant.name
             }
         });

@@ -54,6 +54,60 @@ const Menu = () => {
     const [customerOrders, setCustomerOrders] = useState([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
 
+    // Valid Session State
+    const [sessionValid, setSessionValid] = useState(false);
+    const [validating, setValidating] = useState(true);
+    const [validationError, setValidationError] = useState(null);
+
+    // Initial Token Validation for Deep Links
+    useEffect(() => {
+        const validateSession = async () => {
+            if (!restaurantId || !tableNumber || !token) {
+                setValidating(false);
+                return;
+            }
+
+            // If satisfied from previous QRRedirect logic
+            const sessionData = JSON.parse(sessionStorage.getItem('qr_validation') || '{}');
+            if (sessionData.token === token && String(sessionData.table) === String(tableNumber)) {
+                setSessionValid(true);
+                setValidating(false);
+                return;
+            }
+
+            try {
+                const response = await axios.get(
+                    `${API_URL}/public/menu/validate?r=${restaurantId}&t=${tableNumber}&token=${token}`
+                );
+
+                if (response.data.valid) {
+                    setSessionValid(true);
+                    sessionStorage.setItem('qr_validation', JSON.stringify({
+                        restaurant: response.data.restaurant,
+                        table: response.data.table._id || response.data.table,
+                        token,
+                        timestamp: Date.now()
+                    }));
+
+                    // Persist for reloads
+                    localStorage.setItem(`table-ref-${restaurantId}`, String(tableNumber));
+                    localStorage.setItem(`token-ref-${restaurantId}`, token);
+                } else {
+                    setValidationError(t('invalid_qr') || 'QR Code inválido ou expirado');
+                }
+            } catch (err) {
+                console.error('Validation error:', err);
+                const msg = err.response?.data?.message || err.response?.data?.error || err.message;
+                setValidationError(msg);
+            } finally {
+                setValidating(false);
+            }
+        };
+
+        validateSession();
+    }, [restaurantId, tableNumber, token]);
+
+
     // Real-time Context
     const { joinRestaurantRoom, joinTableRoom, lastMenuUpdate, lastTableUpdate, isOnline } = useNotification();
 
@@ -66,6 +120,8 @@ const Menu = () => {
     // Fetch Menu (Re-fetches on lastMenuUpdate)
     useEffect(() => {
         const fetchMenu = async () => {
+            if (!sessionValid) return; // Wait for valid session
+
             try {
                 setLoading(true);
                 const t = Date.now(); // Cache buster
@@ -87,8 +143,8 @@ const Menu = () => {
             }
         };
 
-        if (restaurantId) fetchMenu();
-    }, [restaurantId, lastMenuUpdate]);
+        if (restaurantId && sessionValid) fetchMenu();
+    }, [restaurantId, lastMenuUpdate, sessionValid]);
 
     // Separate Table Fetch (Re-fetches on lastTableUpdate)
     useEffect(() => {
@@ -174,8 +230,49 @@ const Menu = () => {
         }
     };
 
+    if (validating) return (
+        <div className="flex h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+            <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                className="rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mb-4"
+            />
+            <p className="text-gray-500 dark:text-gray-400 font-medium">Validando sua mesa...</p>
+        </div>
+    );
+
+    if (validationError) return (
+        <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl text-center max-w-sm w-full border border-gray-100 dark:border-gray-700">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                    <AlertTriangle size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t('access_denied') || 'Acesso Negado'}</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">{validationError}</p>
+
+                {/* Debug Info */}
+                <div className="mb-6 p-3 bg-gray-100 dark:bg-gray-900/50 rounded text-[10px] text-left overflow-auto max-h-32 text-gray-500 font-mono border border-gray-200 dark:border-gray-700">
+                    <p><strong>Diagnostic Info:</strong></p>
+                    <p>Restaurant: {restaurantId}</p>
+                    <p>Table Found: {tableNumber ? 'YES' : 'NO'}</p>
+                    <p>Table ID: {tableNumber}</p>
+                    <p>Token Found: {token ? 'YES' : 'NO'}</p>
+                    <p>API URL: {API_URL}</p>
+                    <p>Host: {window.location.host}</p>
+                </div>
+
+                <button
+                    onClick={() => navigate('/')}
+                    className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-primary-500/30"
+                >
+                    {t('scan_again') || 'Escanear Novamente'}
+                </button>
+            </div>
+        </div>
+    );
+
     if (loading) return (
-        <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
             <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
@@ -185,7 +282,7 @@ const Menu = () => {
     );
 
     if (error) return (
-        <div className="flex h-screen items-center justify-center text-red-500 gap-2 bg-gray-50 flex-col p-4 text-center">
+        <div className="flex h-screen items-center justify-center text-red-500 gap-2 bg-gray-50 dark:bg-gray-900 flex-col p-4 text-center">
             <AlertCircle size={48} className="mb-2 opacity-50" />
             <p>{t('failed_to_load')}</p>
         </div>

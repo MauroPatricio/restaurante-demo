@@ -255,7 +255,7 @@ const Cart = () => {
                                                 : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                                                 } `}
                                         >
-                                            <span className="capitalize font-bold text-sm">{method === 'visa' ? 'Card' : method}</span>
+                                            <span className="capitalize font-bold text-sm">{method === 'visa' ? 'VISA' : method}</span>
                                         </button>
                                     ))}
                                 </div>

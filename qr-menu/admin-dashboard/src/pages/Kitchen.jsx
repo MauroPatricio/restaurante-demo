@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { orderAPI } from '../services/api';
+import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useSound } from '../hooks/useSound';
-import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle, Coffee } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -42,13 +42,25 @@ const iconBoxStyle = (color, bg) => ({
 const Kitchen = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
-    const { socket, acknowledgeOrderAlert } = useSocket(); // Get socket and ack method
+    const { socket } = useSocket(); // acknowledgeOrderAlert removed
     const restaurantId = user?.restaurant?._id || user?.restaurant?.id || localStorage.getItem('restaurantId');
 
     const [orders, setOrders] = useState([]);
     const [cancelledOrders, setCancelledOrders] = useState([]); // Track cancelled orders temporarily
     const [loading, setLoading] = useState(true);
     const [audioEnabled, setAudioEnabled] = useState(false);
+
+    // Metrics (Unified Philosophy with Dashboard.jsx)
+    const [stats, setStats] = useState({
+        realtime: {
+            activeOrders: 0,
+            pendingOrders: 0,
+            completedOrders: 0,
+            occupiedTables: 0,
+            activeWaiterCalls: 0
+        },
+        operational: { avgPrepTime: 0 }
+    });
 
     // Use shared sound hook
     const { play: playOrderSound } = useSound('/sounds/bell.mp3');
@@ -59,9 +71,9 @@ const Kitchen = () => {
             setLoading(false);
             return;
         }
-        fetchOrders();
+        fetchData();
         // Keep polling as backup (every 30s)
-        const interval = setInterval(fetchOrders, 30000);
+        const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
     }, [restaurantId]);
 
@@ -71,14 +83,14 @@ const Kitchen = () => {
 
         const handleNewOrder = (data) => {
             console.log('Kitchen: New order received', data);
-            fetchOrders();
+            fetchData();
             if (audioEnabled) {
                 playOrderSound();
             }
         };
 
-        const handleOrderUpdate = (data) => {
-            console.log('Kitchen: Order updated', data);
+        const handleRealtimeUpdate = (data) => {
+            console.log('Kitchen: Realtime update', data);
 
             // Check if cancelled
             if (data.status === 'cancelled') {
@@ -93,29 +105,46 @@ const Kitchen = () => {
                 }, 10000);
             }
 
-            fetchOrders();
+            fetchData();
         };
 
         socket.on('order:new', handleNewOrder);
-        socket.on('order-updated', handleOrderUpdate);
+        socket.on('order-updated', handleRealtimeUpdate);
+
+        // Listen to waiter calls too, as strictly requested "same philosophy" implies showing waiter calls
+        socket.on('waiter:call', handleRealtimeUpdate);
+        socket.on('waiter:update', handleRealtimeUpdate);
 
         return () => {
             socket.off('order:new', handleNewOrder);
-            socket.off('order-updated', handleOrderUpdate);
+            socket.off('order-updated', handleRealtimeUpdate);
+            socket.off('waiter:call', handleRealtimeUpdate);
+            socket.off('waiter:update', handleRealtimeUpdate);
         };
     }, [socket, restaurantId, audioEnabled, playOrderSound]);
 
-    const fetchOrders = async () => {
+    const fetchData = async () => {
         if (!restaurantId) return;
         try {
-            const { data } = await orderAPI.getAll(restaurantId, { status: 'pending,preparing' });
+            const today = new Date().toISOString().split('T')[0];
 
-            const ordersArray = Array.isArray(data?.orders) ? data.orders : (Array.isArray(data) ? data : []);
+            // Parallel fetch: Orders for columns + Stats for Cards (matching Dashboard logic)
+            const [ordersRes, statsRes] = await Promise.all([
+                orderAPI.getAll(restaurantId, { status: 'pending,confirmed,preparing,ready' }),
+                analyticsAPI.getRestaurantStats(restaurantId, { startDate: today, endDate: today })
+            ]);
 
-            setOrders(ordersArray.filter(o => ['pending', 'preparing'].includes(o.status)));
+            const ordersArray = Array.isArray(ordersRes.data?.orders) ? ordersRes.data.orders : (Array.isArray(ordersRes.data) ? ordersRes.data : []);
+            setOrders(ordersArray.filter(o => ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status)));
+
+            setStats({
+                realtime: statsRes.data.realtime || {},
+                operational: statsRes.data.operational || { avgPrepTime: 0 }
+            });
+
         } catch (error) {
-            console.error('Failed to fetch kitchen orders:', error);
-            setOrders([]);
+            console.error('Failed to fetch kitchen data:', error);
+            // Don't clear orders on error to avoid flicker
         } finally {
             setLoading(false);
         }
@@ -124,9 +153,7 @@ const Kitchen = () => {
     const updateStatus = async (orderId, newStatus) => {
         try {
             await orderAPI.updateStatus(orderId, newStatus);
-            // Acknowledge the alert for this order when status changes
-            acknowledgeOrderAlert(orderId);
-            fetchOrders();
+            fetchData();
         } catch (error) {
             console.error('Failed to update order status:', error);
         }
@@ -144,34 +171,34 @@ const Kitchen = () => {
         );
     }
 
-    // Calculate stats
-    const pendingOrders = orders.filter(o => o.status === 'pending');
-    const preparingOrders = orders.filter(o => o.status === 'preparing');
-    const totalItems = orders.reduce((sum, order) => sum + (order.items?.length || 0), 0);
-
-    // Calculate average wait time for pending orders
-    const avgWaitTime = pendingOrders.length > 0
-        ? Math.floor(pendingOrders.reduce((sum, order) => {
-            return sum + (Date.now() - new Date(order.createdAt).getTime());
-        }, 0) / pendingOrders.length / 60000)
-        : 0;
-
     const columns = {
         pending: {
             title: t('pending') || 'Pending',
             icon: AlertCircle,
             color: '#f59e0b',
             bg: '#fffbeb',
-            borderColor: '#fef3c7'
+            borderColor: '#fef3c7',
+            filter: (o) => ['pending', 'confirmed'].includes(o.status)
         },
         preparing: {
             title: t('preparing') || 'Preparing',
             icon: ChefHat,
             color: '#3b82f6',
             bg: '#eff6ff',
-            borderColor: '#dbeafe'
+            borderColor: '#dbeafe',
+            filter: (o) => o.status === 'preparing'
+        },
+        ready: {
+            title: t('ready') || 'Prontos',
+            icon: CheckCircle,
+            color: '#10b981',
+            bg: '#ecfdf5',
+            borderColor: '#d1fae5',
+            filter: (o) => o.status === 'ready'
         }
     };
+
+    const { realtime, operational } = stats;
 
     return (
         <div style={{ padding: '24px', maxWidth: '100vw', minHeight: 'calc(100vh - 64px)', backgroundColor: '#f8fafc' }}>
@@ -208,7 +235,7 @@ const Kitchen = () => {
                         border: '1px solid #d1fae5', color: '#047857', fontSize: '14px', fontWeight: '600'
                     }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
-                        {t('live_updates') || 'Live Updates'} (10s)
+                        {t('live_updates') || 'Live Updates'} (Realtime)
                     </div>
                 </div>
             </div>
@@ -251,21 +278,32 @@ const Kitchen = () => {
                 </div>
             )}
 
-            {/* KPI Cards */}
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
+            {/* KPI Cards - USANDO A MESMA FILOSOFIA (BACKEND STATS) DO DASHBOARD */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', marginBottom: '32px', width: '100%' }}>
+
+                {/* 1. Active Orders */}
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {t('active_orders') || 'Active Orders'}
+                        </p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
+                            {realtime.activeOrders || 0}
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
+                        <Utensils size={24} strokeWidth={2.5} />
+                    </div>
+                </div>
+
+                {/* 2. Pending (Synced with Dashboard) */}
+                <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             {t('pending_orders') || 'Pending Orders'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {pendingOrders.length}
+                            {realtime.pendingOrders || 0}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#f59e0b', '#fffbeb')}>
@@ -273,59 +311,45 @@ const Kitchen = () => {
                     </div>
                 </div>
 
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
+                {/* 3. Completed (Today) */}
+                <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('preparing') || 'Preparing'}
+                            {t('completed_today') || 'Feitos Hoje'}
                         </p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {preparingOrders.length}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
-                        <ChefHat size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('total_items') || 'Total Items'}
-                        </p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {totalItems}
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', margin: '8px 0 0 0' }}>
+                            {realtime.completedOrders || 0}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
-                        <Utensils size={24} strokeWidth={2.5} />
+                        <CheckCircle size={24} strokeWidth={2.5} />
                     </div>
                 </div>
 
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
+                {/* 4. Active Waiter Calls (Useful for Kitchen to know FOH status) */}
+                <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('avg_wait') || 'Avg Wait Time'}
+                            Chamadas Garçom
+                        </p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: (realtime.activeWaiterCalls > 0) ? '#ef4444' : '#94a3b8', margin: '8px 0 0 0' }}>
+                            {realtime.activeWaiterCalls || 0}
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
+                        <Users size={24} strokeWidth={2.5} />
+                    </div>
+                </div>
+
+
+                {/* 5. Avg Prep Time */}
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {t('avg_prep_time') || 'Tempo Médio'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {avgWaitTime} <span style={{ fontSize: '18px', color: '#94a3b8', fontWeight: '600' }}>min</span>
+                            {Math.round(operational.avgPrepTime || 0)} <span style={{ fontSize: '18px', color: '#94a3b8', fontWeight: '600' }}>min</span>
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
@@ -378,7 +402,7 @@ const Kitchen = () => {
                                 border: `2px solid ${config.borderColor}`,
                                 color: config.color
                             }}>
-                                {orders.filter(o => o.status === status).length}
+                                {orders.filter(config.filter).length}
                             </span>
                         </div>
 
@@ -391,7 +415,7 @@ const Kitchen = () => {
                             flexDirection: 'column',
                             gap: '16px'
                         }}>
-                            {orders.filter(o => o.status === status).map(order => (
+                            {orders.filter(config.filter).map(order => (
                                 <div key={order._id} style={{
                                     background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
                                     borderRadius: '12px',
@@ -416,32 +440,40 @@ const Kitchen = () => {
                                     }}>
                                         <div>
                                             <div style={{
-                                                fontWeight: '800',
-                                                fontSize: '20px',
+                                                fontWeight: '900',
+                                                fontSize: '24px',
                                                 color: '#1e293b',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '8px'
+                                                gap: '12px'
                                             }}>
-                                                #{order.orderNumber || order._id.substr(-4)}
-                                                <span style={{
-                                                    fontSize: '12px',
-                                                    fontWeight: '600',
-                                                    padding: '4px 10px',
-                                                    background: '#f1f5f9',
-                                                    borderRadius: '6px',
-                                                    color: '#64748b',
-                                                    border: '1px solid #e2e8f0'
+                                                #{order.orderNumber || (order._id ? order._id.substr(-5).toUpperCase() : '----')}
+                                                <div style={{
+                                                    fontSize: '14px',
+                                                    fontWeight: '700',
+                                                    padding: '6px 14px',
+                                                    background: '#f8fafc',
+                                                    borderRadius: '8px',
+                                                    color: '#475569',
+                                                    border: '1px solid #e2e8f0',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px'
                                                 }}>
-                                                    Table {order.table?.number || '?'}
-                                                </span>
+                                                    <span style={{ color: '#94a3b8', fontSize: '12px' }}>Mesa</span>
+                                                    {order.table?.number || '?'}
+                                                </div>
                                             </div>
                                             <div style={{
-                                                fontSize: '12px',
+                                                fontSize: '13px',
                                                 color: '#94a3b8',
-                                                marginTop: '4px',
-                                                fontWeight: '500'
+                                                marginTop: '6px',
+                                                fontWeight: '600',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
                                             }}>
+                                                <Clock size={14} />
                                                 {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
@@ -449,58 +481,63 @@ const Kitchen = () => {
                                     </div>
 
                                     {/* Items List */}
-                                    <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         {order.items?.map((item, idx) => (
                                             <div key={idx} style={{
                                                 display: 'flex',
                                                 justifyContent: 'space-between',
                                                 alignItems: 'start',
-                                                fontSize: '14px'
+                                                fontSize: '15px',
+                                                padding: '8px',
+                                                borderRadius: '8px',
+                                                background: idx % 2 === 0 ? 'transparent' : '#f8fafc'
                                             }}>
                                                 <div style={{
                                                     fontWeight: '600',
-                                                    color: '#475569',
+                                                    color: '#334155',
                                                     flex: 1,
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '8px'
+                                                    gap: '12px'
                                                 }}>
-                                                    <span style={{
-                                                        fontWeight: '800',
-                                                        background: config.bg,
-                                                        color: config.color,
-                                                        padding: '4px 8px',
-                                                        borderRadius: '6px',
-                                                        fontSize: '12px',
-                                                        minWidth: '32px',
-                                                        textAlign: 'center',
-                                                        border: `1px solid ${config.borderColor}`
-                                                    }}>
-                                                        {item.quantity}x
-                                                    </span>
-                                                    {item.name || "Item Name"}
-                                                </div>
-                                                {item.notes && (
                                                     <div style={{
-                                                        fontSize: '11px',
+                                                        fontWeight: '800',
+                                                        background: '#fff7ed',
                                                         color: '#f59e0b',
-                                                        background: '#fffbeb',
                                                         padding: '4px 8px',
                                                         borderRadius: '6px',
-                                                        border: '1px solid #fef3c7',
-                                                        maxWidth: '50%',
-                                                        fontWeight: '600'
+                                                        fontSize: '13px',
+                                                        minWidth: '36px',
+                                                        textAlign: 'center',
+                                                        border: '1px solid #ffedd5',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
                                                     }}>
-                                                        {item.notes}
+                                                        {item.qty || item.quantity || 1}x
                                                     </div>
-                                                )}
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ fontWeight: '700' }}>{item.item?.name || item.name || "S/ Nome"}</span>
+                                                        {item.notes && (
+                                                            <span style={{
+                                                                fontSize: '12px',
+                                                                color: '#d97706',
+                                                                fontWeight: '500',
+                                                                marginTop: '2px',
+                                                                fontStyle: 'italic'
+                                                            }}>
+                                                                • {item.notes}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
 
                                     {/* Actions */}
                                     <div>
-                                        {status === 'pending' && (
+                                        {['pending', 'confirmed'].includes(order.status) && (
                                             <>
                                                 <button
                                                     onClick={() => updateStatus(order._id, 'preparing')}
@@ -556,7 +593,7 @@ const Kitchen = () => {
                                                 </button>
                                             </>
                                         )}
-                                        {status === 'preparing' && (
+                                        {order.status === 'preparing' && (
                                             <button
                                                 onClick={() => updateStatus(order._id, 'ready')}
                                                 style={{
@@ -588,10 +625,41 @@ const Kitchen = () => {
                                                 <CheckCircle size={18} /> Mark Ready
                                             </button>
                                         )}
+                                        {order.status === 'ready' && (
+                                            <button
+                                                onClick={() => updateStatus(order._id, 'completed')}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '14px',
+                                                    background: 'white',
+                                                    color: '#64748b',
+                                                    border: '2px solid #e2e8f0',
+                                                    borderRadius: '10px',
+                                                    fontWeight: '700',
+                                                    fontSize: '14px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '8px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = '#f8fafc';
+                                                    e.currentTarget.style.borderColor = '#cbd5e1';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'white';
+                                                    e.currentTarget.style.borderColor = '#e2e8f0';
+                                                }}
+                                            >
+                                                <CheckCircle size={18} /> Entregue / Fechar
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
-                            {orders.filter(o => o.status === status).length === 0 && (
+                            {orders.filter(config.filter).length === 0 && (
                                 <div style={{
                                     height: '100%',
                                     display: 'flex',

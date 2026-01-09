@@ -24,6 +24,7 @@ import StockDashboard from './pages/StockDashboard';
 import Delivery from './pages/Delivery';
 import Reports from './pages/Reports';
 import ManagerDashboard from './pages/ManagerDashboard';
+import Clients from './pages/Clients';
 import { SocketProvider } from './contexts/SocketContext';
 import './App.css';
 
@@ -115,6 +116,7 @@ function AppContent() {
           <Route path="subscription" element={<Subscription />} />
           <Route path="payments" element={<Payments />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="clients" element={<Clients />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="profiles" element={<Profiles />} />
           <Route path="subscriptions" element={<Subscriptions />} />

@@ -42,7 +42,7 @@ const iconBoxStyle = (color, bg) => ({
 export default function WaiterDashboard() {
     const { user } = useAuth();
     const { t } = useTranslation();
-    const { pendingAlerts, acknowledgeOrderAlert, activeCalls } = useSocket();
+    const { activeCalls, removeCall, socket } = useSocket(); // Use removeCall for dismissing calls
     const [tables, setTables] = useState([]);
     const [readyOrders, setReadyOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -63,6 +63,22 @@ export default function WaiterDashboard() {
             clearInterval(interval);
         };
     }, [restaurantId]);
+
+    // Listen for Order Updates to refresh Ready list
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleOrderUpdate = (data) => {
+            if (data.status === 'ready' || data.status === 'completed') {
+                fetchReadyOrders();
+            }
+        };
+
+        socket.on('order-updated', handleOrderUpdate);
+        return () => {
+            socket.off('order-updated', handleOrderUpdate);
+        };
+    }, [socket]);
 
     const fetchData = () => {
         fetchTables();
@@ -89,10 +105,6 @@ export default function WaiterDashboard() {
             console.error('Failed to fetch ready orders:', error);
             setReadyOrders([]);
         }
-    };
-
-    const dismissAlert = (id) => {
-        // This function seems to be unused now that we use activeCalls/pendingAlerts from socket
     };
 
     const markOrderServed = async (orderId) => {
@@ -271,7 +283,7 @@ export default function WaiterDashboard() {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => acknowledgeOrderAlert(call.tableNumber)}
+                                            onClick={() => removeCall(call.callId)}
                                             className="px-4 py-2 bg-white text-red-600 text-xs font-bold rounded-lg shadow-sm hover:bg-red-50 transition-all border-2 border-red-200"
                                         >
                                             {t('dismiss') || 'Dispensar'}
@@ -363,16 +375,14 @@ export default function WaiterDashboard() {
                                     cleaning: { bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '#93c5fd', text: '#1e40af', shadow: '0 4px 15px rgba(59, 130, 246, 0.2)' }
                                 };
                                 const config = statusConfig[table.status] || statusConfig.free;
-                                const hasAlert = pendingAlerts.some(a => a.tableNumber === table.number || a.tableNumber === String(table.number));
 
                                 return (
                                     <div
                                         key={table._id}
-                                        className={hasAlert ? 'blink-urgent' : ''}
                                         style={{
                                             padding: '20px',
                                             borderRadius: '12px',
-                                            border: hasAlert ? '2px solid #ef4444' : `2px solid ${config.border}`,
+                                            border: `2px solid ${config.border}`,
                                             background: config.bg,
                                             color: config.text,
                                             position: 'relative',
@@ -383,21 +393,19 @@ export default function WaiterDashboard() {
                                             alignItems: 'flex-start',
                                             justifyContent: 'space-between',
                                             minHeight: '140px',
-                                            boxShadow: hasAlert ? '0 0 20px rgba(239, 68, 68, 0.4)' : config.shadow
+                                            boxShadow: config.shadow
                                         }}
-                                        onClick={() => hasAlert && acknowledgeOrderAlert(table.number)}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.transform = 'translateY(-8px) scale(1.05)';
-                                            if (!hasAlert) e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.15)';
+                                            e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.15)';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                            e.currentTarget.style.boxShadow = hasAlert ? '0 0 20px rgba(239, 68, 68, 0.4)' : config.shadow;
+                                            e.currentTarget.style.boxShadow = config.shadow;
                                         }}
                                     >
                                         <div className="text-2xl font-bold mb-2" style={{ color: '#000' }}>
                                             {t('table')} {table.number}
-                                            {hasAlert && <span className="ml-2">📦</span>}
                                         </div>
 
                                         <div style={{

@@ -132,10 +132,10 @@ export default function WaiterCallAlerts() {
                                     e.stopPropagation();
                                     toggleSound();
                                 }}
-                                className="sound-toggle"
-                                title={soundEnabled ? 'Silenciar' : 'Ativar Som'}
+                                className={`sound-toggle-btn ${!soundEnabled ? 'muted' : ''}`}
+                                title={soundEnabled ? 'Silenciar Alarme' : 'Ativar Som'}
                             >
-                                {soundEnabled ? '🔊' : '🔇'}
+                                {soundEnabled ? '🔊 Silenciar' : '🔇 Silenciado'}
                             </button>
                         )}
                         <button

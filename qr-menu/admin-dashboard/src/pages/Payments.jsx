@@ -150,6 +150,30 @@ export default function Payments() {
                                     </span>
                                 </td>
                                 <td>
+                                    {order.paymentStatus === 'pending' && (
+                                        <button
+                                            onClick={() => {
+                                                setSelectedOrder(order);
+                                                setShowVerifyModal(true);
+                                            }}
+                                            className="btn-small btn-confirm"
+                                            style={{
+                                                background: '#10b981',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            <CheckCircle size={16} />
+                                            {t('confirm_payment') || 'Confirmar Pagamento'}
+                                        </button>
+                                    )}
                                     {order.paymentMethod === 'transfer' && order.paymentStatus !== 'paid' && (
                                         <button onClick={() => handleVerifyParams(order)} className="btn-small">
                                             <Eye size={16} />

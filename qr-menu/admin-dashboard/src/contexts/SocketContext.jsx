@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { useSound } from '../hooks/useSound';
+import { orderAPI } from '../services/api';
 
 const SocketContext = createContext(null);
 
@@ -14,31 +15,75 @@ export const SocketProvider = ({ children }) => {
     const [connected, setConnected] = useState(false);
     const [activeCalls, setActiveCalls] = useState([]);
 
-    // Get restaurant data safely from user object 
+    // Restaurant context
     const restaurant = user?.restaurant;
 
-    const [pendingAlerts, setPendingAlerts] = useState(() => {
-        // Load initial state from localStorage to persist across refreshes
-        if (!restaurant?._id) return [];
-        const saved = localStorage.getItem(`pending-alerts-${restaurant._id}`);
-        return saved ? JSON.parse(saved) : [];
+    // --- New Notification State ---
+    const [audioEnabled, setAudioEnabled] = useState(() => {
+        return localStorage.getItem('audioEnabled') !== 'false'; // Default to true
     });
 
-    // Sound notification for new orders
-    const { play: playOrderSound } = useSound('/sounds/bell.mp3');
+    const [isRinging, setIsRinging] = useState(false);
+    const [pendingCount, setPendingCount] = useState(0); // Total orders in 'pending' state
+    const ringingIntervalRef = useRef(null);
 
-    // Save alerts to localStorage whenever they change
+    // Audio hooks
+    const { play: playNewOrderSound } = useSound('/sounds/glass.mp3');
+    const { play: playReadySound } = useSound('/sounds/bell3.mp3');
+
+    // Persist Audio Setting
     useEffect(() => {
-        if (restaurant?._id) {
-            localStorage.setItem(`pending-alerts-${restaurant._id}`, JSON.stringify(pendingAlerts));
+        localStorage.setItem('audioEnabled', audioEnabled);
+    }, [audioEnabled]);
+
+    // Ringing Loop Logic
+    useEffect(() => {
+        if (isRinging && audioEnabled) {
+            // Play immediately
+            playNewOrderSound();
+
+            // Loop every 3 seconds
+            ringingIntervalRef.current = setInterval(() => {
+                playNewOrderSound();
+            }, 3000);
+        } else {
+            // Stop logic
+            if (ringingIntervalRef.current) {
+                clearInterval(ringingIntervalRef.current);
+                ringingIntervalRef.current = null;
+            }
         }
-    }, [pendingAlerts, restaurant?._id]);
+
+        return () => {
+            if (ringingIntervalRef.current) {
+                clearInterval(ringingIntervalRef.current);
+                ringingIntervalRef.current = null;
+            }
+        };
+    }, [isRinging, audioEnabled, playNewOrderSound]);
+
+    // Initial Fetch for Counts
+    useEffect(() => {
+        const fetchInitialCounts = async () => {
+            if (restaurant?._id) {
+                try {
+                    // Fetch only pending orders to get count
+                    const { data } = await orderAPI.getAll(restaurant._id, { status: 'pending' });
+                    const orders = Array.isArray(data?.orders) ? data.orders : [];
+                    setPendingCount(orders.length);
+                } catch (err) {
+                    console.error('Failed to fetch initial pending count', err);
+                }
+            }
+        };
+        fetchInitialCounts();
+    }, [restaurant]);
+
+    // ... (Socket Connection Logic remains similar, updated handlers below)
 
     useEffect(() => {
-        // Only connect if user is authenticated and has restaurant context
         if (!user || !restaurant?._id) {
             if (socketRef.current) {
-                console.log('Disconnecting socket - no user/restaurant');
                 socketRef.current.disconnect();
                 socketRef.current = null;
                 setSocket(null);
@@ -47,7 +92,6 @@ export const SocketProvider = ({ children }) => {
             return;
         }
 
-        // Create socket connection
         console.log('Creating socket connection to:', SOCKET_URL);
         const newSocket = io(SOCKET_URL, {
             transports: ['websocket', 'polling'],
@@ -58,125 +102,111 @@ export const SocketProvider = ({ children }) => {
 
         socketRef.current = newSocket;
 
-        // Connection events
         newSocket.on('connect', () => {
             console.log('Socket connected:', newSocket.id);
             setConnected(true);
-
-            // Join restaurant room
             newSocket.emit('join:restaurant', { restaurantId: restaurant._id });
         });
 
-        newSocket.on('joined:restaurant', (data) => {
-            console.log('Joined restaurant room:', data);
-        });
+        newSocket.on('disconnect', () => setConnected(false));
 
-        newSocket.on('disconnect', (reason) => {
-            console.log('Socket disconnected:', reason);
-            setConnected(false);
-        });
+        // --- Event Handlers ---
 
-        newSocket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error);
-        });
-
-        // New Order Alert
         newSocket.on('order:new', (data) => {
             console.log('🔔 New order received:', data);
 
-            // Play notification sound
-            playOrderSound();
+            // 1. Update Count
+            setPendingCount(prev => prev + 1);
 
-            setPendingAlerts(prev => {
-                // Avoid duplicates
-                if (prev.some(a => a.orderId === data.orderId)) return prev;
-                return [...prev, { ...data, timestamp: new Date(), type: 'new' }];
-            });
+            // 2. Start Ringing (Notification)
+            // If user is already on Orders page, maybe distinct logic? 
+            // For now, always ring unless disabled.
+            setIsRinging(true);
         });
 
-        // Order Updated Alert (e.g. from client adding items)
         newSocket.on('order-updated', (data) => {
             console.log('📝 Order updated:', data);
-            // We only care about updates that haven't been acknowledged yet
-            // In the future, we could filter by source (client vs staff)
-            // For now, if it's already in pending, we update it, if not, we might add it
-            // if it's a specific type of update.
+
+            // Check Status Change for Count
+            // Note: data might trigger update, but we might not know 'previous' status purely from event
+            // unless backend sends it. 
+            // Ideally we re-fetch or assume if it enters 'pending' from null (unlikely)
+            // or leaves 'pending' (to preparing/ready).
+
+            // Simplest approach: Re-fetch count strictly? Or estimate?
+            // Re-fetching is safer for accuracy.
+            // Let's do a lightweight re-check or just adjust if we know the transition.
+            // Backend usually sends the FULL updated order.
+
+            if (data.status !== 'pending') {
+                // It might have been pending before. Safe to re-fetch to be accurate.
+                // Optimization: Decrement if we knew it was pending? Hard to know.
+                // Let's fetch count again to be consistent. 
+                // (Debounced or just call it, distinct from main list fetch)
+                orderAPI.getAll(restaurant._id, { status: 'pending' })
+                    .then(({ data }) => {
+                        const orders = Array.isArray(data?.orders) ? data.orders : [];
+                        setPendingCount(orders.length);
+                    })
+                    .catch(console.error);
+            }
+
+            // Check for "Ready" Sound
+            if (data.status === 'ready' && audioEnabled) {
+                playReadySound();
+            }
         });
 
-        // Waiter call events
+        // Waiter Calls (Preserve existing logic)
         newSocket.on('waiter:call', (data) => {
-            console.log('Received waiter call:', data);
             setActiveCalls(prev => {
-                // Check if call already exists
-                if (prev.some(call => call.callId === data.callId)) {
-                    return prev;
-                }
+                if (prev.some(call => call.callId === data.callId)) return prev;
                 return [...prev, data];
             });
         });
 
         newSocket.on('waiter:call:acknowledged', (data) => {
-            console.log('Call acknowledged:', data);
-            setActiveCalls(prev =>
-                prev.map(call =>
-                    call.callId === data.callId
-                        ? { ...call, acknowledged: true, acknowledgedAt: data.acknowledgedAt }
-                        : call
-                )
-            );
+            setActiveCalls(prev => prev.map(call =>
+                call.callId === data.callId ? { ...call, acknowledged: true } : call
+            ));
         });
 
         newSocket.on('waiter:call:resolved', (data) => {
-            console.log('Call resolved:', data);
-            setActiveCalls(prev =>
-                prev.filter(call => call.callId !== data.callId)
-            );
-        });
-
-        // Client reaction events
-        newSocket.on('client:reaction', (data) => {
-            console.log('Received client reaction:', data);
-            // Handle reaction notification (optional toast/badge)
+            setActiveCalls(prev => prev.filter(call => call.callId !== data.callId));
         });
 
         setSocket(newSocket);
 
-        // Cleanup on unmount
         return () => {
-            console.log('Cleaning up socket connection');
             if (newSocket) {
-                newSocket.emit('leave:restaurant', { restaurantId: restaurant._id });
                 newSocket.disconnect();
             }
         };
-    }, [user, restaurant]);
+    }, [user, restaurant, audioEnabled, playNewOrderSound, playReadySound]);
 
-    const acknowledgeOrderAlert = (orderIdOrTableNumber) => {
-        setPendingAlerts(prev => prev.filter(a =>
-            a.orderId !== orderIdOrTableNumber && a.tableNumber !== orderIdOrTableNumber
-        ));
-    };
+    // actions
+    const stopRinging = () => setIsRinging(false);
+    const toggleAudio = () => setAudioEnabled(prev => !prev);
 
+    // Keep acknowledge for waiter calls
     const acknowledgeCall = (callId) => {
-        setActiveCalls(prev =>
-            prev.map(call =>
-                call.callId === callId
-                    ? { ...call, acknowledged: true }
-                    : call
-            )
-        );
+        setActiveCalls(prev => prev.map(c => c.callId === callId ? { ...c, acknowledged: true } : c));
     };
-
     const removeCall = (callId) => {
-        setActiveCalls(prev => prev.filter(call => call.callId !== callId));
+        setActiveCalls(prev => prev.filter(c => c.callId !== callId));
     };
 
     const value = {
         socket,
         connected,
         activeCalls,
-        pendingAlerts,
-        acknowledgeOrderAlert,
+        // New Props
+        isRinging,
+        pendingCount,
+        audioEnabled,
+        stopRinging,
+        toggleAudio,
+        // Legacy
         acknowledgeCall,
         removeCall
     };
@@ -190,9 +220,7 @@ export const SocketProvider = ({ children }) => {
 
 export const useSocket = () => {
     const context = useContext(SocketContext);
-    if (context === undefined) {
-        throw new Error('useSocket must be used within a SocketProvider');
-    }
+    if (context === undefined) throw new Error('useSocket must be used within a SocketProvider');
     return context;
 };
 

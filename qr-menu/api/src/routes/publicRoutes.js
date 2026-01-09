@@ -50,7 +50,7 @@ router.get('/menu/validate', async (req, res) => {
         }
 
         // Check subscription status
-        if (!restaurant.subscription || restaurant.subscription.status !== 'active') {
+        if (!restaurant.subscription || !['active', 'trial'].includes(restaurant.subscription.status)) {
             return res.status(403).json({
                 error: 'Subscription expired',
                 message: 'Este restaurante encontra-se temporariamente indisponível.'

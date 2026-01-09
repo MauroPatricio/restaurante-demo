@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
@@ -79,6 +80,7 @@ router.get('/tables/:id/session-history', authenticateToken, authorizeRoles(['ma
 router.get('/public/menu/:restaurantId', async (req, res) => {
   try {
     const { restaurantId } = req.params;
+    console.log(`🔍 Serving menu for restaurant ${restaurantId} from DB: ${mongoose.connection?.db?.databaseName}`);
     const cacheKey = `menu:${restaurantId}`;
 
     // Check cache first
@@ -674,6 +676,12 @@ router.post('/orders', checkSubscription, validateAndOccupyTable, async (req, re
       console.error('Failed to send order notification:', err);
     });
 
+    // Emit real-time update to restaurant room
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`restaurant-${restaurant}`).emit('order:new', order);
+    }
+
     res.status(201).json({
       message: 'Order created successfully',
       order: {
@@ -697,7 +705,11 @@ router.get('/orders/restaurant/:restaurantId', authenticateToken, checkSubscript
     const query = { restaurant: req.params.restaurantId };
 
     if (status) {
-      query.status = status;
+      if (status.includes(',')) {
+        query.status = { $in: status.split(',') };
+      } else {
+        query.status = status;
+      }
     }
 
     if (orderType) {
@@ -748,18 +760,24 @@ router.get('/orders/:id', async (req, res) => {
 // Update order status
 router.patch('/orders/:id', authenticateToken, async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, paymentStatus } = req.body;
 
-    const updateData = {
-      status,
-      $push: {
+    const updateData = {};
+
+    if (status) {
+      updateData.status = status;
+      updateData.$push = {
         statusHistory: {
           status,
           timestamp: new Date(),
           updatedBy: req.user._id
         }
-      }
-    };
+      };
+    }
+
+    if (paymentStatus) {
+      updateData.paymentStatus = paymentStatus;
+    }
 
     // Set ready time when status changes to ready
     if (status === 'ready') {
@@ -801,6 +819,39 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Update order error:', error);
     res.status(500).json({ error: 'Failed to update order', details: error.message });
+  }
+});
+
+// Get unique clients from orders
+router.get('/clients', authenticateToken, authorizeRoles('owner', 'manager', 'admin'), async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+    const targetRestaurant = restaurantId || req.user.restaurant;
+
+    const matchStage = {};
+    if (targetRestaurant) {
+      matchStage.restaurant = new mongoose.Types.ObjectId(targetRestaurant._id || targetRestaurant);
+    }
+
+    const clients = await Order.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: "$phone",
+          name: { $first: "$customerName" },
+          phone: { $first: "$phone" },
+          totalSpent: { $sum: "$total" },
+          lastOrderDate: { $max: "$createdAt" },
+          orderCount: { $sum: 1 }
+        }
+      },
+      { $sort: { lastOrderDate: -1 } }
+    ]);
+
+    res.json({ clients });
+  } catch (error) {
+    console.error('Get clients error:', error);
+    res.status(500).json({ error: 'Failed to fetch clients' });
   }
 });
 
