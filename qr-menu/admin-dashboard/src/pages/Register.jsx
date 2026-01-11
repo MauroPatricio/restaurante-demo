@@ -270,7 +270,7 @@ export default function Register() {
 
             <div className="register-right">
                 <img
-                    src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80"
+                    src="/image/register.jpg"
                     alt="Restaurant"
                     className="responsive-image"
                 />

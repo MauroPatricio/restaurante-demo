@@ -55,6 +55,11 @@ const Cart = () => {
             return;
         }
 
+        if (!phone.trim()) {
+            setError('Por favor, informe seu número de telefone');
+            return;
+        }
+
         const token = tokenFromUrl || tokenFromStorage || tokenFromSession;
 
         if (!tableNumber || !token) {
@@ -81,7 +86,7 @@ const Cart = () => {
                 token,
                 items: itemsPayload,
                 customerName: customerName.trim(),
-                phone: phone.trim() || '800000000', // Use dummy phone if not provided since schema requires it
+                phone: phone.trim(),
                 paymentMethod,
                 notes: ''
             };
@@ -263,10 +268,10 @@ const Cart = () => {
                                                 transition: 'all 0.3s',
                                                 position: 'relative',
                                                 overflow: 'hidden',
-                                                background: paymentMethod === method ? 'rgba(var(--primary-rgb), 0.08)' : 'rgba(248, 250, 252, 0.5)',
-                                                borderColor: paymentMethod === method ? 'var(--primary-color)' : '#e2e8f0',
-                                                color: paymentMethod === method ? 'var(--primary-color)' : '#64748b',
-                                                boxShadow: paymentMethod === method ? '0 10px 15px -3px rgba(var(--primary-rgb), 0.1)' : 'none'
+                                                background: paymentMethod === method ? '#f0fdf4' : 'rgba(248, 250, 252, 0.5)',
+                                                borderColor: paymentMethod === method ? '#10b981' : '#e2e8f0',
+                                                color: paymentMethod === method ? '#059669' : '#64748b',
+                                                boxShadow: paymentMethod === method ? '0 10px 15px -3px rgba(16, 185, 129, 0.1)' : 'none'
                                             }}
                                             className="group relative"
                                         >
@@ -277,7 +282,7 @@ const Cart = () => {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                background: paymentMethod === method ? 'var(--primary-color)' : '#f1f5f9',
+                                                background: paymentMethod === method ? '#10b981' : '#f1f5f9',
                                                 color: paymentMethod === method ? 'white' : '#94a3b8',
                                                 transition: 'all 0.3s'
                                             }} className="group-hover:scale-110">
@@ -295,7 +300,7 @@ const Cart = () => {
                                                     width: '18px',
                                                     height: '18px',
                                                     borderRadius: '50%',
-                                                    background: 'var(--primary-color)',
+                                                    background: '#10b981',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -320,9 +325,10 @@ const Cart = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Telefone (Opcional)</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Telefone</label>
                                 <input
                                     type="tel"
+                                    required
                                     className="w-full p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}

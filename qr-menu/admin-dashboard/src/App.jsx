@@ -65,7 +65,7 @@ function App() {
       <SubscriptionProvider>
         <ConnectivityProvider>
           <SocketProvider>
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <AppContent />
             </BrowserRouter>
           </SocketProvider>

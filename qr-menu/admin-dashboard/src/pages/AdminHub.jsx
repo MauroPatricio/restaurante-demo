@@ -6,7 +6,7 @@ import {
     Save, Upload, Building, Phone, Mail, MapPin,
     Globe, Clock, Coins, ChevronRight, Lock, Bell,
     Trash2, UserPlus, ShieldCheck, Printer, Cpu, Code,
-    X, Key, Power, CheckCircle, XCircle, Search,
+    X, Key, Power, CheckCircle, XCircle, Search, Timer,
     Sun, Moon, Layout, Eye, EyeOff, Sparkles, ShoppingBag
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -383,7 +383,7 @@ export default function AdminHub() {
                                 <h2 style={{ fontSize: '30px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.05em', margin: 0 }}>
                                     {tabs.find(t => t.id === activeTab)?.label}
                                 </h2>
-                                <p style={{
+                                <div style={{
                                     color: '#94a3b8',
                                     fontSize: '10px',
                                     fontWeight: '900',
@@ -396,7 +396,7 @@ export default function AdminHub() {
                                 }}>
                                     <div style={{ width: '4px', height: '4px', background: '#6366f1', borderRadius: '50%' }} />
                                     Configuração Profissional de {activeTab}
-                                </p>
+                                </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 {activeTab !== 'users' && activeTab !== 'customers' && activeTab !== 'security' && activeTab !== 'integrations' && (

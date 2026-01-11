@@ -177,7 +177,7 @@ const RestaurantSelection = () => {
                     <p>Controle seus pedidos, mesas e equipa com eficiência.</p>
                 </div>
                 <img
-                    src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop"
+                    src="/image/interno.avif"
                     alt="Restaurant Ambiance"
                     className="responsive-image"
                 />

@@ -457,6 +457,7 @@ export default function HallDashboard() {
                 onClose={() => setIsDetailsModalOpen(false)}
                 table={selectedTable}
                 restaurantId={restaurantId}
+                onUpdate={fetchHallData}
             />
         </div>
     );
