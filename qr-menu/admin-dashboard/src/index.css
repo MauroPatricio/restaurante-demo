@@ -597,3 +597,35 @@ button:focus-visible {
     box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
   }
 }
+
+@keyframes ping {
+
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.hover-scale {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.hover-btn-black {
+  transition: all 0.3s ease;
+}
+
+.hover-btn-black:hover {
+  background: #0f172a !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.4);
+}

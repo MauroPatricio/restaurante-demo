@@ -153,6 +153,11 @@ export const usersAPI = {
     changePassword: (data) => api.post('/auth/change-password', data)
 };
 
+// Role API
+export const roleAPI = {
+    getAll: () => api.get('/roles')
+};
+
 // Role Management API
 export const rolesAPI = {
     getAll: () => api.get('/roles'),
@@ -167,7 +172,8 @@ export const analyticsAPI = {
     getOperational: (restaurantId, params) => api.get(`/analytics/${restaurantId}/operational`, { params }),
     getInventory: (restaurantId) => api.get(`/analytics/${restaurantId}/inventory`),
     getCustomers: (restaurantId, params) => api.get(`/analytics/${restaurantId}/customers`, { params }),
-    getHall: (restaurantId, params) => api.get(`/analytics/${restaurantId}/hall`, { params })
+    getHall: (restaurantId, params) => api.get(`/analytics/${restaurantId}/hall`, { params }),
+    getTableHistory: (restaurantId, tableId) => api.get(`/analytics/${restaurantId}/hall/${tableId}/history`)
 };
 
 // Category API

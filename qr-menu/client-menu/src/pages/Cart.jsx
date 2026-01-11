@@ -245,18 +245,65 @@ const Cart = () => {
                         <form id="checkout-form" onSubmit={handleCheckout} className="space-y-5">
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Método de Pagamento</label>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-2 gap-4">
                                     {['mpesa', 'emola', 'visa', 'cash'].map((method) => (
                                         <button
                                             key={method}
                                             type="button"
                                             onClick={() => setPaymentMethod(method)}
-                                            className={`p - 3 rounded - xl border flex flex - col items - center justify - center gap - 2 transition - all ${paymentMethod === method
-                                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 ring-2 ring-primary-500/20'
-                                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                                                } `}
+                                            style={{
+                                                height: '110px',
+                                                borderRadius: '24px',
+                                                border: '2px solid',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '12px',
+                                                transition: 'all 0.3s',
+                                                position: 'relative',
+                                                overflow: 'hidden',
+                                                background: paymentMethod === method ? 'rgba(var(--primary-rgb), 0.08)' : 'rgba(248, 250, 252, 0.5)',
+                                                borderColor: paymentMethod === method ? 'var(--primary-color)' : '#e2e8f0',
+                                                color: paymentMethod === method ? 'var(--primary-color)' : '#64748b',
+                                                boxShadow: paymentMethod === method ? '0 10px 15px -3px rgba(var(--primary-rgb), 0.1)' : 'none'
+                                            }}
+                                            className="group relative"
                                         >
-                                            <span className="capitalize font-bold text-sm">{method === 'visa' ? 'VISA' : method}</span>
+                                            <div style={{
+                                                width: '44px',
+                                                height: '44px',
+                                                borderRadius: '14px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                background: paymentMethod === method ? 'var(--primary-color)' : '#f1f5f9',
+                                                color: paymentMethod === method ? 'white' : '#94a3b8',
+                                                transition: 'all 0.3s'
+                                            }} className="group-hover:scale-110">
+                                                {method === 'mpesa' && <Smartphone size={24} />}
+                                                {method === 'emola' && <Wallet size={24} />}
+                                                {method === 'visa' && <CreditCard size={24} />}
+                                                {method === 'cash' && <Wallet size={24} />}
+                                            </div>
+                                            <span className="capitalize font-black text-xs tracking-widest">{method === 'visa' ? 'VISA / MASTERCARD' : method}</span>
+                                            {paymentMethod === method && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '12px',
+                                                    right: '12px',
+                                                    width: '18px',
+                                                    height: '18px',
+                                                    borderRadius: '50%',
+                                                    background: 'var(--primary-color)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: 'white'
+                                                }}>
+                                                    <ShieldCheck size={12} strokeWidth={4} />
+                                                </div>
+                                            )}
                                         </button>
                                     ))}
                                 </div>

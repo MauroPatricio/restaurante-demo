@@ -8,43 +8,80 @@ import {
 } from 'recharts';
 import {
     Clock, Users, TrendingUp, AlertCircle,
-    CheckCircle, Coffee, Utensils
+    CheckCircle, Coffee, Utensils, Sparkles,
+    Zap, BarChart3, ChevronRight, Activity
 } from 'lucide-react';
 import WaiterCallsModal from '../components/WaiterCallsModal';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
 
-const statCardStyle = {
-    background: 'white',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-    border: '1px solid rgba(0,0,0,0.02)',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    flex: 1,
-    minWidth: '240px'
-};
-
-const iconBoxStyle = (color, bg) => ({
-    padding: '12px',
-    borderRadius: '12px',
-    color: color,
-    background: bg,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-});
+const DashboardKpi = ({ title, value, icon: Icon, color, onClick, pulse }) => (
+    <div
+        onClick={onClick}
+        style={{
+            background: 'white',
+            borderRadius: '32px',
+            padding: '32px',
+            boxShadow: '0 20px 40px -12px rgba(0,0,0,0.05)',
+            border: '1px solid white',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            position: 'relative',
+            minHeight: '160px',
+            cursor: onClick ? 'pointer' : 'default',
+            transition: 'all 0.5s ease',
+            overflow: 'hidden'
+        }}
+        className="group hover-scale"
+    >
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '96px', height: '96px', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.1, marginRight: '-32px', marginTop: '-32px', background: color }} />
+        <div>
+            <div style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '12px' }}>
+                {title}
+            </div>
+            <div style={{ fontSize: '40px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.05em' }}>
+                {value}
+            </div>
+        </div>
+        <div style={{
+            position: 'absolute',
+            top: '24px',
+            right: '24px',
+            padding: '16px',
+            borderRadius: '16px',
+            background: `${color}12`,
+            color: color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.5s ease'
+        }} className="group-hover:scale-110">
+            <Icon size={24} />
+            {pulse && (
+                <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    width: '12px',
+                    height: '12px',
+                    background: color,
+                    borderRadius: '50%',
+                    border: '2px solid white',
+                    animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite'
+                }} />
+            )}
+        </div>
+    </div>
+);
 
 const sectionStyle = {
     background: 'white',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-    marginBottom: '24px',
-    border: '1px solid #f1f5f9'
+    borderRadius: '2.5rem',
+    padding: '32px',
+    boxShadow: '0 20px 40px -12px rgba(0,0,0,0.05)',
+    marginBottom: '32px',
+    border: '1px solid white'
 };
 
 export default function Dashboard() {
@@ -146,92 +183,55 @@ export default function Dashboard() {
     return (
         <div className="dashboard-container" style={{ maxWidth: '100vw', padding: '24px' }}>
             {/* Header */}
-            <div className="dashboard-header-responsive">
-                <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1e293b', margin: 0 }}>Operational Dashboard</h1>
-                    <p style={{ color: '#64748b', marginTop: '8px', fontSize: '16px' }}>
-                        Real-time overview of restaurant operations
-                    </p>
+            <div style={{ marginBottom: '48px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <div style={{ padding: '8px', background: 'white', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', borderRadius: '12px', color: '#6366f1' }}>
+                        <Sparkles size={20} />
+                    </div>
+                    <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#4f46e5' }}>Painel Operacional</span>
                 </div>
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    background: '#ecfdf5', padding: '10px 20px', borderRadius: '50px',
-                    border: '1px solid #d1fae5', color: '#047857', fontSize: '14px', fontWeight: '600'
-                }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
-                    Live Updates
-                </div>
+                <h1 style={{ fontSize: '48px', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.05em', lineHeight: 1.1 }}>
+                    Analytics & <span style={{ color: '#6366f1' }}>Performance</span>
+                </h1>
+                <p style={{ color: '#94a3b8', fontWeight: '700', fontSize: '14px', margin: 0 }}>
+                    Monitoramento estratégico de vendas e produtividade
+                </p>
             </div>
 
             {/* KPI Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '32px', width: '100%' }}>
-                {/* 1. Active Orders */}
-                <div style={statCardStyle}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Orders</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#3b82f6', margin: '8px 0 0 0' }}>
-                            {realtime.activeOrders || 0}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
-                        <Utensils size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                {/* 2. Pending Orders */}
-                <div style={statCardStyle}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Pending</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#f59e0b', margin: '8px 0 0 0' }}>
-                            {realtime.pendingOrders || 0}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#f59e0b', '#fffbeb')}>
-                        <AlertCircle size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                {/* 3. Completed (Today) */}
-                <div style={statCardStyle}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Completed (Today)</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', margin: '8px 0 0 0' }}>
-                            {realtime.completedOrders || 0}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
-                        <CheckCircle size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                {/* 4. Occupied Tables */}
-                <div style={statCardStyle}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Live Tables</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#6366f1', margin: '8px 0 0 0' }}>
-                            {realtime.occupiedTables || 0}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#6366f1', '#e0e7ff')}>
-                        <Coffee size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                {/* 5. Active Waiter Calls */}
-                <div
-                    style={{ ...statCardStyle, cursor: 'pointer' }}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '48px' }}>
+                <DashboardKpi
+                    title="Pedidos Ativos"
+                    value={realtime.activeOrders || 0}
+                    icon={Utensils}
+                    color="#3b82f6"
+                />
+                <DashboardKpi
+                    title="Pedidos Pendentes"
+                    value={realtime.pendingOrders || 0}
+                    icon={AlertCircle}
+                    color="#f59e0b"
+                />
+                <DashboardKpi
+                    title="Concluídos (Hoje)"
+                    value={realtime.completedOrders || 0}
+                    icon={CheckCircle}
+                    color="#10b981"
+                />
+                <DashboardKpi
+                    title="Mesas Ocupadas"
+                    value={realtime.occupiedTables || 0}
+                    icon={Coffee}
+                    color="#6366f1"
+                />
+                <DashboardKpi
+                    title="Solicitações"
+                    value={realtime.activeWaiterCalls || 0}
+                    icon={Users}
+                    color="#ef4444"
+                    pulse={realtime.activeWaiterCalls > 0}
                     onClick={() => setIsCallsModalOpen(true)}
-                >
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Waiter Calls</p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: (realtime.activeWaiterCalls > 0) ? '#ef4444' : '#94a3b8', margin: '8px 0 0 0' }}>
-                            {realtime.activeWaiterCalls || 0}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
-                        <Users size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
+                />
             </div>
 
             <WaiterCallsModal
@@ -242,12 +242,15 @@ export default function Dashboard() {
 
             {/* Charts Section */}
             <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>
-                <div style={{ ...sectionStyle, flex: 2, minWidth: '400px', marginBottom: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                        <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>Peak Hours Activity</h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#4f46e5' }}></span>
-                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Order Volume</span>
+                <div style={{ ...sectionStyle, flex: 2, minWidth: '400px', marginBottom: 0 }} className="group">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
+                        <div>
+                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Atividade por Horário</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Picos de Pedidos</p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="p-3 bg-slate-50 rounded-xl">
+                            <BarChart3 size={16} className="text-indigo-500" />
+                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Volume de Vendas</span>
                         </div>
                     </div>
                     <div style={{ height: '350px' }}>
@@ -272,8 +275,11 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                <div style={{ ...sectionStyle, flex: 1, minWidth: '300px', marginBottom: 0 }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>Orders by Shift</h3>
+                <div style={{ ...sectionStyle, flex: 1, minWidth: '300px', marginBottom: 0 }} className="group">
+                    <div className="mb-8">
+                        <h3 className="text-xl font-black text-slate-800 tracking-tight">Pedidos por Turno</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Distribuição de Fluxo</p>
+                    </div>
                     <div style={{ height: '350px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>

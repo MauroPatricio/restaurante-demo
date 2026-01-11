@@ -7,7 +7,8 @@ import {
     getOperationalReport,
     getInventoryReport,
     getCustomerAnalytics,
-    getHallAnalytics
+    getHallAnalytics,
+    getTableCustomerHistory
 } from '../controllers/analyticsController.js';
 import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
 
@@ -27,5 +28,6 @@ router.get('/:id/operational', authenticateToken, checkSubscription, getOperatio
 router.get('/:id/inventory', authenticateToken, checkSubscription, getInventoryReport);
 router.get('/:id/customers', authenticateToken, checkSubscription, getCustomerAnalytics);
 router.get('/:id/hall', authenticateToken, checkSubscription, getHallAnalytics);
+router.get('/:id/hall/:tableId/history', authenticateToken, checkSubscription, getTableCustomerHistory);
 
 export default router;

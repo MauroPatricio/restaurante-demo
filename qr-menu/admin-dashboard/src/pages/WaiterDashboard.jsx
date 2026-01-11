@@ -4,8 +4,9 @@ import { useSocket } from '../contexts/SocketContext';
 import { tableAPI, orderAPI, waiterCallAPI } from '../services/api';
 import {
     User, Users, Bell, CheckCircle, Clock, MapPin,
-    UtensilsCrossed, AlertTriangle, Coffee, Loader2, TrendingUp
+    UtensilsCrossed, AlertTriangle, Coffee, Loader2, TrendingUp, LayoutGrid, Timer, MessageSquare
 } from 'lucide-react';
+
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -14,30 +15,84 @@ import { useTranslation } from 'react-i18next';
 // Modern Card Styles
 const cardStyle = {
     background: 'white',
-    borderRadius: '16px',
+    borderRadius: '24px',
     padding: '24px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-    border: '1px solid rgba(0,0,0,0.02)',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+    border: '1px solid #f1f5f9',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    position: 'relative',
+    overflow: 'hidden'
 };
 
-const statCardStyle = {
-    ...cardStyle,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    cursor: 'pointer',
-};
-
-const iconBoxStyle = (color, bg) => ({
-    padding: '12px',
-    borderRadius: '12px',
-    color: color,
-    background: bg,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-});
+const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
+    <div style={{
+        background: 'white',
+        borderRadius: '24px',
+        padding: '28px',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.04)',
+        border: '1px solid #f1f5f9',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        position: 'relative',
+        minHeight: '160px',
+        flex: 1,
+        minWidth: '240px'
+    }}>
+        <div>
+            <div style={{
+                fontSize: '11px',
+                fontWeight: '900',
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                marginBottom: '12px'
+            }}>
+                {title}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span style={{ fontSize: '36px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.03em' }}>
+                    {value}
+                </span>
+                {subValue && (
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: '#94a3b8' }}>
+                        {subValue}
+                    </span>
+                )}
+            </div>
+        </div>
+        <div style={{
+            position: 'absolute',
+            top: '24px',
+            right: '24px',
+            width: '48px',
+            height: '48px',
+            borderRadius: '16px',
+            background: `${color}12`,
+            color: color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
+            <Icon size={24} />
+            {pulse && (
+                <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    width: '12px',
+                    height: '12px',
+                    background: color,
+                    borderRadius: '50%',
+                    border: '2px solid white',
+                    animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite'
+                }} />
+            )}
+        </div>
+    </div>
+);
 
 export default function WaiterDashboard() {
     const { user } = useAuth();
@@ -152,109 +207,58 @@ export default function WaiterDashboard() {
     const myTables = tables.filter(t => t.assignedWaiter === user?.name).length;
 
     return (
-        <div style={{ padding: '24px', maxWidth: '100vw', minHeight: 'calc(100vh - 64px)', backgroundColor: '#f8fafc' }}>
+        <div style={{ padding: '40px', maxWidth: '1600px', margin: '0 auto', minHeight: '100vh', background: '#f8fafc' }}>
 
             {/* Header */}
-            <div className="dashboard-header-responsive" style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                    <h1 style={{ fontSize: '36px', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.04em' }}>
                         {t('waiter_area') || 'Área do Garçom'}
                     </h1>
-                    <p style={{ color: '#64748b', marginTop: '8px', fontSize: '16px' }}>
-                        {t('manage_tables_desc') || 'Gerencie mesas e pedidos em tempo real'} • {user?.name}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }} />
+                        <p style={{ color: '#64748b', fontSize: '15px', fontWeight: '600', margin: 0 }}>
+                            {t('manage_tables_desc') || 'Gerencie mesas e pedidos em tempo real'} • {user?.name}
+                        </p>
+                    </div>
                 </div>
                 <div style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    background: '#ecfdf5', padding: '10px 20px', borderRadius: '50px',
-                    border: '1px solid #d1fae5', color: '#047857', fontSize: '14px', fontWeight: '600'
+                    background: '#ecfdf5', padding: '12px 24px', borderRadius: '50px',
+                    border: '1px solid #d1fae5', color: '#047857', fontSize: '14px', fontWeight: '900',
+                    textTransform: 'uppercase', letterSpacing: '0.05em'
                 }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
                     {t('online') || 'Online'}
                 </div>
             </div>
 
             {/* KPI Cards */}
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('active_alerts') || 'Chamadas Ativas'}
-                        </p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {activeCalls.length}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
-                        <Bell size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('ready_orders') || 'Pedidos Prontos'}
-                        </p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {readyOrders.length}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
-                        <CheckCircle size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('my_tables') || 'Minhas Mesas'}
-                        </p>
-                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {myTables}
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
-                        <User size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
-
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
-                    <div>
-                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('table_status') || 'Status Mesas'}
-                        </p>
-                        <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            <span style={{ color: '#10b981' }}>{freeTables}</span> / <span style={{ color: '#ef4444' }}>{occupiedTables}</span>
-                        </h3>
-                    </div>
-                    <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
-                        <UtensilsCrossed size={24} strokeWidth={2.5} />
-                    </div>
-                </div>
+            <div style={{ display: 'flex', gap: '24px', marginBottom: '48px', flexWrap: 'wrap' }}>
+                <KpiCard
+                    title={t('active_alerts') || 'Chamadas Ativas'}
+                    value={activeCalls.length}
+                    icon={Bell}
+                    color="#ef4444"
+                    pulse={activeCalls.length > 0}
+                />
+                <KpiCard
+                    title={t('ready_orders') || 'Pedidos Prontos'}
+                    value={readyOrders.length}
+                    icon={CheckCircle}
+                    color="#10b981"
+                    pulse={readyOrders.length > 0}
+                />
+                <KpiCard
+                    title={t('my_tables') || 'Minhas Mesas'}
+                    value={myTables}
+                    icon={User}
+                    color="#8b5cf6"
+                />
+                <KpiCard
+                    title={t('table_status') || 'Status Mesas'}
+                    value={`${freeTables} / ${occupiedTables}`}
+                    icon={UtensilsCrossed}
+                    color="#3b82f6"
+                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

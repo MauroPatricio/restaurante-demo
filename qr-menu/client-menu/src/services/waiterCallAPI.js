@@ -3,13 +3,14 @@ import axios from 'axios';
 import { API_URL } from '../config/api';
 
 // Create waiter call
-export const createWaiterCall = async (tableId, type = 'call') => {
+export const createWaiterCall = async (tableId, type = 'call', customerName = '') => {
     try {
-        const response = await axios.post(`${API_URL}/waiter-calls`, {
+        const payload = {
             tableId,
             type,
-            customerName
-        });
+            customerName: customerName || ''
+        };
+        const response = await axios.post(`${API_URL}/waiter-calls`, payload);
         return response.data;
     } catch (error) {
         console.error('Create waiter call error:', error);

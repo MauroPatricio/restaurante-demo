@@ -102,92 +102,111 @@ export default function DashboardLayout() {
         return user.role.isSystem && (user.role.permissions?.includes('all') || user.role.permissions?.includes(perm));
     };
 
-    // Build menu items with permission-based filtering
-    const menuItems = [
-        // Owner Overview
+    // Build menu groups with permission-based filtering
+    const menuGroups = [
         {
-            icon: LayoutDashboard,
-            label: t('owner_overview'),
-            path: '/owner-dashboard',
-            show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name)
+            title: 'OPERAÇÃO EM TEMPO REAL',
+            items: [
+                {
+                    icon: LayoutDashboard,
+                    label: t('owner_overview'),
+                    path: '/owner-dashboard',
+                    show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name)
+                },
+                {
+                    icon: LayoutDashboard,
+                    label: t('dashboard') || 'Painel Geral',
+                    path: '/dashboard/analytics',
+                    show: hasPermission('view_reports') || hasPermission('manage_settings')
+                },
+                {
+                    icon: LayoutDashboard,
+                    label: t('waiter_dashboard') || 'Dashboard de Garçom',
+                    path: '/dashboard/waiter',
+                    show: hasPermission('take_orders')
+                },
+                {
+                    icon: UtensilsCrossed,
+                    label: t('kitchen_monitor'),
+                    path: '/dashboard/kitchen',
+                    show: hasPermission('update_order_status')
+                },
+                {
+                    icon: LayoutGrid,
+                    label: t('hall_details') || 'Detalhes da Mesa',
+                    path: '/dashboard/hall',
+                    show: hasPermission('view_reports') || hasPermission('manage_tables')
+                },
+                {
+                    icon: ShoppingBag,
+                    label: t('orders'),
+                    path: '/dashboard/orders',
+                    show: hasPermission('manage_orders'),
+                    isOrders: true
+                },
+                {
+                    icon: Banknote,
+                    label: t('payments'),
+                    path: '/dashboard/payments',
+                    show: hasPermission('manage_settings') || hasPermission('manage_orders')
+                },
+            ]
         },
-        // Waiter Dashboard (for those who can take orders)
         {
-            icon: LayoutDashboard,
-            label: t('waiter_dashboard') || 'My Tables',
-            path: '/dashboard/waiter',
-            show: hasPermission('take_orders')
+            title: '🍽️ GESTÃO DE MENU',
+            items: [
+                { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu', show: hasPermission('manage_menu') },
+                { icon: Folder, label: t('categories'), path: '/dashboard/categories', show: hasPermission('manage_menu') },
+                { icon: FolderTree, label: t('subcategories'), path: '/dashboard/subcategories', show: hasPermission('manage_menu') },
+            ]
         },
-        // Manager Dashboard (for those with management permissions)
         {
-            icon: LayoutDashboard,
-            label: t('dashboard'),
-            path: '/dashboard/analytics',
-            show: hasPermission('view_reports') || hasPermission('manage_settings')
+            title: '👥 CLIENTES & EXPERIÊNCIA',
+            items: [
+                {
+                    icon: UsersIcon,
+                    label: t('clients') || 'Clientes',
+                    path: '/dashboard/clients',
+                    show: hasPermission('view_reports') || hasPermission('manage_orders')
+                },
+                { icon: Star, label: t('feedback'), path: '/dashboard/feedback', show: hasPermission('manage_settings') },
+                { icon: Tag, label: t('coupons'), path: '/dashboard/coupons', show: hasPermission('manage_settings') },
+            ]
         },
-        // Kitchen Monitor (for those who update status)
         {
-            icon: UtensilsCrossed,
-            label: t('kitchen_monitor'),
-            path: '/dashboard/kitchen',
-            show: hasPermission('update_order_status')
+            title: '🚚 LOGÍSTICA & SERVIÇOS',
+            items: [
+                { icon: Truck, label: t('delivery'), path: '/dashboard/delivery', show: hasPermission('view_delivery_orders') || hasPermission('manage_orders') },
+            ]
         },
-        // Reports
         {
-            icon: FileText,
-            label: t('reports'),
-            path: '/dashboard/reports',
-            show: hasPermission('view_reports')
+            title: '📦 CONTROLO FINANCEIRO & STOCK',
+            items: [
+                { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings') },
+                { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports') },
+            ]
         },
-        // Clients (New Module)
         {
-            icon: UsersIcon,
-            label: t('clients') || 'Clientes',
-            path: '/dashboard/clients',
-            show: hasPermission('view_reports') || hasPermission('manage_orders')
+            title: '🪑 ESTRUTURA DO RESTAURANTE',
+            items: [
+                { icon: QrCode, label: t('tables'), path: '/dashboard/tables', show: hasPermission('manage_tables') },
+            ]
         },
-        // Hall (New Module)
         {
-            icon: LayoutGrid,
-            label: t('hall') || 'Salão',
-            path: '/dashboard/hall',
-            show: hasPermission('view_reports') || hasPermission('manage_tables')
+            title: '👥 UTILIZADORES & SEGURANÇA',
+            items: [
+                { icon: UsersIcon, label: t('users'), path: '/dashboard/users', show: hasPermission('manage_staff') },
+                { icon: Shield, label: t('profiles'), path: '/dashboard/profiles', show: hasPermission('manage_staff') },
+            ]
         },
-        // Orders (Full list management)
         {
-            icon: ShoppingBag,
-            label: t('orders'),
-            path: '/dashboard/orders',
-            show: hasPermission('manage_orders'),
-            isOrders: true // Mark for special handling
-        },
-        // Menu Management
-        { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu', show: hasPermission('manage_menu') },
-        { icon: Folder, label: t('categories'), path: '/dashboard/categories', show: hasPermission('manage_menu') },
-        { icon: FolderTree, label: t('subcategories'), path: '/dashboard/subcategories', show: hasPermission('manage_menu') },
-        // Tables
-        { icon: QrCode, label: t('tables'), path: '/dashboard/tables', show: hasPermission('manage_tables') },
-        // Payments (Settings/Admin)
-        { icon: Banknote, label: t('payments'), path: '/dashboard/payments', show: hasPermission('manage_settings') },
-        // Coupons (Settings/Admin)
-        { icon: Tag, label: t('coupons'), path: '/dashboard/coupons', show: hasPermission('manage_settings') },
-        // Delivery
-        { icon: Truck, label: t('delivery'), path: '/dashboard/delivery', show: hasPermission('view_delivery_orders') || hasPermission('manage_orders') },
-        // Feedback (Settings/Admin)
-        { icon: Star, label: t('feedback'), path: '/dashboard/feedback', show: hasPermission('manage_settings') },
-        // Subscription (Owner/Admin)
-        { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
-        // Stock (Settings/Admin)
-        { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings') },
-        // Users (Staff Management)
-        { icon: UsersIcon, label: t('users'), path: '/dashboard/users', show: hasPermission('manage_staff') },
-        // Settings (Settings Management)
-        { icon: Settings, label: t('settings'), path: '/dashboard/settings', show: hasPermission('manage_settings') },
-        // Profiles (Staff Management)
-        { icon: Shield, label: t('profiles'), path: '/dashboard/profiles', show: hasPermission('manage_staff') },
-        // System Admin
-        { icon: ShieldCheck, label: t('system_admin'), path: '/system-admin', show: user?.role?.isSystem && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) }
-    ].filter(item => item.show);
+            title: '⚙️ SISTEMA & ADMINISTRAÇÃO',
+            items: [
+                { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') },
+                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
+            ]
+        }
+    ];
 
     const getDaysUntilExpiry = () => {
         if (!subscription?.currentPeriodEnd) return null;
@@ -232,6 +251,22 @@ export default function DashboardLayout() {
                     border-radius: 999px;
                     margin-left: auto;
                     font-weight: bold;
+                }
+                .nav-section-title {
+                    padding: 18px 24px 8px 24px;
+                    font-size: 0.65rem;
+                    font-weight: 800;
+                    color: #94a3b8;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .nav-section-divider {
+                    height: 1px;
+                    background: rgba(226, 232, 240, 0.4);
+                    margin: 8px 0;
                 }
             `}</style>
 
@@ -429,27 +464,40 @@ export default function DashboardLayout() {
                 </div>
 
                 <nav className="sidebar-nav">
-                    {menuItems.map((item) => {
-                        const Icon = item.icon;
-                        const isOrders = item.isOrders === true;
-                        const shouldBlink = isOrders && isRinging;
+                    {menuGroups.map((group, groupIdx) => {
+                        const visibleItems = group.items.filter(item => item.show);
+                        if (visibleItems.length === 0) return null;
 
                         return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                onClick={() => {
-                                    closeSidebar();
-                                    if (isOrders) stopRinging();
-                                }}
-                                className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''}`}
-                            >
-                                <Icon size={20} />
-                                <span>{item.label}</span>
-                                {isOrders && pendingCount > 0 && (
-                                    <span className="nav-badge">{pendingCount}</span>
-                                )}
-                            </Link>
+                            <div key={groupIdx}>
+                                <div className="nav-section-title">
+                                    {group.title}
+                                </div>
+                                {visibleItems.map((item) => {
+                                    const Icon = item.icon;
+                                    const isOrders = item.isOrders === true;
+                                    const shouldBlink = isOrders && isRinging;
+
+                                    return (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            onClick={() => {
+                                                closeSidebar();
+                                                if (isOrders) stopRinging();
+                                            }}
+                                            className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''}`}
+                                        >
+                                            <Icon size={20} />
+                                            <span>{item.label}</span>
+                                            {isOrders && pendingCount > 0 && (
+                                                <span className="nav-badge">{pendingCount}</span>
+                                            )}
+                                        </Link>
+                                    );
+                                })}
+                                {groupIdx < menuGroups.length - 1 && <div className="nav-section-divider" />}
+                            </div>
                         );
                     })}
                 </nav>

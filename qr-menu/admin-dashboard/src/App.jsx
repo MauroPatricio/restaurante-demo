@@ -33,7 +33,7 @@ import UserManagement from './pages/UserManagement';
 import Profiles from './pages/Profiles';
 import Subscriptions from './pages/Subscriptions';
 import ChangePassword from './pages/ChangePassword';
-import Settings from './pages/Settings';
+import AdminHub from './pages/AdminHub';
 import Categories from './pages/Categories';
 import Subcategories from './pages/Subcategories';
 
@@ -123,7 +123,7 @@ function AppContent() {
           <Route path="profiles" element={<Profiles />} />
           <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="system-admin" element={<SystemAdmin />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="settings" element={<AdminHub />} />
         </Route>
 
         <Route path="/owner-dashboard" element={

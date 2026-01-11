@@ -397,8 +397,17 @@ export const getSalesReport = async (req, res) => {
             },
             { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
             {
+                $lookup: {
+                    from: "categories",
+                    localField: "product.category",
+                    foreignField: "_id",
+                    as: "categoryDetails"
+                }
+            },
+            { $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true } },
+            {
                 $group: {
-                    _id: { $ifNull: ["$product.category", "Uncategorized"] },
+                    _id: { $ifNull: ["$categoryDetails.name", "Sem Categoria"] },
                     revenue: { $sum: "$items.subtotal" },
                     count: { $sum: "$items.quantity" }
                 }
@@ -679,18 +688,76 @@ export const getHallAnalytics = async (req, res) => {
             ? Math.round(tablePerformance.reduce((acc, curr) => acc + curr.avgDuration, 0) / tablePerformance.length)
             : 0;
 
+        // 4. Find Most Requested Table (Historical orders + calls)
+        const historicalOrders = await Order.aggregate([
+            { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' } } },
+            { $group: { _id: "$table", count: { $count: {} } } }
+        ]);
+
+        const historicalCalls = await WaiterCall.aggregate([
+            { $match: { restaurant: restaurantId } },
+            { $group: { _id: "$table", count: { $count: {} } } }
+        ]);
+
+        let mostRequestedTable = null;
+        let maxRequests = -1;
+
+        hallData.forEach(t => {
+            const hOrders = historicalOrders.find(o => o._id?.toString() === t._id.toString());
+            const hCalls = historicalCalls.find(c => c._id?.toString() === t._id.toString());
+            const totalRequests = (hOrders ? hOrders.count : 0) + (hCalls ? hCalls.count : 0);
+
+            if (totalRequests > maxRequests) {
+                maxRequests = totalRequests;
+                mostRequestedTable = {
+                    number: t.number,
+                    requests: totalRequests
+                };
+            }
+        });
+
         res.json({
             summary: {
                 totalTables,
                 occupiedCount,
                 freeCount,
                 waitingCount,
-                avgTurnover // in minutes
+                avgTurnover,
+                mostRequestedTable
             },
             tables: hallData
         });
     } catch (error) {
         console.error('Hall analytics error:', error);
         res.status(500).json({ error: 'Failed to fetch hall analytics' });
+    }
+};
+
+export const getTableCustomerHistory = async (req, res) => {
+    try {
+        const { id, tableId } = req.params;
+        const restaurantId = new mongoose.Types.ObjectId(id);
+        const targetTableId = new mongoose.Types.ObjectId(tableId);
+
+        // Get customers who ordered at this table
+        const history = await Order.aggregate([
+            { $match: { restaurant: restaurantId, table: targetTableId, status: { $ne: 'cancelled' } } },
+            {
+                $group: {
+                    _id: "$phone",
+                    name: { $first: "$customerName" },
+                    phone: { $first: "$phone" },
+                    lastVisit: { $max: "$createdAt" },
+                    totalSpent: { $sum: "$total" },
+                    orderCount: { $count: {} }
+                }
+            },
+            { $sort: { lastVisit: -1 } }
+        ]);
+
+        res.json(history);
+    } catch (error) {
+        console.error('Table customer history error:', error);
+        res.status(500).json({ error: 'Failed to fetch table customer history' });
     }
 };

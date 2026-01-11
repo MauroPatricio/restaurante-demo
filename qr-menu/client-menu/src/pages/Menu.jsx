@@ -38,7 +38,7 @@ const Menu = () => {
 
     const scrollRef = useRef(null);
 
-    const { addToCart, cartCount, checkRestaurant } = useCart();
+    const { cart, addToCart, updateQty, cartCount, checkRestaurant } = useCart();
 
     const [restaurant, setRestaurant] = useState(null);
     const [categories, setCategories] = useState([]);
@@ -452,13 +452,43 @@ const Menu = () => {
                                         <span className="text-xs text-gray-400 font-medium">MT</span>
                                     </div>
 
-                                    <motion.button
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={() => addToCart(item)}
-                                        className="h-9 w-9 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center hover:bg-primary-600 hover:text-white dark:hover:bg-primary-500 dark:hover:text-white transition-colors shadow-sm"
-                                    >
-                                        <Plus size={18} strokeWidth={2.5} />
-                                    </motion.button>
+                                    {(() => {
+                                        // Find if this specific item (without customizations for now) is in cart
+                                        const cartItemIndex = cart.findIndex(i => i._id === item._id && (!i.customizations || i.customizations.length === 0));
+                                        const cartItem = cartItemIndex > -1 ? cart[cartItemIndex] : null;
+
+                                        if (cartItem) {
+                                            return (
+                                                <div className="flex items-center gap-3 bg-primary-50 dark:bg-primary-900/20 rounded-full p-1 border border-primary-100 dark:border-primary-800">
+                                                    <motion.button
+                                                        whileTap={{ scale: 0.8 }}
+                                                        onClick={() => updateQty(cartItemIndex, -1)}
+                                                        className="h-8 w-8 bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center shadow-sm"
+                                                    >
+                                                        <Minus size={14} strokeWidth={3} />
+                                                    </motion.button>
+                                                    <span className="font-black text-primary-700 dark:text-primary-300 min-w-[20px] text-center">{cartItem.qty}</span>
+                                                    <motion.button
+                                                        whileTap={{ scale: 0.8 }}
+                                                        onClick={() => updateQty(cartItemIndex, 1)}
+                                                        className="h-8 w-8 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-md shadow-primary-500/20"
+                                                    >
+                                                        <Plus size={14} strokeWidth={3} />
+                                                    </motion.button>
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <motion.button
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={() => addToCart(item)}
+                                                className="h-9 w-9 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center hover:bg-primary-600 hover:text-white dark:hover:bg-primary-500 dark:hover:text-white transition-colors shadow-sm"
+                                            >
+                                                <Plus size={18} strokeWidth={2.5} />
+                                            </motion.button>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </motion.div>
@@ -467,17 +497,17 @@ const Menu = () => {
 
                 {filteredItems.length === 0 && (
                     <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Search className="text-gray-300" size={24} />
                         </div>
-                        <p className="text-gray-500 font-medium">{t('no_items_found')}</p>
+                        <p className="text-gray-500 font-medium dark:text-gray-400">{t('no_items_found')}</p>
                         <p className="text-xs text-gray-400 mt-1">{t('try_changing_search')}</p>
                     </div>
                 )}
             </div>
 
             {/* Floating Cart Button */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {cartCount > 0 && (
                     <motion.div
                         initial={{ y: 100, opacity: 0 }}

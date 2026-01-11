@@ -55,6 +55,34 @@ const RestaurantSchema = new mongoose.Schema({
       type: String,
       default: 'MT'
     },
+    language: {
+      type: String,
+      default: 'pt'
+    },
+    timezone: {
+      type: String,
+      default: 'Africa/Maputo'
+    },
+    theme: {
+      primaryColor: { type: String, default: '#6366f1' },
+      darkMode: { type: Boolean, default: false },
+      qrMenuTheme: { type: String, default: 'modern' }
+    },
+    qrConfig: {
+      validityDays: { type: Number, default: 30 },
+      requireSession: { type: Boolean, default: true },
+      showPrices: { type: Boolean, default: true }
+    },
+    automationRules: {
+      autoResetTableOnPayment: { type: Boolean, default: true },
+      orderDelayAlertMinutes: { type: Number, default: 15 },
+      autoResolveWaiterCalls: { type: Boolean, default: false }
+    },
+    notificationSettings: {
+      enableSound: { type: Boolean, default: true },
+      notifyNewOrder: { type: Boolean, default: true },
+      notifyWaiterCall: { type: Boolean, default: true }
+    },
     enableDelivery: {
       type: Boolean,
       default: true
