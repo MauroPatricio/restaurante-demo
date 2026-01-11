@@ -215,8 +215,13 @@ export const resolveCall = async (req, res) => {
             call
         });
     } catch (error) {
-        console.error('Resolve call error:', error);
-        res.status(500).json({ error: 'Failed to resolve call' });
+        console.error('Resolve call error:', {
+            error: error.message,
+            stack: error.stack,
+            callId: req.params.id,
+            userId: req.user?._id
+        });
+        res.status(500).json({ error: 'Failed to resolve call', details: error.message });
     }
 };
 

@@ -132,7 +132,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                             background: 'white', color: tokens.slate400,
                             borderRadius: '14px', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.03)'
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
                         }}
                     >
                         <X size={20} />

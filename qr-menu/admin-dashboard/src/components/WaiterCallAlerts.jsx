@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, X, Check, Clock } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
+import { waiterCallAPI } from '../services/api';
 import './WaiterCallAlerts.css';
 
 export default function WaiterCallAlerts() {
@@ -66,21 +66,31 @@ export default function WaiterCallAlerts() {
     };
 
     const handleAcknowledge = async (callId) => {
+        if (!callId) return;
         try {
-            await api.post(`/waiter-calls/${callId}/acknowledge`);
+            await waiterCallAPI.acknowledge(callId);
             localAcknowledge(callId);
         } catch (error) {
-            console.error('Failed to acknowledge call:', error);
+            console.error('Failed to acknowledge call:', {
+                callId,
+                error: error.response?.data || error.message,
+                status: error.response?.status
+            });
             alert('Erro ao reconhecer chamada. Por favor, tente novamente.');
         }
     };
 
     const handleResolve = async (callId) => {
+        if (!callId) return;
         try {
-            await api.post(`/waiter-calls/${callId}/resolve`);
+            await waiterCallAPI.resolve(callId);
             removeCall(callId);
         } catch (error) {
-            console.error('Failed to resolve call:', error);
+            console.error('Failed to resolve call:', {
+                callId,
+                error: error.response?.data || error.message,
+                status: error.response?.status
+            });
             alert('Erro ao resolver chamada. Por favor, tente novamente.');
         }
     };
