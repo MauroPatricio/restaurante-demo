@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 dotenv.config();
 
 const restaurantId = '695fe59bd9193b05e3c59209';
-const tableId = '696510f39f3e8d05eb44f814';
+const tableId = '69651d35fed50f3f9c4de135'; // New table ID
 
 // Minimal Schemas
 const restaurantSchema = new mongoose.Schema({

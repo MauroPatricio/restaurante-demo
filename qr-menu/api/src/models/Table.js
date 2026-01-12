@@ -6,6 +6,7 @@ const TableSchema = new mongoose.Schema({
   capacity: { type: Number, default: 4 },
   qrCode: String,
   // New Enhanced Fields
+  numericCode: { type: String, unique: true, sparse: true }, // 6-digit unique code
   location: String, // e.g. "Varanda", "Salão"
   status: {
     type: String,

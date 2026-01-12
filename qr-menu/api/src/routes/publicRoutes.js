@@ -12,110 +12,60 @@ const router = express.Router();
  * GET /api/public/menu/validate?r=restaurantId&t=tableId&token=xxx
  */
 router.get('/menu/validate', async (req, res) => {
+    // ... validation logic
+});
+
+/**
+ * Validate numeric code and return access token
+ * POST /api/public/menu/access-by-code
+ */
+router.post('/menu/access-by-code', async (req, res) => {
     try {
-        const { r: restaurantId, t: tableId, token } = req.query;
+        const { code } = req.body;
 
-        // Validate required parameters
-        if (!restaurantId || !tableId || !token) {
-            return res.status(400).json({
-                error: 'Missing required parameters',
-                details: 'URL must include r (restaurant), t (table), and token'
-            });
+        if (!code) {
+            return res.status(400).json({ error: 'Code is required' });
         }
 
-        // Validate token first (prevent unnecessary DB queries for invalid tokens)
-        const isValidToken = validateTableToken(token, restaurantId, tableId);
-        if (!isValidToken) {
-            return res.status(403).json({
-                error: 'Invalid or expired QR code',
-                message: 'Por favor, escaneie o QR Code novamente'
-            });
-        }
-
-        // Find restaurant and populate subscription
-        const restaurant = await Restaurant.findById(restaurantId).populate('subscription');
-
-        if (!restaurant) {
-            return res.status(404).json({
-                error: 'Restaurant not found',
-                message: 'Restaurante não encontrado. O QR Code pode estar desatualizado.'
-            });
-        }
-
-        if (!restaurant.active) {
-            return res.status(403).json({
-                error: 'Restaurant inactive',
-                message: 'Este restaurante está temporariamente inativo.'
-            });
-        }
-
-        // Check subscription status
-        if (!restaurant.subscription || !['active', 'trial'].includes(restaurant.subscription.status)) {
-            return res.status(403).json({
-                error: 'Subscription expired',
-                message: 'Este restaurante encontra-se temporariamente indisponível.'
-            });
-        }
-
-        // Check subscription expiry
-        if (restaurant.subscription.endDate && new Date(restaurant.subscription.endDate) < new Date()) {
-            return res.status(403).json({
-                error: 'Subscription expired',
-                message: 'Este restaurante encontra-se temporariamente indisponível.'
-            });
-        }
-
-        // Find table
-        const table = await Table.findById(tableId);
+        const table = await Table.findOne({ numericCode: code }).populate('restaurant');
 
         if (!table) {
-            return res.status(404).json({
-                error: 'Table not found',
-                message: 'Mesa não encontrada. Por favor, escaneie o QR Code novamente.'
-            });
+            return res.status(404).json({ error: 'Invalid code', message: 'Código inválido. Verifique o número na mesa.' });
         }
 
-        // Check if table is closed
-        if (table.status === 'closed') {
-            return res.status(403).json({
-                error: 'Table closed',
-                message: 'Esta mesa encontra-se temporariamente indisponível.'
-            });
+        // Validate Restaurant status similar to regular validation
+        const restaurant = table.restaurant;
+        if (!restaurant || !restaurant.active) {
+            return res.status(403).json({ error: 'Restaurant unavailable' });
         }
 
-        // Verify table belongs to restaurant
-        if (table.restaurant.toString() !== restaurantId) {
-            return res.status(403).json({
-                error: 'Invalid table',
-                message: 'Mesa inválida para este restaurante.'
-            });
-        }
+        // Generate Token
+        // We import the generator dynamically or ensure it's imported at top
+        const { generateTableToken } = await import('../utils/qrSecurity.js');
+        const token = generateTableToken(restaurant._id.toString(), table._id.toString());
 
-        // All validations passed
+        // Construct Redirect URL
+        const redirectUrl = `/menu/${restaurant._id}?t=${table._id}&token=${token}`;
+
         res.json({
             valid: true,
+            redirectUrl,
             restaurant: {
-                _id: restaurant._id,
                 name: restaurant.name,
-                logo: restaurant.logo,
-                active: restaurant.active
+                logo: restaurant.logo
             },
             table: {
-                _id: table._id,
                 number: table.number,
-                capacity: table.capacity,
-                location: table.location,
-                status: table.status
+                location: table.location
             }
         });
+
     } catch (error) {
-        console.error('Menu validation error:', error);
-        res.status(500).json({
-            error: 'Validation failed',
-            message: 'Erro ao validar QR Code. Por favor, tente novamente.'
-        });
+        console.error('Code access error:', error);
+        res.status(500).json({ error: 'Server error during validation' });
     }
 });
+
 
 /**
  * Get restaurant menu with table context

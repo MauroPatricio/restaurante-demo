@@ -484,6 +484,15 @@ export default function Tables() {
                             {selectedTable.location ? `${selectedTable.location} - ` : ''}
                             {selectedTable.type}
                         </p>
+                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', margin: '0 auto 1.5rem', maxWidth: '80%' }}>
+                            <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase' }}>Código de Acesso Manual</p>
+                            <p style={{ fontSize: '2rem', fontWeight: '900', color: '#0f172a', letterSpacing: '0.2rem', fontFamily: 'monospace' }}>
+                                {selectedTable.numericCode || '------'}
+                            </p>
+                            <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                                Use este código se a câmera não funcionar
+                            </p>
+                        </div>
                         <div style={{ marginBottom: '1.5rem', fontSize: '0.75rem', color: '#666', fontStyle: 'italic' }}>
                             Desenvolvido por Nhiquela Servicos e Consultoria, LDA
                         </div>

@@ -1,8 +1,8 @@
 import { validateTableToken, generateTableToken } from './src/utils/qrSecurity.js';
 
 const restaurantId = '695fe59bd9193b05e3c59209';
-const tableId = '696515b99f3e8d05eb44f984'; // Updated table ID
-const tokenFromUrl = '6f72586dad9c1eb5aa202031c11f2bb64abb3314bd477de03fbed93e5d32d31a.1768232377493';
+const tableId = '69651d35fed50f3f9c4de135'; // New table ID from URL
+const tokenFromUrl = '155cf404dd639ed98e199c649bb3df4430f6999b785ddf49969be8e2c9afc90e.1768234293834';
 
 console.log('--- Debugging Token ---');
 console.log('Provided Token:', tokenFromUrl);

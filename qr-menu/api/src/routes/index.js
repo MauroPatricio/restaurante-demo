@@ -264,10 +264,19 @@ router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'mana
     } = req.body;
 
     // Create table first to get the ID
+    let numericCode;
+    let isUnique = false;
+    while (!isUnique) {
+      numericCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const existing = await Table.findOne({ numericCode });
+      if (!existing) isUnique = true;
+    }
+
     const table = await Table.create({
       restaurant, number, capacity, location, type, status,
       accessibility, joinable, assignedWaiter, minConsumption,
-      qrCode: '' // Temporary empty string
+      qrCode: '', // Temporary empty string
+      numericCode
     });
 
     // Generate QR code URL with table ID and security token
