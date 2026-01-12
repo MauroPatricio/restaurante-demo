@@ -161,7 +161,18 @@ const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   process.env.ADMIN_URL || 'http://localhost:5173',
   'http://localhost:5174', // Client Menu alternative
-  'http://localhost:5175'  // Client Menu actual port
+  'http://localhost:5175',  // Client Menu actual port
+  'http://46.62.246.24:5175',
+  'http://46.62.246.24:5174',
+  'http://46.62.246.24:5173',
+  'http://46.62.246.24:5000',
+  'http://gestaomodernaonline.com',
+  'https://gestaomodernaonline.com',
+  'http://menu.gestaomodernaonline.com',
+  'https://menu.gestaomodernaonline.com',
+  'http://api.gestaomodernaonline.com',
+  'https://api.gestaomodernaonline.com',
+
 ];
 
 const io = new Server(server, {
