@@ -4,7 +4,12 @@
  */
 
 // Base URLs - edit these to change API location for all components
-export const API_URL = import.meta.env.VITE_API_URL || '/api';
+// Base URLs - edit these to change API location for all components
+let baseApi = import.meta.env.VITE_API_URL || '/api';
+if (baseApi.startsWith('http') && !baseApi.toLowerCase().includes('/api')) {
+    baseApi = baseApi.endsWith('/') ? `${baseApi}api` : `${baseApi}/api`;
+}
+export const API_URL = baseApi;
 export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '/';
 
 // You can also add other API-related constants here
