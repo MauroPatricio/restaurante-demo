@@ -172,6 +172,9 @@ const allowedOrigins = [
   'https://menu.gestaomodernaonline.com',
   'http://api.gestaomodernaonline.com',
   'https://api.gestaomodernaonline.com',
+  'https://gestaomodernaonline.com',
+  'https://www.gestaomodernaonline.com',
+  'https://menu.gestaomodernaonline.com'
 
 ];
 
