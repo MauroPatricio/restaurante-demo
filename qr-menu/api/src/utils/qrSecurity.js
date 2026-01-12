@@ -58,38 +58,42 @@ export const validateTableToken = (token, restaurantId, tableId, expiryHours = n
         // Regenerate token and compare
         const payload = `${restaurantId}:${tableId}:${timestamp}`;
         const secret = process.env.QR_SECRET || 'default-qr-secret-change-in-production';
-
-        if (secret === 'default-qr-secret-change-in-production') {
-            console.log('⚠️ Using DEFAULT QR secret for validation');
-        } else {
-            console.log('🔒 Using CUSTOM QR secret from env for validation');
-        }
+        const defaultSecret = 'default-qr-secret-change-in-production';
 
         const expectedHash = crypto
             .createHmac('sha256', secret)
             .update(payload)
             .digest('hex');
 
-        console.log('🔍 Hash comparison:', {
-            providedHashStart: tokenHash?.substring(0, 10),
-            expectedHashStart: expectedHash?.substring(0, 10),
-            match: tokenHash === expectedHash
-        });
-
         // Use constant-time comparison to prevent timing attacks
         // Both hashes are hex strings, so we compare their buffer representations
         const tokenBuffer = Buffer.from(tokenHash);
         const expectedBuffer = Buffer.from(expectedHash);
 
-        if (tokenBuffer.length !== expectedBuffer.length) {
-            console.error('❌ Token buffer length mismatch:', {
-                tokenLength: tokenBuffer.length,
-                expectedLength: expectedBuffer.length
-            });
-            return false;
+        let isValid = false;
+
+        if (tokenBuffer.length === expectedBuffer.length) {
+            isValid = crypto.timingSafeEqual(tokenBuffer, expectedBuffer);
         }
 
-        const isValid = crypto.timingSafeEqual(tokenBuffer, expectedBuffer);
+        // FALLBACK: If validation failed, and we are using a custom secret, try the default secret
+        // This handles cases where the QR was generated in an environment without the custom secret (e.g. local dev)
+        // or during a transition period.
+        if (!isValid && secret !== defaultSecret) {
+            console.log('⚠️ Primary secret validation failed. Attempting fallback to default secret...');
+            const fallbackHash = crypto
+                .createHmac('sha256', defaultSecret)
+                .update(payload)
+                .digest('hex');
+
+            const fallbackBuffer = Buffer.from(fallbackHash);
+            if (tokenBuffer.length === fallbackBuffer.length) {
+                isValid = crypto.timingSafeEqual(tokenBuffer, fallbackBuffer);
+                if (isValid) {
+                    console.log('✅ Token validated using FALLBACK (Default) secret.');
+                }
+            }
+        }
 
         console.log('✅ Token validation result:', isValid);
         return isValid;

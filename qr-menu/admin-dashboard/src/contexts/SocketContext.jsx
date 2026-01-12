@@ -6,7 +6,24 @@ import { orderAPI } from '../services/api';
 
 const SocketContext = createContext(null);
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const getSocketUrl = () => {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) return 'http://localhost:5000';
+
+    // Remove trailing /api or /api/
+    let base = apiUrl.replace(/\/api\/?$/, '');
+
+    // If the result is explicitly just a protocol or invalid, fallback
+    try {
+        new URL(base);
+        return base;
+    } catch (e) {
+        console.error('Invalid VITE_API_URL for socket, falling back from:', base);
+        return 'http://localhost:5000';
+    }
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export const SocketProvider = ({ children }) => {
     const { user } = useAuth();
