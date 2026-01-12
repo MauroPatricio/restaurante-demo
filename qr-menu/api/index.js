@@ -174,7 +174,7 @@ const allowedOrigins = [
   'https://api.gestaomodernaonline.com',
   'https://gestaomodernaonline.com',
   'https://www.gestaomodernaonline.com',
-  'https://menu.gestaomodernaonline.com'
+  'http://localhost:5000'
 
 ];
 

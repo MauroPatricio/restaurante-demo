@@ -11,7 +11,7 @@ const api = axios.create({
 });
 
 // Health check function - uses full URL to bypass /api prefix
-api.healthCheck = () => axios.get('http://localhost:5000/health');
+api.healthCheck = () => axios.get(`${API_URL.replace('/api', '')}/health`);
 
 api.interceptors.request.use(
     (config) => {

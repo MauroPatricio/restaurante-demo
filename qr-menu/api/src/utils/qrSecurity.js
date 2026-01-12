@@ -58,6 +58,13 @@ export const validateTableToken = (token, restaurantId, tableId, expiryHours = n
         // Regenerate token and compare
         const payload = `${restaurantId}:${tableId}:${timestamp}`;
         const secret = process.env.QR_SECRET || 'default-qr-secret-change-in-production';
+
+        if (secret === 'default-qr-secret-change-in-production') {
+            console.log('⚠️ Using DEFAULT QR secret for validation');
+        } else {
+            console.log('🔒 Using CUSTOM QR secret from env for validation');
+        }
+
         const expectedHash = crypto
             .createHmac('sha256', secret)
             .update(payload)
@@ -70,10 +77,19 @@ export const validateTableToken = (token, restaurantId, tableId, expiryHours = n
         });
 
         // Use constant-time comparison to prevent timing attacks
-        const isValid = crypto.timingSafeEqual(
-            Buffer.from(tokenHash),
-            Buffer.from(expectedHash)
-        );
+        // Both hashes are hex strings, so we compare their buffer representations
+        const tokenBuffer = Buffer.from(tokenHash);
+        const expectedBuffer = Buffer.from(expectedHash);
+
+        if (tokenBuffer.length !== expectedBuffer.length) {
+            console.error('❌ Token buffer length mismatch:', {
+                tokenLength: tokenBuffer.length,
+                expectedLength: expectedBuffer.length
+            });
+            return false;
+        }
+
+        const isValid = crypto.timingSafeEqual(tokenBuffer, expectedBuffer);
 
         console.log('✅ Token validation result:', isValid);
         return isValid;

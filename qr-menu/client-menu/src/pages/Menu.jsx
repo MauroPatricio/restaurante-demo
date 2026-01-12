@@ -93,12 +93,20 @@ const Menu = () => {
                     localStorage.setItem(`table-ref-${restaurantId}`, String(tableNumber));
                     localStorage.setItem(`token-ref-${restaurantId}`, token);
                 } else {
-                    setValidationError(t('invalid_qr') || 'QR Code inválido ou expirado');
+                    // This part is actually almost unreachable due to backend throwing 403
+                    setValidationError(t('invalid_qr'));
                 }
             } catch (err) {
                 console.error('Validation error:', err);
-                const msg = err.response?.data?.message || err.response?.data?.error || err.message;
-                setValidationError(msg);
+                const errorData = err.response?.data;
+                const msg = errorData?.message || errorData?.error || err.message;
+
+                // If it's specifically an invalid token, use translation but keep the technical reason visible
+                if (err.response?.status === 403 && (errorData?.error?.includes('token') || errorData?.error?.includes('QR'))) {
+                    setValidationError(`${t('invalid_qr')} (${msg})`);
+                } else {
+                    setValidationError(msg);
+                }
             } finally {
                 setValidating(false);
             }

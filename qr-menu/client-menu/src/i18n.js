@@ -47,7 +47,10 @@ const resources = {
             "make_first_order": "Make your first order!",
             "order_id": "Order",
             "items": "items",
-            "status": "Status"
+            "status": "Status",
+            "invalid_qr": "Invalid or expired QR code",
+            "access_denied": "Access Denied",
+            "scan_again": "Scan Again"
         }
     },
     pt: {
@@ -94,7 +97,10 @@ const resources = {
             "make_first_order": "Faça seu primeiro pedido!",
             "order_id": "Pedido",
             "items": "itens",
-            "status": "Status"
+            "status": "Status",
+            "invalid_qr": "QR Code inválido ou expirado",
+            "access_denied": "Acesso Negado",
+            "scan_again": "Escanear Novamente"
         }
     },
     es: {
@@ -141,7 +147,10 @@ const resources = {
             "make_first_order": "¡Haz tu primer pedido!",
             "order_id": "Pedido",
             "items": "artículos",
-            "status": "Estado"
+            "status": "Estado",
+            "invalid_qr": "Código QR inválido o expirado",
+            "access_denied": "Acceso Denegado",
+            "scan_again": "Escanear de Nuevo"
         }
     }
 };
