@@ -255,6 +255,25 @@ app.use((req, res, next) => {
 */
 
 // Rotas da API
+app.get('/', (req, res) => {
+  res.status(200).send(`
+    <div style="font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white; text-align: center; padding: 20px;">
+      <div style="padding: 24px; background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; border-radius: 24px; box-shadow: 0 0 40px rgba(16, 185, 129, 0.2); animation: fadeIn 0.8s ease-out;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.025em;">🚀 API Conectada com Sucesso</h1>
+        <p style="font-size: 1.15rem; color: #94a3b8; line-height: 1.6; max-width: 500px; margin: 0 auto 24px;">Você conseguiu chegar ao servidor do Restaurante Demo. Este endpoint é apenas para fins de verificação.</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <span style="padding: 8px 16px; background: #1e293b; border-radius: 12px; font-size: 0.9rem; font-weight: 600; color: #10b981;">Status: OK</span>
+          <span style="padding: 8px 16px; background: #1e293b; border-radius: 12px; font-size: 0.9rem; font-weight: 600; color: #10b981;">Porta: ${PORT}</span>
+        </div>
+      </div>
+      <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        body { margin: 0; }
+      </style>
+    </div>
+  `);
+});
+
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
 // Authenticated health check with more details
