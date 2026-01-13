@@ -165,7 +165,11 @@ const allowedOrigins = [
   'http://46.62.246.24:5175',
   'http://46.62.246.24:5174',
   'http://46.62.246.24:5173',
-  'http://46.62.246.24:5000',
+  'http://192.168.0.6:5175', // Local Network Client
+  'http://192.168.0.6:5173', // Local Network Admin
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:5173',
+  'http://localhost:5000',
   'http://gestaomodernaonline.com',
   'https://gestaomodernaonline.com',
   'http://menu.gestaomodernaonline.com',
@@ -174,7 +178,6 @@ const allowedOrigins = [
   'https://api.gestaomodernaonline.com',
   'https://gestaomodernaonline.com',
   'https://www.gestaomodernaonline.com',
-  'http://localhost:5000'
 
 ];
 
@@ -202,12 +205,12 @@ app.use(compression());
 if (process.env.NODE_ENV === 'production') {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 100, // Limit each IP to 2000 requests per windowMs (relaxed from 100)
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many requests from this IP, please try again after 15 minutes'
   });
-  app.use('/api', limiter);
+    app.use('/api', limiter);
 }
 
 // Middleware

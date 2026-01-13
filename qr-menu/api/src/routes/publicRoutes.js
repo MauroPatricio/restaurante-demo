@@ -12,7 +12,90 @@ const router = express.Router();
  * GET /api/public/menu/validate?r=restaurantId&t=tableId&token=xxx
  */
 router.get('/menu/validate', async (req, res) => {
-    // ... validation logic
+    try {
+        const { r: restaurantId, t: tableId, token } = req.query;
+
+        console.log('🔍 QR Validation Request:', { restaurantId, tableId, tokenProvided: !!token });
+
+        // Validate required parameters
+        if (!restaurantId || !tableId || !token) {
+            return res.status(400).json({
+                error: 'Missing parameters',
+                message: 'Parâmetros incompletos. Por favor, escaneie o QR Code novamente.'
+            });
+        }
+
+        // Validate the token
+        const isValidToken = validateTableToken(token, restaurantId, tableId);
+        console.log('🔐 Token validation result:', isValidToken);
+
+        if (!isValidToken) {
+            return res.status(403).json({
+                error: 'Invalid QR code',
+                message: 'QR Code inválido ou expirado. Por favor, escaneie novamente.',
+                valid: false
+            });
+        }
+
+        // Fetch restaurant and table
+        const restaurant = await Restaurant.findById(restaurantId).populate('subscription');
+        const table = await Table.findById(tableId);
+
+        console.log('🏪 Restaurant check:', {
+            found: !!restaurant,
+            active: restaurant?.active,
+            hasSubscription: !!restaurant?.subscription
+        });
+
+        if (!restaurant || !restaurant.active) {
+            return res.status(403).json({
+                error: 'Restaurant unavailable',
+                message: 'Restaurante não disponível no momento.',
+                valid: false
+            });
+        }
+
+        if (!restaurant.subscription || !['active', 'trial'].includes(restaurant.subscription.status)) {
+            return res.status(403).json({
+                error: 'Subscription expired',
+                message: 'O restaurante não está aceitando pedidos no momento.',
+                valid: false
+            });
+        }
+
+        if (!table) {
+            return res.status(404).json({
+                error: 'Table not found',
+                message: 'Mesa não encontrada. Verifique o QR Code.',
+                valid: false
+            });
+        }
+
+        // Success response
+        console.log('✅ QR Validation successful');
+        res.json({
+            valid: true,
+            restaurant: {
+                _id: restaurant._id,
+                name: restaurant.name,
+                logo: restaurant.logo
+            },
+            table: {
+                _id: table._id,
+                number: table.number,
+                location: table.location,
+                status: table.status
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Validation error:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Erro ao validar QR Code. Tente novamente.',
+            valid: false
+        });
+    }
 });
 
 /**

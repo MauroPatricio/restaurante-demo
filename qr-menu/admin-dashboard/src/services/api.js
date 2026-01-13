@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-let base = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+let base = import.meta.env.VITE_API_URL || `http://${hostname}:5000/api`;
 
 // Robustness: Ensure production URL includes /api suffix if pointing to remote
 if (base.startsWith('http') && !base.toLowerCase().includes('/api')) {

@@ -8,7 +8,8 @@ const SocketContext = createContext(null);
 
 const getSocketUrl = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
-    if (!apiUrl) return 'http://localhost:5000';
+    const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+    if (!apiUrl) return `http://${hostname}:5000`;
 
     // Remove trailing /api or /api/
     let base = apiUrl.replace(/\/api\/?$/, '');
@@ -19,7 +20,8 @@ const getSocketUrl = () => {
         return base;
     } catch (e) {
         console.error('Invalid VITE_API_URL for socket, falling back from:', base);
-        return 'http://localhost:5000';
+        const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+        return `http://${hostname}:5000`;
     }
 };
 
