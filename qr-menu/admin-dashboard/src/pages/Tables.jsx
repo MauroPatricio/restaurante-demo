@@ -162,15 +162,115 @@ export default function Tables() {
     };
 
     const printQR = () => {
-        const printWindow = window.open('', '', 'height=600,width=800');
-        printWindow.document.write('<html><head><title>Print QR Code</title>');
-        printWindow.document.write('</head><body style="text-align:center;">');
-        printWindow.document.write(`<h1>${t('table')} ${selectedTable.number}</h1>`);
-        printWindow.document.write(`<img src="${selectedTable.qrCode}" style="width:300px;height:300px;"/>`);
-        printWindow.document.write(`<p>${selectedTable.location || ''}</p>`);
-        printWindow.document.write('</body></html>');
+        const printWindow = window.open('', '', 'height=800,width=600');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Print QR Code - Mesa ${selectedTable.number}</title>
+                <style>
+                    @page {
+                        margin: 20mm;
+                        size: A4 portrait;
+                    }
+                    body {
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                        text-align: center;
+                        padding: 40px 20px;
+                        margin: 0;
+                        background: white;
+                    }
+                    .qr-container {
+                        max-width: 500px;
+                        margin: 0 auto;
+                    }
+                    .qr-image {
+                        width: 280px;
+                        height: 280px;
+                        margin: 20px auto;
+                        display: block;
+                    }
+                    .table-name {
+                        font-size: 1.2rem;
+                        color: #64748b;
+                        margin: 20px 0 10px;
+                        font-weight: 500;
+                    }
+                    .table-number {
+                        font-size: 3rem;
+                        font-weight: 900;
+                        color: #0f172a;
+                        margin: 15px 0;
+                        letter-spacing: 0.05em;
+                    }
+                    .code-section {
+                        background: #f8fafc;
+                        padding: 20px;
+                        border-radius: 12px;
+                        margin: 30px auto;
+                        max-width: 350px;
+                    }
+                    .code-label {
+                        font-size: 0.85rem;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                    }
+                    .code-value {
+                        font-size: 2.5rem;
+                        font-weight: 900;
+                        color: #0f172a;
+                        letter-spacing: 0.3rem;
+                        font-family: 'Courier New', monospace;
+                        margin: 10px 0;
+                    }
+                    .code-hint {
+                        font-size: 0.75rem;
+                        color: #94a3b8;
+                        font-style: italic;
+                        margin-top: 8px;
+                    }
+                    .footer {
+                        font-size: 0.7rem;
+                        color: #94a3b8;
+                        font-style: italic;
+                        margin-top: 40px;
+                        padding-top: 20px;
+                        border-top: 1px solid #e2e8f0;
+                    }
+                    @media print {
+                        body { padding: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="qr-container">
+                    <img src="${selectedTable.qrCode}" alt="QR Code" class="qr-image" />
+                    <p class="table-name">${selectedTable.location || 'Mesa'} - ${selectedTable.type}</p>
+                    <h1 class="table-number">MESA ${selectedTable.number}</h1>
+                    
+                    <div class="code-section">
+                        <p class="code-label">Código de Acesso Manual</p>
+                        <p class="code-value">${selectedTable.numericCode || '------'}</p>
+                        <p class="code-hint">Use este código se a câmera não funcionar</p>
+                    </div>
+                    
+                    <div class="footer">
+                        Desenvolvido por Nhiquela Serviços e Consultoria, LDA
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
         printWindow.document.close();
-        printWindow.print();
+
+        // Wait for images to load before printing
+        printWindow.onload = function () {
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        };
     };
 
     const handleViewSession = async (table) => {
@@ -469,37 +569,102 @@ export default function Tables() {
                 </div>
             )}
 
-            {/* QR Modal - same as before */}
+            {/* QR Modal - Enhanced Layout */}
             {showQRModal && selectedTable && (
                 <div className="modal-overlay" onClick={() => setShowQRModal(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                    <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'center', maxWidth: '500px' }}>
                         <div className="modal-header">
-                            <h3>{t('table')} {selectedTable.number} - QR Code</h3>
+                            <h3>QR Code - Mesa {selectedTable.number}</h3>
                             <button onClick={() => setShowQRModal(false)} className="icon-btn"><X size={20} /></button>
                         </div>
-                        <div style={{ padding: '20px' }}>
-                            <img src={selectedTable.qrCode} alt="QR Code" style={{ maxWidth: '100%', maxHeight: '300px' }} />
-                        </div>
-                        <p style={{ marginBottom: '1rem' }}>
-                            {selectedTable.location ? `${selectedTable.location} - ` : ''}
-                            {selectedTable.type}
-                        </p>
-                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', margin: '0 auto 1.5rem', maxWidth: '80%' }}>
-                            <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase' }}>Código de Acesso Manual</p>
-                            <p style={{ fontSize: '2rem', fontWeight: '900', color: '#0f172a', letterSpacing: '0.2rem', fontFamily: 'monospace' }}>
-                                {selectedTable.numericCode || '------'}
+                        <div style={{ padding: '30px 20px' }}>
+                            {/* QR Code Image */}
+                            <img
+                                src={selectedTable.qrCode}
+                                alt="QR Code"
+                                style={{
+                                    width: '280px',
+                                    height: '280px',
+                                    display: 'block',
+                                    margin: '0 auto 20px'
+                                }}
+                            />
+
+                            {/* Table Name */}
+                            <p style={{
+                                fontSize: '1rem',
+                                color: '#64748b',
+                                marginBottom: '8px',
+                                fontWeight: '500'
+                            }}>
+                                {selectedTable.location || 'Mesa'} - {selectedTable.type}
                             </p>
-                            <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                                Use este código se a câmera não funcionar
-                            </p>
+
+                            {/* Table Number - Prominent */}
+                            <h2 style={{
+                                fontSize: '2.5rem',
+                                fontWeight: '900',
+                                color: '#0f172a',
+                                margin: '10px 0 30px',
+                                letterSpacing: '0.05em'
+                            }}>
+                                MESA {selectedTable.number}
+                            </h2>
+
+                            {/* Numeric Code Section */}
+                            <div style={{
+                                background: '#f8fafc',
+                                padding: '20px',
+                                borderRadius: '12px',
+                                margin: '0 auto 25px',
+                                maxWidth: '350px',
+                                border: '1px solid #e2e8f0'
+                            }}>
+                                <p style={{
+                                    fontSize: '0.85rem',
+                                    color: '#64748b',
+                                    marginBottom: '8px',
+                                    fontWeight: '600',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    Código de Acesso Manual
+                                </p>
+                                <p style={{
+                                    fontSize: '2.2rem',
+                                    fontWeight: '900',
+                                    color: '#0f172a',
+                                    letterSpacing: '0.3rem',
+                                    fontFamily: 'monospace',
+                                    margin: '12px 0'
+                                }}>
+                                    {selectedTable.numericCode || '------'}
+                                </p>
+                                <p style={{
+                                    fontSize: '0.75rem',
+                                    color: '#94a3b8',
+                                    fontStyle: 'italic',
+                                    margin: '8px 0 0'
+                                }}>
+                                    Use este código se a câmera não funcionar
+                                </p>
+                            </div>
+
+                            {/* Footer */}
+                            <div style={{
+                                fontSize: '0.7rem',
+                                color: '#94a3b8',
+                                fontStyle: 'italic',
+                                paddingTop: '20px',
+                                borderTop: '1px solid #e2e8f0'
+                            }}>
+                                Desenvolvido por Nhiquela Serviços e Consultoria, LDA
+                            </div>
                         </div>
-                        <div style={{ marginBottom: '1.5rem', fontSize: '0.75rem', color: '#666', fontStyle: 'italic' }}>
-                            Desenvolvido por Nhiquela Servicos e Consultoria, LDA
-                        </div>
-                        <div className="modal-actions" style={{ justifyContent: 'center' }}>
-                            <button onClick={printQR} className="btn-primary">
+
+                        <div className="modal-actions" style={{ justifyContent: 'center', padding: '0 20px 20px' }}>
+                            <button onClick={printQR} className="btn-primary" style={{ minWidth: '150px' }}>
                                 <Printer size={18} />
-                                {t('print_qr')}
+                                {t('print_qr') || 'Imprimir'}
                             </button>
                         </div>
                     </div>
