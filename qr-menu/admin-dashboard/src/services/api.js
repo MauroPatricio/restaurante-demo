@@ -1,11 +1,23 @@
 import axios from 'axios';
 
-const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-let base = import.meta.env.VITE_API_URL || `http://${hostname}:5000/api`;
+// Determine API URL based on environment
+let base;
 
-// Robustness: Ensure production URL includes /api suffix if pointing to remote
-if (base.startsWith('http') && !base.toLowerCase().includes('/api')) {
-    base = base.endsWith('/') ? `${base}api` : `${base}/api`;
+if (import.meta.env.VITE_API_URL) {
+    base = import.meta.env.VITE_API_URL;
+} else {
+    const hostname = window.location.hostname;
+
+    if (hostname.includes('gestaomodernaonline.com')) {
+        // Production
+        base = 'https://api.gestaomodernaonline.com/api';
+    } else if (hostname === 'localhost') {
+        // Local development
+        base = 'http://127.0.0.1:5000/api';
+    } else {
+        // LAN
+        base = `http://${hostname}:5000/api`;
+    }
 }
 
 const API_URL = base;

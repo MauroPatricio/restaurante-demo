@@ -8,19 +8,28 @@ const SocketContext = createContext(null);
 
 const getSocketUrl = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
-    const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-    if (!apiUrl) return `http://${hostname}:5000`;
 
-    // Remove trailing /api or /api/
-    let base = apiUrl.replace(/\/api\/?$/, '');
+    if (apiUrl) {
+        // Remove trailing /api or /api/
+        let base = apiUrl.replace(/\/api\/?$/, '');
 
-    // If the result is explicitly just a protocol or invalid, fallback
-    try {
-        new URL(base);
-        return base;
-    } catch (e) {
-        console.error('Invalid VITE_API_URL for socket, falling back from:', base);
-        const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+        // If the result is explicitly just a protocol or invalid, fallback
+        try {
+            new URL(base);
+            return base;
+        } catch (e) {
+            console.error('Invalid VITE_API_URL for socket, falling back');
+        }
+    }
+
+    // Auto-detect based on hostname
+    const hostname = window.location.hostname;
+
+    if (hostname.includes('gestaomodernaonline.com')) {
+        return 'https://api.gestaomodernaonline.com';
+    } else if (hostname === 'localhost') {
+        return 'http://127.0.0.1:5000';
+    } else {
         return `http://${hostname}:5000`;
     }
 };

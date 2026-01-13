@@ -5,16 +5,39 @@
 
 // Base URLs - edit these to change API location for all components
 // Base URLs - edit these to change API location for all components
-// Dynamic API URL: aligns with the current hostname (localhost or LAN IP) on port 5000
-const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-let baseApi = import.meta.env.VITE_API_URL || `http://${hostname}:5000/api`;
+// Determine API URL based on environment
+let baseApi;
+let socketUrl;
 
-if (baseApi.startsWith('http') && !baseApi.toLowerCase().includes('/api')) {
+if (import.meta.env.VITE_API_URL) {
+    // Use environment variable if set
+    baseApi = import.meta.env.VITE_API_URL;
+} else {
+    // Auto-detect based on hostname
+    const hostname = window.location.hostname;
+
+    if (hostname.includes('gestaomodernaonline.com')) {
+        // Production environment
+        baseApi = 'https://api.gestaomodernaonline.com/api';
+        socketUrl = 'https://api.gestaomodernaonline.com';
+    } else if (hostname === 'localhost') {
+        // Local development (localhost)
+        baseApi = 'http://127.0.0.1:5000/api';
+        socketUrl = 'http://127.0.0.1:5000';
+    } else {
+        // Local network (LAN IP)
+        baseApi = `http://${hostname}:5000/api`;
+        socketUrl = `http://${hostname}:5000`;
+    }
+}
+
+// Ensure /api suffix
+if (baseApi && baseApi.startsWith('http') && !baseApi.toLowerCase().includes('/api')) {
     baseApi = baseApi.endsWith('/') ? `${baseApi}api` : `${baseApi}/api`;
 }
+
 export const API_URL = baseApi;
-// Dynamic Socket URL: aligns with the current hostname (localhost or LAN IP) on port 5000
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${hostname}:5000`;
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || socketUrl;
 
 // You can also add other API-related constants here
 export const API_TIMEOUT = 10000; // 10 seconds
