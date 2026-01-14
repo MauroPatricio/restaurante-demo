@@ -156,6 +156,9 @@ async function getPublicIP() {
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for correct IP detection behind Nginx
+app.set('trust proxy', 1);
+
 // Allow CORS for Client and Admin Dashboard
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
@@ -188,8 +191,32 @@ const io = new Server(server, {
   }
 });
 
-// Security & Performance Middleware
-// In development, use more permissive helmet settings
+// 1. CORS Middleware (Must be FIRST to handle preflight and include headers in errors/rate-limits)
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('gestaomodernaonline.com')) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
+
+// 2. Body Parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 3. Security & Performance
 if (process.env.NODE_ENV === 'production') {
   app.use(helmet());
 } else {
@@ -201,44 +228,17 @@ if (process.env.NODE_ENV === 'production') {
 }
 app.use(compression());
 
-// Rate Limiting (disabled in development)
+// 4. Rate Limiting (Applied AFTER CORS)
 if (process.env.NODE_ENV === 'production') {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 2000 requests per windowMs (relaxed from 100)
+    max: 2000, // Relaxed limit for production dashboard polling
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many requests from this IP, please try again after 15 minutes'
   });
-    app.use('/api', limiter);
+  app.use('/api', limiter);
 }
-
-// Middleware
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    // In development, allow ALL origins
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-
-    // In production, check allowed origins
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-
-    return callback(new Error('Not allowed by CORS'), false);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
-}));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Make Socket.IO instance available in req for controllers
 app.use((req, res, next) => {
