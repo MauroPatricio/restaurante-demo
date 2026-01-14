@@ -150,6 +150,35 @@ router.patch('/:id/toggle-active', authorizeRoles('Owner', 'Manager'), async (re
     }
 });
 
+// Get specific role for a user in a restaurant context
+router.get('/:userId/restaurants/:restaurantId/role', async (req, res) => {
+    try {
+        const { userId, restaurantId } = req.params;
+
+        // Ensure user is fetching their own role or is authorized
+        if (req.user._id.toString() !== userId && !['Admin', 'Owner', 'Manager'].includes(req.user.role)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const userRole = await UserRestaurantRole.findOne({
+            user: userId,
+            restaurant: restaurantId,
+            active: true
+        }).populate('role');
+
+        if (!userRole) {
+            return res.status(404).json({ error: 'Role not found for this user and restaurant' });
+        }
+
+        res.json({
+            role: userRole.role
+        });
+    } catch (error) {
+        console.error('Error fetching user-restaurant role:', error);
+        res.status(500).json({ error: 'Failed to fetch role', details: error.message });
+    }
+});
+
 // Existing routes
 router.post('/', requirePermission(PERMISSIONS.MANAGE_USERS), createUser);
 router.patch('/:id', requirePermission(PERMISSIONS.MANAGE_USERS), updateUser);
