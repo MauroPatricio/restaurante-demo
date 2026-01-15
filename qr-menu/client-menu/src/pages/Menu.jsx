@@ -306,6 +306,8 @@ const Menu = () => {
                     src={restaurant?.logo || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"}
                     alt="Restaurant"
                     className="w-full h-full object-cover opacity-60"
+                    loading="eager"
+                    decoding="async"
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent pt-16">
                     <motion.h1
@@ -332,7 +334,7 @@ const Menu = () => {
                             </div>
                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 min-w-[140px]">
                                 {tableInfo.waiterPhoto ? (
-                                    <img src={tableInfo.waiterPhoto} alt="Waiter" className="w-8 h-8 rounded-full object-cover border-2 border-white/20" />
+                                    <img src={tableInfo.waiterPhoto} alt="Waiter" className="w-8 h-8 rounded-full object-cover border-2 border-white/20" loading="lazy" decoding="async" />
                                 ) : (
                                     <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                                         <User size={16} className="text-white/80" />
@@ -433,6 +435,8 @@ const Menu = () => {
                                         src={item.imageUrl || item.image || item.photo}
                                         alt={item.name}
                                         className="w-full h-full object-cover"
+                                        loading="lazy"
+                                        decoding="async"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50 dark:bg-gray-800">

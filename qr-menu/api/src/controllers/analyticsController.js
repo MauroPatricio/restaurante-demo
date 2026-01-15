@@ -428,11 +428,20 @@ export const getSalesReport = async (req, res) => {
             },
             { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
             {
+                $lookup: {
+                    from: "categories",
+                    localField: "product.category",
+                    foreignField: "_id",
+                    as: "categoryDetails"
+                }
+            },
+            { $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true } },
+            {
                 $group: {
                     _id: { $ifNull: ["$product.name", "Unknown Item"] },
                     revenue: { $sum: "$items.subtotal" },
                     count: { $sum: "$items.quantity" },
-                    category: { $first: "$product.category" }
+                    category: { $first: { $ifNull: ["$categoryDetails.name", "Sem Categoria"] } }
                 }
             },
             { $sort: { count: -1 } },

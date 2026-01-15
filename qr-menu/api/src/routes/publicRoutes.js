@@ -5,6 +5,8 @@ import Order from '../models/Order.js';
 import { validateTableToken } from '../utils/qrSecurity.js';
 import { occupyTable } from '../controllers/tableStateController.js';
 
+import cacheService from '../services/cacheService.js';
+
 const router = express.Router();
 
 /**
@@ -167,6 +169,16 @@ router.get('/menu/:restaurantId', async (req, res) => {
             });
         }
 
+        // Check cache
+        const cacheKey = `public_menu:${restaurantId}`;
+        const cachedData = cacheService.get(cacheKey);
+        if (cachedData) {
+            return res.json({
+                ...cachedData,
+                tableId
+            });
+        }
+
         // Get restaurant with menu items
         const restaurant = await Restaurant.findById(restaurantId).select('name logo menuItems');
 
@@ -176,10 +188,15 @@ router.get('/menu/:restaurantId', async (req, res) => {
             });
         }
 
-        res.json({
+        const responseData = {
             restaurant,
             tableId
-        });
+        };
+
+        // Cache for 10 minutes (600 seconds)
+        cacheService.set(cacheKey, { restaurant }, 600);
+
+        res.json(responseData);
     } catch (error) {
         console.error('Get menu error:', error);
         res.status(500).json({
