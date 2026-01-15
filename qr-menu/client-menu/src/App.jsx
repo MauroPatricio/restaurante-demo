@@ -8,7 +8,7 @@ import OrderStatus from './pages/OrderStatus';
 import OrderHistory from './pages/OrderHistory';
 import { NotificationProvider } from './context/NotificationContext';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_URL } from './config/api';
 
 // QR Code redirect component
 function QRRedirect() {
@@ -33,8 +33,20 @@ function QRRedirect() {
             try {
                 // Validate the QR code with the backend
                 const response = await fetch(
-                    `${API_URL}/public/menu/validate?r=${restaurantId}&t=${tableId}&token=${token}`
+                    `${API_URL}/public/menu/validate?r=${restaurantId}&t=${tableId}&token=${token}`,
+                    {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    }
                 );
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    console.error('❌ Expected JSON but received:', text.substring(0, 200));
+                    throw new Error('Servidor retornou resposta inválida (não JSON)');
+                }
 
                 if (!response.ok) {
                     const data = await response.json();
@@ -124,12 +136,24 @@ function CodeEntry() {
             const response = await fetch(`${API_URL}/public/menu/access-by-code`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ code })
             });
 
-            const data = await response.json();
+            // Robust check for JSON response
+            const contentType = response.headers.get("content-type");
+            let data;
+
+            if (contentType && contentType.includes("application/json")) {
+                data = await response.json();
+            } else {
+                // Not JSON - probably a 404 or 500 HTML page from proxy/server
+                const text = await response.text();
+                console.error('❌ Server returned non-JSON response:', text.substring(0, 500));
+                throw new Error('O servidor encontrou um erro e não retornou JSON. Verifique a conexão.');
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || 'Código inválido');
