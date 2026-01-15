@@ -12,19 +12,6 @@ import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useSocket } from '../contexts/SocketContext';
-import { tableAPI, orderAPI, waiterCallAPI } from '../services/api';
-import {
-    User, Users, Bell, CheckCircle, Clock, MapPin,
-    UtensilsCrossed, AlertTriangle, Coffee, Loader2, TrendingUp, LayoutGrid, Timer, MessageSquare
-} from 'lucide-react';
-
-import { formatDistanceToNow } from 'date-fns';
-import { pt } from 'date-fns/locale/pt';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { useTranslation } from 'react-i18next';
 import '../styles/PremiumTheme.css';
 
 const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
