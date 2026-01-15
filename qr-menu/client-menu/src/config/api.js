@@ -20,10 +20,10 @@ if (import.meta.env.VITE_API_URL) {
         // Production environment
         baseApi = 'https://api.gestaomodernaonline.com/api';
         socketUrl = 'https://api.gestaomodernaonline.com';
-    } else if (hostname === 'localhost') {
-        // Local development (localhost)
-        baseApi = 'http://127.0.0.1:5000/api';
-        socketUrl = 'http://127.0.0.1:5000';
+    } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        // Local development - Use relative path for Vite Proxy
+        baseApi = '/api';
+        socketUrl = ''; // Relative to current origin
     } else {
         // Local network (LAN IP)
         baseApi = `http://${hostname}:5000/api`;

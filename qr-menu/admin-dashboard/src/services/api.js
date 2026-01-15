@@ -11,9 +11,9 @@ if (import.meta.env.VITE_API_URL) {
     if (hostname.includes('gestaomodernaonline.com')) {
         // Production
         base = 'https://api.gestaomodernaonline.com/api';
-    } else if (hostname === 'localhost') {
-        // Local development
-        base = 'http://127.0.0.1:5000/api';
+    } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        // Local development - Use relative path to leverage Vite Proxy
+        base = '/api';
     } else {
         // LAN
         base = `http://${hostname}:5000/api`;

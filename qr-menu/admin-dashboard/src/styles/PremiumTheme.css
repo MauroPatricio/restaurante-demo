@@ -1,0 +1,116 @@
+/* Premium Design System Tokens */
+:root {
+    /* Surfaces */
+    --premium-surface: #ffffff;
+    --premium-glass: rgba(255, 255, 255, 0.7);
+    --premium-glass-border: rgba(255, 255, 255, 0.5);
+
+    /* Borders & Shadows */
+    --premium-border: #f1f5f9;
+    --premium-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+    --premium-shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    --premium-shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
+
+    /* Text */
+    --premium-text-main: #0f172a;
+    --premium-text-muted: #64748b;
+    --premium-text-accent: #6366f1;
+
+    /* States */
+    --premium-success: #10b981;
+    --premium-error: #ef4444;
+    --premium-warning: #f59e0b;
+    --premium-info: #3b82f6;
+}
+
+/* Base Utility Classes */
+.premium-card {
+    background: var(--premium-surface);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: var(--premium-shadow-md);
+    border: 1px solid var(--premium-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--premium-shadow-lg);
+}
+
+.glass-surface {
+    background: var(--premium-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--premium-glass-border);
+}
+
+.text-premium-header {
+    font-family: 'Inter', sans-serif;
+    color: var(--premium-text-main);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+}
+
+.text-premium-muted {
+    color: var(--premium-text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Premium Badge System */
+.premium-badge {
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #d1fae5;
+}
+
+.badge-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fee2e2;
+}
+
+.badge-info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #dbeafe;
+}
+
+/* Layout Utilities */
+.premium-grid {
+    display: grid;
+    gap: 24px;
+}
+
+/* Modern Pulse for Premium Alerts */
+.premium-pulse-soft {
+    animation: premium-pulse 2s infinite;
+}
+
+@keyframes premium-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}

@@ -27,8 +27,8 @@ const getSocketUrl = () => {
 
     if (hostname.includes('gestaomodernaonline.com')) {
         return 'https://api.gestaomodernaonline.com';
-    } else if (hostname === 'localhost') {
-        return 'http://127.0.0.1:5000';
+    } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return ''; // Use same-origin to leverage Vite Proxy
     } else {
         return `http://${hostname}:5000`;
     }

@@ -413,9 +413,12 @@ export default function DashboardLayout() {
                                         if (isOwnerOrManager) {
                                             try {
                                                 const restaurantId = restaurantData?._id || restaurantData?.id;
-                                                const response = await fetch(`http://localhost:5000/api/restaurants/${restaurantId}/toggle-active`, {
+                                                const response = await fetch(`/api/restaurants/${restaurantId}/toggle-active`, {
                                                     method: 'PATCH',
-                                                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                                                    headers: {
+                                                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                                        'Content-Type': 'application/json'
+                                                    }
                                                 });
                                                 if (response.ok) window.location.reload();
                                             } catch (error) { console.error('Failed to toggle:', error); }
