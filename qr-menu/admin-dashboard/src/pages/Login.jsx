@@ -142,6 +142,9 @@ export default function Login() {
                                 {t('register_here')}
                             </Link>
                         </p>
+                        <p className="developer-credit">
+                            Desenvolvido por Nhiquela Servicos e Consultoria, LDA
+                        </p>
                     </div>
                 </div>
             </div>
@@ -200,6 +203,7 @@ export default function Login() {
                 .footer-text { color: #64748b; font-size: 0.9rem; margin: 0; }
                 .register-link { color: #4f46e5; font-weight: 600; text-decoration: none; transition: color 0.2s; }
                 .register-link:hover { color: #4338ca; text-decoration: underline; }
+                .developer-credit { color: #94a3b8; font-size: 0.75rem; margin-top: 16px; margin-bottom: 0; font-weight: 500; }
 
                 .error-message { background: #fee2e2; color: #991b1b; padding: 14px; border-radius: 12px; margin-bottom: 24px; font-size: 0.9rem; border: 1px solid #fecaca; display: flex; align-items: center; gap: 8px; }
 
