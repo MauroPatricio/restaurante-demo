@@ -257,53 +257,45 @@ router.get('/me', authenticateToken, async (req, res) => {
             .populate('restaurant')
             .populate('role');
 
-        // Format restaurants array
-        const restaurants = userRestaurantRoles.map(urr => ({
-            _id: urr.restaurant._id,
-            name: urr.restaurant.name,
-            role: urr.role.name,
-            logo: urr.restaurant.logo
-        }));
+        // Format restaurants array for the general list
+        const restaurants = userRestaurantRoles.map(urr => {
+            if (!urr.restaurant || !urr.role) return null;
+            return {
+                _id: urr.restaurant._id,
+                name: urr.restaurant.name,
+                role: urr.role.name,
+                logo: urr.restaurant.logo,
+                active: urr.restaurant.active
+            };
+        }).filter(Boolean);
 
-        // If restaurantId is in the token, get full restaurant details + role
+        // If restaurantId is in the token/request, get full restaurant details + role
         let responseUser = {
             ...user.toObject(),
             restaurants
         };
 
-        console.log('🔍 /auth/me - req.restaurantId:', req.restaurantId);
-        console.log('🔍 /auth/me - req.user.restaurant:', req.user.restaurant);
+        const activeRestaurantId = req.restaurantId || req.user.restaurant;
 
-        if (req.restaurantId) {
-            console.log('✅ restaurantId found in request, fetching restaurant...');
-            const currentRestaurant = await Restaurant.findById(req.restaurantId).populate('subscription');
+        if (activeRestaurantId) {
+            const currentRestaurant = await Restaurant.findById(activeRestaurantId).populate('subscription');
             const currentUserRole = await UserRestaurantRole.findOne({
                 user: req.user._id,
-                restaurant: req.restaurantId,
+                restaurant: activeRestaurantId,
                 active: true
             }).populate('role');
 
-            console.log('📊 currentRestaurant:', currentRestaurant ? currentRestaurant.name : 'null');
-            console.log('📊 currentUserRole:', currentUserRole ? currentUserRole.role.name : 'null');
-            console.log('📊 role.isSystem:', currentUserRole?.role?.isSystem);
-
             if (currentRestaurant && currentUserRole) {
+                // Attach critical context for instant UI rendering
                 responseUser.restaurant = currentRestaurant;
-                responseUser.role = currentUserRole.role; // Full role object with isSystem
+                responseUser.role = currentUserRole.role;
                 responseUser.subscription = currentRestaurant.subscription;
-                console.log('✅ Restaurant data added to response');
-                console.log('✅ Role with isSystem:', responseUser.role.isSystem);
-            } else {
-                console.log('⚠️  Missing currentRestaurant or currentUserRole');
             }
-        } else {
-            console.log('⚠️  No restaurantId in request');
-            // Even without restaurant context, try to get the first role
-            if (userRestaurantRoles.length > 0) {
-                const firstRole = userRestaurantRoles[0].role;
-                responseUser.role = firstRole; // Include role with isSystem
-                console.log('✅ Using first role:', firstRole.name, 'isSystem:', firstRole.isSystem);
-            }
+        }
+
+        // Safety: If no specific context, but has associations, attach the first one's role for basic permissioning
+        if (!responseUser.role && userRestaurantRoles.length > 0) {
+            responseUser.role = userRestaurantRoles[0].role;
         }
 
         res.json({

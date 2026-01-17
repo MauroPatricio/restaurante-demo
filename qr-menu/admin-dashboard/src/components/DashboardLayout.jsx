@@ -223,9 +223,9 @@ export default function DashboardLayout() {
         {
             title: t('system_administration') || '⚙️ SISTEMA & ADMINISTRAÇÃO',
             items: [
-                { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') },
+                { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
                 { icon: CreditCard, label: t('subscription_management') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.isSystem },
-                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.name === 'Manager' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
+                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: user?.role?.isSystem || (['Owner', 'Manager'].includes(user?.role?.name)) },
             ]
         }
     ];

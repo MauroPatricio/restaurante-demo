@@ -26,36 +26,12 @@ export const AuthProvider = ({ children }) => {
 
             if (token) {
                 try {
-                    // Call /auth/me to get full user profile with role
+                    // Call /auth/me to get full user profile with role & restaurant context
+                    // Backend is now enriched to provide this in ONE call
                     const { data } = await api.get('/auth/me');
-                    console.log('✅ /auth/me response:', data);
-                    console.log('  User:', data.user?.name);
-                    console.log('  Restaurant:', data.user?.restaurant?.name);
-                    console.log('  Restaurant active:', data.user?.restaurant?.active);
-                    console.log('  Restaurant logo:', data.user?.restaurant?.logo);
-
-                    // If restaurant data is missing but restaurantId exists in localStorage,
-                    // fetch restaurant manually (happens when old token doesn't have restaurantId)
-                    if (!data.user?.restaurant && restaurantId) {
-                        console.log('⚠️  Restaurant not in token, fetching manually...');
-                        try {
-                            const restaurantRes = await api.get(`/restaurants/${restaurantId}`);
-                            console.log('✅ Restaurant fetched:', restaurantRes.data);
-                            data.user.restaurant = restaurantRes.data;
-
-                            // Also get user role for this restaurant
-                            const roleRes = await api.get(`/users/${data.user._id}/restaurants/${restaurantId}/role`);
-                            data.user.role = roleRes.data.role;
-                            data.user.subscription = restaurantRes.data.subscription;
-                        } catch (fetchError) {
-                            console.error('❌ Failed to fetch restaurant:', fetchError);
-                        }
-                    }
-
                     setUser(data.user);
                 } catch (error) {
                     console.error('❌ Failed to load user:', error);
-                    console.error('  Error response:', error.response?.data);
                     localStorage.removeItem('token');
                     localStorage.removeItem('restaurantId');
                     setUser(null);

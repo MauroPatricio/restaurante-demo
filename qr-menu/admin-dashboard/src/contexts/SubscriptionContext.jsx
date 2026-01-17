@@ -40,9 +40,15 @@ export const SubscriptionProvider = ({ children }) => {
             // PRIORITY: If user has selected a specific restaurant, fetch that restaurant's subscription
             // This happens after restaurant selection, even if they own multiple restaurants
             if (hasSelectedRestaurant) {
-                console.log('[SubscriptionContext] Fetching subscription for selected restaurant ID:', restaurantId);
-                const response = await api.get(`/subscriptions/${restaurantId}`);
-                data = response.data;
+                // Optimization: If user object already has the full subscription populated, use it
+                if (user.subscription && typeof user.subscription === 'object' && user.subscription.currentPeriodEnd) {
+                    console.log('[SubscriptionContext] Using subscription data from AuthContext');
+                    data = { subscription: user.subscription };
+                } else {
+                    console.log('[SubscriptionContext] Fetching subscription for selected restaurant ID:', restaurantId);
+                    const response = await api.get(`/subscriptions/${restaurantId}`);
+                    data = response.data;
+                }
 
                 const subscriptionData = data.subscription || data;
                 console.log('[SubscriptionContext] Fetched subscription:', subscriptionData);

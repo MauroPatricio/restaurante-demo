@@ -25,7 +25,7 @@ export default function Loader({
     const iconSize = sizeMap[size] || sizeMap.medium;
 
     const spinnerStyle = {
-        animation: 'spin 1s linear infinite',
+        animation: 'spin 0.6s linear infinite',
         color: color
     };
 

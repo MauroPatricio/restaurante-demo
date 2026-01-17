@@ -40,24 +40,29 @@ const RestaurantSelection = () => {
         try {
             const subscriptionData = {};
 
-            // Fetch subscription for each restaurant
-            await Promise.all(
-                restaurantList.map(async (restaurant) => {
-                    const restaurantId = restaurant.id || restaurant._id;
-                    try {
-                        const { data } = await api.get(`/subscriptions/${restaurantId}`);
-                        subscriptionData[restaurantId] = data.subscription || data;
-                    } catch (err) {
-                        console.error(`Failed to fetch subscription for ${restaurantId}:`, err);
-                        // Default to suspended if fetch fails
-                        subscriptionData[restaurantId] = { status: 'suspended' };
-                    }
-                })
-            );
+            // Bulk fetch all subscription statuses for the user
+            // This is MUCH faster than individual calls
+            const { data } = await api.get('/subscriptions/global-status');
+
+            if (data.restaurants && Array.isArray(data.restaurants)) {
+                data.restaurants.forEach(sub => {
+                    subscriptionData[sub.restaurantId] = {
+                        status: sub.status,
+                        currentPeriodEnd: sub.currentPeriodEnd
+                    };
+                });
+            } else if (data.subscription) {
+                // Single restaurant case
+                const rid = data.restaurant?._id || data.restaurant?.id;
+                if (rid) {
+                    subscriptionData[rid] = data.subscription;
+                }
+            }
 
             setSubscriptions(subscriptionData);
         } catch (err) {
-            console.error('Failed to fetch subscriptions:', err);
+            console.error('Failed to fetch subscriptions in bulk:', err);
+            // Fallback: If bulk fails, we could do individual ones but better to show error or empty
         }
     };
 

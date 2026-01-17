@@ -28,7 +28,7 @@ const LoadingOverlay = () => {
                 <div style={{
                     marginBottom: '16px',
                     color: '#2563eb', // primary-600
-                    animation: 'spin 1s linear infinite'
+                    animation: 'spin 0.6s linear infinite'
                 }}>
                     <Loader2 size={48} />
                 </div>
