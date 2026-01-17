@@ -2,6 +2,9 @@ import Subscription from '../models/Subscription.js';
 import SubscriptionTransaction from '../models/SubscriptionTransaction.js';
 import Restaurant from '../models/Restaurant.js';
 import AuditLog from '../models/AuditLog.js';
+import SystemSetting from '../models/SystemSetting.js';
+import User from '../models/User.js';
+import { calculateGlobalStatus, findCriticalSubscription } from '../utils/subscriptionHelper.js';
 
 // Get current subscription
 export const getSubscription = async (req, res) => {
@@ -20,7 +23,33 @@ export const getSubscription = async (req, res) => {
             return res.json({ subscription: newSub });
         }
 
-        res.json({ subscription });
+        // Call checkExpiration to ensure status is up to date with the date
+        await subscription.checkExpiration();
+
+        // Calculate effective price (Main vs Additional)
+        // 1. Fetch base price
+        const priceSetting = await SystemSetting.findOne({ key: 'base_subscription_price' });
+        const basePrice = priceSetting ? Number(priceSetting.value) : 1000;
+
+        let effectivePrice = basePrice;
+
+        // 2. Determine if it's Main (100%) or Additional (50%)
+        const restaurant = await Restaurant.findById(restaurantId);
+        if (restaurant && restaurant.owner) {
+            const ownerRestaurants = await Restaurant.find({ owner: restaurant.owner }).sort({ createdAt: 1 });
+            if (ownerRestaurants.length > 0) {
+                const mainRestaurantId = ownerRestaurants[0]._id.toString();
+                // If this is NOT the first restaurant, apply 50% discount
+                if (mainRestaurantId !== restaurantId) {
+                    effectivePrice = basePrice * 0.5;
+                }
+            }
+        }
+
+        res.json({
+            subscription,
+            systemPrice: effectivePrice
+        });
     } catch (error) {
         console.error('Get subscription error:', error);
         res.status(500).json({ error: 'Failed to fetch subscription' });
@@ -50,6 +79,23 @@ export const createTransaction = async (req, res) => {
             status: 'pending'
         });
 
+        // Update subscription status to pending_activation
+        subscription.status = 'pending_activation';
+        await subscription.save();
+
+        // Emit real-time notification to all connected sockets
+        // Admins will filter this on the frontend
+        if (req.io) {
+            req.io.emit('subscription:renewal_request', {
+                requestId: transaction._id,
+                restaurantId,
+                restaurantName: req.user.restaurantName || 'Restaurante',
+                amount: transaction.amount,
+                plan: subscription.plan || 'Standard',
+                requestedAt: new Date()
+            });
+        }
+
         res.status(201).json({ message: 'Payment request submitted', transaction });
     } catch (error) {
         console.error('Create transaction error:', error);
@@ -65,7 +111,11 @@ export const getTransactions = async (req, res) => {
 
         let query = {};
 
-        if (req.user.restaurant && req.query.view !== 'admin_all') {
+        if (req.user.role?.isSystem || req.user.role?.name === 'System Admin') {
+            // Admin can see everything, or filter by restaurantId if provided
+            if (restaurantId) query.restaurant = restaurantId;
+        } else if (req.user.restaurant) {
+            // Normal user restricted to their restaurant
             query.restaurant = req.user.restaurant;
         }
 
@@ -133,6 +183,21 @@ export const reviewTransaction = async (req, res) => {
                 });
 
                 await subscription.save();
+            }
+        }
+
+        if (req.io) {
+            if (status === 'approved') {
+                req.io.emit('subscription:activated', {
+                    restaurantId: transaction.restaurant,
+                    subscriptionId: transaction.subscription
+                });
+            } else if (status === 'rejected') {
+                req.io.emit('subscription:rejected', {
+                    restaurantId: transaction.restaurant,
+                    subscriptionId: transaction.subscription,
+                    reason: rejectionReason
+                });
             }
         }
 
@@ -304,5 +369,239 @@ export const getAuditLogs = async (req, res) => {
             success: false,
             message: 'Failed to fetch audit logs'
         });
+    }
+};
+
+// Get owners summary with subscription totals (Admin only)
+export const getOwnersSummary = async (req, res) => {
+    try {
+        // 1. Get all subscriptions with restaurant and owner details
+        const subscriptions = await Subscription.find()
+            .populate({
+                path: 'restaurant',
+                select: 'name email owner createdAt',
+                populate: {
+                    path: 'owner',
+                    select: 'name email'
+                }
+            });
+
+        // 2. Get base price
+        let basePriceSetting = await SystemSetting.findOne({ key: 'base_subscription_price' });
+        const basePrice = basePriceSetting ? Number(basePriceSetting.value) : 1000; // Default 1000 Mt
+
+        // 3. Group by Owner
+        const ownerMap = {};
+
+        subscriptions.forEach(sub => {
+            const restaurant = sub.restaurant;
+            if (!restaurant || !restaurant.owner) return;
+
+            const ownerId = restaurant.owner._id.toString();
+
+            if (!ownerMap[ownerId]) {
+                ownerMap[ownerId] = {
+                    id: ownerId,
+                    name: restaurant.owner.name,
+                    email: restaurant.owner.email,
+                    restaurants: [],
+                    totalAmount: 0,
+                    status: 'active'
+                };
+            }
+
+            ownerMap[ownerId].restaurants.push({
+                id: restaurant._id,
+                subscriptionId: sub._id,
+                name: restaurant.name,
+                status: sub.status,
+                daysUntilExpiry: sub.getDaysUntilExpiry ? sub.getDaysUntilExpiry() : 0,
+                createdAt: restaurant.createdAt
+            });
+        });
+
+        // 4. Calculate Totals and Assign Roles (Main vs Additional)
+        const owners = Object.values(ownerMap).map(owner => {
+            // Sort restaurants by creation date (Oldest = Main)
+            owner.restaurants.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+            let total = 0;
+            const enhancedRestaurants = owner.restaurants.map((r, index) => {
+                let amount = 0;
+                let priceType = 'main';
+
+                if (index === 0) {
+                    amount = basePrice;
+                    priceType = 'main';
+                } else {
+                    amount = basePrice * 0.5;
+                    priceType = 'additional';
+                }
+
+                // Only count active/paying statuses towards total (optional, but requested logic implies we show costs)
+                // Actually, the requirement says "Subscription Amount" so we should probably show what they SHOULD pay.
+                // But for the total check, usually we sum up what is due. 
+                // Let's sum up everything as "Potential Revenue" or "Billed Amount".
+                total += amount;
+
+                return {
+                    ...r,
+                    currentAmount: amount,
+                    priceType
+                };
+            });
+
+            const allSuspendedOrExpired = enhancedRestaurants.every(r => ['suspended', 'expired', 'cancelled'].includes(r.status));
+            owner.status = allSuspendedOrExpired ? 'suspended' : 'active';
+
+            return {
+                ...owner,
+                restaurants: enhancedRestaurants, // Return enhanced list
+                totalAmount: total,
+                restaurantCount: enhancedRestaurants.length
+            };
+        });
+
+        res.json({
+            success: true,
+            basePrice,
+            count: owners.length,
+            owners
+        });
+
+    } catch (error) {
+        console.error('Get owners summary error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch owners summary'
+        });
+    }
+};
+
+// Get Base Price (Admin only)
+export const getBasePrice = async (req, res) => {
+    try {
+        const setting = await SystemSetting.findOne({ key: 'base_subscription_price' });
+        res.json({
+            success: true,
+            basePrice: setting ? Number(setting.value) : 1000
+        });
+    } catch (error) {
+        console.error('Get base price error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch base price' });
+    }
+};
+
+// Update Base Price (Admin only)
+export const updateBasePrice = async (req, res) => {
+    try {
+        const { price } = req.body;
+        if (price === undefined || price < 0) {
+            return res.status(400).json({ success: false, message: 'Invalid price' });
+        }
+
+        const setting = await SystemSetting.findOneAndUpdate(
+            { key: 'base_subscription_price' },
+            {
+                value: price,
+                description: 'Base subscription price for the first restaurant'
+            },
+            { upsert: true, new: true }
+        );
+
+        // Audit Log
+        await AuditLog.log({
+            userId: req.user.id,
+            action: 'update_system_setting',
+            targetModel: 'SystemSetting',
+            targetId: setting._id,
+            changes: { key: 'base_subscription_price', value: price },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
+        res.json({
+            success: true,
+            message: 'Base price updated',
+            basePrice: Number(setting.value)
+        });
+    } catch (error) {
+        console.error('Update base price error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update base price' });
+    }
+};
+
+// Get global subscription status for multi-restaurant user
+export const getGlobalSubscriptionStatus = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.user.id;
+
+        // Find user and populate their restaurants
+        const user = await User.findById(userId).populate('restaurants');
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // If user has no restaurants or only one, return single subscription
+        let userRestaurants = user.restaurants || [];
+
+        // If user has no populated restaurants, try finding them by owner ID explicitly
+        if (userRestaurants.length === 0) {
+            const Restaurant = (await import('../models/Restaurant.js')).default;
+            userRestaurants = await Restaurant.find({ owner: userId });
+        }
+
+        if (userRestaurants.length === 0) {
+            return res.status(404).json({ error: 'No restaurants found for user' });
+        }
+
+        if (userRestaurants.length === 1) {
+            const subscription = await Subscription.findOne({ restaurant: userRestaurants[0]._id });
+            return res.json({
+                globalStatus: subscription?.status || 'suspended',
+                isSingleRestaurant: true,
+                subscription: subscription,
+                restaurant: userRestaurants[0]
+            });
+        }
+
+        // Fetch subscriptions for all restaurants
+        const restaurantIds = userRestaurants.map(r => r._id);
+        const subscriptions = await Subscription.find({
+            restaurant: { $in: restaurantIds }
+        }).populate('restaurant', 'name email logo');
+
+        // Calculate global status
+        const globalStatus = calculateGlobalStatus(subscriptions);
+        const criticalSubscription = findCriticalSubscription(subscriptions);
+
+        // Build restaurant status array
+        // Filter out subscriptions where the restaurant might have been deleted (orphaned)
+        const validSubscriptions = subscriptions.filter(sub => sub.restaurant);
+
+        const restaurantStatuses = validSubscriptions.map(sub => ({
+            restaurantId: sub.restaurant._id,
+            restaurantName: sub.restaurant.name,
+            status: sub.status,
+            currentPeriodEnd: sub.currentPeriodEnd,
+            currentPeriodStart: sub.currentPeriodStart,
+            daysUntilExpiry: sub.getDaysUntilExpiry ? sub.getDaysUntilExpiry() : 0
+        }));
+
+        res.json({
+            globalStatus,
+            isSingleRestaurant: false,
+            totalRestaurants: user.restaurants.length,
+            criticalSubscription: criticalSubscription ? {
+                ...criticalSubscription.toObject(),
+                restaurant: criticalSubscription.restaurant
+            } : null,
+            restaurants: restaurantStatuses
+        });
+
+    } catch (error) {
+        console.error('Get global subscription status error:', error);
+        res.status(500).json({ error: 'Failed to fetch global subscription status' });
     }
 };

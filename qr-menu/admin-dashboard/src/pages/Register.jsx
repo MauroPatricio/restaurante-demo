@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -258,7 +259,12 @@ export default function Register() {
                             disabled={loading}
                             style={{ marginTop: '20px' }}
                         >
-                            {loading ? 'A criar conta...' : 'Criar Conta'}
+                            {loading ? (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                    <LoadingSpinner size={18} color="white" />
+                                    <span>A criar conta...</span>
+                                </div>
+                            ) : 'Criar Conta'}
                         </button>
                     </form>
 

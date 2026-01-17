@@ -13,12 +13,16 @@ export const isAdmin = async (req, res, next) => {
         const userRoles = await UserRestaurantRole.find({ user: userId })
             .populate('role');
 
-        // Check if user has Admin role (system role)
-        const hasAdminRole = userRoles.some(ur => {
-            return ur.role && ur.role.name === 'Admin' && ur.role.isSystem === true;
+        // Check if user has ANY system-wide role (isSystem: true)
+        const hasSystemRole = userRoles.some(ur => {
+            return ur.role && ur.role.isSystem === true;
         });
 
-        if (!hasAdminRole) {
+        // Also check if the current active role (req.user.role) is a system role
+        // This handles cases where we might have the role already from authenticateToken
+        const currentRoleIsSystem = req.user.role && req.user.role.isSystem === true;
+
+        if (!hasSystemRole && !currentRoleIsSystem) {
             // Log unauthorized access attempt
             console.warn(`Unauthorized admin access attempt by user ${userId}`);
 

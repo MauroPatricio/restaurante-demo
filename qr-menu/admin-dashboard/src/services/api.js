@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { loadingManager } from '../utils/loadingManager';
 
 // Determine API URL based on environment
 let base;
@@ -25,6 +26,7 @@ const API_URL = base;
 // Create axios instance
 const api = axios.create({
     baseURL: API_URL,
+    timeout: 15000, // 15 seconds timeout
     headers: {
         'Content-Type': 'application/json'
     }
@@ -35,6 +37,7 @@ api.healthCheck = () => axios.get(`${API_URL.replace('/api', '')}/health`);
 
 api.interceptors.request.use(
     (config) => {
+        loadingManager.start();
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -42,14 +45,29 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
+        loadingManager.stop();
         return Promise.reject(error);
     }
 );
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-    (response) => response,
-    (error) => {
+    (response) => {
+        loadingManager.stop();
+        return response;
+    },
+    async (error) => {
+        const { config, response } = error;
+
+        // Timeout handling or Network Error - Retry GET requests once
+        if ((error.code === 'ECONNABORTED' || error.message.includes('timeout') || !response) && config && config.method === 'get' && !config._retry) {
+            config._retry = true;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            loadingManager.start(); // Restart loading for the retry effort
+            return api(config);
+        }
+
+        loadingManager.stop();
         if (error.response?.status === 401) {
             // Token expired or invalid
             localStorage.removeItem('token');

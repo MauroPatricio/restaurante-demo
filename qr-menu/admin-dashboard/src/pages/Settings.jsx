@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { restaurantAPI } from '../services/api';
 import { Save, Upload, Building, Phone, Mail, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Settings() {
     const { user } = useAuth();
@@ -103,7 +104,12 @@ export default function Settings() {
         }
     };
 
-    if (loading) return <div className="loading">{t('loading')}</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '50vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading')}</span>
+        </div>
+    );
 
     return (
         <div className="page-container">

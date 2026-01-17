@@ -102,6 +102,13 @@ export const checkSubscription = async (req, res, next) => {
             return res.status(404).json({ error: 'Restaurant not found' });
         }
 
+        // Check if user is System Admin - BYPASS SUBSCRIPTION CHECK
+        if (req.user?.role?.isSystem === true) {
+            req.restaurant = restaurant; // Still attach restaurant for context
+            req.subscription = await Subscription.findById(restaurant.subscription); // Attach subscription if exists, but don't block
+            return next();
+        }
+
         if (!restaurant.subscription) {
             return res.status(403).json({
                 error: 'No active subscription',

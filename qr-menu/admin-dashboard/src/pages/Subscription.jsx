@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { subscriptionAPI } from '../services/api';
-import Loader from '../components/Loader';
+import LoadingSpinner from '../components/LoadingSpinner';
 import {
     CreditCard,
     Calendar,
@@ -20,11 +20,13 @@ export default function Subscription() {
     const { user } = useAuth();
     const { subscription: contextSub, refreshSubscription } = useSubscription();
     const [subscription, setSubscription] = useState(null);
+    const [systemPrice, setSystemPrice] = useState(1500); // Default fallback
     const [paymentHistory, setPaymentHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [renewLoading, setRenewLoading] = useState(false);
     const [showRenewModal, setShowRenewModal] = useState(false);
     const [renewSuccess, setRenewSuccess] = useState(false);
+    const [selectedMethod, setSelectedMethod] = useState('mpesa');
 
     useEffect(() => {
         if (user?.restaurant) {
@@ -36,8 +38,9 @@ export default function Subscription() {
         try {
             const restaurantId = user.restaurant._id || user.restaurant.id || user.restaurant;
             const { data } = await subscriptionAPI.get(restaurantId);
-            setSubscription(data);
-            setPaymentHistory(data.paymentHistory || []);
+            setSubscription(data.subscription);
+            setSystemPrice(data.systemPrice || 1500);
+            setPaymentHistory(data.subscription.paymentHistory || []);
         } catch (error) {
             console.error('Failed to fetch subscription:', error);
         } finally {
@@ -51,12 +54,12 @@ export default function Subscription() {
             const restaurantId = user.restaurant._id || user.restaurant.id || user.restaurant;
             const { data } = await subscriptionAPI.renew({
                 restaurantId,
-                paymentMethod: 'manual',
-                amount: subscription.amount,
+                paymentMethod: selectedMethod,
+                amount: systemPrice,
                 reference: `RENEW-${Date.now()}`
             });
 
-            if (data.success) {
+            if (data.success || data.message) {
                 setRenewSuccess(true);
                 setTimeout(() => {
                     setShowRenewModal(false);
@@ -74,7 +77,11 @@ export default function Subscription() {
     };
 
     if (loading) {
-        return <Loader variant="page" size="large" message={t('loading_subscription')} />;
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+                <LoadingSpinner size={48} message={t('loading_subscription')} />
+            </div>
+        );
     }
 
     const getDaysUntilExpiry = () => {
@@ -91,7 +98,19 @@ export default function Subscription() {
     const isExpiring = daysUntil !== null && daysUntil <= 7 && daysUntil > 0;
 
     const getStatusConfig = () => {
-        if (isExpired) {
+        // Priority: Internal Status from Backend
+        const status = subscription?.status;
+
+        if (status === 'pending_activation') {
+            return {
+                label: t('subscription_status_pending') || 'Pendente de Autorização',
+                color: '#2563eb', // Blue
+                bgColor: '#eff6ff',
+                icon: Clock
+            };
+        }
+
+        if (status === 'expired' || isExpired) {
             return {
                 label: t('subscription_status_expired'),
                 color: '#dc2626',
@@ -99,7 +118,8 @@ export default function Subscription() {
                 icon: XCircle
             };
         }
-        if (isExpiring) {
+
+        if (isExpiring && status === 'active') { // Only show expiring warning if active
             return {
                 label: t('subscription_status_expiring'),
                 color: '#f59e0b',
@@ -107,7 +127,8 @@ export default function Subscription() {
                 icon: AlertTriangle
             };
         }
-        if (subscription?.status === 'active') {
+
+        if (status === 'active') {
             return {
                 label: t('subscription_status_active'),
                 color: '#059669',
@@ -115,8 +136,9 @@ export default function Subscription() {
                 icon: CheckCircle
             };
         }
+
         return {
-            label: subscription?.status || t('subscription_status_suspended'),
+            label: status || t('subscription_status_suspended'),
             color: '#64748b',
             bgColor: '#f8fafc',
             icon: Clock
@@ -125,6 +147,7 @@ export default function Subscription() {
 
     const statusConfig = getStatusConfig();
     const StatusIcon = statusConfig.icon;
+    const isPending = subscription?.status === 'pending_activation';
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -168,7 +191,7 @@ export default function Subscription() {
                 </div>
 
                 {/* Countdown */}
-                {daysUntil !== null && daysUntil > 0 && (
+                {!isPending && daysUntil !== null && daysUntil > 0 && (
                     <div style={styles.countdown}>
                         <div style={styles.countdownNumber}>{daysUntil}</div>
                         <div style={styles.countdownLabel}>
@@ -177,7 +200,7 @@ export default function Subscription() {
                     </div>
                 )}
 
-                {isExpired && (
+                {!isPending && isExpired && (
                     <div style={{ ...styles.countdown, backgroundColor: '#fef2f2', borderColor: '#dc2626' }}>
                         <div style={{ ...styles.countdownNumber, color: '#dc2626' }}>
                             {Math.abs(daysUntil)}
@@ -206,7 +229,7 @@ export default function Subscription() {
                         <div style={styles.detailRow}>
                             <span style={styles.detailLabel}>{t('subscription_monthly_amount')}</span>
                             <span style={{ ...styles.detailValue, fontWeight: '700', color: '#3b82f6' }}>
-                                {formatCurrency(subscription?.amount)}
+                                {formatCurrency(systemPrice)}
                             </span>
                         </div>
                         <div style={styles.detailRow}>
@@ -224,13 +247,28 @@ export default function Subscription() {
                     </div>
 
                     <div style={styles.cardFooter}>
-                        <button
-                            style={isExpired ? styles.buttonPrimary : styles.buttonSecondary}
-                            onClick={() => setShowRenewModal(true)}
-                        >
-                            <CreditCard size={18} />
-                            {isExpired ? t('subscription_renew_now') : t('subscription_renew')}
-                        </button>
+                        {isPending ? (
+                            <div style={{
+                                width: '100%',
+                                padding: '12px',
+                                backgroundColor: '#eff6ff',
+                                borderRadius: '8px',
+                                textAlign: 'center',
+                                color: '#2563eb',
+                                fontWeight: '600',
+                                fontSize: '14px'
+                            }}>
+                                {t('subscription_status_pending_desc') || 'Aguardando Aprovação do Administrador'}
+                            </div>
+                        ) : (
+                            <button
+                                style={isExpired ? styles.buttonPrimary : styles.buttonSecondary}
+                                onClick={() => setShowRenewModal(true)}
+                            >
+                                <CreditCard size={18} />
+                                {isExpired ? t('subscription_renew_now') : t('subscription_renew')}
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -250,7 +288,7 @@ export default function Subscription() {
                             <div style={styles.statLabel}>{t('subscription_stats_total_paid')}</div>
                             <div style={styles.statValue}>
                                 {formatCurrency(
-                                    paymentHistory?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0
+                                    paymentHistory?.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0) || 0
                                 )}
                             </div>
                         </div>
@@ -304,12 +342,12 @@ export default function Subscription() {
                                         <td style={styles.tableCell}>
                                             <span style={{
                                                 ...styles.statusBadge,
-                                                backgroundColor: payment.status === 'completed' ? '#f0fdf4' : '#fef2f2',
-                                                color: payment.status === 'completed' ? '#059669' : '#dc2626'
+                                                backgroundColor: payment.status === 'completed' ? '#f0fdf4' : (payment.status === 'pending' ? '#eff6ff' : '#fef2f2'),
+                                                color: payment.status === 'completed' ? '#059669' : (payment.status === 'pending' ? '#2563eb' : '#dc2626')
                                             }}>
                                                 {payment.status === 'completed'
                                                     ? t('subscription_payment_completed')
-                                                    : t('subscription_payment_pending')
+                                                    : (payment.status === 'pending' ? 'Pendente' : t('subscription_payment_failed'))
                                                 }
                                             </span>
                                         </td>
@@ -335,34 +373,65 @@ export default function Subscription() {
                                 <div style={styles.successIcon}>
                                     <Check size={48} color="#ffffff" />
                                 </div>
-                                <h3 style={styles.successTitle}>{t('subscription_renew_success')}</h3>
+                                <h3 style={styles.successTitle}>{t('subscription_renew_requested_title') || 'Solicitação Enviada!'}</h3>
                                 <p style={styles.successText}>
-                                    {t('subscription_renew_success')}
+                                    {t('subscription_renew_requested_desc') || 'A sua renovação foi solicitada. Aguarde a confirmação do administrador.'}
                                 </p>
                             </div>
                         ) : (
                             <>
                                 <h3 style={styles.modalTitle}>{t('subscription_renew')}</h3>
                                 <p style={styles.modalText}>
-                                    {t('subscription_renew_confirm')}
+                                    {t('subscription_renew_select_method') || 'Selecione o método de pagamento para renovar sua subscrição.'}
                                 </p>
+
+                                {/* Payment Method Selection */}
+                                <div style={{ marginBottom: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div
+                                        onClick={() => setSelectedMethod('mpesa')}
+                                        style={{
+                                            border: `2px solid ${selectedMethod === 'mpesa' ? '#ef4444' : '#e2e8f0'}`,
+                                            borderRadius: '12px',
+                                            padding: '16px',
+                                            cursor: 'pointer',
+                                            backgroundColor: selectedMethod === 'mpesa' ? '#fef2f2' : '#ffffff',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}
+                                    >
+                                        <div style={{ fontWeight: '700', color: selectedMethod === 'mpesa' ? '#ef4444' : '#64748b' }}>M-Pesa</div>
+                                        <div style={{ fontSize: '12px', color: '#64748b' }}>84/85 xxx xxxx</div>
+                                    </div>
+
+                                    <div
+                                        onClick={() => setSelectedMethod('visa')}
+                                        style={{
+                                            border: `2px solid ${selectedMethod === 'visa' ? '#2563eb' : '#e2e8f0'}`,
+                                            borderRadius: '12px',
+                                            padding: '16px',
+                                            cursor: 'pointer',
+                                            backgroundColor: selectedMethod === 'visa' ? '#eff6ff' : '#ffffff',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}
+                                    >
+                                        <div style={{ fontWeight: '700', color: selectedMethod === 'visa' ? '#2563eb' : '#64748b' }}>VISA / BCI</div>
+                                        <div style={{ fontSize: '12px', color: '#64748b' }}>Cartão de Crédito/Débito</div>
+                                    </div>
+                                </div>
 
                                 <div style={styles.renewalDetails}>
                                     <div style={styles.renewalRow}>
                                         <span>{t('subscription_amount_label')}:</span>
-                                        <strong>{formatCurrency(subscription?.amount)}</strong>
+                                        <strong>{formatCurrency(systemPrice)}</strong>
                                     </div>
                                     <div style={styles.renewalRow}>
                                         <span>{t('subscription_period_label')}:</span>
                                         <strong>{t('subscription_period_30_days')}</strong>
-                                    </div>
-                                    <div style={styles.renewalRow}>
-                                        <span>{t('subscription_new_expiry_date')}:</span>
-                                        <strong>
-                                            {formatDate(
-                                                new Date(new Date().setMonth(new Date().getMonth() + 1))
-                                            )}
-                                        </strong>
                                     </div>
                                 </div>
 
@@ -380,7 +449,7 @@ export default function Subscription() {
                                         disabled={renewLoading}
                                     >
                                         {renewLoading ? (
-                                            <Loader variant="inline" size="small" color="#ffffff" />
+                                            <LoadingSpinner size={18} color="#ffffff" />
                                         ) : (
                                             <>
                                                 <Check size={18} />

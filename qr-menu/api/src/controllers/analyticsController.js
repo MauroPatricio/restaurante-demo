@@ -12,7 +12,10 @@ export const getOwnerStats = async (req, res) => {
         const ownerId = req.user._id;
 
         // 1. Get all restaurants owned by user
-        const restaurants = await Restaurant.find({ owner: ownerId }).select('_id name settings');
+        const restaurants = await Restaurant.find({ owner: ownerId })
+            .select('_id name settings subscription')
+            .populate('subscription', 'status');
+
         const restaurantIds = restaurants.map(r => r._id);
 
         if (restaurantIds.length === 0) {
@@ -55,7 +58,8 @@ export const getOwnerStats = async (req, res) => {
                 id: r._id,
                 name: r.name,
                 revenue: stats ? stats.revenue : 0,
-                orders: stats ? stats.orders : 0
+                orders: stats ? stats.orders : 0,
+                subscriptionStatus: r.subscription?.status || 'suspended'
             };
         }).sort((a, b) => b.revenue - a.revenue);
 

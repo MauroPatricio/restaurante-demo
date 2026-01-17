@@ -33,30 +33,50 @@ import {
     AlertCircle,
     CreditCard as CreditCardIcon,
     Volume2,
-    VolumeX
+    VolumeX,
+    Lock,
+    Store
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
-import SubscriptionBlocker from './SubscriptionBlocker';
+import SubscriptionBlockedScreen from './SubscriptionBlockedScreen';
 import SubscriptionAlert from './SubscriptionAlert';
 import { useSocket } from '../contexts/SocketContext';
 import WaiterCallAlerts from './WaiterCallAlerts';
+import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
+import SubscriptionRenewalModal from './SubscriptionRenewalModal';
+import RenewalNotifications from './RenewalNotifications';
+import './DashboardLayout.css';
 
 export default function DashboardLayout() {
     const { user, logout } = useAuth();
-    const { subscription, isBlocked } = useSubscription();
+    const { subscription, isBlocked, requiresRenewal, isExpiring } = useSubscription();
     const { isBackendConnected } = useConnectivity();
     const { pendingCount, isRinging, stopRinging, toggleAudio, audioEnabled } = useSocket();
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [dismissedRenewalModal, setDismissedRenewalModal] = useState(false);
 
-    // Redirect to subscription page if blocked and not already there
-    useEffect(() => {
-        if (isBlocked && !location.pathname.includes('/subscription')) {
-            navigate('/dashboard/subscription', { replace: true });
-        }
-    }, [isBlocked, location.pathname, navigate]);
+    // Blocking Logic
+    const isSubscriptionPage = location.pathname.includes('/subscription');
+    // Allow System Admin to bypass
+    const isSystemAdmin = user?.role?.isSystem === true;
+
+    // Determine user type for the blocker screen
+    const userType = (user?.role?.name === 'Owner' || user?.role?.isOwner) ? 'owner' : 'staff';
+
+    // Show blocker if:
+    // 1. Blocked
+    // 2. Not System Admin
+    // 3. Not on subscription page (so owners can pay) - OR if staff, always block
+    const showBlocker = isBlocked && !requiresRenewal && !isSystemAdmin && (!isSubscriptionPage || userType === 'staff');
+    const showRenewalModal = requiresRenewal && !isSystemAdmin && userType === 'owner' && !dismissedRenewalModal;
+    const showExpiredBlockerForStaff = requiresRenewal && !isSystemAdmin && userType === 'staff';
+    // Actually, if userType is staff, they can't pay, so block everywhere.
+    // If owner, allow subscription page.
+
+
 
     // Helper: Get restaurant data - handles both object and ID-only cases
     const getRestaurantData = () => {
@@ -105,13 +125,14 @@ export default function DashboardLayout() {
     // Build menu groups with permission-based filtering
     const menuGroups = [
         {
-            title: 'OPERAÇÃO EM TEMPO REAL',
+            title: t('real_time_operation') || 'OPERAÇÃO EM TEMPO REAL',
             items: [
                 {
                     icon: LayoutDashboard,
                     label: t('owner_overview'),
                     path: '/owner-dashboard',
-                    show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name)
+                    show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name),
+                    isPremium: true
                 },
                 {
                     icon: LayoutDashboard,
@@ -153,15 +174,16 @@ export default function DashboardLayout() {
             ]
         },
         {
-            title: '🍽️ GESTÃO DE MENU',
+            title: t('menu_management_section') || '🍽️ GESTÃO DE MENU',
             items: [
-                { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu', show: hasPermission('manage_menu') },
                 { icon: Folder, label: t('categories'), path: '/dashboard/categories', show: hasPermission('manage_menu') },
                 { icon: FolderTree, label: t('subcategories'), path: '/dashboard/subcategories', show: hasPermission('manage_menu') },
+                { icon: UtensilsCrossed, label: t('menu'), path: '/dashboard/menu', show: hasPermission('manage_menu') },
+                { icon: Tag, label: t('coupons'), path: '/dashboard/coupons', show: hasPermission('manage_settings'), isPremium: true },
             ]
         },
         {
-            title: '👥 CLIENTES & EXPERIÊNCIA',
+            title: t('clients_experience') || '👥 CLIENTES & EXPERIÊNCIA',
             items: [
                 {
                     icon: UsersIcon,
@@ -169,40 +191,40 @@ export default function DashboardLayout() {
                     path: '/dashboard/clients',
                     show: hasPermission('view_reports') || hasPermission('manage_orders')
                 },
-                { icon: Star, label: t('feedback'), path: '/dashboard/feedback', show: hasPermission('manage_settings') },
-                { icon: Tag, label: t('coupons'), path: '/dashboard/coupons', show: hasPermission('manage_settings') },
+                { icon: Star, label: t('feedback'), path: '/dashboard/feedback', show: hasPermission('manage_settings'), isPremium: true },
             ]
         },
         {
-            title: '🚚 LOGÍSTICA & SERVIÇOS',
+            title: t('logistics_services') || '🚚 LOGÍSTICA & SERVIÇOS',
             items: [
                 { icon: Truck, label: t('delivery'), path: '/dashboard/delivery', show: hasPermission('view_delivery_orders') || hasPermission('manage_orders') },
             ]
         },
         {
-            title: '📦 CONTROLO FINANCEIRO & STOCK',
+            title: t('financial_stock') || '📦 CONTROLO FINANCEIRO & STOCK',
             items: [
-                { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings') },
-                { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports') },
+                { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings'), isPremium: true },
+                { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports'), isPremium: true },
             ]
         },
         {
-            title: '🪑 ESTRUTURA DO RESTAURANTE',
+            title: t('restaurant_structure') || '🪑 ESTRUTURA DO RESTAURANTE',
             items: [
                 { icon: QrCode, label: t('tables'), path: '/dashboard/tables', show: hasPermission('manage_tables') },
             ]
         },
         {
-            title: '👥 UTILIZADORES & SEGURANÇA',
+            title: t('users_security') || '👥 UTILIZADORES & SEGURANÇA',
             items: [
                 { icon: UsersIcon, label: t('users'), path: '/dashboard/users', show: hasPermission('manage_staff') },
                 { icon: Shield, label: t('profiles'), path: '/dashboard/profiles', show: hasPermission('manage_staff') },
             ]
         },
         {
-            title: '⚙️ SISTEMA & ADMINISTRAÇÃO',
+            title: t('system_administration') || '⚙️ SISTEMA & ADMINISTRAÇÃO',
             items: [
                 { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') },
+                { icon: CreditCard, label: t('subscription_management') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.isSystem },
                 { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
             ]
         }
@@ -232,43 +254,7 @@ export default function DashboardLayout() {
     }
 
     return (
-        <div className="dashboard-layout">
-            <style>{`
-                @keyframes urgent-pulse {
-                    0% { background-color: rgba(220, 38, 38, 0.1); }
-                    50% { background-color: rgba(220, 38, 38, 0.3); }
-                    100% { background-color: rgba(220, 38, 38, 0.1); }
-                }
-                .nav-item.blink-urgent {
-                    animation: urgent-pulse 1s infinite;
-                    border-left: 4px solid #dc2626;
-                }
-                .nav-badge {
-                    background: #10b981;
-                    color: white;
-                    font-size: 0.75rem;
-                    padding: 2px 8px;
-                    border-radius: 999px;
-                    margin-left: auto;
-                    font-weight: bold;
-                }
-                .nav-section-title {
-                    padding: 18px 24px 8px 24px;
-                    font-size: 0.65rem;
-                    font-weight: 800;
-                    color: #94a3b8;
-                    text-transform: uppercase;
-                    letter-spacing: 0.1em;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-                .nav-section-divider {
-                    height: 1px;
-                    background: rgba(226, 232, 240, 0.4);
-                    margin: 8px 0;
-                }
-            `}</style>
+        <div className={`dashboard-layout ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
 
             {!isBackendConnected && (
                 <div style={{
@@ -284,7 +270,7 @@ export default function DashboardLayout() {
                     zIndex: 9999,
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}>
-                    ⚠️ Não consigo me conectar com a api/backend
+                    {t('not_connected_api')}
                 </div>
             )}
 
@@ -374,93 +360,44 @@ export default function DashboardLayout() {
                 style={{ top: !isBackendConnected ? '48px' : '0', height: !isBackendConnected ? 'calc(100vh - 48px)' : '100vh' }}
             >
                 <div className="sidebar-header">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                            {/* Restaurant Logo */}
-                            <div style={{ position: 'relative' }}>
-                                {restaurantData?.logo ? (
-                                    <img
-                                        src={restaurantData.logo}
-                                        alt="Restaurant Logo"
-                                        style={{
-                                            width: '48px',
-                                            height: '48px',
-                                            borderRadius: '10px',
-                                            objectFit: 'cover',
-                                            border: '2px solid rgba(100, 108, 255, 0.2)',
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                        }}
-                                    />
-                                ) : (
-                                    <div style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        borderRadius: '10px',
-                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                        color: 'white',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '1.5rem',
-                                        fontWeight: '700',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                        textTransform: 'uppercase'
-                                    }}>{restaurantData?.name?.charAt(0) || 'R'}</div>
-                                )}
-                                {/* Status Indicator */}
-                                <div
-                                    onClick={async () => {
-                                        if (isOwnerOrManager) {
-                                            try {
-                                                const restaurantId = restaurantData?._id || restaurantData?.id;
-                                                const response = await fetch(`/api/restaurants/${restaurantId}/toggle-active`, {
-                                                    method: 'PATCH',
-                                                    headers: {
-                                                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                                                        'Content-Type': 'application/json'
-                                                    }
-                                                });
-                                                if (response.ok) window.location.reload();
-                                            } catch (error) { console.error('Failed to toggle:', error); }
-                                        }
-                                    }}
-                                    title={isOwnerOrManager ? (restaurantData?.active ? 'Clique para desativar' : 'Clique para ativar') : (restaurantData?.active ? 'Restaurante Ativo' : 'Restaurante Inativo')}
-                                    style={{
-                                        position: 'absolute',
-                                        bottom: '-2px',
-                                        right: '-2px',
-                                        width: '14px',
-                                        height: '14px',
-                                        borderRadius: '50%',
-                                        background: restaurantData?.active ? '#10b981' : '#ef4444',
-                                        border: '2px solid var(--card-bg)',
-                                        boxShadow: `0 0 0 2px ${restaurantData?.active ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
-                                        animation: restaurantData?.active ? 'pulse-green 2s infinite' : 'pulse-red 2s infinite',
-                                        cursor: isOwnerOrManager ? 'pointer' : 'default',
-                                        transition: 'transform 0.2s ease'
-                                    }}
-                                />
-                            </div>
+                    <div className="restaurant-info">
+                        {restaurantData?.logo ? (
+                            <img
+                                src={restaurantData.logo}
+                                alt={restaurantData.name}
+                                className="restaurant-logo"
+                                onError={(e) => {
+                                    e.target.style.display = 'none'; // Hide broken image
+                                    e.target.nextSibling.style.display = 'flex'; // Show fallback
+                                }}
+                            />
+                        ) : null}
 
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {restaurantData?.name || 'QR Menu'}
-                                </h2>
-                                <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.7, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    {t('admin_panel')}
-                                    <span style={{
-                                        fontSize: '0.7rem',
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        background: restaurantData?.active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                        color: restaurantData?.active ? '#10b981' : '#ef4444',
-                                        fontWeight: '600',
-                                        marginLeft: '4px',
-                                        userSelect: 'none'
-                                    }}>
-                                        {restaurantData?.active ? t('active') || 'Ativo' : t('inactive') || 'Inativo'}
+                        {/* Fallback Icon (shown if no logo or error) */}
+                        <div className="restaurant-avatar" style={{ display: restaurantData?.logo ? 'none' : 'flex' }}>
+                            <Store size={24} />
+                        </div>
+
+                        <div className="restaurant-details">
+                            <h3>{restaurantData?.name || 'Restaurante'}</h3>
+                            <div className="flex flex-col gap-1">
+                                <span className="user-role">
+                                    {user?.role?.name || user?.role || 'User'}
+                                </span>
+                                {subscription && (
+                                    <span
+                                        className="status-badge"
+                                        style={{
+                                            ...getStatusBadgeStyle(subscription.status),
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}
+                                    >
+                                        <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }}></span>
+                                        {getStatusLabel(subscription.status, t)}
                                     </span>
-                                </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -486,14 +423,14 @@ export default function DashboardLayout() {
                                             key={item.path}
                                             to={item.path}
                                             onClick={() => {
-                                                closeSidebar();
                                                 if (isOrders) stopRinging();
                                             }}
-                                            className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''}`}
+                                            className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''} ${item.isPremium && isExpiring ? 'premium-locked' : ''}`}
                                         >
                                             <Icon size={20} />
                                             <span>{item.label}</span>
-                                            {isOrders && pendingCount > 0 && (
+                                            {item.isPremium && isExpiring && <Lock size={14} className="ml-auto text-orange-400" />}
+                                            {isOrders && pendingCount > 0 && !isExpiring && (
                                                 <span className="nav-badge">{pendingCount}</span>
                                             )}
                                         </Link>
@@ -521,10 +458,15 @@ export default function DashboardLayout() {
                 {/* Header */}
                 <header className="header">
                     <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <button onClick={toggleSidebar} className="icon-btn mobile-menu-btn" style={{ background: 'transparent', border: 'none', padding: 0 }}>
-                            <MenuIcon size={24} />
+                        <button
+                            onClick={toggleSidebar}
+                            className="icon-btn sidebar-toggle-btn"
+                            style={{ background: 'transparent', border: 'none', padding: 0 }}
+                            title={sidebarOpen ? t('collapse_menu') : t('expand_menu')}
+                        >
+                            {sidebarOpen ? <X size={24} /> : <MenuIcon size={24} />}
                         </button>
-                        <h1>{t('welcome')}, {user?.name}</h1>
+                        <h1 className="header-title">{t('welcome')}, {user?.name}</h1>
                     </div>
 
                     <div className="header-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -532,11 +474,40 @@ export default function DashboardLayout() {
                         <button
                             className="icon-btn"
                             onClick={toggleAudio}
-                            title={audioEnabled ? "Silenciar" : "Ativar Som"}
+                            title={audioEnabled ? t('mute_alarm_label') : t('activate_sound_label')}
                             style={{ opacity: audioEnabled ? 1 : 0.5 }}
                         >
                             {audioEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
                         </button>
+
+                        {/* Renewal Notifications for Admins */}
+                        {isSystemAdmin && <RenewalNotifications />}
+
+                        {/* Subscription Status in Header */}
+                        {subscription && (
+                            <div
+                                style={{
+                                    ...getStatusBadgeStyle(subscription.status),
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    border: ['expired', 'suspended'].includes(subscription.status) ? '1px solid currentColor' : 'none'
+                                }}
+                            >
+                                {['expired', 'suspended'].includes(subscription.status) ? (
+                                    <AlertCircle size={14} />
+                                ) : (
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }}></span>
+                                )}
+                                {getStatusLabel(subscription.status, t)}
+                            </div>
+                        )}
 
                         <LanguageSwitcher />
 
@@ -554,22 +525,37 @@ export default function DashboardLayout() {
                         <SubscriptionAlert subscription={subscription} />
                     )}
 
-                    {isBlocked && !location.pathname.includes('/subscription') ? (
-                        <SubscriptionBlocker
-                            status={subscription?.status || 'expired'}
-                            subscription={subscription}
-                        />
-                    ) : (
-                        <Outlet />
-                    )}
+                    <Outlet />
                 </main>
 
                 {/* Waiter Call Alerts - Real-time notifications */}
                 <WaiterCallAlerts />
+
+                {/* Blocking Overlay - Renders ON TOP of the dashboard */}
+                {showBlocker && (
+                    <SubscriptionBlockedScreen
+                        userType={userType}
+                        subscription={subscription}
+                    />
+                )}
+
+                {/* Staff blocked for expired subscription */}
+                {showExpiredBlockerForStaff && (
+                    <SubscriptionBlockedScreen
+                        userType="staff"
+                        subscription={subscription}
+                    />
+                )}
+
+                {/* Mandatory Renewal Modal for Owners */}
+                {showRenewalModal && (
+                    <SubscriptionRenewalModal
+                        subscription={subscription}
+                        onRenew={() => navigate('/dashboard/subscription')}
+                        onCancel={() => setDismissedRenewalModal(true)}
+                    />
+                )}
             </div>
         </div>
     );
 }
-
-
-

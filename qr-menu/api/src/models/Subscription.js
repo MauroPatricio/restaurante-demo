@@ -9,7 +9,7 @@ const SubscriptionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['trial', 'active', 'suspended', 'cancelled', 'expired'],
+    enum: ['trial', 'active', 'suspended', 'cancelled', 'expired', 'pending_activation'],
     default: 'trial'
   },
   currentPeriodStart: {
@@ -121,6 +121,13 @@ SubscriptionSchema.methods.checkExpiration = async function () {
 // Method to check if subscription is active (not suspended, cancelled, or expired)
 SubscriptionSchema.methods.isActive = function () {
   return this.status === 'active' || this.status === 'trial';
+};
+
+// Method to check if subscription is expiring (active and <= 7 days remaining)
+SubscriptionSchema.methods.isExpiring = function () {
+  if (this.status !== 'active' && this.status !== 'trial') return false;
+  const daysRemaining = this.getDaysUntilExpiry();
+  return daysRemaining <= 7 && daysRemaining >= 0;
 };
 
 export default mongoose.model('Subscription', SubscriptionSchema);

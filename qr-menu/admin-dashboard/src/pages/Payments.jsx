@@ -4,6 +4,7 @@ import { orderAPI } from '../services/api';
 import { Search, Filter, CheckCircle, XCircle, FileText, Download, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Payments() {
     const { user } = useAuth();
@@ -85,7 +86,12 @@ export default function Payments() {
         return true;
     });
 
-    if (loading) return <div>{t('loading') || 'Loading...'}</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '50vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading')}</span>
+        </div>
+    );
 
     return (
         <div className="payments-page">
@@ -105,15 +111,15 @@ export default function Payments() {
                 <div className="form-group" style={{ marginBottom: 0 }}>
                     <label>{t('status')}</label>
                     <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                        <option value="all">{t('all') || 'All'}</option>
+                        <option value="all">{t('all')}</option>
                         <option value="pending">{t('pending_validation')}</option>
                         <option value="paid">{t('verified')}</option>
                     </select>
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label>{t('method') || 'Method'}</label>
+                    <label>{t('method')}</label>
                     <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)}>
-                        <option value="all">{t('all') || 'All'}</option>
+                        <option value="all">{t('all')}</option>
                         <option value="mpesa">M-Pesa</option>
                         <option value="emola">e-Mola</option>
                         <option value="pos">POS</option>
@@ -127,11 +133,11 @@ export default function Payments() {
                 <table className="data-table">
                     <thead>
                         <tr>
-                            <th>{t('order_id') || 'Order ID'}</th>
+                            <th>{t('order_id')}</th>
                             <th>{t('date')}</th>
                             <th>{t('customer')}</th>
                             <th>{t('total')}</th>
-                            <th>{t('method') || 'Method'}</th>
+                            <th>{t('method')}</th>
                             <th>{t('status')}</th>
                             <th>{t('actions')}</th>
                         </tr>
@@ -143,10 +149,10 @@ export default function Payments() {
                                 <td>{format(new Date(order.createdAt), 'PP p')}</td>
                                 <td>{order.customerName || 'Walk-in'}</td>
                                 <td>{order.total} MT</td>
-                                <td><span className="badge">{order.paymentMethod}</span></td>
+                                <td><span className="badge">{t(`method_${order.paymentMethod}`) || order.paymentMethod}</span></td>
                                 <td>
                                     <span className={`status-badge ${order.paymentStatus || 'pending'}`}>
-                                        {order.paymentStatus || 'pending'}
+                                        {t(`status_${order.paymentStatus || 'pending'}`) || order.paymentStatus}
                                     </span>
                                 </td>
                                 <td>
@@ -171,7 +177,7 @@ export default function Payments() {
                                             }}
                                         >
                                             <CheckCircle size={16} />
-                                            {t('confirm_payment') || 'Confirmar Pagamento'}
+                                            {t('confirm_payment')}
                                         </button>
                                     )}
                                     {order.paymentMethod === 'transfer' && order.paymentStatus !== 'paid' && (

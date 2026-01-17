@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { useSound } from '../hooks/useSound';
-import { orderAPI } from '../services/api';
+import api, { orderAPI } from '../services/api';
 
 const SocketContext = createContext(null);
 
@@ -42,6 +42,7 @@ export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const [connected, setConnected] = useState(false);
     const [activeCalls, setActiveCalls] = useState([]);
+    const [pendingRenewals, setPendingRenewals] = useState([]); // For Admins
 
     // Restaurant context
     const restaurant = user?.restaurant;
@@ -103,9 +104,19 @@ export const SocketProvider = ({ children }) => {
                     console.error('Failed to fetch initial pending count', err);
                 }
             }
+
+            // If Admin, fetch pending renewals
+            if (user?.role?.isSystem) {
+                try {
+                    const { data } = await api.get('/subscriptions/admin/transactions?status=pending');
+                    setPendingRenewals(data.transactions || []);
+                } catch (err) {
+                    console.error('Failed to fetch initial renewals count', err);
+                }
+            }
         };
         fetchInitialCounts();
-    }, [restaurant]);
+    }, [restaurant, user]);
 
     // ... (Socket Connection Logic remains similar, updated handlers below)
 
@@ -203,6 +214,49 @@ export const SocketProvider = ({ children }) => {
             setActiveCalls(prev => prev.filter(call => call.callId !== data.callId));
         });
 
+        // --- Subscription Events ---
+        newSocket.on('subscription:renewal_request', (data) => {
+            if (user?.role?.isSystem) {
+                console.log('🔔 New subscription renewal request:', data);
+                setPendingRenewals(prev => {
+                    if (prev.some(r => r._id === data.requestId)) return prev;
+                    return [data, ...prev];
+                });
+
+                // Play sound for admins
+                if (audioEnabled) {
+                    playNewOrderSound(); // glass.mp3
+                }
+            }
+        });
+
+        newSocket.on('subscription:activated', (data) => {
+            if (restaurant?._id === data.restaurantId || restaurant?.id === data.restaurantId) {
+                console.log('✅ Subscription activated!');
+                // Broadcast to update context immediately if needed, 
+                // but just a reload or re-fetch is standard.
+                // We'll use a custom event for other contexts to listen
+                window.dispatchEvent(new CustomEvent('subscription-updated'));
+            }
+
+            // If Admin, remove from pending list
+            if (user?.role?.isSystem) {
+                setPendingRenewals(prev => prev.filter(r => r._id !== data.requestId));
+            }
+        });
+
+        newSocket.on('subscription:rejected', (data) => {
+            if (restaurant?._id === data.restaurantId || restaurant?.id === data.restaurantId) {
+                console.log('❌ Subscription rejected:', data.reason);
+                window.dispatchEvent(new CustomEvent('subscription-updated'));
+            }
+
+            // If Admin, remove from pending list
+            if (user?.role?.isSystem) {
+                setPendingRenewals(prev => prev.filter(r => r._id !== data.requestId));
+            }
+        });
+
         setSocket(newSocket);
 
         return () => {
@@ -224,10 +278,16 @@ export const SocketProvider = ({ children }) => {
         setActiveCalls(prev => prev.filter(c => c.callId !== callId));
     };
 
+    const removeRenewal = (requestId) => {
+        setPendingRenewals(prev => prev.filter(r => r._id !== requestId));
+    };
+
     const value = {
         socket,
         connected,
         activeCalls,
+        pendingRenewals,
+        removeRenewal,
         // New Props
         isRinging,
         pendingCount,

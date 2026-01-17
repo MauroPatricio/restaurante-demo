@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { ConnectivityProvider, useConnectivity } from './contexts/ConnectivityContext';
 import ToastContainer from './components/ToastContainer';
+import { LoadingProvider } from './contexts/LoadingContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import CreateRestaurant from './pages/CreateRestaurant';
@@ -36,6 +37,7 @@ import ChangePassword from './pages/ChangePassword';
 import AdminHub from './pages/AdminHub';
 import Categories from './pages/Categories';
 import Subcategories from './pages/Subcategories';
+import PremiumFeatureGate from './components/PremiumFeatureGate';
 
 import DashboardRedirect from './components/DashboardRedirect';
 
@@ -65,9 +67,11 @@ function App() {
       <SubscriptionProvider>
         <ConnectivityProvider>
           <SocketProvider>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <AppContent />
-            </BrowserRouter>
+            <LoadingProvider>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <AppContent />
+              </BrowserRouter>
+            </LoadingProvider>
           </SocketProvider>
         </ConnectivityProvider>
       </SubscriptionProvider>
@@ -105,18 +109,34 @@ function AppContent() {
           <Route path="analytics" element={<Dashboard />} />
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="waiter" element={<WaiterDashboard />} />
-          <Route path="stock" element={<StockDashboard />} />
+          <Route path="stock" element={
+            <PremiumFeatureGate featureName="Controlo de Stock">
+              <StockDashboard />
+            </PremiumFeatureGate>
+          } />
           <Route path="orders" element={<Orders />} />
           <Route path="menu" element={<Menu />} />
           <Route path="categories" element={<Categories />} />
           <Route path="subcategories" element={<Subcategories />} />
           <Route path="tables" element={<Tables />} />
-          <Route path="coupons" element={<Coupons />} />
+          <Route path="coupons" element={
+            <PremiumFeatureGate featureName="Cupons de Desconto">
+              <Coupons />
+            </PremiumFeatureGate>
+          } />
           <Route path="delivery" element={<Delivery />} />
-          <Route path="feedback" element={<Feedback />} />
+          <Route path="feedback" element={
+            <PremiumFeatureGate featureName="Feedback de Clientes">
+              <Feedback />
+            </PremiumFeatureGate>
+          } />
           <Route path="subscription" element={<Subscription />} />
           <Route path="payments" element={<Payments />} />
-          <Route path="reports" element={<Reports />} />
+          <Route path="reports" element={
+            <PremiumFeatureGate featureName="Relatórios Detalhados">
+              <Reports />
+            </PremiumFeatureGate>
+          } />
           <Route path="clients" element={<Clients />} />
           <Route path="hall" element={<HallDashboard />} />
           <Route path="users" element={<UserManagement />} />
@@ -131,7 +151,11 @@ function AppContent() {
             <DashboardLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<OwnerDashboard />} />
+          <Route index element={
+            <PremiumFeatureGate featureName="Dashboard Executivo" blurOnly={true}>
+              <OwnerDashboard />
+            </PremiumFeatureGate>
+          } />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

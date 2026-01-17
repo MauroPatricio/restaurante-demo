@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { categoryAPI } from '../services/api';
 import { Plus, Edit2, Trash2, GripVertical, FolderOpen, Package } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Modern Card Styles
 const cardStyle = {
@@ -58,16 +59,16 @@ export default function Categories() {
             setLoading(true);
 
             if (!restaurantId) {
-              
+
                 alert('Restaurant ID not found. Please refresh the page.');
                 return;
             }
 
             const { data } = await categoryAPI.getAll(restaurantId);
-       
+
             setCategories(data.categories || []);
         } catch (error) {
-           
+
             alert('Failed to load categories: ' + (error.response?.data?.message || error.message));
         } finally {
             setLoading(false);
@@ -119,7 +120,12 @@ export default function Categories() {
     const totalItems = categories.reduce((sum, cat) => sum + (cat.itemsCount || 0), 0);
     const activeCategories = categories.filter(cat => cat.isActive).length;
 
-    if (loading) return <div style={{ padding: '32px', textAlign: 'center' }}>Loading...</div>;
+    if (loading) return (
+        <div style={{ padding: '64px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', minHeight: '50vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px' }}>Loading...</span>
+        </div>
+    );
 
     return (
         <div style={{ padding: '32px', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column', gap: '24px' }}>

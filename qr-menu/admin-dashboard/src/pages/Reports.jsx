@@ -9,6 +9,7 @@ import FinancialTab from '../components/reports/FinancialTab';
 import SalesTab from '../components/reports/SalesTab';
 import OperationalTab from '../components/reports/OperationalTab';
 import InventoryTab from '../components/reports/InventoryTab';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Modern styles matching Dashboard.jsx
 const cardStyle = {
@@ -270,17 +271,11 @@ export default function Reports() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '80px 20px',
+                        gap: '16px',
                         color: '#64748b'
                     }}>
-                        <div style={{
-                            width: '48px',
-                            height: '48px',
-                            border: '4px solid #f1f5f9',
-                            borderTop: '4px solid #4f46e5',
-                            borderRadius: '50%',
-                            animation: 'spin 1s linear infinite'
-                        }} />
-                        <p style={{ marginTop: '16px', fontSize: '14px', fontWeight: '500' }}>
+                        <LoadingSpinner size={48} />
+                        <p style={{ fontSize: '14px', fontWeight: '500' }}>
                             {t('loading') || 'Carregando dados...'}
                         </p>
                     </div>
@@ -295,9 +290,12 @@ export default function Reports() {
             </div>
 
             <style>{`
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
+                @media (max-width: 768px) {
+                    .dashboard-header-responsive {
+                        flex-direction: column;
+                        align-items: flex-start !important;
+                        gap: 16px;
+                    }
                 }
             `}</style>
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usersAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function ChangePassword() {
     const [currentPassword, setCurrentPassword] = useState('');
@@ -159,10 +160,19 @@ export default function ChangePassword() {
                                 fontSize: '16px',
                                 fontWeight: '600',
                                 boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
-                                transition: 'opacity 0.2s'
+                                transition: 'opacity 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px'
                             }}
                         >
-                            {loading ? 'Updating Password...' : 'Set New Password'}
+                            {loading ? (
+                                <>
+                                    <LoadingSpinner size={18} color="white" />
+                                    <span>Updating Password...</span>
+                                </>
+                            ) : 'Set New Password'}
                         </button>
                     </form>
                 </div>

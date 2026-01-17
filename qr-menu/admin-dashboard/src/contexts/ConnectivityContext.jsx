@@ -130,9 +130,6 @@ export const ConnectivityProvider = ({ children }) => {
 
     // Show toasts based on status changes
     useEffect(() => {
-        // TEMPORARILY DISABLED FOR DEBUGGING
-        return;
-
         // Internet status changed
         if (lastOnlineStatusRef.current !== isOnline) {
             if (!isOnline) {

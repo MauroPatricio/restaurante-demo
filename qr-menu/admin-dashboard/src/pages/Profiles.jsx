@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { rolesAPI } from '../services/api';
 import { Plus, Edit, Trash2, X, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Profiles() {
     const { t } = useTranslation();
@@ -56,7 +57,10 @@ export default function Profiles() {
             </div>
 
             {loading ? (
-                <div className="loading">Loading...</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '400px' }}>
+                    <LoadingSpinner size={48} />
+                    <div className="loading">Loading...</div>
+                </div>
             ) : (
                 <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                     {roles.map(role => (

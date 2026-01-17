@@ -65,6 +65,21 @@ const subscriptionAPI = {
         }
 
         return api.get(`/subscriptions/admin/audit-logs?${params.toString()}`);
+    },
+
+    // Get owners summary (admin only)
+    getOwnersSummary: async () => {
+        return api.get('/subscriptions/admin/owners');
+    },
+
+    // Get base price (admin only)
+    getBasePrice: async () => {
+        return api.get('/subscriptions/admin/settings');
+    },
+
+    // Update base price (admin only)
+    updateBasePrice: async (price) => {
+        return api.post('/subscriptions/admin/settings', { price });
     }
 };
 

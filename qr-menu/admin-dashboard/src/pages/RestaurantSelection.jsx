@@ -2,13 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { restaurantAPI } from '../services/api';
+import api from '../services/api';
 import { LogOut, Building2, ChevronRight, PlusCircle, ArrowRight, Power } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
+import { useTranslation } from 'react-i18next';
 
 const RestaurantSelection = () => {
     const { user, selectRestaurant } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useTranslation();
     const [restaurants, setRestaurants] = useState([]);
+    const [subscriptions, setSubscriptions] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [togglingId, setTogglingId] = useState(null);
@@ -16,14 +22,44 @@ const RestaurantSelection = () => {
     const isOwner = user?.role?.name === 'Owner' || user?.role?.isSystem;
 
     useEffect(() => {
-        if (location.state?.restaurants) {
-            setRestaurants(location.state.restaurants);
-        } else if (user?.restaurants && Array.isArray(user.restaurants)) {
-            setRestaurants(user.restaurants);
-        } else if (!user) {
-            navigate('/login');
-        }
+        const loadData = async () => {
+            if (location.state?.restaurants) {
+                setRestaurants(location.state.restaurants);
+                await fetchSubscriptions(location.state.restaurants);
+            } else if (user?.restaurants && Array.isArray(user.restaurants)) {
+                setRestaurants(user.restaurants);
+                await fetchSubscriptions(user.restaurants);
+            } else if (!user) {
+                navigate('/login');
+            }
+        };
+        loadData();
     }, [user, location.state]);
+
+    const fetchSubscriptions = async (restaurantList) => {
+        try {
+            const subscriptionData = {};
+
+            // Fetch subscription for each restaurant
+            await Promise.all(
+                restaurantList.map(async (restaurant) => {
+                    const restaurantId = restaurant.id || restaurant._id;
+                    try {
+                        const { data } = await api.get(`/subscriptions/${restaurantId}`);
+                        subscriptionData[restaurantId] = data.subscription || data;
+                    } catch (err) {
+                        console.error(`Failed to fetch subscription for ${restaurantId}:`, err);
+                        // Default to suspended if fetch fails
+                        subscriptionData[restaurantId] = { status: 'suspended' };
+                    }
+                })
+            );
+
+            setSubscriptions(subscriptionData);
+        } catch (err) {
+            console.error('Failed to fetch subscriptions:', err);
+        }
+    };
 
     const handleSelectRestaurant = async (restaurantId) => {
         setLoading(true);
@@ -126,8 +162,17 @@ const RestaurantSelection = () => {
                                                     <h3>{restaurant.name}</h3>
                                                     <div className="rest-meta">
                                                         <span className="role-badge">{restaurant.role || 'Membro'}</span>
-                                                        <span className={`status-badge ${isActive ? 'status-active' : 'status-inactive'}`}>
-                                                            {isActive ? 'Ativo' : 'Inativo'}
+                                                        <span
+                                                            className="status-badge subscription-status"
+                                                            style={{
+                                                                ...getStatusBadgeStyle(subscriptions[restaurantId]?.status || 'suspended'),
+                                                                fontSize: '0.75rem',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '4px',
+                                                                fontWeight: '500'
+                                                            }}
+                                                        >
+                                                            {getStatusLabel((subscriptions[restaurantId]?.status || 'suspended').toLowerCase(), t)}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -167,6 +212,21 @@ const RestaurantSelection = () => {
                         </button>
                     </div>
                 </div>
+                {loading && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(255, 255, 255, 0.7)',
+                        backdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 20,
+                        borderRadius: '16px'
+                    }}>
+                        <LoadingSpinner size={48} />
+                    </div>
+                )}
             </div>
 
             {/* RIGHT SIDE: IMAGE */}

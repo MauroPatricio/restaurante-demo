@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { subcategoryAPI, categoryAPI } from '../services/api';
 import { Plus, Edit2, Trash2, FolderOpen, Package } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const cardStyle = {
     background: 'white',
@@ -52,8 +53,8 @@ export default function Subcategories() {
                 alert('Restaurant ID not found. Please refresh the page.');
                 return;
             }
- const { data } = await subcategoryAPI.getByRestaurant(restaurantId);
-        
+            const { data } = await subcategoryAPI.getByRestaurant(restaurantId);
+
             setSubcategories(data.subcategories || []);
         } catch (error) {
             console.error('Error fetching subcategories:', error);
@@ -109,7 +110,12 @@ export default function Subcategories() {
         ? subcategories.filter(sub => sub.category._id === selectedCategory)
         : subcategories;
 
-    if (loading) return <div style={{ padding: '32px', textAlign: 'center' }}>Loading...</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Loading Subcategories...</span>
+        </div>
+    );
 
     return (
         <div style={{ padding: '32px', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column', gap: '24px' }}>

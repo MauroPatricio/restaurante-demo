@@ -20,14 +20,15 @@ const AuditLogSchema = new mongoose.Schema({
             'user_delete',
             'restaurant_create',
             'restaurant_update',
-            'restaurant_delete'
+            'restaurant_delete',
+            'update_system_setting'
         ],
         index: true
     },
     targetModel: {
         type: String,
         required: true,
-        enum: ['Subscription', 'User', 'Restaurant', 'Order', 'Table']
+        enum: ['Subscription', 'User', 'Restaurant', 'Order', 'Table', 'SystemSetting']
     },
     targetId: {
         type: mongoose.Schema.Types.ObjectId,

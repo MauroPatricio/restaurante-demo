@@ -8,6 +8,7 @@ import {
     ArrowRight, Utensils, ChefHat, LayoutGrid
 } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const ManagerDashboard = () => {
     const { user } = useAuth();
@@ -104,7 +105,11 @@ const ManagerDashboard = () => {
         flex: 1
     };
 
-    if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} message={t('preparing_dashboard')} />
+        </div>
+    );
 
     return (
         <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Clock, CheckCircle, Coffee, MessageSquare, AlertTriangle, UserCheck, LayoutGrid, List, DollarSign, Calendar, ShoppingBag, Loader2 } from 'lucide-react';
+import { X, User, Clock, CheckCircle, Coffee, MessageSquare, AlertTriangle, UserCheck, LayoutGrid, List, DollarSign, Calendar, ShoppingBag } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 import { analyticsAPI, tableAPI } from '../services/api';
 import { format, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
@@ -179,7 +180,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                                         color: opt.color, boxShadow: table.status === opt.id ? '0 4px 10px rgba(0,0,0,0.05)' : 'none'
                                     }}>
                                         {updating && table.status === opt.id ? (
-                                            <Loader2 size={24} className="animate-spin" />
+                                            <LoadingSpinner size={24} color={opt.color} />
                                         ) : (
                                             <opt.icon size={24} strokeWidth={2.5} />
                                         )}
@@ -199,11 +200,9 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                     {/* History Section */}
                     {loading ? (
                         <div style={{ textAlign: 'center', padding: '100px 0' }}>
-                            <div style={{
-                                width: '40px', height: '40px', border: '3px solid #f3f3f3',
-                                borderTop: `3px solid ${tokens.primary}`, borderRadius: '50%',
-                                margin: '0 auto 20px auto', animation: 'spinAround 0.8s linear infinite'
-                            }} />
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                                <LoadingSpinner size={40} />
+                            </div>
                             <p style={{ fontSize: '14px', fontWeight: '700', color: tokens.slate400 }}>Recuperando registros...</p>
                         </div>
                     ) : error ? (

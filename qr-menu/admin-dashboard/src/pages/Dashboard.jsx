@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
@@ -12,6 +13,7 @@ import {
     Zap, BarChart3, ChevronRight, Activity
 } from 'lucide-react';
 import WaiterCallsModal from '../components/WaiterCallsModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -86,6 +88,7 @@ const sectionStyle = {
 
 export default function Dashboard() {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const { socket } = useSocket();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -155,8 +158,9 @@ export default function Dashboard() {
     }, [socket, restaurantId]);
 
     if (loading) return (
-        <div className="loading-screen" style={{ minHeight: '80vh' }}>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('preparing_dashboard') || 'Preparamos o seu painel...'}</span>
         </div>
     );
 

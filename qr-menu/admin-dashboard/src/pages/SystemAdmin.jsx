@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import { Check, X, Filter, Loader } from 'lucide-react';
+import { Check, X, Filter } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function SystemAdmin() {
     const { t } = useTranslation();
@@ -74,7 +75,10 @@ export default function SystemAdmin() {
 
             <div className="table-container">
                 {loading ? (
-                    <div className="loading"><Loader className="spin" /> Loading requests...</div>
+                    <div className="loading" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px' }}>
+                        <LoadingSpinner size={48} />
+                        <span>Loading requests...</span>
+                    </div>
                 ) : (
                     <table className="data-table">
                         <thead>

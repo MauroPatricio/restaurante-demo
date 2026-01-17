@@ -239,7 +239,12 @@ export default function AdminHub() {
         }
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('loading') || 'Carregando Sistema...'}</span>
+        </div>
+    );
 
     const tabs = [
         { id: 'general', label: 'Geral', icon: Building, color: '#3b82f6', gradient: 'from-blue-500/10 to-transparent' },

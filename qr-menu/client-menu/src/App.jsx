@@ -7,6 +7,8 @@ import Cart from './pages/Cart';
 import OrderStatus from './pages/OrderStatus';
 import OrderHistory from './pages/OrderHistory';
 import { NotificationProvider } from './context/NotificationContext';
+import { LoadingProvider } from './context/LoadingContext';
+import LoadingSpinner from './components/LoadingSpinner';
 
 import { API_URL } from './config/api';
 
@@ -87,7 +89,9 @@ function QRRedirect() {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+                    <div className="flex justify-center mb-4">
+                        <LoadingSpinner size={48} />
+                    </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Carregando Menu...</h2>
                     <p className="text-gray-600">Validando QR Code</p>
                 </div>
@@ -236,10 +240,7 @@ function CodeEntry() {
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
-                                    <svg className="animate-spin h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
+                                    <LoadingSpinner size={20} color="white" />
                                     Verificando...
                                 </span>
                             ) : 'Acessar Menu'}
@@ -259,16 +260,18 @@ function App() {
         <CartProvider>
             <ThemeProvider>
                 <NotificationProvider>
-                    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                        <Routes>
-                            <Route path="/menu" element={<QRRedirect />} />
-                            <Route path="/menu/:restaurantId" element={<Menu />} />
-                            <Route path="/menu/:restaurantId/cart" element={<Cart />} />
-                            <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
-                            <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
-                            <Route path="/" element={<CodeEntry />} />
-                        </Routes>
-                    </div>
+                    <LoadingProvider>
+                        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                            <Routes>
+                                <Route path="/menu" element={<QRRedirect />} />
+                                <Route path="/menu/:restaurantId" element={<Menu />} />
+                                <Route path="/menu/:restaurantId/cart" element={<Cart />} />
+                                <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
+                                <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
+                                <Route path="/" element={<CodeEntry />} />
+                            </Routes>
+                        </div>
+                    </LoadingProvider>
                 </NotificationProvider>
             </ThemeProvider>
         </CartProvider>

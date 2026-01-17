@@ -76,7 +76,7 @@ export default function WaiterCallAlerts() {
                 error: error.response?.data || error.message,
                 status: error.response?.status
             });
-            alert('Erro ao reconhecer chamada. Por favor, tente novamente.');
+            alert(t('error_acknowledge_call') || 'Erro ao reconhecer chamada. Por favor, tente novamente.');
         }
     };
 
@@ -91,7 +91,7 @@ export default function WaiterCallAlerts() {
                 error: error.response?.data || error.message,
                 status: error.response?.status
             });
-            alert('Erro ao resolver chamada. Por favor, tente novamente.');
+            alert(t('error_resolve_call') || 'Erro ao resolver chamada. Por favor, tente novamente.');
         }
     };
 
@@ -129,7 +129,7 @@ export default function WaiterCallAlerts() {
                             className={`bell-icon ${unacknowledgedCount > 0 ? 'ringing' : ''}`}
                         />
                         <span className="header-title">
-                            Chamadas Ativas
+                            {t('active_calls_title')}
                             {unacknowledgedCount > 0 && (
                                 <span className="urgent-badge">{unacknowledgedCount}</span>
                             )}
@@ -145,7 +145,7 @@ export default function WaiterCallAlerts() {
                                 className={`sound-toggle-btn ${!soundEnabled ? 'muted' : ''}`}
                                 title={soundEnabled ? 'Silenciar Alarme' : 'Ativar Som'}
                             >
-                                {soundEnabled ? '🔊 Silenciar' : '🔇 Silenciado'}
+                                {soundEnabled ? t('unmuted_label') : t('muted_label')}
                             </button>
                         )}
                         <button
@@ -171,7 +171,7 @@ export default function WaiterCallAlerts() {
                         >
                             <div className="call-info">
                                 <div className="call-header">
-                                    <span className="table-number">Mesa {call.tableNumber}</span>
+                                    <span className="table-number">{t('table_label')} {call.tableNumber}</span>
                                     <span className="call-time">
                                         <Clock size={12} />
                                         {formatTime(call.createdAt)}
@@ -179,11 +179,11 @@ export default function WaiterCallAlerts() {
                                 </div>
                                 {call.waiterName && (
                                     <div className="call-waiter">
-                                        Garçom: {call.waiterName}
+                                        {t('waiter')}: {call.waiterName}
                                     </div>
                                 )}
                                 <div className="call-type">
-                                    {call.type === 'payment_request' ? 'Pedido de Conta' : 'Chamar Garçom'}
+                                    {call.type === 'payment_request' ? t('payment_request') : t('service_call')}
                                 </div>
                             </div>
 
@@ -195,7 +195,7 @@ export default function WaiterCallAlerts() {
                                         title="Reconhecer (para alarme)"
                                     >
                                         <Check size={16} />
-                                        Atender
+                                        {t('acknowledge_btn')}
                                     </button>
                                 ) : (
                                     <button
@@ -204,7 +204,7 @@ export default function WaiterCallAlerts() {
                                         title="Marcar como resolvido"
                                     >
                                         <X size={16} />
-                                        Resolver
+                                        {t('resolve_btn')}
                                     </button>
                                 )}
                             </div>

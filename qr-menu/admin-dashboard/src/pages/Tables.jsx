@@ -7,6 +7,7 @@ import { Plus, Trash2, QrCode, X, Printer, RefreshCw, Maximize, Edit2, Users, Re
 import { useTranslation } from 'react-i18next';
 import TableSessionModal from '../components/TableSessionModal';
 import '../styles/TableSessionModal.css';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Tables() {
     const { user } = useAuth();
@@ -331,7 +332,12 @@ export default function Tables() {
         }
     };
 
-    if (loading) return <div>{t('loading')}</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '50vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading')}</span>
+        </div>
+    );
 
     return (
         <div className="page-content">

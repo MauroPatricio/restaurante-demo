@@ -11,6 +11,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import { format } from 'date-fns';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Modern Card Styles (matching FinancialTab)
 const cardStyle = {
@@ -112,7 +113,12 @@ export default function CXDashboard() {
         { name: '1 Star', count: feedbacks.filter(f => f.rating === 1).length, color: '#ef4444' },
     ];
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading Customer Insights...</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Loading Customer Insights...</span>
+        </div>
+    );
 
     return (
         <div style={{ padding: '32px', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column', gap: '24px' }}>

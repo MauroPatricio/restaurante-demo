@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Clock, ChefHat, Truck, ArrowLeft, RefreshCw, AlertCircle, Star, Copy, CheckCheck } from 'lucide-react';
@@ -27,7 +28,8 @@ const OrderStatus = () => {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const res = await axios.get(`${API_URL}/orders/${orderId}`);
+                // Remove API_URL as api service has baseURL
+                const res = await api.get(`/orders/${orderId}`);
                 setOrder(res.data.order);
                 setLoading(false);
             } catch (err) {
@@ -62,7 +64,7 @@ const OrderStatus = () => {
 
     const submitFeedback = async () => {
         try {
-            await axios.post(`${API_URL}/feedback`, {
+            await api.post('/feedback', {
                 restaurant: restaurantId,
                 orderId: orderId,
                 rating,
@@ -77,12 +79,8 @@ const OrderStatus = () => {
     };
 
     if (loading) return (
-        <div className="flex h-screen items-center justify-center bg-gray-50">
-            <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                className="rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"
-            />
+        <div className="flex h-screen flex-col items-center justify-center bg-gray-50 gap-4">
+            <LoadingSpinner size={48} message={t('loading_data') || "Carregando o estado do pedido..."} />
         </div>
     );
 
@@ -112,7 +110,7 @@ const OrderStatus = () => {
                     <button onClick={() => navigate(`/menu/${restaurantId}`)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <ArrowLeft size={24} className="text-gray-600" />
                     </button>
-                    <h1 className="text-lg font-bold text-gray-900">{t('order_status') || 'Status do Pedido'}</h1>
+                    <h1 className="text-lg font-bold text-gray-900">{t('order_status')}</h1>
                 </div>
                 <button onClick={() => window.location.reload()} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-primary-600">
                     <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
@@ -134,13 +132,13 @@ const OrderStatus = () => {
                                 <Check size={24} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-lg leading-tight">Pedido submetido com sucesso!</h3>
-                                <p className="text-white/80 text-sm mt-1">O ID do seu pedido é <strong>#{order?._id.slice(-6).toUpperCase()}</strong>. Você pode acompanhar o progresso abaixo.</p>
+                                <h3 className="font-bold text-lg leading-tight">{t('order_success_msg')}</h3>
+                                <p className="text-white/80 text-sm mt-1">{t('order_id_desc', { id: order?._id.slice(-6).toUpperCase() })}</p>
                                 <button
                                     onClick={() => setJustSubmitted(false)}
                                     className="mt-2 text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-lg"
                                 >
-                                    Entendi
+                                    {t('got_it')}
                                 </button>
                             </div>
                         </motion.div>
@@ -205,7 +203,7 @@ const OrderStatus = () => {
                 {/* Order Summary */}
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">ID DO PEDIDO</span>
+                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t('order_id_label')}</span>
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-mono font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-lg border border-gray-200">
                                 #{order._id.slice(-6).toUpperCase()}
@@ -227,14 +225,14 @@ const OrderStatus = () => {
                     </div>
                     <div className="flex justify-between items-center border-t border-gray-100 pt-3 mt-1">
                         <span className="font-bold text-gray-900">{t('total')}</span>
-                        <span className="font-bold text-primary-600 text-lg">{order.total} {t('currency') || 'MT'}</span>
+                        <span className="font-bold text-primary-600 text-lg">{order.total} {t('currency')}</span>
                     </div>
                 </div>
 
                 {/* Feedback Section */}
                 {['ready', 'completed'].includes(order.status) && !feedbackSubmitted && (
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
-                        <h3 className="font-bold text-gray-900 mb-4">{t('rate_experience') || 'Rate your experience'}</h3>
+                        <h3 className="font-bold text-gray-900 mb-4">{t('rate_experience')}</h3>
 
                         <div className="flex justify-center gap-2 mb-4">
                             {[1, 2, 3, 4, 5].map((star) => (
@@ -254,7 +252,7 @@ const OrderStatus = () => {
 
                         <textarea
                             className="w-full p-3 border border-gray-200 rounded-xl mb-4 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
-                            placeholder={t('leave_comment') || "Any comments?"}
+                            placeholder={t('leave_comment')}
                             rows={3}
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
@@ -265,15 +263,15 @@ const OrderStatus = () => {
                             disabled={rating === 0}
                             className="w-full py-3 bg-primary-600 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-700 transition-colors"
                         >
-                            {t('submit_feedback') || 'Send Feedback'}
+                            {t('submit_feedback')}
                         </button>
                     </div>
                 )}
 
                 {feedbackSubmitted && (
                     <div className="bg-green-50 text-green-700 p-4 rounded-xl text-center border border-green-100">
-                        <p className="font-bold">Thank you!</p>
-                        <p className="text-sm">Your feedback helps us improve.</p>
+                        <p className="font-bold">{t('thank_you')}</p>
+                        <p className="text-sm">{t('feedback_help_msg')}</p>
                     </div>
                 )}
 
@@ -281,7 +279,7 @@ const OrderStatus = () => {
                     onClick={() => window.location.reload()}
                     className="w-full py-3 text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center justify-center gap-2"
                 >
-                    <RefreshCw size={16} /> Tap to refresh
+                    <RefreshCw size={16} /> {t('tap_to_refresh')}
                 </button>
 
             </div>

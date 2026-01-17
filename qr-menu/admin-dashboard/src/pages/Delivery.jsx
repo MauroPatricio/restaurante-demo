@@ -7,6 +7,7 @@ import {
     Navigation, Clock, Package, Users
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Modern Card Styles (matching FinancialTab)
 const cardStyle = {
@@ -93,7 +94,12 @@ export default function DeliveryDashboard() {
     const deliveredCount = orders.filter(o => o.status === 'delivered').length;
     const activeDrivers = drivers.filter(d => d.isOnline).length;
 
-    if (loading) return <div className="p-8">Loading Delivery Manager...</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Loading Delivery Manager...</span>
+        </div>
+    );
 
     return (
         <div style={{ padding: '32px', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column', gap: '24px' }}>

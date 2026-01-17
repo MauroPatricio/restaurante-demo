@@ -154,7 +154,11 @@ export default function WaiterDashboard() {
         }
     };
 
-    if (loading) return <LoadingSpinner message={t('loading_waiter') || "Carregando Área do Garçom..."} />;
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} message={t('loading_waiter') || "Carregando Área do Garçom..."} />
+        </div>
+    );
 
     if (!restaurantId) {
         return (

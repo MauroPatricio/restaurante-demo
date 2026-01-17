@@ -4,13 +4,14 @@ import { useCart } from '../context/CartContext';
 import { useNotification } from '../context/NotificationContext';
 import { Trash2, ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, CreditCard, Wallet, Smartphone, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../services/api';
 import { API_URL } from '../config/api';
 import WaiterCallButton from '../components/WaiterCallButton';
 import ReactionButtons from '../components/ReactionButtons';
 import { useSound } from '../hooks/useSound';
 import bellSound from '../sound/bell.mp3';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Cart = () => {
     const { restaurantId } = useParams();
@@ -42,7 +43,7 @@ const Cart = () => {
     // Auto-redirect if cart is empty
     useEffect(() => {
         if (!loading && cart.length === 0 && !success) {
-            navigate(`/menu/${restaurantId}${window.location.search}`);
+            navigate(`/menu/${restaurantId}${window.location.search}`, { replace: true });
         }
     }, [cart.length, success, loading, navigate, restaurantId]);
 
@@ -98,7 +99,8 @@ const Cart = () => {
                 data: payload
             });
 
-            const response = await axios.post(`${API_URL}/public/orders`, payload);
+            // Use centralized API
+            const response = await api.post('/public/orders', payload);
 
             if (response.status === 201) {
                 const orderData = response.data.order;
@@ -119,11 +121,15 @@ const Cart = () => {
                 clearCart();
 
                 // Redirect to Order Status page with state to show confirmation message
-                navigate(`/menu/${restaurantId}/status/${orderData._id}`, { state: { justSubmitted: true } });
+                // Use replace: true to prevent back button loop
+                navigate(`/menu/${restaurantId}/status/${orderData._id}`, {
+                    state: { justSubmitted: true },
+                    replace: true
+                });
             }
         } catch (err) {
             console.error('Checkout error:', err);
-            const msg = err.response?.data?.message || err.response?.data?.error || 'Erro ao processar pedido';
+            const msg = err.response?.data?.message || err.response?.data?.error || t('error_checkout_generic');
             setError(msg);
             submitLock.current = false;
         } finally {
@@ -139,8 +145,8 @@ const Cart = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Order Placed!</h1>
-                <p className="text-gray-500 dark:text-gray-400 mb-8">Your order has been sent to the kitchen/bar.</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('order_placed')}</h1>
+                <p className="text-gray-500 dark:text-gray-400 mb-8">{t('order_sent_msg')}</p>
 
                 {/* Feedback state presented at the end of service (checkout/payment success) */}
                 <div className="w-full max-w-sm mb-8">
@@ -151,7 +157,7 @@ const Cart = () => {
                     onClick={() => navigate(`/menu/${restaurantId}`)}
                     className="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 mb-8"
                 >
-                    Back to Menu
+                    {t('browse_menu')}
                 </button>
 
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-widest mt-auto pb-4">
@@ -173,7 +179,7 @@ const Cart = () => {
                     onClick={() => navigate(`/menu/${restaurantId}`)}
                     className="text-primary-600 dark:text-primary-400 font-bold flex items-center gap-2 hover:underline"
                 >
-                    <ArrowLeft size={20} /> Browse Menu
+                    <ArrowLeft size={20} /> {t('browse_menu')}
                 </button>
             </div>
         );
@@ -234,7 +240,7 @@ const Cart = () => {
                 {/* Totals */}
                 <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 transition-colors">
                     <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
-                        <span>Subtotal</span>
+                        <span>{t('subtotal') || 'Subtotal'}</span>
                         <span>{cartTotal} {t('currency')}</span>
                     </div>
                     <div className="flex justify-between font-bold text-xl pt-3 border-t border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
@@ -245,11 +251,11 @@ const Cart = () => {
 
                 {/* Guest Details Form */}
                 <div className="space-y-3">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-sm ml-1">Detalhes do Pedido</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-sm ml-1">{t('order_details')}</h3>
                     <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
                         <form id="checkout-form" onSubmit={handleCheckout} className="space-y-5">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Método de Pagamento</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('payment_method_label')}</label>
                                 <div className="grid grid-cols-2 gap-4">
                                     {['mpesa', 'emola', 'visa', 'cash'].map((method) => (
                                         <button
@@ -314,25 +320,25 @@ const Cart = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Seu Nome</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('your_name_label')}</label>
                                 <input
                                     type="text"
                                     required
                                     className="w-full p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
-                                    placeholder="Ex: João da Silva"
+                                    placeholder={t('name_placeholder')}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Telefone</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('phone_label')}</label>
                                 <input
                                     type="tel"
                                     required
                                     className="w-full p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
-                                    placeholder="Ex: 84 123 4567"
+                                    placeholder={t('phone_placeholder')}
                                 />
                             </div>
                             {error && <p className="text-red-500 text-sm font-medium bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-100 dark:border-red-800">{error}</p>}
@@ -347,7 +353,14 @@ const Cart = () => {
                         disabled={loading}
                         className="w-full max-w-md mx-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-4 rounded-xl font-bold flex items-center justify-between hover:bg-black dark:hover:bg-gray-200 transition-all active:scale-[0.98] shadow-xl disabled:opacity-70 disabled:cursor-wait mb-4"
                     >
-                        <span>{loading ? t('scanning') : t('confirm_order')}</span>
+                        <span>
+                            {loading ? (
+                                <div className="flex items-center gap-2">
+                                    <LoadingSpinner size={18} color="white" />
+                                    <span>{t('scanning')}</span>
+                                </div>
+                            ) : t('confirm_order')}
+                        </span>
                         <span>{cartTotal} {t('currency')} <ArrowRight className="inline ml-1" size={18} /></span>
                     </button>
                     <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold text-center uppercase tracking-widest">

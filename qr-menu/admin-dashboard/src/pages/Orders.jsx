@@ -3,8 +3,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { orderAPI } from '../services/api';
 import { format } from 'date-fns';
 import { Eye, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Orders() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [orders, setOrders] = useState([]);
     const [filter, setFilter] = useState('all');
@@ -35,7 +38,7 @@ export default function Orders() {
             fetchOrders();
         } catch (error) {
             console.error('Failed to update order:', error);
-            alert('Failed to update order status');
+            alert(t('error_update_order') || 'Failed to update order status');
         }
     };
 
@@ -53,12 +56,12 @@ export default function Orders() {
         <div className="orders-page">
             <div className="page-header">
                 <div>
-                    <h2>Orders Management</h2>
-                    <p>View and manage all orders</p>
+                    <h2>{t('orders_management')}</h2>
+                    <p>{t('orders_management_desc')}</p>
                 </div>
                 <button onClick={fetchOrders} className="btn-secondary">
                     <RefreshCw size={18} />
-                    Refresh
+                    {t('refresh_btn')}
                 </button>
             </div>
 
@@ -70,29 +73,32 @@ export default function Orders() {
                         onClick={() => setFilter(status)}
                         className={`filter-btn ${filter === status ? 'active' : ''}`}
                     >
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {status === 'all' ? t('all_filter') : t(status)}
                     </button>
                 ))}
             </div>
 
             {/* Orders Table */}
             {loading ? (
-                <div className="loading">Loading orders...</div>
+                <div style={{ display: 'flex', flexDir: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px' }}>
+                    <LoadingSpinner size={48} />
+                    <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading_data')}</span>
+                </div>
             ) : (
                 <div className="table-container">
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th>Order ID</th>
-                                <th>Date & Time</th>
-                                <th>Customer</th>
-                                <th>Type</th>
-                                <th>Table</th>
-                                <th>Items</th>
-                                <th>Total</th>
-                                <th>Payment</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>{t('order_id_label')}</th>
+                                <th>{t('date_time_label')}</th>
+                                <th>{t('customer_label')}</th>
+                                <th>{t('order_type_label')}</th>
+                                <th>{t('table_label')}</th>
+                                <th>{t('items_label')}</th>
+                                <th>{t('total')}</th>
+                                <th>{t('payment_label')}</th>
+                                <th>{t('status')}</th>
+                                <th>{t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -110,13 +116,13 @@ export default function Orders() {
                                     <td>
                                         {order.table ? (
                                             <span className="font-semibold text-blue-600">
-                                                Mesa {order.table.number || order.table}
+                                                {t('table_label')} {order.table.number || order.table}
                                             </span>
                                         ) : (
                                             <span className="text-gray-400">-</span>
                                         )}
                                     </td>
-                                    <td>{order.items?.length || 0} items</td>
+                                    <td>{order.items?.length || 0} {t('items')}</td>
                                     <td className="font-semibold">{order.total} MT</td>
                                     <td>
                                         <span className={`status-badge ${order.paymentStatus}`}>
@@ -136,14 +142,14 @@ export default function Orders() {
                                                         onClick={() => updateOrderStatus(order._id, 'confirmed')}
                                                         className="btn-small btn-primary"
                                                     >
-                                                        Confirm
+                                                        {t('confirm_btn')}
                                                     </button>
                                                     <button
                                                         onClick={() => updateOrderStatus(order._id, 'cancelled')}
                                                         className="btn-small btn-danger"
                                                         style={{ marginLeft: '8px', background: '#ef4444', color: 'white', border: 'none' }}
                                                     >
-                                                        Cancel
+                                                        {t('cancel_btn')}
                                                     </button>
                                                 </>
                                             )}
@@ -153,14 +159,14 @@ export default function Orders() {
                                                         onClick={() => updateOrderStatus(order._id, 'preparing')}
                                                         className="btn-small btn-primary"
                                                     >
-                                                        Start Preparing
+                                                        {t('start_preparing_btn')}
                                                     </button>
                                                     <button
                                                         onClick={() => updateOrderStatus(order._id, 'cancelled')}
                                                         className="btn-small btn-danger"
                                                         style={{ marginLeft: '8px', background: '#ef4444', color: 'white', border: 'none' }}
                                                     >
-                                                        Cancel
+                                                        {t('cancel_btn')}
                                                     </button>
                                                 </>
                                             )}
@@ -169,7 +175,7 @@ export default function Orders() {
                                                     onClick={() => updateOrderStatus(order._id, 'ready')}
                                                     className="btn-small btn-primary"
                                                 >
-                                                    Mark Ready
+                                                    {t('mark_ready_btn')}
                                                 </button>
                                             )}
                                             {order.status === 'ready' && (
@@ -177,7 +183,7 @@ export default function Orders() {
                                                     onClick={() => updateOrderStatus(order._id, 'completed')}
                                                     className="btn-small btn-primary"
                                                 >
-                                                    Complete
+                                                    {t('complete_btn')}
                                                 </button>
                                             )}
                                         </div>
@@ -189,7 +195,7 @@ export default function Orders() {
 
                     {orders.length === 0 && (
                         <div className="empty-state">
-                            <p>No orders found</p>
+                            <p>{t('no_orders_found')}</p>
                         </div>
                     )}
                 </div>

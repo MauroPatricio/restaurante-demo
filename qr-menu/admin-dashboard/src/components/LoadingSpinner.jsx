@@ -1,20 +1,55 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-const LoadingSpinner = ({ fullScreen = true, message = 'Loading...' }) => {
-    if (fullScreen) {
-        return (
-            <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center animate-in fade-in duration-200">
-                <Loader2 className="h-12 w-12 text-indigo-600 animate-spin mb-4" />
-                <p className="text-slate-600 font-medium text-lg animate-pulse">{message}</p>
-            </div>
-        );
-    }
+const LoadingSpinner = ({ size = 24, className = "", message = "" }) => {
+    const iconSize = typeof size === 'number' ? size : (size === 'sm' ? 16 : size === 'lg' ? 48 : 24);
 
     return (
-        <div className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 text-indigo-600 animate-spin mb-3" />
-            <span className="text-sm text-slate-500 font-medium">{message}</span>
+        <div
+            className={className}
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px'
+            }}
+        >
+            <div
+                style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#2563eb', // primary-600
+                    animation: 'spin 1s linear infinite'
+                }}
+            >
+                <Loader2 size={iconSize} />
+            </div>
+
+            {message && (
+                <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#64748b',
+                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                }}>
+                    {message}
+                </div>
+            )}
+
+            <style>
+                {`
+                    @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                    @keyframes pulse {
+                        0%, 100% { opacity: 1; }
+                        50% { opacity: .5; }
+                    }
+                `}
+            </style>
         </div>
     );
 };

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, Layout, Loader2, LogIn } from 'lucide-react';
+import { Eye, EyeOff, Layout, LogIn } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -128,7 +129,7 @@ export default function Login() {
                             disabled={loading}
                         >
                             <div className="btn-content center-content">
-                                {loading ? <Loader2 className="animate-spin" size={20} /> : <LogIn size={20} />}
+                                {loading ? <LoadingSpinner size={20} color="white" /> : <LogIn size={20} />}
                                 <span>{loading ? t('signing_in') : t('sign_in')}</span>
                             </div>
                         </button>

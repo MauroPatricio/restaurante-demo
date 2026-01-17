@@ -12,6 +12,8 @@ import {
     ArrowRight, Building2, Calendar, Star
 } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -80,8 +82,8 @@ const OwnerDashboard = () => {
     };
 
     if (loading) return (
-        <div className="loading-screen" style={{ minHeight: '80vh' }}>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+            <LoadingSpinner size={48} message={t('preparingDashboard')} />
         </div>
     );
 
@@ -259,10 +261,10 @@ const OwnerDashboard = () => {
                                     </td>
                                     <td>
                                         <span style={{
-                                            background: '#ecfdf5', color: '#059669',
+                                            ...getStatusBadgeStyle(rest.subscriptionStatus || 'suspended'),
                                             padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase'
                                         }}>
-                                            Active
+                                            {getStatusLabel((rest.subscriptionStatus || 'suspended').toLowerCase(), t)}
                                         </span>
                                     </td>
                                     <td style={{ textAlign: 'right', paddingRight: 0 }}>
@@ -278,7 +280,7 @@ const OwnerDashboard = () => {
                                             onMouseOver={(e) => { e.target.style.borderColor = '#4f46e5'; e.target.style.background = '#eef2ff'; }}
                                             onMouseOut={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = 'white'; }}
                                         >
-                                            Manage Dashboard <ArrowRight size={16} />
+                                            {t('manage_dashboard') || 'Manage Dashboard'} <ArrowRight size={16} />
                                         </button>
                                     </td>
                                 </tr>

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useSocket } from '../contexts/SocketContext';
 import WaiterCallsModal from '../components/WaiterCallsModal';
 import TableDetailsModal from '../components/TableDetailsModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
     <div style={{
@@ -164,7 +165,7 @@ export default function HallDashboard() {
     if (loading) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
             <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <LoadingSpinner size={48} />
                 <p className="font-bold text-slate-400">Sincronizando operação...</p>
             </div>
         </div>

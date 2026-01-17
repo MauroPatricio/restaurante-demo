@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CreateRestaurant() {
     const [formData, setFormData] = useState({
@@ -212,7 +213,12 @@ export default function CreateRestaurant() {
                                 className="btn-primary"
                                 disabled={loading}
                             >
-                                {loading ? 'A criar...' : 'Criar Restaurante'}
+                                {loading ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <LoadingSpinner size={18} color="white" />
+                                        <span>A criar...</span>
+                                    </div>
+                                ) : 'Criar Restaurante'}
                             </button>
                         </div>
                     </form>

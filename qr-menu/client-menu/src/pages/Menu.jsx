@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../config/api';
 import ThemeToggle from '../components/ThemeToggle';
 import WaiterCallButton from '../components/WaiterCallButton';
 import ReactionButtons from '../components/ReactionButtons';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { createWaiterCall, createClientReaction } from '../services/waiterCallAPI';
 import { formatDate, formatTime } from '../utils/dateUtils';
 
@@ -76,8 +77,9 @@ const Menu = () => {
             }
 
             try {
-                const response = await axios.get(
-                    `${API_URL}/public/menu/validate?r=${restaurantId}&t=${tableNumber}&token=${token}`
+                // Use api service
+                const response = await api.get(
+                    `/public/menu/validate?r=${restaurantId}&t=${tableNumber}&token=${token}`
                 );
 
                 if (response.data.valid) {
@@ -130,19 +132,46 @@ const Menu = () => {
         const fetchMenu = async () => {
             if (!sessionValid) return; // Wait for valid session
 
+            // Cache Logic
+            const CACHE_KEY = `menu_cache_${restaurantId}`;
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+            if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
+                console.log('Using cached menu data');
+                setRestaurant(cached.restaurant);
+                setMenuItems(cached.items);
+                setCategories(cached.categories);
+                checkRestaurant(restaurantId);
+                setLoading(false);
+                return;
+            }
+
             try {
                 setLoading(true);
                 const t = Date.now(); // Cache buster
                 const [restRes, menuRes, catRes] = await Promise.all([
-                    axios.get(`${API_URL}/restaurants/${restaurantId}`),
-                    axios.get(`${API_URL}/menu/${restaurantId}?available=true&_t=${t}`),
-                    axios.get(`${API_URL}/menu/${restaurantId}/categories`)
+                    api.get(`/restaurants/${restaurantId}`),
+                    api.get(`/menu/${restaurantId}?available=true&_t=${t}`),
+                    api.get(`/menu/${restaurantId}/categories`)
                 ]);
 
-                setRestaurant(restRes.data.restaurant);
-                setMenuItems(menuRes.data.items);
-                setCategories(['All', ...(catRes.data.categories || [])]);
+                const restaurantData = restRes.data.restaurant;
+                const itemsData = menuRes.data.items;
+                const categoriesData = ['All', ...(catRes.data.categories || [])];
+
+                setRestaurant(restaurantData);
+                setMenuItems(itemsData);
+                setCategories(categoriesData);
                 checkRestaurant(restaurantId);
+
+                // Update Cache
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    timestamp: Date.now(),
+                    restaurant: restaurantData,
+                    items: itemsData,
+                    categories: categoriesData
+                }));
             } catch (err) {
                 console.error(err);
                 setError('Failed to load menu. Please scan QR Code again.');
@@ -159,7 +188,7 @@ const Menu = () => {
         const fetchTableInfo = async () => {
             if (tableNumber) {
                 try {
-                    const tableRes = await axios.get(`${API_URL}/tables/${tableNumber}?_t=${Date.now()}`);
+                    const tableRes = await api.get(`/tables/${tableNumber}?_t=${Date.now()}`);
                     setTableInfo(tableRes.data.table);
                 } catch (e) {
                     console.warn("Table not found or err", e);
@@ -190,8 +219,9 @@ const Menu = () => {
         }
 
         setLoadingOrders(true);
+        setLoadingOrders(true);
         try {
-            const response = await axios.get(`${API_URL}/orders/restaurant/${restaurantId}`, {
+            const response = await api.get(`/orders/restaurant/${restaurantId}`, {
                 params: { phone: savedPhone }
             });
             // Filter orders by phone on client side if API doesn't support it
@@ -217,7 +247,7 @@ const Menu = () => {
             if (type === 'call') {
                 const customerName = localStorage.getItem(`customer-name-${restaurantId}`) || '';
                 await createWaiterCall(tableInfo._id, 'call', customerName);
-                setAlertMessage('Garçom a caminho');
+                setAlertMessage(t('waiter_on_way'));
             } else if (type === 'emotion') {
                 const reactionType = value === 'happy' ? 'satisfied' : 'dissatisfied';
                 await createClientReaction(tableInfo._id, reactionType, msg);
@@ -233,7 +263,7 @@ const Menu = () => {
             if (e.response?.status === 409) {
                 setAlertMessage(t('already_called') || 'Aguarde um momento...');
             } else {
-                setAlertMessage(`Failed: ${errorMsg}`);
+                setAlertMessage(`${t('failed_action') || 'Failed'}: ${errorMsg}`);
             }
             setTimeout(() => setAlertMessage(null), 5000);
         }
@@ -241,12 +271,7 @@ const Menu = () => {
 
     if (validating) return (
         <div className="flex h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-            <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                className="rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mb-4"
-            />
-            <p className="text-gray-500 dark:text-gray-400 font-medium">Validando sua mesa...</p>
+            <LoadingSpinner size={48} message={t('validating_table')} />
         </div>
     );
 
@@ -282,11 +307,7 @@ const Menu = () => {
 
     if (loading) return (
         <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-            <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                className="rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"
-            />
+            <LoadingSpinner size={48} />
         </div>
     );
 
@@ -330,7 +351,7 @@ const Menu = () => {
                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur-sm border border-white/20">
                                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                                 <span className="text-white font-bold text-sm">{t('table')} {tableInfo.number}</span>
-                                <span className="text-white/60 text-xs ml-1 border-l border-white/20 pl-2">Estado: {t(tableInfo.status) || tableInfo.status}</span>
+                                <span className="text-white/60 text-xs ml-1 border-l border-white/20 pl-2">{t('table_status')}: {t(tableInfo.status)}</span>
                             </div>
                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 min-w-[140px]">
                                 {tableInfo.waiterPhoto ? (
@@ -348,7 +369,7 @@ const Menu = () => {
                                         )}
                                     </span>
                                     <span className="text-white font-bold text-xs truncate max-w-[100px]">
-                                        {tableInfo.assignedWaiter || "Não atribuído"}
+                                        {tableInfo.assignedWaiter || t('not_assigned')}
                                     </span>
                                 </div>
                             </div>
@@ -587,7 +608,7 @@ const Menu = () => {
                                         </div>
                                         <div>
                                             <h2 className="text-lg font-bold leading-tight">{t('my_orders')}</h2>
-                                            <p className="text-xs text-primary-100 font-medium">Histórico de pedidos</p>
+                                            <p className="text-xs text-primary-100 font-medium">{t('order_history_desc')}</p>
                                         </div>
                                     </div>
                                     <button
@@ -603,12 +624,8 @@ const Menu = () => {
                             <div className="overflow-y-auto max-h-[calc(85vh-88px)] p-5 bg-gray-50 dark:bg-gray-900">
                                 {loadingOrders ? (
                                     <div className="flex flex-col items-center justify-center py-12 gap-4">
-                                        <motion.div
-                                            animate={{ rotate: 360 }}
-                                            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                                            className="rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500"
-                                        />
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Carregando pedidos...</p>
+                                        <LoadingSpinner size={40} />
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t('loading_data')}</p>
                                     </div>
                                 ) : customerOrders.length === 0 ? (
                                     <div className="text-center py-12 px-4">
@@ -683,7 +700,7 @@ const Menu = () => {
                                                         }}
                                                         className="text-[10px] font-bold text-primary-600 uppercase tracking-widest hover:underline"
                                                     >
-                                                        Acompanhar Pedido
+                                                        {t('track_order')}
                                                     </button>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-lg font-black text-gray-900 dark:text-white">
@@ -711,10 +728,10 @@ const Menu = () => {
             {/* Institutional Footer Only */}
             <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-4 z-10 border-t border-gray-200 dark:border-gray-800 transition-colors duration-200">
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium text-center mb-1">
-                    Última atualização do menu: {formatTime(lastMenuUpdate)}
+                    {t('last_menu_update')}: {formatTime(lastMenuUpdate)}
                 </p>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold text-center uppercase tracking-widest">
-                    Desenvolvido por Nhiquela Serviços e Consultoria, LDA
+                    {t('developed_by')}
                 </p>
             </div>
         </div>

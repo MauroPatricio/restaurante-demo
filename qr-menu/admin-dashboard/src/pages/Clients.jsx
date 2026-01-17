@@ -8,6 +8,7 @@ import {
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Clients() {
     const { user } = useAuth();
@@ -79,8 +80,9 @@ export default function Clients() {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '50vh' }}>
+            <LoadingSpinner size={48} />
+            <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading')}</span>
         </div>
     );
 
