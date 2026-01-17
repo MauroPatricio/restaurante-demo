@@ -106,7 +106,8 @@ export const SocketProvider = ({ children }) => {
             }
 
             // If Admin, fetch pending renewals
-            if (user?.role?.isSystem) {
+            const isAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
+            if (isAdmin) {
                 try {
                     const { data } = await api.get('/subscriptions/admin/transactions?status=pending');
                     setPendingRenewals(data.transactions || []);
@@ -216,7 +217,8 @@ export const SocketProvider = ({ children }) => {
 
         // --- Subscription Events ---
         newSocket.on('subscription:renewal_request', (data) => {
-            if (user?.role?.isSystem) {
+            const isAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
+            if (isAdmin) {
                 console.log('🔔 New subscription renewal request:', data);
                 setPendingRenewals(prev => {
                     if (prev.some(r => r._id === data.requestId)) return prev;

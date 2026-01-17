@@ -127,11 +127,18 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
                         </div>
                     )}
 
-                    <button
+                    <Link
+                        to="/select-restaurant"
                         style={secondaryButtonStyle}
-                        onClick={() => window.location.href = '/login'} // Or just close/stay blocked
                     >
-                        {t('close_button') || 'Close'}
+                        {t('back_to_restaurants') || 'Selecionar Outro Restaurante'}
+                    </Link>
+
+                    <button
+                        style={{ ...secondaryButtonStyle, border: 'none', color: '#ef4444', marginTop: '-8px' }}
+                        onClick={() => window.location.href = '/login'}
+                    >
+                        {t('logout') || 'Sair'}
                     </button>
                 </div>
             </div>

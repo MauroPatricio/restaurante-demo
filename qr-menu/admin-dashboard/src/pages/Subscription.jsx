@@ -28,6 +28,10 @@ export default function Subscription() {
     const [renewSuccess, setRenewSuccess] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState('mpesa');
 
+    // New state for upload
+    const [proofFile, setProofFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
+
     useEffect(() => {
         if (user?.restaurant) {
             fetchData();
@@ -48,28 +52,58 @@ export default function Subscription() {
         }
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Basic validation
+            if (file.size > 5 * 1024 * 1024) {
+                alert(t('error_file_too_large') || 'Arquivo muito grande (Max 5MB)');
+                return;
+            }
+            setProofFile(file);
+        }
+    };
+
     const handleRenew = async () => {
+        if (!proofFile) {
+            alert(t('error_proof_required') || 'Por favor, anexe o comprovativo de pagamento.');
+            return;
+        }
+
         setRenewLoading(true);
         try {
+            // 1. Upload Proof
+            setUploading(true);
+            const proofFormData = new FormData();
+            proofFormData.append('proof', proofFile);
+
+            const uploadRes = await subscriptionAPI.uploadProof(proofFile);
+            const proofUrl = uploadRes.data.url;
+            setUploading(false);
+
+            // 2. Submit Transaction
             const restaurantId = user.restaurant._id || user.restaurant.id || user.restaurant;
-            const { data } = await subscriptionAPI.renew({
+            const { data } = await subscriptionAPI.renew({ // This calls createTransaction in backend
                 restaurantId,
-                paymentMethod: selectedMethod,
+                method: selectedMethod,
                 amount: systemPrice,
-                reference: `RENEW-${Date.now()}`
+                reference: selectedMethod === 'mpesa' ? 'MPESA-' + Date.now() : 'BANK-' + Date.now(), // Or ask user for ref input if needed
+                proofUrl: proofUrl
             });
 
-            if (data.success || data.message) {
+            if (data.message || data.transaction) {
                 setRenewSuccess(true);
                 setTimeout(() => {
                     setShowRenewModal(false);
                     setRenewSuccess(false);
+                    setProofFile(null);
                     fetchData();
                     refreshSubscription();
-                }, 2000);
+                }, 3000);
             }
         } catch (error) {
             console.error('Renewal failed:', error);
+            setUploading(false);
             alert(t('error_generic') || 'Erro ao renovar subscrição. Tente novamente.');
         } finally {
             setRenewLoading(false);
@@ -84,6 +118,7 @@ export default function Subscription() {
         );
     }
 
+    // ... (keep helper functions like getDaysUntilExpiry, getStatusConfig, etc.)
     const getDaysUntilExpiry = () => {
         if (!subscription?.currentPeriodEnd) return null;
         const now = new Date();
@@ -98,51 +133,20 @@ export default function Subscription() {
     const isExpiring = daysUntil !== null && daysUntil <= 7 && daysUntil > 0;
 
     const getStatusConfig = () => {
-        // Priority: Internal Status from Backend
         const status = subscription?.status;
-
         if (status === 'pending_activation') {
-            return {
-                label: t('subscription_status_pending') || 'Pendente de Autorização',
-                color: '#2563eb', // Blue
-                bgColor: '#eff6ff',
-                icon: Clock
-            };
+            return { label: t('subscription_status_pending') || 'Pendente de Autorização', color: '#2563eb', bgColor: '#eff6ff', icon: Clock };
         }
-
         if (status === 'expired' || isExpired) {
-            return {
-                label: t('subscription_status_expired'),
-                color: '#dc2626',
-                bgColor: '#fef2f2',
-                icon: XCircle
-            };
+            return { label: t('subscription_status_expired'), color: '#dc2626', bgColor: '#fef2f2', icon: XCircle };
         }
-
-        if (isExpiring && status === 'active') { // Only show expiring warning if active
-            return {
-                label: t('subscription_status_expiring'),
-                color: '#f59e0b',
-                bgColor: '#fffbeb',
-                icon: AlertTriangle
-            };
+        if (isExpiring && status === 'active') {
+            return { label: t('subscription_status_expiring'), color: '#f59e0b', bgColor: '#fffbeb', icon: AlertTriangle };
         }
-
         if (status === 'active') {
-            return {
-                label: t('subscription_status_active'),
-                color: '#059669',
-                bgColor: '#f0fdf4',
-                icon: CheckCircle
-            };
+            return { label: t('subscription_status_active'), color: '#059669', bgColor: '#f0fdf4', icon: CheckCircle };
         }
-
-        return {
-            label: status || t('subscription_status_suspended'),
-            color: '#64748b',
-            bgColor: '#f8fafc',
-            icon: Clock
-        };
+        return { label: status || t('subscription_status_suspended'), color: '#64748b', bgColor: '#f8fafc', icon: Clock };
     };
 
     const statusConfig = getStatusConfig();
@@ -152,16 +156,10 @@ export default function Subscription() {
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
-        return date.toLocaleDateString('pt-PT', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric'
-        });
+        return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
     };
 
-    const formatCurrency = (amount) => {
-        return `${amount?.toLocaleString() || '0'} MT`;
-    };
+    const formatCurrency = (amount) => `${amount?.toLocaleString() || '0'} MT`;
 
     return (
         <div style={styles.pageContainer}>
@@ -176,38 +174,25 @@ export default function Subscription() {
             {/* Status Card */}
             <div style={styles.statusCard}>
                 <div style={styles.statusCardLeft}>
-                    <div style={{
-                        ...styles.statusIconContainer,
-                        backgroundColor: statusConfig.bgColor
-                    }}>
+                    <div style={{ ...styles.statusIconContainer, backgroundColor: statusConfig.bgColor }}>
                         <StatusIcon size={32} color={statusConfig.color} />
                     </div>
                     <div>
                         <p style={styles.statusLabel}>{t('status')}</p>
-                        <h2 style={{ ...styles.statusValue, color: statusConfig.color }}>
-                            {statusConfig.label}
-                        </h2>
+                        <h2 style={{ ...styles.statusValue, color: statusConfig.color }}>{statusConfig.label}</h2>
                     </div>
                 </div>
 
-                {/* Countdown */}
                 {!isPending && daysUntil !== null && daysUntil > 0 && (
                     <div style={styles.countdown}>
                         <div style={styles.countdownNumber}>{daysUntil}</div>
-                        <div style={styles.countdownLabel}>
-                            {t('subscription_days_remaining')}
-                        </div>
+                        <div style={styles.countdownLabel}>{t('subscription_days_remaining')}</div>
                     </div>
                 )}
-
                 {!isPending && isExpired && (
                     <div style={{ ...styles.countdown, backgroundColor: '#fef2f2', borderColor: '#dc2626' }}>
-                        <div style={{ ...styles.countdownNumber, color: '#dc2626' }}>
-                            {Math.abs(daysUntil)}
-                        </div>
-                        <div style={{ ...styles.countdownLabel, color: '#dc2626' }}>
-                            {t('subscription_days_expired')}
-                        </div>
+                        <div style={{ ...styles.countdownNumber, color: '#dc2626' }}>{Math.abs(daysUntil)}</div>
+                        <div style={{ ...styles.countdownLabel, color: '#dc2626' }}>{t('subscription_days_expired')}</div>
                     </div>
                 )}
             </div>
@@ -220,7 +205,6 @@ export default function Subscription() {
                         <CreditCard size={24} color="#3b82f6" />
                         <h3 style={styles.cardTitle}>{t('subscription_details_title')}</h3>
                     </div>
-
                     <div style={styles.cardBody}>
                         <div style={styles.detailRow}>
                             <span style={styles.detailLabel}>{t('subscription_plan')}</span>
@@ -228,9 +212,7 @@ export default function Subscription() {
                         </div>
                         <div style={styles.detailRow}>
                             <span style={styles.detailLabel}>{t('subscription_monthly_amount')}</span>
-                            <span style={{ ...styles.detailValue, fontWeight: '700', color: '#3b82f6' }}>
-                                {formatCurrency(systemPrice)}
-                            </span>
+                            <span style={{ ...styles.detailValue, fontWeight: '700', color: '#3b82f6' }}>{formatCurrency(systemPrice)}</span>
                         </div>
                         <div style={styles.detailRow}>
                             <span style={styles.detailLabel}>{t('subscription_currency')}</span>
@@ -245,26 +227,13 @@ export default function Subscription() {
                             <span style={styles.detailValue}>{formatDate(subscription?.currentPeriodEnd)}</span>
                         </div>
                     </div>
-
                     <div style={styles.cardFooter}>
                         {isPending ? (
-                            <div style={{
-                                width: '100%',
-                                padding: '12px',
-                                backgroundColor: '#eff6ff',
-                                borderRadius: '8px',
-                                textAlign: 'center',
-                                color: '#2563eb',
-                                fontWeight: '600',
-                                fontSize: '14px'
-                            }}>
+                            <div style={{ width: '100%', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', textAlign: 'center', color: '#2563eb', fontWeight: '600', fontSize: '14px' }}>
                                 {t('subscription_status_pending_desc') || 'Aguardando Aprovação do Administrador'}
                             </div>
                         ) : (
-                            <button
-                                style={isExpired ? styles.buttonPrimary : styles.buttonSecondary}
-                                onClick={() => setShowRenewModal(true)}
-                            >
+                            <button style={isExpired ? styles.buttonPrimary : styles.buttonSecondary} onClick={() => setShowRenewModal(true)}>
                                 <CreditCard size={18} />
                                 {isExpired ? t('subscription_renew_now') : t('subscription_renew')}
                             </button>
@@ -278,7 +247,6 @@ export default function Subscription() {
                         <TrendingUp size={24} color="#059669" />
                         <h3 style={styles.cardTitle}>{t('subscription_stats_title')}</h3>
                     </div>
-
                     <div style={styles.cardBody}>
                         <div style={styles.statItem}>
                             <div style={styles.statLabel}>{t('subscription_stats_total_payments')}</div>
@@ -287,18 +255,13 @@ export default function Subscription() {
                         <div style={styles.statItem}>
                             <div style={styles.statLabel}>{t('subscription_stats_total_paid')}</div>
                             <div style={styles.statValue}>
-                                {formatCurrency(
-                                    paymentHistory?.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0) || 0
-                                )}
+                                {formatCurrency(paymentHistory?.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0) || 0)}
                             </div>
                         </div>
                         <div style={styles.statItem}>
                             <div style={styles.statLabel}>{t('subscription_stats_last_payment')}</div>
                             <div style={styles.statValue}>
-                                {paymentHistory?.length > 0
-                                    ? formatDate(paymentHistory[paymentHistory.length - 1]?.date)
-                                    : 'N/A'
-                                }
+                                {paymentHistory?.length > 0 ? formatDate(paymentHistory[paymentHistory.length - 1]?.date) : 'N/A'}
                             </div>
                         </div>
                     </div>
@@ -311,7 +274,6 @@ export default function Subscription() {
                     <Calendar size={24} color="#8b5cf6" />
                     <h3 style={styles.cardTitle}>{t('subscription_payment_history')}</h3>
                 </div>
-
                 {paymentHistory?.length > 0 ? (
                     <div style={styles.tableContainer}>
                         <table style={styles.table}>
@@ -328,27 +290,12 @@ export default function Subscription() {
                                 {paymentHistory.map((payment, index) => (
                                     <tr key={index} style={styles.tableRow}>
                                         <td style={styles.tableCell}>{formatDate(payment.date)}</td>
+                                        <td style={styles.tableCell}><code style={styles.code}>{payment.reference || 'N/A'}</code></td>
+                                        <td style={styles.tableCell}><span style={styles.methodBadge}>{payment.method?.toUpperCase() || 'MANUAL'}</span></td>
+                                        <td style={styles.tableCell}><strong>{formatCurrency(payment.amount)}</strong></td>
                                         <td style={styles.tableCell}>
-                                            <code style={styles.code}>{payment.reference || 'N/A'}</code>
-                                        </td>
-                                        <td style={styles.tableCell}>
-                                            <span style={styles.methodBadge}>
-                                                {payment.method?.toUpperCase() || 'MANUAL'}
-                                            </span>
-                                        </td>
-                                        <td style={styles.tableCell}>
-                                            <strong>{formatCurrency(payment.amount)}</strong>
-                                        </td>
-                                        <td style={styles.tableCell}>
-                                            <span style={{
-                                                ...styles.statusBadge,
-                                                backgroundColor: payment.status === 'completed' ? '#f0fdf4' : (payment.status === 'pending' ? '#eff6ff' : '#fef2f2'),
-                                                color: payment.status === 'completed' ? '#059669' : (payment.status === 'pending' ? '#2563eb' : '#dc2626')
-                                            }}>
-                                                {payment.status === 'completed'
-                                                    ? t('subscription_payment_completed')
-                                                    : (payment.status === 'pending' ? 'Pendente' : t('subscription_payment_failed'))
-                                                }
+                                            <span style={{ ...styles.statusBadge, backgroundColor: payment.status === 'completed' ? '#f0fdf4' : (payment.status === 'pending' ? '#eff6ff' : '#fef2f2'), color: payment.status === 'completed' ? '#059669' : (payment.status === 'pending' ? '#2563eb' : '#dc2626') }}>
+                                                {payment.status === 'completed' ? t('subscription_payment_completed') : (payment.status === 'pending' ? 'Pendente' : t('subscription_payment_failed'))}
                                             </span>
                                         </td>
                                     </tr>
@@ -370,92 +317,101 @@ export default function Subscription() {
                     <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
                         {renewSuccess ? (
                             <div style={styles.successContent}>
-                                <div style={styles.successIcon}>
-                                    <Check size={48} color="#ffffff" />
-                                </div>
+                                <div style={styles.successIcon}><Check size={48} color="#ffffff" /></div>
                                 <h3 style={styles.successTitle}>{t('subscription_renew_requested_title') || 'Solicitação Enviada!'}</h3>
-                                <p style={styles.successText}>
-                                    {t('subscription_renew_requested_desc') || 'A sua renovação foi solicitada. Aguarde a confirmação do administrador.'}
-                                </p>
+                                <p style={styles.successText}>{t('subscription_renew_requested_desc') || 'A sua renovação foi solicitada. Aguarde a confirmação do administrador.'}</p>
                             </div>
                         ) : (
                             <>
                                 <h3 style={styles.modalTitle}>{t('subscription_renew')}</h3>
-                                <p style={styles.modalText}>
-                                    {t('subscription_renew_select_method') || 'Selecione o método de pagamento para renovar sua subscrição.'}
-                                </p>
+                                <p style={styles.modalText}>{t('subscription_renew_select_method') || 'Selecione a forma de pagamento e siga as instruções.'}</p>
 
                                 {/* Payment Method Selection */}
                                 <div style={{ marginBottom: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                     <div
                                         onClick={() => setSelectedMethod('mpesa')}
-                                        style={{
-                                            border: `2px solid ${selectedMethod === 'mpesa' ? '#ef4444' : '#e2e8f0'}`,
-                                            borderRadius: '12px',
-                                            padding: '16px',
-                                            cursor: 'pointer',
-                                            backgroundColor: selectedMethod === 'mpesa' ? '#fef2f2' : '#ffffff',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}
+                                        style={{ border: `2px solid ${selectedMethod === 'mpesa' ? '#ef4444' : '#e2e8f0'}`, borderRadius: '12px', padding: '16px', cursor: 'pointer', backgroundColor: selectedMethod === 'mpesa' ? '#fef2f2' : '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
                                     >
                                         <div style={{ fontWeight: '700', color: selectedMethod === 'mpesa' ? '#ef4444' : '#64748b' }}>M-Pesa</div>
-                                        <div style={{ fontSize: '12px', color: '#64748b' }}>84/85 xxx xxxx</div>
+                                        <div style={{ fontSize: '12px', color: '#64748b' }}>*150#</div>
                                     </div>
-
                                     <div
-                                        onClick={() => setSelectedMethod('visa')}
-                                        style={{
-                                            border: `2px solid ${selectedMethod === 'visa' ? '#2563eb' : '#e2e8f0'}`,
-                                            borderRadius: '12px',
-                                            padding: '16px',
-                                            cursor: 'pointer',
-                                            backgroundColor: selectedMethod === 'visa' ? '#eff6ff' : '#ffffff',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}
+                                        onClick={() => setSelectedMethod('bci')}
+                                        style={{ border: `2px solid ${selectedMethod === 'bci' ? '#2563eb' : '#e2e8f0'}`, borderRadius: '12px', padding: '16px', cursor: 'pointer', backgroundColor: selectedMethod === 'bci' ? '#eff6ff' : '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
                                     >
-                                        <div style={{ fontWeight: '700', color: selectedMethod === 'visa' ? '#2563eb' : '#64748b' }}>VISA / BCI</div>
-                                        <div style={{ fontSize: '12px', color: '#64748b' }}>Cartão de Crédito/Débito</div>
+                                        <div style={{ fontWeight: '700', color: selectedMethod === 'bci' ? '#2563eb' : '#64748b' }}>VISA / Transferência</div>
+                                        <div style={{ fontSize: '12px', color: '#64748b' }}>BCI</div>
                                     </div>
                                 </div>
 
-                                <div style={styles.renewalDetails}>
-                                    <div style={styles.renewalRow}>
-                                        <span>{t('subscription_amount_label')}:</span>
-                                        <strong>{formatCurrency(systemPrice)}</strong>
-                                    </div>
-                                    <div style={styles.renewalRow}>
-                                        <span>{t('subscription_period_label')}:</span>
-                                        <strong>{t('subscription_period_30_days')}</strong>
+                                {/* Dynamic Instructions */}
+                                <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '24px', border: '1px solid #e2e8f0' }}>
+                                    {selectedMethod === 'mpesa' ? (
+                                        <div style={{ fontSize: '14px', color: '#334155' }}>
+                                            <h4 style={{ fontWeight: '600', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={16} /> Siga os passos no seu telemóvel:</h4>
+                                            <ol style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <li>Digite <strong>*150#</strong></li>
+                                                <li>Escolha a opção <strong>6 - Pagamentos</strong></li>
+                                                <li>Escolha a opção <strong>7 - Digitar código do serviço</strong></li>
+                                                <li>Insira o Código de Serviço: <strong>901811</strong></li>
+                                                <li>Insira a referência (opcional)</li>
+                                                <li>Insira o valor: <strong>{formatCurrency(systemPrice)}</strong></li>
+                                                <li>Insira o seu <strong>PIN</strong> e confirme</li>
+                                            </ol>
+                                        </div>
+                                    ) : (
+                                        <div style={{ fontSize: '14px', color: '#334155' }}>
+                                            <h4 style={{ fontWeight: '600', marginBottom: '8px' }}>Dados Bancários (BCI):</h4>
+                                            <div style={{ display: 'grid', gap: '6px' }}>
+                                                <div><strong>Titular:</strong> NHIQUELA SERVICOS & CONSULTORIA</div>
+                                                <div><strong>Conta:</strong> 26266610710001</div>
+                                                <div><strong>NIB:</strong> 000800006266610710113</div>
+                                                <div><strong>IBAN:</strong> MZ59000800006266610710113</div>
+                                                <div><strong>Valor:</strong> {formatCurrency(systemPrice)}</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Proof Upload */}
+                                <div style={{ marginBottom: '24px' }}>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>
+                                        {t('subscription_upload_proof_label') || 'Comprovativo de Pagamento (Obrigatório)'}
+                                    </label>
+                                    <div style={{ border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#ffffff', transition: 'border-color 0.2s' }}
+                                        onClick={() => document.getElementById('proof-upload').click()}
+                                    >
+                                        <input
+                                            id="proof-upload"
+                                            type="file"
+                                            accept="image/*,application/pdf"
+                                            onChange={handleFileChange}
+                                            style={{ display: 'none' }}
+                                        />
+                                        {proofFile ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#059669' }}>
+                                                <CheckCircle size={20} />
+                                                <span style={{ fontWeight: '500' }}>{proofFile.name}</span>
+                                            </div>
+                                        ) : (
+                                            <div style={{ color: '#64748b' }}>
+                                                <div style={{ marginBottom: '8px' }}>📂</div>
+                                                <span>{t('subscription_click_to_upload') || 'Clique para anexar PDF ou Imagem'}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div style={styles.modalActions}>
-                                    <button
-                                        style={styles.buttonCancel}
-                                        onClick={() => setShowRenewModal(false)}
-                                        disabled={renewLoading}
-                                    >
+                                    <button style={styles.buttonCancel} onClick={() => setShowRenewModal(false)} disabled={renewLoading}>
                                         {t('cancel')}
                                     </button>
                                     <button
-                                        style={styles.buttonConfirm}
+                                        style={{ ...styles.buttonConfirm, opacity: (!proofFile || renewLoading) ? 0.5 : 1, cursor: (!proofFile || renewLoading) ? 'not-allowed' : 'pointer' }}
                                         onClick={handleRenew}
-                                        disabled={renewLoading}
+                                        disabled={!proofFile || renewLoading}
                                     >
-                                        {renewLoading ? (
-                                            <LoadingSpinner size={18} color="#ffffff" />
-                                        ) : (
-                                            <>
-                                                <Check size={18} />
-                                                {t('subscription_confirm_renewal')}
-                                            </>
-                                        )}
+                                        {renewLoading ? <LoadingSpinner size={18} color="#ffffff" /> : <><Check size={18} /> {t('subscription_confirm_renewal')}</>}
                                     </button>
                                 </div>
                             </>

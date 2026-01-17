@@ -4,6 +4,7 @@ import isAdmin from '../middleware/isAdmin.js';
 import {
     getSubscription,
     createTransaction,
+    uploadProof, // Added
     getTransactions,
     reviewTransaction,
     getAllSubscriptions,
@@ -38,7 +39,6 @@ router.get('/:restaurantId/history', getTransactions);
 
 // Payment routes
 router.post('/pay', createTransaction);
-router.get('/transactions/list', getTransactions);
-router.patch('/transactions/:id/review', reviewTransaction);
+router.post('/proof', (await import('../middleware/uploadDocument.js')).default.single('proof'), uploadProof);
 
 export default router;

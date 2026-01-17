@@ -61,7 +61,7 @@ export default function DashboardLayout() {
     // Blocking Logic
     const isSubscriptionPage = location.pathname.includes('/subscription');
     // Allow System Admin to bypass
-    const isSystemAdmin = user?.role?.isSystem === true;
+    const isSystemAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
 
     // Determine user type for the blocker screen
     const userType = (user?.role?.name === 'Owner' || user?.role?.isOwner) ? 'owner' : 'staff';
@@ -225,7 +225,7 @@ export default function DashboardLayout() {
             items: [
                 { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') },
                 { icon: CreditCard, label: t('subscription_management') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.isSystem },
-                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
+                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: (user?.role?.name === 'Owner' || user?.role?.name === 'Manager' || user?.role?.isSystem) && !['Waiter', 'Kitchen', 'Delivery'].includes(user?.role?.name) },
             ]
         }
     ];
@@ -305,10 +305,32 @@ export default function DashboardLayout() {
                         fontSize: '14px',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '6px'
+                        gap: '6px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}>
                         <CreditCardIcon size={16} />
                         {t('subscription_renew_now')}
+                    </Link>
+
+                    <Link to="/select-restaurant" style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: 'white',
+                        padding: '6px 16px',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        fontWeight: '500',
+                        fontSize: '14px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        transition: 'all 0.2s ease'
+                    }}
+                        onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+                        onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
+                    >
+                        <LayoutGrid size={16} />
+                        {t('back_to_restaurants')}
                     </Link>
                 </div>
             )}

@@ -56,10 +56,53 @@ export const getSubscription = async (req, res) => {
     }
 };
 
+// Upload Proof
+export const uploadProof = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const uploadService = (await import('../services/uploadService.js')).default;
+        const streamifier = (await import('streamifier')).default;
+
+        const streamUpload = (req) => {
+            return new Promise((resolve, reject) => {
+                const stream = uploadService.cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'subscription-proofs',
+                        resource_type: 'auto' // Auto detect (important for PDF)
+                    },
+                    (error, result) => {
+                        if (result) {
+                            resolve(result);
+                        } else {
+                            reject(error);
+                        }
+                    }
+                );
+                streamifier.createReadStream(req.file.buffer).pipe(stream);
+            });
+        };
+
+        const result = await streamUpload(req);
+
+        res.json({
+            success: true,
+            url: result.secure_url,
+            publicId: result.public_id,
+            format: result.format
+        });
+    } catch (error) {
+        console.error('Upload proof error:', error);
+        res.status(500).json({ error: 'Failed to upload proof' });
+    }
+};
+
 // Create payment transaction
 export const createTransaction = async (req, res) => {
     try {
-        const { amount, method, reference } = req.body;
+        const { amount, method, reference, proofUrl } = req.body;
         const restaurantId = req.user.restaurant;
         const userId = req.user.userId;
 
@@ -69,19 +112,31 @@ export const createTransaction = async (req, res) => {
             return res.status(404).json({ error: 'Subscription not found' });
         }
 
+        // Validate proof for non-automatic methods (if any) or just enforce if method requires it
+        if ((method === 'mpesa' || method === 'bci' || method === 'visa') && !proofUrl) {
+            // Maybe optional for some, but requirement says "Upload de comprovativo (Obrigatório)"
+            if (!proofUrl) {
+                return res.status(400).json({ error: 'Payment proof is required' });
+            }
+        }
+
         const transaction = await SubscriptionTransaction.create({
             restaurant: restaurantId,
             subscription: subscription._id,
             amount: amount || 15000,
             method,
             reference,
+            proofUrl,
             requestedBy: userId,
             status: 'pending'
         });
 
-        // Update subscription status to pending_activation
-        subscription.status = 'pending_activation';
-        await subscription.save();
+        // Update subscription status to pending_activation ONLY if currently expired
+        // If it's active, keep it active so the user isn't blocked while waiting for approval
+        if (subscription.status === 'expired' || !subscription.isValid()) {
+            subscription.status = 'pending_activation';
+            await subscription.save();
+        }
 
         // Emit real-time notification to all connected sockets
         // Admins will filter this on the frontend
@@ -104,19 +159,26 @@ export const createTransaction = async (req, res) => {
 };
 
 // Get transactions (History or Pending)
+// Get transactions (History or Pending)
 export const getTransactions = async (req, res) => {
     try {
-        const { restaurantId } = req.query;
-        const { status } = req.query;
-
+        const { restaurantId, status } = req.query;
         let query = {};
 
-        if (req.user.role?.isSystem || req.user.role?.name === 'System Admin') {
-            // Admin can see everything, or filter by restaurantId if provided
+        // Security: Strictly enforce scoping
+        if (req.user.role?.isSystem) {
+            // System Admins can see all or specific restaurant
             if (restaurantId) query.restaurant = restaurantId;
-        } else if (req.user.restaurant) {
-            // Normal user restricted to their restaurant
-            query.restaurant = req.user.restaurant;
+        } else {
+            // Owners/Managers MUST have a restaurant context
+            const activeRestaurantId = req.user.restaurant || restaurantId;
+
+            if (!activeRestaurantId) {
+                return res.status(403).json({ error: 'Restaurant context required' });
+            }
+
+            // If providing restaurantId in query, verify it matches user's context (unless it's a multi-res user, but here we expect the active context)
+            query.restaurant = activeRestaurantId;
         }
 
         if (status) {
@@ -163,12 +225,19 @@ export const reviewTransaction = async (req, res) => {
             // Update Subscription
             const subscription = await Subscription.findById(transaction.subscription);
             if (subscription) {
-                // Add 30 days to current end date OR now if expired
-                let newEnd = new Date(subscription.currentPeriodEnd);
-                if (newEnd < new Date()) {
-                    newEnd = new Date();
+                // Add 30 days to current end date OR now if already expired
+                // This implements cumulative renewal (summing days)
+                let currentEnd = new Date(subscription.currentPeriodEnd);
+                let now = new Date();
+
+                let newEnd;
+                if (currentEnd > now) {
+                    // Cumulative: Add 30 days to the existing future date
+                    newEnd = new Date(currentEnd.getTime() + (30 * 24 * 60 * 60 * 1000));
+                } else {
+                    // Expired: New 30 days starting from now
+                    newEnd = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
                 }
-                newEnd.setDate(newEnd.getDate() + 30);
 
                 subscription.currentPeriodEnd = newEnd;
                 subscription.status = 'active';
@@ -536,21 +605,19 @@ export const getGlobalSubscriptionStatus = async (req, res) => {
     try {
         const userId = req.params.userId || req.user.id;
 
-        // Find user and populate their restaurants
-        const user = await User.findById(userId).populate('restaurants');
+        // Find user
+        const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // If user has no restaurants or only one, return single subscription
-        let userRestaurants = user.restaurants || [];
+        // Fetch user's restaurants (ForeignKey relationship)
+        // Dynamic import to avoid circular dependency if any, though regular import is preferred if clean.
+        // We use the existing import at the top if available, or dynamic if needed. 
+        // Restaurant is already imported at the top of file? Yes: import Restaurant from '../models/Restaurant.js';
 
-        // If user has no populated restaurants, try finding them by owner ID explicitly
-        if (userRestaurants.length === 0) {
-            const Restaurant = (await import('../models/Restaurant.js')).default;
-            userRestaurants = await Restaurant.find({ owner: userId });
-        }
+        const userRestaurants = await Restaurant.find({ owner: userId });
 
         if (userRestaurants.length === 0) {
             return res.status(404).json({ error: 'No restaurants found for user' });
@@ -592,7 +659,7 @@ export const getGlobalSubscriptionStatus = async (req, res) => {
         res.json({
             globalStatus,
             isSingleRestaurant: false,
-            totalRestaurants: user.restaurants.length,
+            totalRestaurants: userRestaurants.length,
             criticalSubscription: criticalSubscription ? {
                 ...criticalSubscription.toObject(),
                 restaurant: criticalSubscription.restaurant

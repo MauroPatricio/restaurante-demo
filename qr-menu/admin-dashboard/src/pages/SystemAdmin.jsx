@@ -109,6 +109,13 @@ export default function SystemAdmin() {
                                             <span className={`status-badge ${tx.status}`}>
                                                 {tx.status}
                                             </span>
+                                            {tx.proofUrl && (
+                                                <div style={{ marginTop: '4px' }}>
+                                                    <a href={tx.proofUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'underline' }}>
+                                                        View Proof
+                                                    </a>
+                                                </div>
+                                            )}
                                         </td>
                                         <td>
                                             {tx.status === 'pending' && (

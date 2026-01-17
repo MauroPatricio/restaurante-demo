@@ -169,7 +169,14 @@ export const subscriptionAPI = {
     get: (restaurantId) => api.get(`/subscriptions/${restaurantId}`),
     getHistory: (restaurantId) => api.get(`/subscriptions/${restaurantId}/history`),
     createPayment: (data) => api.post('/subscriptions/pay', data),
-    renew: (data) => api.post('/payments/renew-subscription', data)
+    renew: (data) => api.post('/subscriptions/pay', data), // Corrected endpoint for renewal to match backend
+    uploadProof: async (file) => {
+        const formData = new FormData();
+        formData.append('proof', file);
+        return api.post('/subscriptions/proof', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    }
 };
 
 // Delivery API
