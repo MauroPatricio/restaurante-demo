@@ -206,3 +206,84 @@ export const getTableSessionHistory = async (req, res) => {
         res.status(500).json({ message: 'Failed to get session history' });
     }
 };
+
+/**
+ * PATCH /api/tables/:id/status
+ * Update table status with audit logging
+ * Accessible by waiter, manager, and owner roles
+ */
+export const updateTableStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, reason } = req.body;
+        const userId = req.user?.userId || req.user?._id;
+
+        // Validate status
+        const validStatuses = ['free', 'occupied', 'reserved', 'cleaning', 'closed'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                error: 'Invalid status',
+                message: `Status must be one of: ${validStatuses.join(', ')}`
+            });
+        }
+
+        const table = await Table.findById(id);
+        if (!table) {
+            return res.status(404).json({ error: 'Table not found' });
+        }
+
+        const previousStatus = table.status;
+
+        // Don't update if status is the same
+        if (previousStatus === status) {
+            return res.json({
+                message: 'Table status unchanged',
+                table
+            });
+        }
+
+        // Update table status
+        table.status = status;
+        table.lastStatusChange = new Date();
+        table.statusChangedBy = userId;
+
+        // Add to audit history
+        if (!table.statusHistory) table.statusHistory = [];
+        table.statusHistory.push({
+            status,
+            previousStatus,
+            changedBy: userId,
+            reason: reason || `Status changed to ${status}`,
+            timestamp: new Date()
+        });
+
+        await table.save();
+
+        // Emit real-time update via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`restaurant:${table.restaurant}`).emit('table:status-updated', {
+                tableId: table._id,
+                tableNumber: table.number,
+                status,
+                previousStatus,
+                changedBy: userId,
+                timestamp: new Date()
+            });
+        }
+
+        res.json({
+            message: 'Table status updated successfully',
+            table: {
+                _id: table._id,
+                number: table.number,
+                status: table.status,
+                previousStatus,
+                lastStatusChange: table.lastStatusChange
+            }
+        });
+    } catch (error) {
+        console.error('Update table status error:', error);
+        res.status(500).json({ error: 'Failed to update table status' });
+    }
+};

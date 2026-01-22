@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { orderAPI } from '../services/api';
 import { format } from 'date-fns';
-import { Eye, RefreshCw } from 'lucide-react';
+import { Eye, RefreshCw, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ReceiptModal from '../components/ReceiptModal';
 
 export default function Orders() {
     const { t } = useTranslation();
@@ -51,6 +52,8 @@ export default function Orders() {
         completed: 'green',
         cancelled: 'red'
     };
+
+    const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState(null);
 
     return (
         <div className="orders-page">
@@ -126,16 +129,24 @@ export default function Orders() {
                                     <td className="font-semibold">{order.total} MT</td>
                                     <td>
                                         <span className={`status-badge ${order.paymentStatus}`}>
-                                            {order.paymentStatus}
+                                            {t(`payment_status_${order.paymentStatus}`) || order.paymentStatus}
                                         </span>
                                     </td>
                                     <td>
                                         <span className={`status-badge ${statusColors[order.status]}`}>
-                                            {order.status}
+                                            {t(`status_${order.status}`) || order.status}
                                         </span>
                                     </td>
                                     <td>
                                         <div className="action-buttons">
+                                            <button
+                                                onClick={() => setSelectedOrderForReceipt(order)}
+                                                className="btn-small"
+                                                style={{ marginRight: '8px', background: '#f1f5f9', color: '#475569', border: 'none' }}
+                                                title={t('issue_receipt') || "Emitir Recibo"}
+                                            >
+                                                <Printer size={16} />
+                                            </button>
                                             {order.status === 'pending' && (
                                                 <>
                                                     <button
@@ -199,6 +210,13 @@ export default function Orders() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {selectedOrderForReceipt && (
+                <ReceiptModal
+                    order={selectedOrderForReceipt}
+                    onClose={() => setSelectedOrderForReceipt(null)}
+                />
             )}
         </div>
     );

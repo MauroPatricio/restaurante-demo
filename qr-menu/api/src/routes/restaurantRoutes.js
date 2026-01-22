@@ -148,4 +148,41 @@ router.patch('/:id/toggle-active', authenticateToken, async (req, res) => {
     }
 });
 
+// Update restaurant settings (Owner only)
+router.patch('/:id/settings', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        const userId = req.user._id;
+
+        const restaurant = await Restaurant.findById(id);
+        if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+
+        if (restaurant.owner.toString() !== userId.toString()) {
+            // ideally check role too but owner check is safer for now
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Merge settings
+        if (updates.settings) {
+            restaurant.settings = {
+                ...restaurant.settings,
+                ...updates.settings // Shallow merge of top-level settings keys
+            };
+
+            // Special handling for nested objects if needed, but for isMaintenance it is top level of settings
+            if (updates.settings.operatingHours) {
+                restaurant.settings.operatingHours = { ...restaurant.settings.operatingHours, ...updates.settings.operatingHours };
+            }
+        }
+
+        await restaurant.save();
+        res.json({ message: 'Settings updated', settings: restaurant.settings });
+
+    } catch (error) {
+        console.error('Update Settings Error:', error);
+        res.status(500).json({ error: 'Failed to update settings' });
+    }
+});
+
 export default router;

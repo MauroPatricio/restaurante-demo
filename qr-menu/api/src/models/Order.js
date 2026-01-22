@@ -109,6 +109,11 @@ const OrderSchema = new mongoose.Schema({
     status: String,
     timestamp: { type: Date, default: Date.now },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  }],
+  receiptHistory: [{
+    issuedAt: { type: Date, default: Date.now },
+    issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    type: { type: String, enum: ['print', 'email', 'download', 'whatsapp'] }
   }]
 }, { timestamps: true });
 

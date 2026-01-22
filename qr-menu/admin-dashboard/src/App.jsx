@@ -37,6 +37,7 @@ import ChangePassword from './pages/ChangePassword';
 import AdminHub from './pages/AdminHub';
 import Categories from './pages/Categories';
 import Subcategories from './pages/Subcategories';
+import AssistedOrder from './pages/waiter/AssistedOrder';
 import PremiumFeatureGate from './components/PremiumFeatureGate';
 
 import DashboardRedirect from './components/DashboardRedirect';
@@ -157,6 +158,12 @@ function AppContent() {
             </PremiumFeatureGate>
           } />
         </Route>
+
+        <Route path="/dashboard/waiter/order/:tableId" element={
+          <ProtectedRoute>
+            <AssistedOrder />
+          </ProtectedRoute>
+        } />
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

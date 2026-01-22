@@ -6,5 +6,6 @@ export const analyticsAPI = {
     getFinancialReport: (restaurantId, params) => api.get(`/analytics/${restaurantId}/financial`, { params }),
     getSalesReport: (restaurantId, params) => api.get(`/analytics/${restaurantId}/sales`, { params }),
     getOperationalReport: (restaurantId, params) => api.get(`/analytics/${restaurantId}/operational`, { params }),
-    getInventoryReport: (restaurantId, params) => api.get(`/analytics/${restaurantId}/inventory`, { params })
+    getInventoryReport: (restaurantId, params) => api.get(`/analytics/${restaurantId}/inventory`, { params }),
+    clearOwnerStats: () => api.post('/analytics/owner/clear-stats', {}, { background: true })
 };

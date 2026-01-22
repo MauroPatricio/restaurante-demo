@@ -76,6 +76,47 @@ export const getOwnerStats = async (req, res) => {
     }
 };
 
+export const clearOwnerStats = async (req, res) => {
+    try {
+        const ownerId = req.user._id;
+
+        // 1. Get all restaurants owned by user
+        const restaurants = await Restaurant.find({ owner: ownerId }).select('_id');
+        const restaurantIds = restaurants.map(r => r._id);
+
+        if (restaurantIds.length === 0) {
+            return res.status(404).json({ message: 'No restaurants found for this owner' });
+        }
+
+        // 2. Delete all Orders
+        await Order.deleteMany({ restaurant: { $in: restaurantIds } });
+
+        // 3. Reset Tables (Free them and clear sessions)
+        await Table.updateMany(
+            { restaurant: { $in: restaurantIds } },
+            {
+                $set: {
+                    status: 'free',
+                    currentSessionId: null,
+                    occupiedAt: null
+                }
+            }
+        );
+
+        // 4. Delete Table Sessions
+        await TableSession.deleteMany({ restaurant: { $in: restaurantIds } });
+
+        // 5. Delete Waiter Calls (Optional but good for clean slate)
+        await WaiterCall.deleteMany({ restaurant: { $in: restaurantIds } });
+
+        res.json({ message: 'Financial data and operational state cleared successfully' });
+
+    } catch (error) {
+        console.error('Clear stats error:', error);
+        res.status(500).json({ error: 'Failed to clear stats' });
+    }
+};
+
 export const getRestaurantStats = async (req, res) => {
     try {
         const { id } = req.params;
@@ -522,9 +563,93 @@ export const getOperationalReport = async (req, res) => {
             { $sort: { orders: -1 } }
         ]);
 
+        // --- NEW: Prep Time Analytics ---
+
+        // 1. Avg Prep Time (Global for period)
+        const prepTimeStats = await Order.aggregate([
+            {
+                $match: {
+                    ...query,
+                    status: { $in: ['ready', 'completed'] },
+                    // Use actualReadyTime if possible, otherwise rely on updatedAt or skip
+                    // For now, assuming actualReadyTime is being set as per routes update
+                    actualReadyTime: { $exists: true }
+                }
+            },
+            {
+                $project: {
+                    prepTimeMinutes: {
+                        $divide: [
+                            { $subtract: ["$actualReadyTime", "$createdAt"] },
+                            60000 // ms to min
+                        ]
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgPrepTime: { $avg: "$prepTimeMinutes" }
+                }
+            }
+        ]);
+
+        const avgPrepTime = prepTimeStats[0] ? Math.round(prepTimeStats[0].avgPrepTime) : 0;
+
+        // 2. Slowest Items (Items that appear in orders with longest prep times)
+        // Note: This is an approximation. We correlate item presence with order duration.
+        const slowestItems = await Order.aggregate([
+            {
+                $match: {
+                    ...query,
+                    status: { $in: ['ready', 'completed'] },
+                    actualReadyTime: { $exists: true }
+                }
+            },
+            { $unwind: "$items" },
+            {
+                $project: {
+                    item: "$items.item",
+                    prepTimeMinutes: {
+                        $divide: [
+                            { $subtract: ["$actualReadyTime", "$createdAt"] },
+                            60000
+                        ]
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$item",
+                    avgItemPrepTime: { $avg: "$prepTimeMinutes" },
+                    orderCount: { $count: {} } // How many times this item was involved
+                }
+            },
+            { $sort: { avgItemPrepTime: -1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: "menuitems",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "details"
+                }
+            },
+            { $unwind: "$details" },
+            {
+                $project: {
+                    name: "$details.name",
+                    avgPrepTime: { $round: ["$avgItemPrepTime", 0] },
+                    orderCount: 1
+                }
+            }
+        ]);
+
         res.json({
             shifts,
-            busiestDays
+            busiestDays,
+            avgPrepTime,
+            slowestItems
         });
 
     } catch (error) {
@@ -576,13 +701,28 @@ export const getCustomerAnalytics = async (req, res) => {
         const basicStats = await Order.aggregate([
             { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' } } },
             {
+                $lookup: {
+                    from: "tables",
+                    localField: "table",
+                    foreignField: "_id",
+                    as: "tableInfo"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$tableInfo",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
                 $group: {
                     _id: "$phone",
                     name: { $first: "$customerName" },
                     totalSpent: { $sum: "$total" },
                     orderCount: { $count: {} },
                     lastVisit: { $max: "$createdAt" },
-                    firstVisit: { $min: "$createdAt" }
+                    firstVisit: { $min: "$createdAt" },
+                    tables: { $addToSet: "$tableInfo.number" }
                 }
             },
             { $sort: { totalSpent: -1 } }

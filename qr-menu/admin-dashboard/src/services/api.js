@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { loadingManager } from '../utils/loadingManager';
+import { loadingManager, LOADING_TYPES } from '../utils/loadingManager';
 
 // Determine API URL based on environment
 let base;
@@ -37,7 +37,9 @@ api.healthCheck = () => axios.get(`${API_URL.replace('/api', '')}/health`);
 
 api.interceptors.request.use(
     (config) => {
-        loadingManager.start();
+        const type = config.background ? LOADING_TYPES.BACKGROUND : LOADING_TYPES.FULL;
+        loadingManager.start(type);
+
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -45,7 +47,21 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        loadingManager.stop();
+        // Default to full, or try to infer from config if possible (though config might not be available)
+        loadingManager.stop(LOADING_TYPES.FULL);
+        // Also stop background just in case, or we need a way to know which one failed. 
+        // Ideally we should know, but for error case let's try to stop current active one if we could track it.
+        // For now, let's play safe and reset or stop the most likely.
+        // Actually, loadingManager.stop() handles counters. If we don't know the type, it might be tricky.
+        // But the error usually comes from a request that *started*.
+        // If we can't determine, maybe we should stop both to be safe? 
+        // Or better: check error.config.
+        if (error.config) {
+            const type = error.config.background ? LOADING_TYPES.BACKGROUND : LOADING_TYPES.FULL;
+            loadingManager.stop(type);
+        } else {
+            loadingManager.stop(); // Default full
+        }
         return Promise.reject(error);
     }
 );
@@ -53,21 +69,25 @@ api.interceptors.request.use(
 // Response interceptor to handle errors
 api.interceptors.response.use(
     (response) => {
-        loadingManager.stop();
+        const type = response.config.background ? LOADING_TYPES.BACKGROUND : LOADING_TYPES.FULL;
+        loadingManager.stop(type);
         return response;
     },
     async (error) => {
         const { config, response } = error;
 
+        const type = config && config.background ? LOADING_TYPES.BACKGROUND : LOADING_TYPES.FULL;
+
         // Timeout handling or Network Error - Retry GET requests once
         if ((error.code === 'ECONNABORTED' || error.message.includes('timeout') || !response) && config && config.method === 'get' && !config._retry) {
             config._retry = true;
+            loadingManager.stop(type); // Stop previous
             await new Promise(resolve => setTimeout(resolve, 1000));
-            loadingManager.start(); // Restart loading for the retry effort
+            loadingManager.start(type); // Restart loading (with same type) for the retry effort
             return api(config);
         }
 
-        loadingManager.stop();
+        loadingManager.stop(type);
         if (error.response?.status === 401) {
             // Token expired or invalid
             localStorage.removeItem('token');
@@ -113,7 +133,8 @@ export const restaurantAPI = {
         }
         return api.patch(`/restaurants/${id}`, data, config);
     },
-    toggleActive: (id) => api.patch(`/restaurants/${id}/toggle-active`)
+    updateSettings: (id, settings) => api.patch(`/restaurants/${id}/settings`, { settings }),
+    toggleActive: (id) => api.patch(`/restaurants/${id}/toggle-active`, {}, { background: true })
 };
 
 // Menu API
@@ -131,7 +152,7 @@ export const menuAPI = {
 
 // Table API
 export const tableAPI = {
-    getAll: (restaurantId) => api.get(`/tables/restaurant/${restaurantId}`),
+    getAll: (restaurantId, config = {}) => api.get(`/tables/restaurant/${restaurantId}`, config),
     get: (id) => api.get(`/tables/${id}`),
     create: (data) => api.post('/tables', data),
     update: (id, data) => api.patch(`/tables/${id}`, data),
@@ -139,14 +160,18 @@ export const tableAPI = {
     // Table Session Management
     getCurrentSession: (id) => api.get(`/tables/${id}/current-session`),
     freeTable: (id) => api.post(`/tables/${id}/free`),
-    getSessionHistory: (id, params) => api.get(`/tables/${id}/session-history`, { params })
+    getSessionHistory: (id, params) => api.get(`/tables/${id}/session-history`, { params }),
+    // Table Order History & Status
+    getOrders: (tableId, params = {}) => api.get(`/tables/${tableId}/orders`, { params }),
+    updateStatus: (tableId, status, reason = '') => api.patch(`/tables/${tableId}/status`, { status, reason })
 };
 
 // Order API
 export const orderAPI = {
-    getAll: (restaurantId, params) => api.get(`/orders/restaurant/${restaurantId}`, { params }),
+    getAll: (restaurantId, params, config = {}) => api.get(`/orders/restaurant/${restaurantId}`, { params, ...config }),
     get: (id) => api.get(`/orders/${id}`),
-    updateStatus: (id, status, paymentStatus) => api.patch(`/orders/${id}`, { status, paymentStatus })
+    create: (data) => api.post('/orders', data),
+    updateStatus: (id, status, paymentStatus, config = {}) => api.patch(`/orders/${id}`, { status, paymentStatus }, config)
 };
 
 // Coupon API
@@ -218,7 +243,9 @@ export const analyticsAPI = {
     getInventory: (restaurantId) => api.get(`/analytics/${restaurantId}/inventory`),
     getCustomers: (restaurantId, params) => api.get(`/analytics/${restaurantId}/customers`, { params }),
     getHall: (restaurantId, params) => api.get(`/analytics/${restaurantId}/hall`, { params }),
-    getTableHistory: (restaurantId, tableId) => api.get(`/analytics/${restaurantId}/hall/${tableId}/history`)
+    getTableHistory: (restaurantId, tableId) => api.get(`/analytics/${restaurantId}/hall/${tableId}/history`),
+    generateReceipt: (orderId, data) => api.post(`/analytics/orders/${orderId}/receipt`, data),
+    clearOwnerStats: () => api.post('/analytics/owner/clear-stats')
 };
 
 // Category API
@@ -255,7 +282,8 @@ export const uploadAPI = {
         formData.append('image', file);
 
         return api.post('/menu-items/upload-image', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': 'multipart/form-data' },
+            background: true
         });
     }
 };
@@ -269,7 +297,7 @@ export const waiterCallAPI = {
     getActive: (restaurantId, waiterId = null) => api.get('/waiter-calls/active', {
         params: { restaurantId, waiterId }
     }),
-    resolve: (id) => api.post(`/waiter-calls/${id}/resolve`),
+    resolve: (id) => api.post(`/waiter-calls/${id}/resolve`, {}, { background: true }),
     acknowledge: (id) => api.post(`/waiter-calls/${id}/acknowledge`)
 };
 

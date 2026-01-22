@@ -6,6 +6,7 @@ import Menu from './pages/Menu';
 import Cart from './pages/Cart';
 import OrderStatus from './pages/OrderStatus';
 import OrderHistory from './pages/OrderHistory';
+import Maintenance from './pages/Maintenance';
 import { NotificationProvider } from './context/NotificationContext';
 import { LoadingProvider } from './context/LoadingContext';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -57,7 +58,10 @@ function QRRedirect() {
                     return;
                 }
 
-                const data = await response.json();
+                if (data.isMaintenance) {
+                    navigate('/maintenance');
+                    return;
+                }
 
                 if (data.valid) {
                     // Store validation data in sessionStorage for the menu
@@ -161,6 +165,11 @@ function CodeEntry() {
 
             if (!response.ok) {
                 throw new Error(data.message || 'Código inválido');
+            }
+
+            if (data.isMaintenance) {
+                navigate('/maintenance');
+                return;
             }
 
             if (data.valid) {
@@ -268,6 +277,7 @@ function App() {
                                 <Route path="/menu/:restaurantId/cart" element={<Cart />} />
                                 <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
                                 <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
+                                <Route path="/maintenance" element={<Maintenance />} />
                                 <Route path="/" element={<CodeEntry />} />
                             </Routes>
                         </div>

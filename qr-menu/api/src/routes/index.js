@@ -37,9 +37,11 @@ import clientReactionRoutes from './clientReactionRoutes.js';
 import {
   getTableCurrentSession,
   freeTable,
-  getTableSessionHistory
+  getTableSessionHistory,
+  updateTableStatus
 } from '../controllers/tableStateController.js';
 import { validateAndOccupyTable, canFreeTable } from '../middleware/tableValidation.js';
+import { getTableOrders, createStaffOrder } from '../controllers/orderController.js';
 
 const router = express.Router();
 
@@ -67,6 +69,8 @@ router.use('/client-reactions', clientReactionRoutes);
 router.get('/tables/:id/current-session', authenticateToken, getTableCurrentSession);
 router.post('/tables/:id/free', authenticateToken, canFreeTable, freeTable);
 router.get('/tables/:id/session-history', authenticateToken, authorizeRoles(['manager', 'waiter', 'owner']), getTableSessionHistory);
+router.patch('/tables/:id/status', authenticateToken, authorizeRoles('waiter', 'manager', 'owner'), updateTableStatus);
+router.get('/tables/:tableId/orders', authenticateToken, getTableOrders);
 
 // ...
 
@@ -411,201 +415,12 @@ router.get('/menu/:restaurantId/categories', async (req, res) => {
 
 // ============ ORDER ROUTES ============
 
+// Import
+// Import moved to top
+
+
 // Create order
-router.post('/orders', checkSubscription, validateAndOccupyTable, async (req, res) => {
-  try {
-    const {
-      restaurant,
-      table,
-      items,
-      phone,
-      customerName,
-      email,
-      orderType,
-      deliveryAddress,
-      couponCode,
-      notes,
-      paymentMethod // Added paymentMethod
-    } = req.body;
-
-    // Validate Subscription/Restaurant Status First
-    // (Middleware checkSubscription already handles the bulk, 
-    // but ensures we have req.restaurant context if needed)
-
-    // Validate table ownership (optimized with .lean() and field projection)
-    if (table) {
-      const tableData = await Table.findById(table)
-        .select('restaurant')
-        .lean();
-      if (!tableData) {
-        return res.status(404).json({ error: 'Table not found' });
-      }
-      if (tableData.restaurant.toString() !== restaurant) {
-        return res.status(400).json({ error: 'Table does not belong to this restaurant' });
-      }
-    }
-
-    // Calculate subtotal
-    let subtotal = 0;
-    const populatedItems = [];
-
-    // Batch fetch all menu items at once (optimized)
-    const menuItemIds = items.map(i => i.item);
-    const menuItems = await MenuItem.find({ _id: { $in: menuItemIds } })
-      .select('_id name price available orderCount')
-      .lean();
-
-    const menuItemMap = new Map(menuItems.map(item => [item._id.toString(), item]));
-
-    for (const orderItem of items) {
-      const menuItem = menuItemMap.get(orderItem.item);
-      if (!menuItem) {
-        return res.status(404).json({ error: `Menu item ${orderItem.item} not found` });
-      }
-
-      if (!menuItem.available) {
-        return res.status(400).json({ error: `${menuItem.name} is currently unavailable` });
-      }
-
-      let itemSubtotal = menuItem.price * orderItem.qty;
-
-      // Calculate customization price modifications
-      if (orderItem.customizations) {
-        for (const customization of orderItem.customizations) {
-          itemSubtotal += (customization.priceModifier || 0) * orderItem.qty;
-        }
-      }
-
-      populatedItems.push({
-        item: menuItem._id,
-        qty: orderItem.qty,
-        customizations: orderItem.customizations,
-        itemPrice: menuItem.price,
-        subtotal: itemSubtotal
-      });
-
-      subtotal += itemSubtotal;
-    }
-
-    // Batch update order counts (optimized)
-    const bulkOps = items.map(orderItem => ({
-      updateOne: {
-        filter: { _id: orderItem.item },
-        update: { $inc: { orderCount: orderItem.qty } }
-      }
-    }));
-    await MenuItem.bulkWrite(bulkOps);
-
-    // Get restaurant settings (optimized with cache and .lean())
-    const cacheKey = `restaurant:${restaurant}`;
-    let restaurantData = cache.get(cacheKey);
-
-    if (!restaurantData) {
-      restaurantData = await Restaurant.findById(restaurant)
-        .select('settings')
-        .lean();
-      cache.set(cacheKey, restaurantData, 600); // Cache for 10 minutes
-    }
-
-    const taxRate = restaurantData?.settings?.taxRate || 0;
-    const serviceChargeRate = restaurantData?.settings?.serviceChargeRate || 0;
-
-    const tax = (subtotal * taxRate) / 100;
-    const serviceCharge = (subtotal * serviceChargeRate) / 100;
-
-    // Apply coupon if provided
-    let discount = 0;
-    if (couponCode) {
-      const coupon = await Coupon.findOne({
-        code: couponCode.toUpperCase(),
-        restaurant
-      });
-
-      if (coupon) {
-        const validation = coupon.isValid(phone);
-        if (validation.valid && subtotal >= coupon.minOrderAmount) {
-          discount = coupon.calculateDiscount(subtotal);
-
-          // Mark coupon as used
-          coupon.usedCount += 1;
-          coupon.usedBy.push({ user: phone, usedAt: new Date() });
-          await coupon.save();
-        }
-      }
-    }
-
-    // Calculate delivery fee if delivery order
-    let deliveryFee = 0;
-    if (orderType === 'delivery' && deliveryAddress) {
-      deliveryFee = 50; // Default delivery fee, can be calculated based on distance
-    }
-
-    const total = subtotal + tax + serviceCharge + deliveryFee - discount;
-
-    // Estimate ready time
-    const maxEta = Math.max(...populatedItems.map(i => {
-      const menuItem = items.find(mi => mi.item === i.item.toString());
-      return menuItem?.eta || 15;
-    }));
-    const estimatedReadyTime = new Date(Date.now() + maxEta * 60 * 1000);
-
-    // Create order
-    const order = await Order.create({
-      restaurant,
-      table,
-      tableSession: req.tableSession?._id, // Link to table session
-      orderType: orderType || 'dine-in',
-      items: populatedItems,
-      subtotal,
-      discount,
-      couponCode,
-      tax,
-      serviceCharge,
-      deliveryFee,
-      total,
-      customerName,
-      phone,
-      email,
-      deliveryAddress,
-      estimatedReadyTime,
-      notes,
-      status: 'pending'
-    });
-
-    // Add to audience if phone provided
-    if (phone) {
-      await Audience.findOneAndUpdate(
-        { restaurant, phone },
-        { restaurant, phone },
-        { upsert: true }
-      );
-    }
-
-    // Send notification to kitchen (async - don't wait)
-    sendOrderNotification(order, 'new-order').catch(err => {
-      console.error('Failed to send order notification:', err);
-    });
-
-    // Emit real-time update to restaurant room
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`restaurant:${restaurant}`).emit('order:new', order);
-    }
-
-    res.status(201).json({
-      message: 'Order created successfully',
-      order: {
-        id: order._id,
-        total: order.total,
-        estimatedReadyTime: order.estimatedReadyTime,
-        status: order.status
-      }
-    });
-  } catch (error) {
-    console.error('Create order error:', error);
-    res.status(500).json({ error: 'Failed to create order', details: error.message });
-  }
-});
+router.post('/orders', checkSubscription, validateAndOccupyTable, createStaffOrder);
 
 // Get orders for a restaurant
 router.get('/orders/restaurant/:restaurantId', authenticateToken, checkSubscription, async (req, res) => {

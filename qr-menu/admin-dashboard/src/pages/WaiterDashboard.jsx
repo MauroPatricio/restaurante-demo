@@ -1,80 +1,61 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { tableAPI, orderAPI, waiterCallAPI } from '../services/api';
 import {
     User, Users, Bell, CheckCircle, Clock, MapPin,
-    UtensilsCrossed, AlertTriangle, Coffee, Loader2, TrendingUp, LayoutGrid, Timer, MessageSquare
+    UtensilsCrossed, AlertTriangle, Coffee, Loader2
 } from 'lucide-react';
 
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
-
-import '../styles/PremiumTheme.css';
+import TableManagementPanel from '../components/TableManagementPanel';
 
 const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
-    <div className="premium-card" style={{
-        justifyContent: 'space-between',
-        minHeight: '160px',
-        flex: 1,
-        minWidth: '240px'
-    }}>
-        <div>
-            <div className="text-premium-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '12px', fontSize: '11px' }}>
-                {title}
+    <div
+        className="bg-white dark:bg-gray-800 rounded-xl p-5 cursor-pointer transition-all duration-200 hover:shadow-2xl hover:-translate-y-2 shadow-lg dark:shadow-gray-900/50"
+        style={{
+            boxShadow: '0 6px 10px -2px rgba(0, 0, 0, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.15)'
+        }}
+    >
+        <div className="flex justify-between items-start">
+            <div className="flex-1">
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    {title}
+                </p>
+                <div className="flex items-baseline gap-2">
+                    <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white">{value}</h3>
+                    {subValue && <span className="text-sm text-gray-500 dark:text-gray-400">{subValue}</span>}
+                </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span className="text-premium-header" style={{ fontSize: '36px' }}>
-                    {value}
-                </span>
-                {subValue && (
-                    <span className="text-premium-muted" style={{ fontSize: '14px' }}>
-                        {subValue}
-                    </span>
-                )}
+            <div
+                className={`p-3 rounded-full ${pulse ? 'animate-pulse' : ''}`}
+                style={{
+                    backgroundColor: `${color}15`
+                }}
+            >
+                <Icon size={20} style={{ color: color }} />
             </div>
-        </div>
-        <div style={{
-            position: 'absolute',
-            top: '24px',
-            right: '24px',
-            width: '48px',
-            height: '48px',
-            borderRadius: '16px',
-            background: `${color}12`,
-            color: color,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-        }}>
-            <Icon size={24} />
-            {pulse && (
-                <span className="premium-pulse-soft" style={{
-                    position: 'absolute',
-                    top: '-4px',
-                    right: '-4px',
-                    width: '12px',
-                    height: '12px',
-                    background: color,
-                    borderRadius: '50%',
-                    border: '2px solid white',
-                }} />
-            )}
         </div>
     </div>
 );
 
 export default function WaiterDashboard() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const { t } = useTranslation();
     const { activeCalls, removeCall, socket } = useSocket();
     const [tables, setTables] = useState([]);
     const [readyOrders, setReadyOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTable, setSelectedTable] = useState(null);
+    const [showManagementPanel, setShowManagementPanel] = useState(false);
 
     const restaurantId = user?.restaurant?._id || user?.restaurant?.id || localStorage.getItem('restaurantId');
+    const isRinging = activeCalls.length > 0;
 
     useEffect(() => {
         if (!restaurantId) {
@@ -124,7 +105,7 @@ export default function WaiterDashboard() {
 
     const fetchTables = async () => {
         try {
-            const { data } = await tableAPI.getAll(restaurantId);
+            const { data } = await tableAPI.getAll(restaurantId, { background: true });
             setTables(Array.isArray(data?.tables) ? data.tables : []);
         } catch (error) {
             console.error('Failed to fetch tables:', error);
@@ -136,7 +117,7 @@ export default function WaiterDashboard() {
 
     const fetchReadyOrders = async () => {
         try {
-            const { data } = await orderAPI.getAll(restaurantId, { status: 'ready' });
+            const { data } = await orderAPI.getAll(restaurantId, { status: 'ready' }, { background: true });
             setReadyOrders(Array.isArray(data?.orders) ? data.orders : []);
         } catch (error) {
             console.error('Failed to fetch ready orders:', error);
@@ -154,18 +135,34 @@ export default function WaiterDashboard() {
         }
     };
 
+    const handleTableClick = (table) => {
+        setSelectedTable(table);
+        setShowManagementPanel(true);
+    };
+
+    const handleClosePanel = () => {
+        setShowManagementPanel(false);
+        setSelectedTable(null);
+        // Refresh data after closing
+        fetchData();
+    };
+
     if (loading) return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
             <LoadingSpinner size={48} message={t('loading_waiter') || "Carregando Área do Garçom..."} />
         </div>
     );
 
     if (!restaurantId) {
         return (
-            <div className="p-8 text-center text-slate-500">
-                <AlertTriangle className="mx-auto h-12 w-12 mb-4 text-amber-400" />
-                <h2 className="text-xl font-bold text-slate-700">{t('restaurant_not_found') || "Restaurante não identificado"}</h2>
-                <p>{t('login_again') || "Por favor, faça login novamente ou selecione um restaurante."}</p>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
+                <div className="text-center max-w-md">
+                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertTriangle className="h-8 w-8 text-amber-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('restaurant_not_found') || "Restaurante não identificado"}</h2>
+                    <p className="text-gray-500 dark:text-gray-400">{t('login_again') || "Por favor, faça login novamente ou selecione um restaurante."}</p>
+                </div>
             </div>
         );
     }
@@ -175,300 +172,317 @@ export default function WaiterDashboard() {
     const myTables = tables.filter(t => t.assignedWaiter === user?.name).length;
 
     return (
-        <div style={{ padding: '40px', maxWidth: '1600px', margin: '0 auto', minHeight: '100vh' }}>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 lg:p-8">
+            <div className="max-w-7xl mx-auto space-y-8">
 
-            {/* Header */}
-            <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 className="text-premium-header" style={{ fontSize: '48px', margin: 0 }}>
-                        {t('waiter_area') || 'Área do Garçom'}
-                    </h1>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }} />
-                        <p className="text-premium-muted" style={{ margin: 0 }}>
-                            {t('manage_tables_desc') || 'Gerencie mesas e pedidos em tempo real'} • <span style={{ color: '#1e293b' }}>{user?.name}</span>
-                        </p>
-                    </div>
-                </div>
-                <div className="premium-badge badge-success" style={{ fontSize: '14px', padding: '10px 24px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }} />
-                    {t('online') || 'Online'}
-                </div>
-            </div>
-
-            {/* KPI Cards */}
-            <div className="premium-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', marginBottom: '48px' }}>
-                <KpiCard
-                    title={t('active_alerts') || 'Chamadas Ativas'}
-                    value={activeCalls.length}
-                    icon={Bell}
-                    color="#ef4444"
-                    pulse={activeCalls.length > 0}
-                />
-                <KpiCard
-                    title={t('ready_orders') || 'Pedidos Prontos'}
-                    value={readyOrders.length}
-                    icon={CheckCircle}
-                    color="#10b981"
-                    pulse={readyOrders.length > 0}
-                />
-                <KpiCard
-                    title={t('my_tables') || 'Minhas Mesas'}
-                    value={myTables}
-                    icon={User}
-                    color="#8b5cf6"
-                />
-                <KpiCard
-                    title={t('table_status') || 'Status Mesas'}
-                    value={`${freeTables} / ${occupiedTables}`}
-                    icon={UtensilsCrossed}
-                    color="#3b82f6"
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                {/* Left Column: Alerts & Ready Orders */}
-                <div className="space-y-8 lg:col-span-1">
-
-                    {/* Active Alerts Section */}
-                    <div className="premium-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '20px' }}>
-                            <h2 className="text-premium-header" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <div style={{ padding: '8px', background: '#fef2f2', borderRadius: '12px', color: '#ef4444' }}>
-                                    <Bell size={18} />
-                                </div>
-                                {t('table_calls') || 'Chamadas'}
-                            </h2>
-                            {activeCalls.length > 0 && <span className="premium-badge badge-error">{activeCalls.length}</span>}
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+                            {t('waiter_area') || 'Área do Garçom'}
+                        </h1>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {t('manage_tables_desc') || 'Gerencie mesas e pedidos em tempo real'} <span className="mx-2">•</span> <span className="font-semibold text-gray-700 dark:text-gray-200">{user?.name}</span>
+                            </p>
                         </div>
-
-                        {activeCalls.length === 0 ? (
-                            <div className="text-center py-12">
-                                <Bell className="mx-auto h-12 w-12 mb-4 text-slate-200" />
-                                <p className="text-premium-muted" style={{ fontSize: '14px' }}>{t('no_active_calls') || 'Nenhuma chamada ativa'}</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {activeCalls.map(call => (
-                                    <div key={call.callId} className="premium-card glass-surface" style={{
-                                        padding: '20px',
-                                        borderLeft: '4px solid #ef4444',
-                                        borderRadius: '16px'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <div className="text-premium-header" style={{ fontSize: '20px', color: '#ef4444' }}>
-                                                    {t('table') || 'Mesa'} {call.tableNumber || '?'}
-                                                </div>
-                                                <div className="text-premium-muted" style={{ marginTop: '4px', fontSize: '13px' }}>
-                                                    {call.customerName || 'Cliente'} • {call.type === 'payment' || call.type === 'payment_request' ? 'Pagamento' : 'Serviço'}
-                                                </div>
-                                            </div>
-                                            <div className="text-premium-muted" style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <Clock size={12} /> {formatDistanceToNow(new Date(call.createdAt || call.timestamp), { addSuffix: true, locale: pt })}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={async () => {
-                                                try {
-                                                    await waiterCallAPI.resolve(call.callId);
-                                                } catch (err) {
-                                                    console.error(err);
-                                                    alert('Falha ao atender mesa');
-                                                }
-                                            }}
-                                            style={{
-                                                width: '100%',
-                                                marginTop: '16px',
-                                                padding: '12px',
-                                                background: '#ef4444',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '12px',
-                                                fontWeight: '800',
-                                                fontSize: '13px',
-                                                cursor: 'pointer',
-                                                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
-                                            }}
-                                        >
-                                            {t('attend') || 'Atender Mesa'}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
-
-                    {/* Ready Orders Section */}
-                    <div className="premium-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '20px' }}>
-                            <h2 className="text-premium-header" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <div style={{ padding: '8px', background: '#ecfdf5', borderRadius: '12px', color: '#10b981' }}>
-                                    <CheckCircle size={18} />
-                                </div>
-                                {t('ready_for_pickup') || 'Prontos'}
-                            </h2>
-                            {readyOrders.length > 0 && <span className="premium-badge badge-success">{readyOrders.length}</span>}
-                        </div>
-
-                        {readyOrders.length === 0 ? (
-                            <div className="text-center py-12">
-                                <UtensilsCrossed className="mx-auto h-12 w-12 mb-4 text-slate-200" />
-                                <p className="text-premium-muted" style={{ fontSize: '14px' }}>{t('no_ready_orders') || 'Nenhum pedido pronto'}</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {readyOrders.map(order => (
-                                    <div key={order._id} className="premium-card" style={{
-                                        padding: '24px',
-                                        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                                        border: '1px solid #e2e8f0'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                            <span className="text-premium-header" style={{ fontSize: '20px' }}>
-                                                {t('table') || 'Mesa'} {order.table?.number || '?'}
-                                            </span>
-                                            <span className="premium-badge badge-info" style={{ fontFamily: 'monospace' }}>
-                                                #{order.orderNumber || order._id.slice(-4)}
-                                            </span>
-                                        </div>
-                                        <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', marginBottom: '20px' }}>
-                                            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                                {order.items?.map((item, idx) => (
-                                                    <li key={idx} style={{ display: 'flex', gap: '12px', marginBottom: '8px', fontSize: '14px' }}>
-                                                        <span className="text-premium-header" style={{ color: '#6366f1', minWidth: '24px' }}>{item.qty}x</span>
-                                                        <span className="text-premium-muted" style={{ color: '#1e293b' }}>{item.item?.name || item.name}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                        <button
-                                            onClick={() => markOrderServed(order._id)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '14px',
-                                                background: '#10b981',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '14px',
-                                                fontWeight: '800',
-                                                fontSize: '14px',
-                                                cursor: 'pointer',
-                                                boxShadow: '0 8px 20px -6px rgba(16, 185, 129, 0.4)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '8px'
-                                            }}
-                                        >
-                                            <CheckCircle size={18} /> {t('mark_delivered') || 'Marcar como Entregue'}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 self-start md:self-auto">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        {t('online') || 'Online'}
                     </div>
                 </div>
 
-                {/* Right Column: Tables Status Grid */}
-                <div className="lg:col-span-2">
-                    <div className="premium-card" style={{ height: '100%' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', borderBottom: '1px solid #f1f5f9', paddingBottom: '24px' }}>
-                            <h2 className="text-premium-header" style={{ fontSize: '24px' }}>{t('floor_map') || 'Mapa do Salão'}</h2>
-                            <div className="flex gap-4">
-                                <div className="premium-badge badge-success">
-                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} /> {t('free') || 'Livre'}
-                                </div>
-                                <div className="premium-badge badge-error">
-                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} /> {t('occupied') || 'Ocupada'}
-                                </div>
-                                <div className="premium-badge badge-info">
-                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6' }} /> {t('cleaning') || 'Limpeza'}
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard
+                        title={t('active_alerts') || 'Chamadas Ativas'}
+                        value={activeCalls.length}
+                        icon={Bell}
+                        color="#ef4444"
+                        pulse={activeCalls.length > 0}
+                    />
+                    <KpiCard
+                        title={t('ready_orders') || 'Pedidos Prontos'}
+                        value={readyOrders.length}
+                        icon={CheckCircle}
+                        color="#10b981"
+                        pulse={readyOrders.length > 0}
+                    />
+                    <KpiCard
+                        title={t('my_tables') || 'Minhas Mesas'}
+                        value={myTables}
+                        icon={User}
+                        color="#8b5cf6"
+                    />
+                    <div
+                        className={`rounded-xl p-5 cursor-pointer transition-all duration-200 hover:shadow-2xl hover:-translate-y-2 shadow-lg dark:shadow-gray-900/50 ${occupiedTables > (tables.length - occupiedTables)
+                            ? 'bg-red-50 dark:bg-red-900/20'
+                            : 'bg-green-50 dark:bg-green-900/20'
+                            }`}
+                        style={{
+                            boxShadow: '0 6px 10px -2px rgba(0, 0, 0, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.15)'
+                        }}
+                    >
+                        <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                                <p className="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400">
+                                    {t('table_status') || 'Estado da Mesa'}
+                                </p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-3xl font-extrabold text-red-600 dark:text-red-500">
+                                        {occupiedTables}
+                                    </h3>
+                                    <span className="text-2xl font-bold text-gray-900 dark:text-white">/</span>
+                                    <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+                                        {tables.length}
+                                    </h3>
                                 </div>
                             </div>
+                            <div
+                                className="p-3 rounded-full"
+                                style={{
+                                    backgroundColor: occupiedTables > (tables.length - occupiedTables) ? '#ef444415' : '#10b98115'
+                                }}
+                            >
+                                <UtensilsCrossed
+                                    size={20}
+                                    style={{
+                                        color: occupiedTables > (tables.length - occupiedTables) ? '#ef4444' : '#10b981'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+                    {/* Left Column: Alerts & Ready Orders */}
+                    <div className="space-y-8 xl:col-span-1">
+
+                        {/* Active Alerts */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <div className="p-2 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-lg">
+                                        <Bell size={18} />
+                                    </div>
+                                    {t('table_calls') || 'Chamadas'}
+                                </h2>
+                                {activeCalls.length > 0 && (
+                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{activeCalls.length}</span>
+                                )}
+                            </div>
+
+                            {activeCalls.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <Bell className="mx-auto h-10 w-10 mb-3 text-gray-300 dark:text-gray-600" />
+                                    <p className="text-sm text-gray-400 dark:text-gray-500">{t('no_active_calls') || 'Nenhuma chamada ativa'}</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {activeCalls.map(call => (
+                                        <div key={call.callId} className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-xl p-4">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h3 className="font-bold text-gray-900 dark:text-white">{t('table') || 'Mesa'} {call.tableNumber || '?'}</h3>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        {call.customerName || 'Cliente'} • <span className="font-medium text-red-600 dark:text-red-400">{call.type === 'payment' ? 'Pagamento' : 'Serviço'}</span>
+                                                    </p>
+                                                </div>
+                                                <span className="text-xs text-gray-400 flex items-center gap-1">
+                                                    <Clock size={12} /> {formatDistanceToNow(new Date(call.createdAt || call.timestamp), { addSuffix: true, locale: pt })}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => waiterCallAPI.resolve(call.callId)}
+                                                className="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
+                                            >
+                                                {t('attend') || 'Atender Mesa'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {tables.map(table => {
-                                const isMyTable = table.assignedWaiter === user?.name;
-                                const statusConfig = {
-                                    free: { bg: 'white', border: '#e2e8f0', accent: '#10b981', text: '#065f46' },
-                                    occupied: { bg: 'white', border: '#fee2e2', accent: '#ef4444', text: '#991b1b' },
-                                    cleaning: { bg: 'white', border: '#dbeafe', accent: '#3b82f6', text: '#1e40af' }
-                                };
-                                const config = statusConfig[table.status] || statusConfig.free;
-
-                                return (
-                                    <div
-                                        key={table._id}
-                                        className="premium-card"
-                                        style={{
-                                            borderTop: `6px solid ${config.accent}`,
-                                            minHeight: '160px',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'space-between',
-                                            padding: '28px'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <div className="text-premium-header" style={{ fontSize: '28px' }}>
-                                                    {t('table')} {table.number}
-                                                </div>
-                                                <div className="text-premium-muted" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
-                                                    <Users size={14} /> {table.capacity} {t('places') || 'lugares'}
-                                                </div>
-                                            </div>
-                                            {isMyTable && (
-                                                <div style={{
-                                                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-                                                    padding: '10px',
-                                                    borderRadius: '12px',
-                                                    color: 'white',
-                                                    boxShadow: '0 8px 16px -4px rgba(99, 102, 241, 0.4)'
-                                                }} title={t('assigned_you') || 'Atribuída a você'}>
-                                                    <User size={18} />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
-                                            <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.5 }}>
-                                                {table.location || t('main_hall') || 'Salão Principal'}
-                                            </span>
-                                            <div style={{ fontSize: '11px', fontWeight: '800', padding: '4px 10px', borderRadius: '6px', background: `${config.accent}10`, color: config.accent }}>
-                                                {t(table.status) || table.status}
-                                            </div>
-                                        </div>
+                        {/* Ready Orders */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <div className="p-2 bg-green-50 dark:bg-green-900/20 text-green-500 rounded-lg">
+                                        <CheckCircle size={18} />
                                     </div>
-                                );
-                            })}
-                            {tables.length === 0 && (
-                                <div className="col-span-full py-16 text-center text-slate-400">
-                                    <UtensilsCrossed className="mx-auto h-16 w-16 mb-4 opacity-20" />
-                                    <p className="text-lg font-medium">{t('no_tables') || 'Nenhuma mesa cadastrada'}</p>
+                                    {t('ready_for_pickup') || 'Prontos'}
+                                </h2>
+                                {readyOrders.length > 0 && (
+                                    <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">{readyOrders.length}</span>
+                                )}
+                            </div>
+
+                            {readyOrders.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <UtensilsCrossed className="mx-auto h-10 w-10 mb-3 text-gray-300 dark:text-gray-600" />
+                                    <p className="text-sm text-gray-400 dark:text-gray-500">{t('no_ready_orders') || 'Nenhum pedido pronto'}</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {readyOrders.map(order => (
+                                        <div key={order._id} className="bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl p-4 shadow-sm">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <span className="font-bold text-gray-900 dark:text-white">{t('table') || 'Mesa'} {order.table?.number || '?'}</span>
+                                                <span className="bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded font-mono">
+                                                    #{order.orderNumber || order._id.slice(-4)}
+                                                </span>
+                                            </div>
+                                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-3">
+                                                <ul className="text-sm space-y-1">
+                                                    {order.items?.map((item, idx) => (
+                                                        <li key={idx} className="flex gap-2">
+                                                            <span className="font-bold text-primary-600 dark:text-primary-400 text-xs">{item.qty}x</span>
+                                                            <span className="text-gray-700 dark:text-gray-300 truncate">{item.item?.name || item.name}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            <button
+                                                onClick={() => markOrderServed(order._id)}
+                                                className="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-600/20 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle size={16} /> {t('mark_delivered') || 'Marcar como Entregue'}
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <style>{`
-                @keyframes pulse {
-                    0%, 100% {
-                        opacity: 1;
-                    }
-                    50% {
-                        opacity: 0.8;
-                    }
-                }
-                .table-location {
-                    opacity: 0 !important;
-                }
-            `}</style>
+                    {/* Right Column: Tables Grid */}
+                    <div className="xl:col-span-2">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 h-full flex flex-col">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('floor_map') || 'Mapa do Salão'}</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                        <div className="w-2 h-2 rounded-full bg-green-500"></div> {t('free') || 'Livre'}
+                                    </div>
+                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                        <div className="w-2 h-2 rounded-full bg-red-500"></div> {t('occupied') || 'Ocupada'}
+                                    </div>
+                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                        <div className="w-2 h-2 rounded-full bg-blue-500"></div> {t('cleaning') || 'Limpeza'}
+                                    </div>
+                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                        <div className="w-2 h-2 rounded-full bg-amber-500"></div> {t('reserved') || 'Reservada'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ${isRinging ? 'animate-pulse' : ''}`}>
+                                {tables.map(table => {
+                                    const isMyTable = table.assignedWaiter === user?.name;
+
+                                    const statusConfig = {
+                                        free: { border: 'border-green-500', text: 'text-green-600', bg: 'bg-green-50', badge: 'bg-green-100 text-green-700' },
+                                        occupied: { border: 'border-red-500', text: 'text-red-600', bg: 'bg-red-50', badge: 'bg-red-100 text-red-700' },
+                                        cleaning: { border: 'border-blue-500', text: 'text-blue-600', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-700' },
+                                        reserved: { border: 'border-amber-500', text: 'text-amber-600', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-700' }
+                                    };
+                                    const config = statusConfig[table.status] || statusConfig.free;
+
+                                    const StatusIcon =
+                                        table.status === 'occupied' ? Users :
+                                            table.status === 'reserved' ? Clock :
+                                                table.status === 'cleaning' ? Coffee :
+                                                    CheckCircle;
+
+                                    return (
+                                        <div
+                                            key={table._id}
+                                            onClick={() => handleTableClick(table)}
+                                            className="relative p-5 rounded-xl bg-white dark:bg-gray-800 cursor-pointer transition-all duration-200 hover:shadow-2xl hover:-translate-y-2 shadow-lg dark:shadow-gray-900/50"
+                                            style={{
+                                                boxShadow: '0 6px 10px -2px rgba(0, 0, 0, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.15)'
+                                            }}
+                                        >
+                                            {isMyTable && (
+                                                <div className="absolute top-3 right-3 p-1 bg-indigo-600 text-white rounded-full shadow-sm z-10" title={t('assigned_you') || 'Atribuída a você'}>
+                                                    <User size={10} fill="currentColor" />
+                                                </div>
+                                            )}
+
+                                            {/* Header: Table Number */}
+                                            <div className="mb-3">
+                                                <span className={`font-black text-3xl ${table.status === 'free' ? 'text-green-600 dark:text-green-500' :
+                                                    table.status === 'occupied' ? 'text-red-600 dark:text-red-500' :
+                                                        table.status === 'reserved' ? 'text-purple-600 dark:text-purple-500' :
+                                                            table.status === 'cleaning' ? 'text-blue-600 dark:text-blue-500' :
+                                                                'text-gray-600 dark:text-gray-500'
+                                                    }`}>
+                                                    {table.number}
+                                                </span>
+                                            </div>
+
+                                            {/* Status Label */}
+                                            <div className="mb-4">
+                                                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
+                                                    {t(table.status) || table.status}
+                                                </p>
+                                                {table.activeOrders > 0 && (
+                                                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
+                                                        {table.activeOrders} {t('active_orders') || 'pedidos'}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Footer: Icon and Capacity */}
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
+                                                    <Users size={14} />
+                                                    <span className="text-xs font-semibold">{table.capacity || 4}</span>
+                                                </div>
+
+                                                {/* Status Icon Circle */}
+                                                <div
+                                                    className={`p-2.5 rounded-full ${config.badge}`}
+                                                    style={{
+                                                        backgroundColor: `${config.border.replace('border-', '#').replace('500', '')}15`
+                                                    }}
+                                                >
+                                                    <StatusIcon size={18} strokeWidth={2.5} className={config.text} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                                {tables.length === 0 && (
+                                    <div className="col-span-full py-12 text-center text-gray-400">
+                                        <MapPin className="mx-auto h-12 w-12 mb-3 opacity-20" />
+                                        <p>{t('no_tables') || 'Nenhuma mesa cadastrada'}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Table Management Panel */}
+                {showManagementPanel && selectedTable && (
+                    <TableManagementPanel
+                        table={selectedTable}
+                        onClose={handleClosePanel}
+                    />
+                )}
+            </div>
         </div>
     );
 }

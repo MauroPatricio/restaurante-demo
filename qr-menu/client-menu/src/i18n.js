@@ -92,7 +92,11 @@ const resources = {
             "order_history_desc": "Order History",
             "loading_orders": "Loading orders...",
             "last_menu_update": "Last menu update",
-            "developed_by": "Developed by Nhiquela Serviços e Consultoria, LDA"
+            "last_menu_update": "Last menu update",
+            "developed_by": "Developed by Nhiquela Serviços e Consultoria, LDA",
+            "maintenance_title": "Under Maintenance",
+            "maintenance_message": "We are currently updating our menu to serve you better. Please check back soon.",
+            "retry": "Retry"
         }
     },
     pt: {
@@ -184,7 +188,11 @@ const resources = {
             "order_history_desc": "Histórico de pedidos",
             "loading_orders": "Carregando pedidos...",
             "last_menu_update": "Última atualização do menu",
-            "developed_by": "Desenvolvido por Nhiquela Serviços e Consultoria, LDA"
+            "last_menu_update": "Última atualização do menu",
+            "developed_by": "Desenvolvido por Nhiquela Serviços e Consultoria, LDA",
+            "maintenance_title": "Em Manutenção",
+            "maintenance_message": "Estamos atualizando nosso menu para melhor atendê-lo. Por favor, volte em breve.",
+            "retry": "Tentar Novamente"
         }
     },
     es: {
@@ -276,7 +284,11 @@ const resources = {
             "order_history_desc": "Historial de pedidos",
             "loading_orders": "Cargando pedidos...",
             "last_menu_update": "Última actualización del menú",
-            "developed_by": "Desarrollado por Nhiquela Serviços e Consultoria, LDA"
+            "last_menu_update": "Última actualización del menú",
+            "developed_by": "Desarrollado por Nhiquela Serviços e Consultoria, LDA",
+            "maintenance_title": "En Mantenimiento",
+            "maintenance_message": "Estamos actualizando nuestro menú para servirle mejor. Vuelva pronto.",
+            "retry": "Intentar de nuevo"
         }
     }
 };

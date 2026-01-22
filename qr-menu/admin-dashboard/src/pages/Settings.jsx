@@ -232,7 +232,51 @@ export default function Settings() {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+
+                {/* Maintenance Mode Section */}
+                <div style={{ marginTop: '40px', paddingTop: '30px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}>
+                                {t('maintenance_mode') || 'Suspender Menu (Manutenção)'}
+                            </h3>
+                            <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '500px' }}>
+                                {t('maintenance_mode_desc') || 'Ative esta opção para suspender temporariamente o menu do cliente. Uma tela de manutenção será exibida.'}
+                            </p>
+                        </div>
+                        <label className="switch">
+                            <input
+                                type="checkbox"
+                                checked={restaurant?.settings?.isMaintenance || false}
+                                onChange={async (e) => {
+                                    const newValue = e.target.checked;
+                                    try {
+                                        const restId = user.restaurant._id || user.restaurant;
+                                        // Optimistic update
+                                        setRestaurant(prev => ({
+                                            ...prev,
+                                            settings: { ...prev.settings, isMaintenance: newValue }
+                                        }));
+
+                                        await restaurantAPI.updateSettings(restId, { isMaintenance: newValue });
+
+                                        // Show subtle notification or success state if needed
+                                    } catch (error) {
+                                        console.error('Failed to update maintenance mode', error);
+                                        // Revert on error
+                                        setRestaurant(prev => ({
+                                            ...prev,
+                                            settings: { ...prev.settings, isMaintenance: !newValue }
+                                        }));
+                                        alert(t('error_generic') || 'Falha ao atualizar');
+                                    }
+                                }}
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div >
+        </div >
     );
 }

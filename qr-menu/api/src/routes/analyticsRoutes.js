@@ -16,8 +16,16 @@ const router = express.Router();
 
 // Owner Global Stats (Aggregated)
 router.get('/owner', authenticateToken, authorizeRoles('owner', 'admin'), getOwnerStats);
+router.post('/owner/clear-stats', authenticateToken, authorizeRoles('owner', 'admin'), async (req, res) => {
+    const { clearOwnerStats } = await import('../controllers/analyticsController.js');
+    clearOwnerStats(req, res);
+});
 
-// Single Restaurant Detailed Stats
+router.post('/orders/:id/receipt', authenticateToken, async (req, res) => {
+    const { generateReceipt } = await import('../controllers/receiptController.js');
+    generateReceipt(req, res);
+});
+
 // Single Restaurant Detailed Stats
 router.get('/restaurant/:id', authenticateToken, checkSubscription, getRestaurantStats);
 

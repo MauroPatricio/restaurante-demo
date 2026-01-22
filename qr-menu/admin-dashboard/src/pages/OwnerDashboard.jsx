@@ -112,6 +112,41 @@ const OwnerDashboard = () => {
                         <option>Last Month</option>
                     </select>
                 </div>
+
+                <button
+                    onClick={async () => {
+                        if (window.confirm(t('confirm_clear_stats') || 'Tem certeza que deseja limpar TODOS os dados financeiros? Esta ação não pode ser desfeita.')) {
+                            try {
+                                await analyticsAPI.clearOwnerStats();
+                                window.location.reload();
+                            } catch (error) {
+                                console.error('Failed to clear stats', error);
+                                alert('Erro ao limpar dados');
+                            }
+                        }
+                    }}
+                    style={{
+                        marginLeft: '16px',
+                        padding: '10px 20px',
+                        background: '#fee2e2',
+                        color: '#ef4444',
+                        border: 'none',
+                        borderRadius: '50px',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.1)'
+                    }}
+                    onMouseOver={(e) => e.target.style.transform = 'translateY(-1px)'}
+                    onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }}></div>
+                    {t('clear_data') || 'Limpar Dados'}
+                </button>
                 <div className="language-switcher" style={{ marginLeft: '16px' }}>
                     <select
                         onChange={(e) => i18n.changeLanguage(e.target.value)}

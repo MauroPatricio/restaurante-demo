@@ -45,15 +45,23 @@ export default function Clients() {
     );
 
     const exportCSV = () => {
-        const headers = ["Nome", "Telefone", "Total Gasto", "Pedidos", "Favorito", "Ultima Visita"];
-        const rows = filteredClients.map(c => [
-            c.name || 'Cliente',
-            c.phone,
-            c.totalSpent,
-            c.orderCount,
-            c.favoriteItem || 'N/A',
-            format(new Date(c.lastVisit), 'yyyy-MM-dd')
-        ]);
+        const headers = ["Nome", "Telefone", "Total Gasto", "Pedidos", "Favorito", "Mesas", "Ultima Visita"];
+        const rows = filteredClients.map(c => {
+            const sortedTable = (c.tables || [])
+                .filter(t => t !== null && t !== undefined)
+                .sort((a, b) => a - b)
+                .join(', ');
+
+            return [
+                c.name || 'Cliente',
+                c.phone,
+                c.totalSpent,
+                c.orderCount,
+                c.favoriteItem || 'N/A',
+                sortedTable || 'N/A',
+                format(new Date(c.lastVisit), 'yyyy-MM-dd')
+            ];
+        });
 
         const csvContent = "data:text/csv;charset=utf-8,\ufeff"
             + headers.join(",") + "\n"
@@ -183,6 +191,7 @@ export default function Clients() {
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>VALOR VIDA</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>PEDIDOS</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>FAVORITO</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>MESAS</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>ÚLTIMA VISITA</th>
                             </tr>
                         </thead>
@@ -227,6 +236,14 @@ export default function Clients() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#475569', fontWeight: '500' }}>
                                             <Star size={14} className="text-amber-400 fill-amber-400" />
                                             {client.favoriteItem}
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '20px 24px' }}>
+                                        <div style={{ fontSize: '14px', color: '#475569', fontWeight: '500', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {(client.tables || [])
+                                                .filter(t => t !== null && t !== undefined)
+                                                .sort((a, b) => a - b)
+                                                .join(', ') || '---'}
                                         </div>
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>

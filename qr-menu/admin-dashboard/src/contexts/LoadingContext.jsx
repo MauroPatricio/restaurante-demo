@@ -1,29 +1,34 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { loadingManager } from '../utils/loadingManager';
+import { loadingManager, LOADING_TYPES } from '../utils/loadingManager';
 import LoadingOverlay from '../components/LoadingOverlay';
+import DiscreteLoader from '../components/DiscreteLoader';
 
 const LoadingContext = createContext();
 
 export const useLoading = () => useContext(LoadingContext);
 
 export const LoadingProvider = ({ children }) => {
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingState, setLoadingState] = useState({
+        isLoading: false,
+        type: LOADING_TYPES.FULL
+    });
 
     useEffect(() => {
-        const unsubscribe = loadingManager.subscribe((loading) => {
-            setIsLoading(loading);
+        const unsubscribe = loadingManager.subscribe((state) => {
+            setLoadingState(state);
         });
         return unsubscribe;
     }, []);
 
     // Manual controls exposed to context consumers if needed
-    const showLoading = () => loadingManager.start();
-    const hideLoading = () => loadingManager.stop();
+    const showLoading = (type = LOADING_TYPES.FULL) => loadingManager.start(type);
+    const hideLoading = (type = LOADING_TYPES.FULL) => loadingManager.stop(type);
 
     return (
-        <LoadingContext.Provider value={{ isLoading, showLoading, hideLoading }}>
+        <LoadingContext.Provider value={{ ...loadingState, showLoading, hideLoading }}>
             {children}
-            {isLoading && <LoadingOverlay />}
+            {loadingState.isLoading && loadingState.type === LOADING_TYPES.FULL && <LoadingOverlay />}
+            {loadingState.isLoading && loadingState.type === LOADING_TYPES.BACKGROUND && <DiscreteLoader />}
         </LoadingContext.Provider>
     );
 };

@@ -224,7 +224,7 @@ export default function DashboardLayout() {
             title: t('system_administration') || '⚙️ SISTEMA & ADMINISTRAÇÃO',
             items: [
                 { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
-                { icon: CreditCard, label: t('subscription_management') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.isSystem },
+                { icon: CreditCard, label: t('subscription_management') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.name === 'System Admin' },
                 { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: user?.role?.isSystem || (['Owner', 'Manager'].includes(user?.role?.name)) },
             ]
         }
@@ -503,7 +503,7 @@ export default function DashboardLayout() {
                         </button>
 
                         {/* Renewal Notifications for Admins */}
-                        {isSystemAdmin && <RenewalNotifications />}
+                        {user?.role?.name === 'System Admin' && <RenewalNotifications />}
 
                         {/* Subscription Status in Header */}
                         {subscription && (

@@ -103,6 +103,10 @@ const RestaurantSchema = new mongoose.Schema({
       enabled: { type: Boolean, default: false },
       ipAddress: String,
       port: Number
+    },
+    isMaintenance: {
+      type: Boolean,
+      default: false
     }
   },
   subscription: {

@@ -35,7 +35,24 @@ const TableSchema = new mongoose.Schema({
   statusChangedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }
+  },
+  // Status change audit history
+  statusHistory: [{
+    status: {
+      type: String,
+      enum: ['free', 'occupied', 'reserved', 'cleaning', 'closed']
+    },
+    previousStatus: String,
+    changedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    reason: String,
+    timestamp: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

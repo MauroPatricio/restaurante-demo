@@ -1,7 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { Clock, Calendar, Users, TrendingUp } from 'lucide-react';
+import { Clock, Calendar, Users, TrendingUp, AlertCircle } from 'lucide-react';
 
 // Modern Card Styles (matching SalesTab)
 const cardStyle = {
@@ -34,10 +35,12 @@ const iconBoxStyle = (color, bg) => ({
 });
 
 export default function OperationalTab({ data, loading }) {
+    const { t } = useTranslation();
+
     if (loading) return <div className="p-4 text-center">Loading operational data...</div>;
     if (!data) return <div className="p-4 text-center">No operational data available.</div>;
 
-    const { shifts = [], busiestDays = [] } = data;
+    const { shifts = [], busiestDays = [], avgPrepTime = 0, slowestItems = [] } = data;
 
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -59,6 +62,7 @@ export default function OperationalTab({ data, loading }) {
 
             {/* KPI Cards */}
             <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', width: '100%' }}>
+                {/* Avg Prep Time (New) */}
                 <div style={statCardStyle} onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
@@ -68,13 +72,13 @@ export default function OperationalTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Total Shifts
+                            {t('avg_prep_time') || 'Tempo Médio'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {shifts.length}
+                            {avgPrepTime} <span style={{ fontSize: '16px', color: '#64748b', fontWeight: '600' }}>min</span>
                         </h3>
                     </div>
-                    <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
+                    <div style={iconBoxStyle('#ef4444', '#fef2f2')}>
                         <Clock size={24} strokeWidth={2.5} />
                     </div>
                 </div>
@@ -88,7 +92,7 @@ export default function OperationalTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Avg Orders/Shift
+                            {t('avg_orders_shift') || 'Média Pedidos/Turno'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {avgOrdersPerShift.toFixed(0)}
@@ -108,7 +112,7 @@ export default function OperationalTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Busiest Day
+                            {t('busiest_day') || 'Dia Mais Movimentado'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {busiestDay ? busiestDay.day : 'N/A'}
@@ -129,7 +133,7 @@ export default function OperationalTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Weekly Orders
+                            {t('weekly_orders') || 'Pedidos Semanais'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {totalDayOrders}
@@ -143,11 +147,10 @@ export default function OperationalTab({ data, loading }) {
 
             {/* Charts Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-
-                {/* Shifts Performance */}
+                {/* ... existing charts ... */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        Orders by Shift
+                        {t('orders_by_shift') || 'Pedidos por Turno'}
                     </h3>
                     {shifts.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
@@ -168,10 +171,9 @@ export default function OperationalTab({ data, loading }) {
                     )}
                 </div>
 
-                {/* Busiest Days */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        Busiest Days
+                        {t('busiest_days') || 'Dias Mais Movimentados'}
                     </h3>
                     {dayData.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
@@ -193,11 +195,39 @@ export default function OperationalTab({ data, loading }) {
                 </div>
             </div>
 
-            {/* Staff Performance Placeholder */}
-            <div style={{ ...cardStyle, textAlign: 'center', padding: '48px 24px' }}>
-                <p style={{ color: '#94a3b8', fontSize: '14px' }}>
-                    Staff Performance metrics will appear here once shift data is fully populated.
-                </p>
+            {/* Slowest Items Section */}
+            <div style={{ ...cardStyle }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <AlertCircle size={20} className="text-red-500" />
+                    {t('slowest_dishes') || 'Pratos Mais Demorados (Top 5)'}
+                </h3>
+
+                {slowestItems && slowestItems.length > 0 ? (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                    <th style={{ padding: '12px 0', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('dish') || 'Prato'}</th>
+                                    <th style={{ padding: '12px 0', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('avg_time') || 'Tempo Médio'}</th>
+                                    <th style={{ padding: '12px 0', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('orders') || 'Pedidos'}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {slowestItems.map((item, index) => (
+                                    <tr key={item._id || index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <td style={{ padding: '16px 0', fontWeight: '600', color: '#334155' }}>{item.name}</td>
+                                        <td style={{ padding: '16px 0', textAlign: 'right', fontWeight: '700', color: '#ef4444' }}>{item.avgPrepTime} min</td>
+                                        <td style={{ padding: '16px 0', textAlign: 'right', color: '#64748b' }}>{item.orderCount}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>
+                        Sem dados suficientes para análise de tempo de preparo.
+                    </div>
+                )}
             </div>
         </div>
     );
