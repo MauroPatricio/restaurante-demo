@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { analyticsAPI, menuAPI } from '../services/api';
@@ -43,7 +42,6 @@ const iconBoxStyle = (color, bg) => ({
 
 export default function StockDashboard() {
     const { user } = useAuth();
-    const { t } = useTranslation();
     const [data, setData] = useState({ summary: {}, items: [] });
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
@@ -86,7 +84,7 @@ export default function StockDashboard() {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '100vh', background: '#f8fafc' }}>
                 <LoadingSpinner size={48} />
-                <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('preparing_dashboard') || 'Loading Inventory Data...'}</span>
+                <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Loading Inventory Data...</span>
             </div>
         );
     }
