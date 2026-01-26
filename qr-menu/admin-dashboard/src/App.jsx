@@ -39,6 +39,8 @@ import Categories from './pages/Categories';
 import Subcategories from './pages/Subcategories';
 import AssistedOrder from './pages/waiter/AssistedOrder';
 import PremiumFeatureGate from './components/PremiumFeatureGate';
+import WaiterAnalytics from './pages/WaiterAnalytics';
+import WeeklyMenuManagement from './pages/WeeklyMenuManagement';
 
 import DashboardRedirect from './components/DashboardRedirect';
 
@@ -110,11 +112,12 @@ function AppContent() {
           <Route path="analytics" element={<Dashboard />} />
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="waiter" element={<WaiterDashboard />} />
-          <Route path="stock" element={
+          <Route path="stock-old" element={
             <PremiumFeatureGate featureName="Controlo de Stock">
               <StockDashboard />
             </PremiumFeatureGate>
           } />
+          <Route path="stock-management" element={<StockDashboard />} />
           <Route path="orders" element={<Orders />} />
           <Route path="menu" element={<Menu />} />
           <Route path="categories" element={<Categories />} />
@@ -140,6 +143,8 @@ function AppContent() {
           } />
           <Route path="clients" element={<Clients />} />
           <Route path="hall" element={<HallDashboard />} />
+          <Route path="waiter-analytics" element={<WaiterAnalytics />} />
+          <Route path="weekly-menus" element={<WeeklyMenuManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="profiles" element={<Profiles />} />
           <Route path="subscriptions" element={<Subscriptions />} />

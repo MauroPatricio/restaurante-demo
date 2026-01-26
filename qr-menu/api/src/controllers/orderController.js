@@ -3,7 +3,9 @@ import Table from '../models/Table.js';
 import Order from '../models/Order.js';
 import MenuItem from '../models/MenuItem.js';
 import Audience from '../models/Audience.js';
-import Coupon from '../models/Coupon.js'; // Assuming Coupon is needed based on previous logic, though not explicitly in imports list in publicRoutes view, but logic was there.
+import Coupon from '../models/Coupon.js';
+import TableSession from '../models/TableSession.js';
+import StockMovement from '../models/StockMovement.js';
 import { validateTableToken } from '../utils/qrSecurity.js';
 import { occupyTable } from './tableStateController.js';
 import { sendOrderNotification } from '../services/firebaseService.js';
@@ -28,6 +30,7 @@ export const processOrderCreation = async ({
     couponCode,
     token,
     isStaff = false,
+    createdByWaiterId = null, // NEW: Track waiter ID for analytics
     io, // socket.io instance
     tableSessionId // optional, if already known
 }) => {
@@ -120,6 +123,34 @@ export const processOrderCreation = async ({
         subtotal += itemSubtotal;
     }
 
+    // 4.5. STOCK VALIDATION AND DEDUCTION (CRITICAL!)
+    // Process stock BEFORE creating order to prevent overselling
+    const stockMovements = [];
+
+    for (const pItem of populatedItems) {
+        const menuItem = await MenuItem.findById(pItem.item);
+
+        // Only process if stock control is enabled for this item
+        if (menuItem.stockControlled) {
+            // Check if sufficient stock available
+            if (menuItem.stock < pItem.qty) {
+                throw {
+                    status: 400,
+                    error: 'insufficient_stock',
+                    message: `Item "${menuItem.name}" não tem stock suficiente. Disponível: ${menuItem.stock}, Pedido: ${pItem.qty}`
+                };
+            }
+
+            // Prepare stock deduction (will be executed after order creation succeeds)
+            stockMovements.push({
+                menuItem: menuItem,
+                quantityBefore: menuItem.stock,
+                quantityToDeduct: pItem.qty
+            });
+        }
+    }
+
+
     // 5. Batch Update Order Counts
     // We can do this async without blocking? Ideally yes, but let's keep it here.
     const bulkOps = populatedItems.map(pItem => ({
@@ -187,7 +218,8 @@ export const processOrderCreation = async ({
     const maxEta = Math.max(...populatedItems.map(pItem => {
         const menuItem = menuItemMap.get(pItem.item.toString());
         return menuItem?.eta || 15;
-    }));
+    }))
+        ;
     const estimatedReadyTime = new Date(Date.now() + maxEta * 60 * 1000);
 
     const newOrder = await Order.create({
@@ -212,8 +244,44 @@ export const processOrderCreation = async ({
         status: 'pending',
         type: orderType, // Some legacy fields might duplicate
         source: isStaff ? 'waiter' : 'qr-menu',
+        createdByWaiter: createdByWaiterId || null, // Track waiter for analytics
         estimatedReadyTime // Added this field
     });
+
+    // 9.5. EXECUTE STOCK DEDUCTIONS (After order successfully created)
+    for (const movement of stockMovements) {
+        const { menuItem, quantityBefore, quantityToDeduct } = movement;
+
+        // Atomically deduct stock
+        menuItem.stock -= quantityToDeduct;
+        const quantityAfter = menuItem.stock;
+        await menuItem.save();
+
+        // Create stock movement record for audit trail
+        await StockMovement.create({
+            menuItem: menuItem._id,
+            restaurant: restaurantId,
+            type: 'sale',
+            quantityBefore,
+            quantityAfter,
+            quantity: -quantityToDeduct, // Negative for sales
+            order: newOrder._id,
+            reason: `Sold via order #${newOrder._id}`,
+            performedBy: createdByWaiterId || null
+        });
+
+        // Emit real-time stock update via Socket.IO
+        if (io) {
+            io.to(`restaurant:${restaurantId}`).emit('stock:updated', {
+                menuItemId: menuItem._id,
+                menuItemName: menuItem.name,
+                newStock: quantityAfter,
+                change: -quantityToDeduct,
+                alert: quantityAfter <= 5, // Alert if stock is low (<=5)
+                orderId: newOrder._id
+            });
+        }
+    }
 
     // 10. Audience (CRM)
     if (phone) {
@@ -310,6 +378,7 @@ export const createStaffOrder = async (req, res) => {
             phone,
             notes,
             isStaff: true,
+            createdByWaiterId: req.user._id, // Track which waiter created this order
             io: req.app.get('io')
         });
 

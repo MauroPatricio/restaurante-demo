@@ -293,6 +293,34 @@ export const clientAPI = {
     getAll: (restaurantId) => api.get('/clients', { params: { restaurantId } })
 };
 
+// Waiter Analytics API
+export const waiterAnalyticsAPI = {
+    getAll: (restaurantId, params) => api.get(`/analytics/${restaurantId}/waiters`, { params }),
+    getDetails: (restaurantId, waiterId, params) => api.get(`/analytics/${restaurantId}/waiters/${waiterId}`, { params }),
+    getRanking: (restaurantId, params) => api.get(`/analytics/${restaurantId}/waiters/ranking`, { params })
+};
+
+// Weekly Menu API
+export const weeklyMenuAPI = {
+    getAll: (restaurantId, params) => api.get(`/weekly-menus/${restaurantId}`, { params }),
+    getActive: (restaurantId) => api.get(`/weekly-menus/${restaurantId}/active`),
+    create: (data) => api.post('/weekly-menus', data),
+    update: (id, data) => api.patch(`/weekly-menus/${id}`, data),
+    activate: (id) => api.post(`/weekly-menus/${id}/activate`),
+    deactivate: (id) => api.post(`/weekly-menus/${id}/deactivate`),
+    archive: (id) => api.delete(`/weekly-menus/${id}`)
+};
+
+// Stock Management API
+export const stockAPI = {
+    getItems: (restaurantId) => api.get(`/stock/${restaurantId}/items`),
+    getLowStock: (restaurantId, threshold) => api.get(`/stock/${restaurantId}/low-stock`, { params: { threshold } }),
+    getMovements: (restaurantId, params) => api.get(`/stock/${restaurantId}/movements`, { params }),
+    getReport: (restaurantId, params) => api.get(`/stock/${restaurantId}/report`, { params }),
+    restock: (data) => api.post('/stock/restock', data),
+    adjust: (data) => api.post('/stock/adjust', data)
+};
+
 export const waiterCallAPI = {
     getActive: (restaurantId, waiterId = null) => api.get('/waiter-calls/active', {
         params: { restaurantId, waiterId }

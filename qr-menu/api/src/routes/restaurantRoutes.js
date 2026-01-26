@@ -81,7 +81,7 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
 
         // Create Subscription (Trial)
         const now = new Date();
-        const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+        const trialEnd = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000); // 15 days
         const subscription = await Subscription.create({
             restaurant: restaurant._id,
             status: 'trial',

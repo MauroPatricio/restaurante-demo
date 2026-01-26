@@ -10,6 +10,11 @@ import {
     getHallAnalytics,
     getTableCustomerHistory
 } from '../controllers/analyticsController.js';
+import {
+    getAllWaiterAnalytics,
+    getWaiterDetailedAnalytics,
+    getWaiterRanking
+} from '../controllers/waiterAnalyticsController.js';
 import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -35,6 +40,27 @@ router.get('/:id/sales', authenticateToken, checkSubscription, getSalesReport);
 router.get('/:id/operational', authenticateToken, checkSubscription, getOperationalReport);
 router.get('/:id/inventory', authenticateToken, checkSubscription, getInventoryReport);
 router.get('/:id/customers', authenticateToken, checkSubscription, getCustomerAnalytics);
+
+// Waiter Performance Analytics (Owner/Manager/Admin only)
+router.get('/:id/waiters',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getAllWaiterAnalytics
+);
+router.get('/:id/waiters/ranking',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getWaiterRanking
+);
+router.get('/:id/waiters/:waiterId',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getWaiterDetailedAnalytics
+);
+
 router.get('/:id/hall', authenticateToken, checkSubscription, getHallAnalytics);
 router.get('/:id/hall/:tableId/history', authenticateToken, checkSubscription, getTableCustomerHistory);
 

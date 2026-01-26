@@ -32,6 +32,8 @@ import subcategoryRoutes from './subcategories.js';
 import menuItemRoutes from './menuItems.js';
 import waiterCallRoutes from './waiterCallRoutes.js';
 import clientReactionRoutes from './clientReactionRoutes.js';
+import weeklyMenuRoutes from './weeklyMenuRoutes.js';
+import stockRoutes from './stockRoutes.js';
 
 // Table State Management
 import {
@@ -64,6 +66,8 @@ router.use('/subcategories', subcategoryRoutes);
 router.use('/menu-items', menuItemRoutes);
 router.use('/waiter-calls', waiterCallRoutes);
 router.use('/client-reactions', clientReactionRoutes);
+router.use('/weekly-menus', weeklyMenuRoutes);
+router.use('/stock', stockRoutes);
 
 // ============ TABLE STATE MANAGEMENT ROUTES ============
 router.get('/tables/:id/current-session', authenticateToken, getTableCurrentSession);

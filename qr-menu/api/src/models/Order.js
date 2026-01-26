@@ -110,6 +110,19 @@ const OrderSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   }],
+  // Waiter Performance Tracking
+  createdByWaiter: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    index: true // For analytics queries
+  },
+  source: {
+    type: String,
+    enum: ['qr-menu', 'waiter', 'phone', 'delivery'],
+    default: 'qr-menu',
+    index: true
+  },
+  tableNumber: Number, // Denormalized for faster queries
   receiptHistory: [{
     issuedAt: { type: Date, default: Date.now },
     issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

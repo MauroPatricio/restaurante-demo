@@ -17,7 +17,7 @@ export const getSubscription = async (req, res) => {
             const newSub = await Subscription.create({
                 restaurant: restaurantId,
                 currentPeriodStart: new Date(),
-                currentPeriodEnd: new Date(new Date().setDate(new Date().getDate() + 30)), // 30 days trial
+                currentPeriodEnd: new Date(new Date().setDate(new Date().getDate() + 15)), // 15 days trial
                 status: 'trial'
             });
             return res.json({ subscription: newSub });
