@@ -3,9 +3,11 @@ import { Bell, X, Check, Clock } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
 import { waiterCallAPI } from '../services/api';
+import { useTranslation } from 'react-i18next'; // Add import
 import './WaiterCallAlerts.css';
 
 export default function WaiterCallAlerts() {
+    const { t } = useTranslation(); // Add hook
     const { activeCalls, acknowledgeCall: localAcknowledge, removeCall } = useSocket();
     const { user } = useAuth();
     const [minimized, setMinimized] = useState(false);
