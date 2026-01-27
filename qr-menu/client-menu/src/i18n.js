@@ -110,7 +110,13 @@ const resources = {
             "loading_order_status": "Loading order status...",
             "back_to_menu": "Back to Menu",
             "estimated_ready": "Estimated ready",
-            "in_progress": "In Progress..."
+            "in_progress": "In Progress...",
+            "calling": "Calling...",
+            "waiter_call_cooldown": "Please wait {{seconds}} seconds before calling again.",
+            "waiter_called_title": "Waiter Called!",
+            "waiter_confirmation_msg": "Someone will come to attend you shortly",
+            "waiter_active_call": "There is already an active call for this table.",
+            "waiter_call_error": "Error calling waiter. Please try again."
         }
     },
     pt: {
@@ -220,7 +226,13 @@ const resources = {
             "loading_order_status": "Carregando estado do pedido...",
             "back_to_menu": "Voltar ao Menu",
             "estimated_ready": "Estimativa de pronto",
-            "in_progress": "Em andamento..."
+            "in_progress": "Em andamento...",
+            "calling": "A chamar...",
+            "waiter_call_cooldown": "Por favor, aguarde {{seconds}} segundos antes de chamar novamente.",
+            "waiter_called_title": "Garçom Chamado!",
+            "waiter_confirmation_msg": "Em breve alguém virá atendê-lo",
+            "waiter_active_call": "Já existe uma chamada ativa para esta mesa.",
+            "waiter_call_error": "Erro ao chamar garçom. Por favor, tente novamente."
         }
     },
     es: {
@@ -330,7 +342,13 @@ const resources = {
             "loading_order_status": "Cargando estado del pedido...",
             "back_to_menu": "Volver al Menú",
             "estimated_ready": "Estimado listo",
-            "in_progress": "En progreso..."
+            "in_progress": "En progreso...",
+            "calling": "Llamando...",
+            "waiter_call_cooldown": "Por favor espere {{seconds}} segundos antes de llamar de nuevo.",
+            "waiter_called_title": "¡Camarero Llamado!",
+            "waiter_confirmation_msg": "Pronto alguien vendrá a atenderle",
+            "waiter_active_call": "Ya hay una llamada activa para esta mesa.",
+            "waiter_call_error": "Error al llamar al camarero. Inténtelo de nuevo."
         }
     }
 };
