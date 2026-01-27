@@ -12,6 +12,7 @@ import { useSocket } from '../contexts/SocketContext';
 import WaiterCallsModal from '../components/WaiterCallsModal';
 import TableDetailsModal from '../components/TableDetailsModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonGrid } from '../components/Skeleton';
 
 const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
     <div style={{
@@ -162,12 +163,14 @@ export default function HallDashboard() {
         setIsDetailsModalOpen(true);
     };
 
+    // Skeleton loading - maintains layout
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
-            <div className="flex flex-col items-center gap-4">
-                <LoadingSpinner size={48} />
-                <p className="font-bold text-slate-400">Sincronizando operação...</p>
+        <div className="p-6">
+            <div className="mb-6">
+                <div className="h-10 w-64 bg-gray-200 rounded-lg animate-pulse mb-2"></div>
+                <div className="h-4 w-80 bg-gray-200 rounded animate-pulse"></div>
             </div>
+            <SkeletonGrid items={5} columns={5} height="160px" gap="24px" />
         </div>
     );
 

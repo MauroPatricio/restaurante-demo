@@ -8,6 +8,7 @@ import { useSound } from '../hooks/useSound';
 import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle, Coffee } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonGrid } from '../components/Skeleton';
 import '../styles/PremiumTheme.css';
 
 const Kitchen = () => {
@@ -121,9 +122,16 @@ const Kitchen = () => {
         }
     };
 
+    // Skeleton loading - maintains layout and visual context
     if (loading) return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
-            <LoadingSpinner size={48} message={t('loading_kitchen') || "Carregando Cozinha..."} />
+        <div style={{ padding: '40px', maxWidth: '100vw' }}>
+            {/* Header skeleton */}
+            <div style={{ marginBottom: '48px' }}>
+                <div style={{ height: '60px', width: '350px', background: '#f1f5f9', borderRadius: '12px', marginBottom: '12px' }} className="animate-pulse"></div>
+                <div style={{ height: '16px', width: '280px', background: '#f1f5f9', borderRadius: '8px' }} className="animate-pulse"></div>
+            </div>
+            {/* KPI Cards skeleton */}
+            <SkeletonGrid items={5} columns={5} height="120px" gap="24px" />
         </div>
     );
 

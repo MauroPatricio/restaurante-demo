@@ -5,14 +5,16 @@ import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Clock, ChefHat, Truck, ArrowLeft, RefreshCw, AlertCircle, Star, Copy, CheckCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { API_URL, SOCKET_URL } from '../config/api';
 import { formatTime } from '../utils/dateUtils';
+import { getMenuUrl } from '../utils/navigation';
 
 const OrderStatus = () => {
     const { restaurantId, orderId } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { t } = useTranslation();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -78,17 +80,14 @@ const OrderStatus = () => {
         }
     };
 
-    if (loading) return (
-        <div className="flex h-screen flex-col items-center justify-center bg-gray-50 gap-4">
-            <LoadingSpinner size={48} message={t('loading_data') || "Carregando o estado do pedido..."} />
-        </div>
-    );
+    // Removed fullscreen loader - loads in background for better UX
+    if (loading) return null;
 
     if (error) return (
         <div className="flex h-screen items-center justify-center text-red-500 gap-2 bg-gray-50 flex-col p-4 text-center">
             <AlertCircle size={48} className="mb-2 opacity-50" />
             <p>{error}</p>
-            <button onClick={() => navigate(`/menu/${restaurantId}`)} className="mt-4 text-primary-600 underline">Back to Menu</button>
+            <button onClick={() => navigate(getMenuUrl(restaurantId, searchParams))} className="mt-4 text-primary-600 underline">{t('back_to_menu')}</button>
         </div>
     );
 
@@ -154,7 +153,7 @@ const OrderStatus = () => {
                         {order.status === 'pending' ? t('order_status_pending') : t(`order_status_${order.status}`)}
                     </h2>
                     <p className="text-gray-500 text-sm">
-                        Estimated ready: {formatTime(order.estimatedReadyTime)}
+                        {t('estimated_ready')}: {formatTime(order.estimatedReadyTime)}
                     </p>
                 </div>
 

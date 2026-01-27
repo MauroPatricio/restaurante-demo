@@ -10,6 +10,7 @@ import Maintenance from './pages/Maintenance';
 import { NotificationProvider } from './context/NotificationContext';
 import { LoadingProvider } from './context/LoadingContext';
 import LoadingSpinner from './components/LoadingSpinner';
+import { useTranslation } from 'react-i18next';
 
 import { API_URL } from './config/api';
 
@@ -19,6 +20,7 @@ function QRRedirect() {
     const navigate = useNavigate();
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         const validateQR = async () => {
@@ -89,19 +91,8 @@ function QRRedirect() {
         validateQR();
     }, [searchParams, navigate]);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-                    <div className="flex justify-center mb-4">
-                        <LoadingSpinner size={48} />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Carregando Menu...</h2>
-                    <p className="text-gray-600">Validando QR Code</p>
-                </div>
-            </div>
-        );
-    }
+    // Removed fullscreen loader for better UX - loading happens in background
+    // User sees menu page directly which loads its own data
 
     if (error) {
         return (
@@ -112,13 +103,13 @@ function QRRedirect() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Erro</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('error')}</h2>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
                     >
-                        Tentar Novamente
+                        {t('retry')}
                     </button>
                 </div>
             </div>
@@ -134,6 +125,7 @@ function CodeEntry() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -207,7 +199,7 @@ function CodeEntry() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Código da Mesa (6 dígitos)
+                                {t('table_code_label')}
                             </label>
                             <input
                                 type="text"

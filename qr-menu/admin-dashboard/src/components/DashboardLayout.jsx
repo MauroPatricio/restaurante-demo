@@ -445,6 +445,9 @@ export default function DashboardLayout() {
                                             key={item.path}
                                             to={item.path}
                                             onClick={() => {
+                                                // Close sidebar automatically on navigation - better UX
+                                                closeSidebar();
+                                                // Stop ringing for orders
                                                 if (isOrders) stopRinging();
                                             }}
                                             className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''} ${item.isPremium && isExpiring ? 'premium-locked' : ''}`}

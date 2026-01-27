@@ -4,6 +4,7 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { ConnectivityProvider, useConnectivity } from './contexts/ConnectivityContext';
 import ToastContainer from './components/ToastContainer';
 import { LoadingProvider } from './contexts/LoadingContext';
+import GlobalLoader from './components/GlobalLoader';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import CreateRestaurant from './pages/CreateRestaurant';
@@ -50,7 +51,7 @@ function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <div className="loading-screen">Loading...</div>;
+    return null; // Sem loading visual
   }
 
   if (!isAuthenticated) {

@@ -9,10 +9,11 @@ import {
 } from 'recharts';
 import {
     TrendingUp, Users, ShoppingBag, DollarSign,
-    ArrowRight, Building2, Calendar, Star
+    ArrowRight, Building2, Calendar, Star, Utensils, Zap
 } from 'lucide-react';
 import { format } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonGrid } from '../components/Skeleton';
 import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -50,6 +51,50 @@ const sectionStyle = {
     border: '1px solid #f1f5f9'
 };
 
+const premiumCardStyle = {
+    ...statCardStyle,
+    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+    minWidth: '320px',
+    position: 'relative',
+    overflow: 'hidden'
+};
+
+const cardLabelStyle = {
+    color: '#64748b',
+    fontSize: '13px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    marginBottom: '8px'
+};
+
+const cardValueStyle = {
+    fontSize: '24px',
+    fontWeight: '900',
+    color: '#1e293b',
+    margin: '8px 0',
+    letterSpacing: '-0.02em'
+};
+
+const cardSubtextStyle = {
+    color: '#94a3b8',
+    fontSize: '13px',
+    fontWeight: '600',
+    marginBottom: '12px'
+};
+
+const restaurantBadgeStyle = {
+    display: 'inline-block',
+    padding: '4px 12px',
+    background: '#f1f5f9',
+    color: '#475569',
+    borderRadius: '6px',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em'
+};
+
 const OwnerDashboard = () => {
     const { user, selectRestaurant } = useAuth();
     const navigate = useNavigate();
@@ -81,9 +126,14 @@ const OwnerDashboard = () => {
         }
     };
 
+    // Skeleton loading - maintains dashboard layout
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-            <LoadingSpinner size={48} message={t('preparingDashboard')} />
+        <div className="p-6">
+            <div className="mb-8">
+                <div className="h-12 w-96 bg-gray-200 rounded-xl animate-pulse mb-3"></div>
+                <div className="h-5 w-72 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <SkeletonGrid items={3} columns={3} height="160px" gap="24px" />
         </div>
     );
 
@@ -199,6 +249,68 @@ const OwnerDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 🎯 INTELLIGENT STATS CARDS */}
+            {(stats?.topWaiter || stats?.topDish || stats?.fastestDish) && (
+                <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap' }}>
+                    {/* 🏆 Top Waiter Card */}
+                    {stats?.topWaiter && (
+                        <div style={premiumCardStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <p style={cardLabelStyle}>🏆 {t('top_waiter') || 'Melhor Garçom'}</p>
+                                    <h3 style={cardValueStyle}>{stats.topWaiter.name}</h3>
+                                    <p style={cardSubtextStyle}>
+                                        Score: {stats.topWaiter.score}% • {stats.topWaiter.ordersCount} {t('orders') || 'pedidos'}
+                                    </p>
+                                    <span style={restaurantBadgeStyle}>{stats.topWaiter.restaurant}</span>
+                                </div>
+                                <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
+                                    <Star size={28} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🍽️ Top Dish Card */}
+                    {stats?.topDish && (
+                        <div style={premiumCardStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <p style={cardLabelStyle}>🍽️ {t('top_dish') || 'Prato Mais Vendido'}</p>
+                                    <h3 style={cardValueStyle}>{stats.topDish.name}</h3>
+                                    <p style={cardSubtextStyle}>
+                                        {stats.topDish.quantity} {t('sales') || 'vendas'}
+                                    </p>
+                                    <span style={restaurantBadgeStyle}>{stats.topDish.restaurant}</span>
+                                </div>
+                                <div style={iconBoxStyle('#f59e0b', '#fffbeb')}>
+                                    <Utensils size={28} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ⚡ Fastest Dish Card */}
+                    {stats?.fastestDish && (
+                        <div style={premiumCardStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <p style={cardLabelStyle}>⚡ {t('fastest_dish') || 'Prato Mais Rápido'}</p>
+                                    <h3 style={cardValueStyle}>{stats.fastestDish.name}</h3>
+                                    <p style={cardSubtextStyle}>
+                                        {stats.fastestDish.avgTime} min {t('average') || 'média'}
+                                    </p>
+                                    <span style={restaurantBadgeStyle}>{stats.fastestDish.restaurant}</span>
+                                </div>
+                                <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
+                                    <Zap size={28} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Charts Section */}
             <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', flexWrap: 'wrap', width: '100%' }}>

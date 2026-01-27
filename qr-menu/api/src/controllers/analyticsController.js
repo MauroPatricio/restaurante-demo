@@ -6,6 +6,8 @@ import MenuItem from '../models/MenuItem.js';
 import WaiterCall from '../models/WaiterCall.js';
 import Table from '../models/Table.js';
 import TableSession from '../models/TableSession.js';
+import User from '../models/User.js';
+import { calculateTopWaiter, calculateTopDish, calculateFastestDish } from './ownerStatsHelpers.js';
 
 export const getOwnerStats = async (req, res) => {
     try {
@@ -23,7 +25,10 @@ export const getOwnerStats = async (req, res) => {
                 totalRevenue: 0,
                 totalOrders: 0,
                 activeRestaurants: 0,
-                revenueByRestaurant: []
+                revenueByRestaurant: [],
+                topWaiter: null,
+                topDish: null,
+                fastestDish: null
             });
         }
 
@@ -63,11 +68,23 @@ export const getOwnerStats = async (req, res) => {
             };
         }).sort((a, b) => b.revenue - a.revenue);
 
+        // 4. 🏆 CALCULATE TOP WAITER based on performance
+        const topWaiter = await calculateTopWaiter(restaurantIds, restaurants);
+
+        // 5. 🍽️ CALCULATE TOP DISH based on quantity sold
+        const topDish = await calculateTopDish(restaurantIds, restaurants);
+
+        // 6. ⚡ CALCULATE FASTEST DISH based on prep time
+        const fastestDish = await calculateFastestDish(restaurantIds, restaurants);
+
         res.json({
             totalRevenue: globalStats[0]?.totalRevenue || 0,
             totalOrders: globalStats[0]?.totalOrders || 0,
             activeRestaurants: restaurants.length,
-            revenueByRestaurant: revenueData
+            revenueByRestaurant: revenueData,
+            topWaiter,
+            topDish,
+            fastestDish
         });
 
     } catch (error) {

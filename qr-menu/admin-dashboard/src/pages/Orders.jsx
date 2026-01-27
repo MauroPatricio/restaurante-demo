@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { Eye, RefreshCw, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonList } from '../components/Skeleton';
 import ReceiptModal from '../components/ReceiptModal';
 
 export default function Orders() {
@@ -83,9 +84,12 @@ export default function Orders() {
 
             {/* Orders Table */}
             {loading ? (
-                <div style={{ display: 'flex', flexDir: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px' }}>
-                    <LoadingSpinner size={48} />
-                    <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading_data')}</span>
+                <div className="p-6">
+                    <div className="mb-6">
+                        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                        <div className="h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                    <SkeletonList items={8} height="100px" gap="16px" />
                 </div>
             ) : (
                 <div className="table-container">

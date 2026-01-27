@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CartProvider } from './contexts/CartContext';
+import { LoadingProvider } from './contexts/LoadingContext';
 
 import HomeScreen from './screens/HomeScreen';
 import CartScreen from './screens/CartScreen';
@@ -47,36 +48,38 @@ function HomeTabs() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Home"
-            component={HomeTabs}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Checkout"
-            component={CheckoutScreen}
-            options={{ title: 'Checkout' }}
-          />
-          <Stack.Screen
-            name="DeliveryAddress"
-            component={DeliveryAddressScreen}
-            options={{ title: 'Delivery Address' }}
-          />
-          <Stack.Screen
-            name="OrderStatus"
-            component={OrderStatusScreen}
-            options={{ title: 'Order Status' }}
-          />
-          <Stack.Screen
-            name="Feedback"
-            component={FeedbackScreen}
-            options={{ title: 'Share Feedback' }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </CartProvider>
+    <LoadingProvider>
+      <CartProvider>
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen
+              name="Home"
+              component={HomeTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Checkout"
+              component={CheckoutScreen}
+              options={{ title: 'Checkout' }}
+            />
+            <Stack.Screen
+              name="DeliveryAddress"
+              component={DeliveryAddressScreen}
+              options={{ title: 'Delivery Address' }}
+            />
+            <Stack.Screen
+              name="OrderStatus"
+              component={OrderStatusScreen}
+              options={{ title: 'Order Status' }}
+            />
+            <Stack.Screen
+              name="Feedback"
+              component={FeedbackScreen}
+              options={{ title: 'Share Feedback' }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </CartProvider>
+    </LoadingProvider>
   );
 }

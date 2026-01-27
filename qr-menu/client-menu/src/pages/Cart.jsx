@@ -12,6 +12,7 @@ import ReactionButtons from '../components/ReactionButtons';
 import { useSound } from '../hooks/useSound';
 import bellSound from '../sound/bell.mp3';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getMenuUrl } from '../utils/navigation';
 
 const Cart = () => {
     const { restaurantId } = useParams();
@@ -154,7 +155,7 @@ const Cart = () => {
                 </div>
 
                 <button
-                    onClick={() => navigate(`/menu/${restaurantId}`)}
+                    onClick={() => navigate(getMenuUrl(restaurantId, searchParams))}
                     className="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 mb-8"
                 >
                     {t('browse_menu')}
@@ -176,7 +177,7 @@ const Cart = () => {
                 <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t('cart_empty') || 'Seu carrinho está vazio'}</h2>
                 <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-xs">{t('cart_empty_msg') || 'Adicione itens deliciosos do menu para começar seu pedido!'}</p>
                 <button
-                    onClick={() => navigate(`/menu/${restaurantId}`)}
+                    onClick={() => navigate(getMenuUrl(restaurantId, searchParams))}
                     className="text-primary-600 dark:text-primary-400 font-bold flex items-center gap-2 hover:underline"
                 >
                     <ArrowLeft size={20} /> {t('browse_menu')}
@@ -240,7 +241,7 @@ const Cart = () => {
                 {/* Totals */}
                 <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 transition-colors">
                     <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
-                        <span>{t('subtotal') || 'Subtotal'}</span>
+                        <span>{t('subtotal')}</span>
                         <span>{cartTotal} {t('currency')}</span>
                     </div>
                     <div className="flex justify-between font-bold text-xl pt-3 border-t border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">

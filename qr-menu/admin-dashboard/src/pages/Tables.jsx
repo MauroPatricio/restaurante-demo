@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import TableSessionModal from '../components/TableSessionModal';
 import '../styles/TableSessionModal.css';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonGrid } from '../components/Skeleton';
 
 export default function Tables() {
     const { user } = useAuth();
@@ -332,10 +333,14 @@ export default function Tables() {
         }
     };
 
+    // Skeleton loading - maintains table grid layout
     if (loading) return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '50vh' }}>
-            <LoadingSpinner size={48} />
-            <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading')}</span>
+        <div className="p-6">
+            <div className="mb-6">
+                <div className="h-10 w-56 bg-gray-200 rounded-lg animate-pulse mb-3"></div>
+                <div className="h-5 w-80 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <SkeletonGrid items={12} columns={4} height="180px" gap="20px" />
         </div>
     );
 

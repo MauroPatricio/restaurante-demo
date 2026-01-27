@@ -2,6 +2,7 @@ class LoadingManager {
     constructor() {
         this.listeners = [];
         this.isLoading = false;
+        this.message = null;
         this.activeRequests = 0;
     }
 
@@ -13,10 +14,17 @@ class LoadingManager {
     }
 
     notify() {
-        this.listeners.forEach(listener => listener(this.isLoading));
+        this.listeners.forEach(listener => listener({
+            isLoading: this.isLoading,
+            message: this.message
+        }));
     }
 
-    start() {
+    start(message = null) {
+        if (message) {
+            this.message = message;
+        }
+
         this.activeRequests++;
         if (!this.isLoading) {
             this.isLoading = true;
@@ -29,6 +37,7 @@ class LoadingManager {
         if (this.activeRequests <= 0) {
             this.activeRequests = 0;
             this.isLoading = false;
+            this.message = null;
             this.notify();
         }
     }
@@ -37,6 +46,7 @@ class LoadingManager {
     reset() {
         this.activeRequests = 0;
         this.isLoading = false;
+        this.message = null;
         this.notify();
     }
 }

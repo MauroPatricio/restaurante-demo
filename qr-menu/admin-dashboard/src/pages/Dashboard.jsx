@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import WaiterCallsModal from '../components/WaiterCallsModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonGrid } from '../components/Skeleton';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -157,10 +158,16 @@ export default function Dashboard() {
         };
     }, [socket, restaurantId]);
 
+    // Use skeleton instead of fullscreen loading - maintains layout and context
     if (loading) return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
-            <LoadingSpinner size={48} />
-            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('preparing_dashboard') || 'Preparamos o seu painel...'}</span>
+        <div className="dashboard-container" style={{ maxWidth: '100vw', padding: '24px' }}>
+            {/* Header skeleton */}
+            <div style={{ marginBottom: '48px' }}>
+                <div style={{ height: '80px', width: '400px', background: '#f1f5f9', borderRadius: '12px', marginBottom: '12px' }} className="animate-pulse"></div>
+                <div style={{ height: '20px', width: '300px', background: '#f1f5f9', borderRadius: '8px' }} className="animate-pulse"></div>
+            </div>
+            {/* KPI Cards skeleton */}
+            <SkeletonGrid items={5} columns={5} height="160px" gap="24px" />
         </div>
     );
 

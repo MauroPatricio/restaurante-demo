@@ -1,29 +1,38 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { loadingManager } from '../utils/loadingManager';
-import LoadingOverlay from '../components/LoadingOverlay';
+import GlobalLoader from '../components/GlobalLoader';
 
 const LoadingContext = createContext();
 
 export const useLoading = () => useContext(LoadingContext);
 
 export const LoadingProvider = ({ children }) => {
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingState, setLoadingState] = useState({
+        isLoading: false,
+        message: null
+    });
 
     useEffect(() => {
-        const unsubscribe = loadingManager.subscribe((loading) => {
-            setIsLoading(loading);
+        const unsubscribe = loadingManager.subscribe((state) => {
+            setLoadingState(state);
         });
         return unsubscribe;
     }, []);
 
     // Manual controls exposed to context consumers if needed
-    const showLoading = () => loadingManager.start();
+    const showLoading = (message = null) => loadingManager.start(message);
     const hideLoading = () => loadingManager.stop();
 
     return (
-        <LoadingContext.Provider value={{ isLoading, showLoading, hideLoading }}>
+        <LoadingContext.Provider value={{ ...loadingState, showLoading, hideLoading }}>
             {children}
-            {isLoading && <LoadingOverlay />}
+            {loadingState.isLoading && (
+                <GlobalLoader
+                    mode="fullscreen"
+                    size="lg"
+                    message={loadingState.message}
+                />
+            )}
         </LoadingContext.Provider>
     );
 };

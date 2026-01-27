@@ -8,6 +8,7 @@ class LoadingManager {
         this.listeners = [];
         this.isLoading = false;
         this.loadingType = LOADING_TYPES.FULL; // 'full' or 'background'
+        this.message = null; // Custom message for loading state
 
         this.activeFullRequests = 0;
         this.activeBackgroundRequests = 0;
@@ -23,7 +24,8 @@ class LoadingManager {
     notify() {
         this.listeners.forEach(listener => listener({
             isLoading: this.isLoading,
-            type: this.loadingType
+            type: this.loadingType,
+            message: this.message
         }));
     }
 
@@ -37,13 +39,20 @@ class LoadingManager {
             this.loadingType = LOADING_TYPES.BACKGROUND;
         } else {
             this.isLoading = false;
+            // Reset message when loading stops
+            this.message = null;
             // Retain last type or reset to default? Resetting seems safer to avoid confusion.
             this.loadingType = LOADING_TYPES.FULL;
         }
         this.notify();
     }
 
-    start(type = LOADING_TYPES.FULL) {
+    start(type = LOADING_TYPES.FULL, message = null) {
+        // Store custom message if provided
+        if (message) {
+            this.message = message;
+        }
+
         if (type === LOADING_TYPES.FULL) {
             this.activeFullRequests++;
         } else {
@@ -69,6 +78,7 @@ class LoadingManager {
         this.activeBackgroundRequests = 0;
         this.isLoading = false;
         this.loadingType = LOADING_TYPES.FULL;
+        this.message = null;
         this.notify();
     }
 }

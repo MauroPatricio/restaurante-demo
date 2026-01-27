@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonGrid } from '../components/Skeleton';
 
 const ManagerDashboard = () => {
     const { user } = useAuth();
@@ -105,9 +106,14 @@ const ManagerDashboard = () => {
         flex: 1
     };
 
+    // Skeleton loading - maintains dashboard layout
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-            <LoadingSpinner size={48} message={t('preparing_dashboard')} />
+        <div className="p-6">
+            <div className="mb-8">
+                <div className="h-12 w-80 bg-gray-200 rounded-xl animate-pulse mb-3"></div>
+                <div className="h-5 w-64 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <SkeletonGrid items={4} columns={4} height="140px" gap="20px" />
         </div>
     );
 

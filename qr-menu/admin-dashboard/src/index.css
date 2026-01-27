@@ -633,3 +633,66 @@ button:focus-visible {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.4);
 }
+
+/* ========================================
+   Global Loading Animations
+   ======================================== */
+
+/* Spin animation for loader icon - 0.6s for snappy, high-performance feel */
+@keyframes spin-loader {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pulse animation for loading messages */
+@keyframes pulse-loader {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Fade in animation for loader appearance */
+@keyframes fade-in-loader {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Utility classes for GlobalLoader */
+.global-loader-spin {
+  animation: spin-loader 0.6s linear infinite;
+}
+
+.global-loader-pulse {
+  animation: pulse-loader 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Dark mode support for fullscreen loader */
+@media (prefers-color-scheme: dark) {
+  .global-loader-fullscreen>div {
+    background-color: #1f2937 !important;
+  }
+
+  .global-loader-fullscreen h3 {
+    color: #f9fafb !important;
+  }
+
+  .global-loader-fullscreen p {
+    color: #9ca3af !important;
+  }
+}
