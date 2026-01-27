@@ -12,7 +12,9 @@ import { useSocket } from '../contexts/SocketContext';
 import WaiterCallsModal from '../components/WaiterCallsModal';
 import TableDetailsModal from '../components/TableDetailsModal';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { SkeletonGrid } from '../components/Skeleton';
+import WaiterCallToast from '../components/WaiterCallToast';
+import { useSound } from '../hooks/useSound';
+import { waiterCallAPI } from '../services/api';
 
 const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
     <div style={{
@@ -101,11 +103,27 @@ export default function HallDashboard() {
 
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
+    const [activeCalls, setActiveCalls] = useState([]);
+    const [latestCall, setLatestCall] = useState(null);
+    const { play: playBell } = useSound('/sounds/bell.mp3');
+
     useEffect(() => {
         if (restaurantId) {
             fetchHallData();
+            fetchActiveCalls();
         }
     }, [restaurantId]);
+
+    const fetchActiveCalls = async () => {
+        try {
+            const res = await waiterCallAPI.getActive(restaurantId);
+            if (res.data && Array.isArray(res.data.calls)) {
+                setActiveCalls(res.data.calls);
+            }
+        } catch (error) {
+            console.error('Failed to fetch active calls:', error);
+        }
+    };
 
     // Update real-time if socket events occur
     useEffect(() => {
@@ -115,18 +133,42 @@ export default function HallDashboard() {
             fetchHallData();
         };
 
-        socket.on('waiter:call', handleUpdate);
-        socket.on('waiter:call:resolved', handleUpdate);
+        const handleNewCall = (newCall) => {
+            playBell();
+            setLatestCall(newCall);
+            fetchActiveCalls(); // Refresh list
+            fetchHallData(); // Refresh table stats
+        };
+
+        const handleCallResolved = () => {
+            fetchActiveCalls();
+            fetchHallData();
+        };
+
+        socket.on('waiter:call', handleNewCall);
+        socket.on('waiter:call:resolved', handleCallResolved);
+        socket.on('waiter:call:acknowledged', handleCallResolved);
         socket.on('order:updated', handleUpdate);
         socket.on('order:new', handleUpdate);
 
         return () => {
-            socket.off('waiter:call', handleUpdate);
-            socket.off('waiter:call:resolved', handleUpdate);
+            socket.off('waiter:call', handleNewCall);
+            socket.off('waiter:call:resolved', handleCallResolved);
+            socket.off('waiter:call:acknowledged', handleCallResolved);
             socket.off('order:updated', handleUpdate);
             socket.off('order:new', handleUpdate);
         };
-    }, [socket]);
+    }, [socket, playBell]);
+
+    const handleAttendCall = async (callId) => {
+        try {
+            await waiterCallAPI.resolve(callId);
+            setLatestCall(null); // Dismiss toast
+            fetchActiveCalls();
+        } catch (error) {
+            console.error('Failed to attend call:', error);
+        }
+    };
 
     const fetchHallData = async () => {
         try {
@@ -213,7 +255,19 @@ export default function HallDashboard() {
                         className="hover-scale group"
                     >
                         <Zap size={20} style={{ transition: 'color 0.3s' }} className="group-hover:text-yellow-400" />
-                        Solicitações Ativas ({tables.filter(t => t.callsToday > 0).length})
+                        Solicitações Ativas
+                        {activeCalls.length > 0 && (
+                            <span style={{
+                                background: '#ef4444',
+                                color: 'white',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '12px',
+                                marginLeft: 'auto'
+                            }}>
+                                {activeCalls.length}
+                            </span>
+                        )}
                     </button>
                 </div>
             </div>
@@ -462,6 +516,12 @@ export default function HallDashboard() {
                 table={selectedTable}
                 restaurantId={restaurantId}
                 onUpdate={fetchHallData}
+            />
+
+            <WaiterCallToast
+                call={latestCall}
+                onDismiss={() => setLatestCall(null)}
+                onAttend={handleAttendCall}
             />
         </div>
     );
