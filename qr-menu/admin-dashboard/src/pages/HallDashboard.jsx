@@ -12,6 +12,7 @@ import { useSocket } from '../contexts/SocketContext';
 import WaiterCallsModal from '../components/WaiterCallsModal';
 import TableDetailsModal from '../components/TableDetailsModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { SkeletonGrid } from '../components/Skeleton';
 import WaiterCallToast from '../components/WaiterCallToast';
 import { useSound } from '../hooks/useSound';
 import { waiterCallAPI } from '../services/api';
