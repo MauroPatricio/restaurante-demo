@@ -205,6 +205,7 @@ export default function DashboardLayout() {
             items: [
                 { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings'), isPremium: true },
                 { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports'), isPremium: true },
+                { icon: CreditCard, label: t('subscription') || 'Subscrição', path: '/dashboard/subscription', show: ['Owner', 'Manager'].includes(user?.role?.name) },
             ]
         },
         {
@@ -224,8 +225,7 @@ export default function DashboardLayout() {
             title: t('system_administration') || '⚙️ SISTEMA & ADMINISTRAÇÃO',
             items: [
                 { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
-                { icon: CreditCard, label: t('subscription_management') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.name === 'System Admin' },
-                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: user?.role?.isSystem || (['Owner', 'Manager'].includes(user?.role?.name)) },
+                { icon: CreditCard, label: t('subscription_management_admin') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.name === 'System Admin' || user?.role?.isSystem },
             ]
         }
     ];
