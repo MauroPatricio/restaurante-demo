@@ -164,6 +164,13 @@ export const SocketProvider = ({ children }) => {
             setIsRinging(true);
         });
 
+        // Room-service orders — same notification as dine-in
+        newSocket.on('room:order:new', (data) => {
+            console.log('🛏️ New room-service order received:', data);
+            setPendingCount(prev => prev + 1);
+            setIsRinging(true);
+        });
+
         newSocket.on('order-updated', (data) => {
             console.log('📝 Order updated:', data);
 

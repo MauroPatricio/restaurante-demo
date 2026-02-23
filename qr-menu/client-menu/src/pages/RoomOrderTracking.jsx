@@ -34,13 +34,17 @@ export default function RoomOrderTracking() {
             const data = await res.json();
             setOrder(prev => {
                 const newStatus = data.order.status;
-                // Detect "ready" transition → alert
-                if (prev?.status !== newStatus && newStatus === 'ready') {
-                    setShowReadyAlert(true);
-                    // Vibrate mobile
-                    try { navigator.vibrate?.([400, 100, 400, 100, 800]); } catch { }
-                    // Play beep
+                if (prev?.status !== newStatus) {
+                    // Play bell on ANY status change
                     try { audioRef.current?.play(); } catch { }
+                    // Vibrate on any update too
+                    try { navigator.vibrate?.([200, 50, 200]); } catch { }
+                    // Full-screen alert only when "ready" (on its way)
+                    if (newStatus === 'ready') {
+                        setShowReadyAlert(true);
+                        // Stronger vibration for ready
+                        try { navigator.vibrate?.([400, 100, 400, 100, 800]); } catch { }
+                    }
                 }
                 setPrevStatus(prev?.status ?? null);
                 return data.order;
@@ -120,9 +124,9 @@ export default function RoomOrderTracking() {
 
     return (
         <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 460, margin: '0 auto' }}>
-            {/* Silent audio for ready notification */}
-            <audio ref={audioRef} preload="none">
-                <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" type="audio/wav" />
+            {/* Bell audio — plays on every status update */}
+            <audio ref={audioRef} preload="auto">
+                <source src="/sound/bell.mp3" type="audio/mpeg" />
             </audio>
 
             {/* Header */}
