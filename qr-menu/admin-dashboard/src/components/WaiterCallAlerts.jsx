@@ -69,6 +69,11 @@ export default function WaiterCallAlerts() {
 
     const handleAcknowledge = async (callId) => {
         if (!callId) return;
+        // Room waiter calls are not stored in DB — just update locally
+        if (callId.startsWith('room-')) {
+            localAcknowledge(callId);
+            return;
+        }
         try {
             await waiterCallAPI.acknowledge(callId);
             localAcknowledge(callId);
@@ -84,6 +89,11 @@ export default function WaiterCallAlerts() {
 
     const handleResolve = async (callId) => {
         if (!callId) return;
+        // Room waiter calls are not stored in DB — just remove locally
+        if (callId.startsWith('room-')) {
+            removeCall(callId);
+            return;
+        }
         try {
             await waiterCallAPI.resolve(callId);
             removeCall(callId);
@@ -110,7 +120,9 @@ export default function WaiterCallAlerts() {
     };
 
     const formatTime = (dateString) => {
+        if (!dateString) return '--:--';
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '--:--';
         return date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
     };
 
@@ -176,7 +188,7 @@ export default function WaiterCallAlerts() {
                                     <span className="table-number">{t('table_label')} {call.tableNumber}</span>
                                     <span className="call-time">
                                         <Clock size={12} />
-                                        {formatTime(call.createdAt)}
+                                        {formatTime(call.timestamp || call.createdAt)}
                                     </span>
                                 </div>
                                 {call.waiterName && (
