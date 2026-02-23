@@ -212,9 +212,9 @@ app.use(cors({
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
-// 2. Body Parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 2. Body Parsers (10mb to support base64 images; actual file uploads handled by multer)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 3. Security & Performance
 if (process.env.NODE_ENV === 'production') {
@@ -335,10 +335,22 @@ try {
   console.error('⚠️  Firebase initialization failed:', err?.message || err);
 }
 
-// Middleware de erro
+// Global error handler — must include CORS headers so browser sees the real error (not "CORS blocked")
 app.use((err, req, res, next) => {
   console.error('❌ Erro:', err);
-  res.status(500).send({ message: err.message });
+
+  // Re-apply CORS headers on error responses so browsers don't misreport as CORS failure
+  const origin = req.headers.origin;
+  if (origin && (allowedOrigins.includes(origin) || origin.includes('gestaomodernaonline.com'))) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Ficheiro demasiado grande. Máximo 10MB por pedido.' });
+  }
+
+  res.status(err.status || 500).send({ message: err.message });
 });
 
 // Configuração do servidor HTTP

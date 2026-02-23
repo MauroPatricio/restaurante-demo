@@ -3,6 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+// Compress image to JPEG, max 800px wide, quality 0.8 (~< 300KB for most photos)
+const compressImage = (file, maxWidth = 800, quality = 0.8) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob(
+                    (blob) => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
 export default function CreateRestaurant() {
     const [formData, setFormData] = useState({
         name: '',
@@ -47,7 +76,9 @@ export default function CreateRestaurant() {
             data.append('email', formData.email);
 
             if (image) {
-                data.append('image', image);
+                // Compress before uploading to stay well under server limits
+                const compressed = await compressImage(image);
+                data.append('image', compressed);
             }
 
             // POST to /restaurants using authenticated api instance
@@ -101,7 +132,16 @@ export default function CreateRestaurant() {
                                     type="file"
                                     accept="image/*"
                                     className="hidden-input"
-                                    onChange={(e) => setImage(e.target.files[0])}
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+                                        if (file.size > 10 * 1024 * 1024) {
+                                            setError('Imagem muito grande. Máximo 10MB.');
+                                            return;
+                                        }
+                                        setError('');
+                                        setImage(file);
+                                    }}
                                 />
                             </label>
                         </div>
