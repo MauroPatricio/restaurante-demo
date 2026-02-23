@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { roomServiceAPI } from '../services/api';
+import api from '../services/api';
 import {
     BedDouble, Clock, CheckCircle2, ChefHat,
     Footprints, RefreshCw, AlertCircle, ShoppingBag
@@ -146,20 +147,10 @@ export default function RoomOrders() {
 
     const handleStatusChange = async (orderId, newStatus) => {
         try {
-            // Use the existing order update route
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/orders/${orderId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
-            if (res.ok) {
-                setOrders(prev => prev.map(o =>
-                    o._id === orderId ? { ...o, status: newStatus } : o
-                ));
-            }
+            await api.patch(`/orders/${orderId}`, { status: newStatus });
+            setOrders(prev => prev.map(o =>
+                o._id === orderId ? { ...o, status: newStatus } : o
+            ));
         } catch (e) {
             console.error('Update status error:', e);
         }
