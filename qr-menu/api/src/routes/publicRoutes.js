@@ -326,6 +326,49 @@ router.get('/room/validate', async (req, res) => {
 });
 
 /**
+ * Get restaurant menu for room service (uses room token)
+ * GET /api/public/room/menu/:restaurantId?room=roomId&token=xxx
+ */
+router.get('/room/menu/:restaurantId', async (req, res) => {
+    try {
+        const { restaurantId } = req.params;
+        const { room: roomId, token } = req.query;
+
+        if (!restaurantId || !roomId || !token) {
+            return res.status(400).json({ error: 'Missing parameters' });
+        }
+
+        const isValidToken = validateTableToken(token, restaurantId, roomId);
+        if (!isValidToken) {
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+
+        // Use cache if available
+        const cacheKey = `room_menu:${restaurantId}`;
+        const cached = cacheService.get(cacheKey);
+        if (cached) return res.json(cached);
+
+        const MenuItem = (await import('../models/MenuItem.js')).default;
+        const Category = (await import('../models/Category.js')).default;
+
+        const [restaurant, items, categories] = await Promise.all([
+            Restaurant.findById(restaurantId).select('name logo settings currency'),
+            MenuItem.find({ restaurant: restaurantId, available: true }).lean(),
+            Category.find({ restaurant: restaurantId }).sort('order').lean()
+        ]);
+
+        if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+
+        const payload = { restaurant, items, categories };
+        cacheService.set(cacheKey, payload, 600);
+        res.json(payload);
+    } catch (error) {
+        console.error('Room menu fetch error:', error);
+        res.status(500).json({ error: 'Failed to load menu' });
+    }
+});
+
+/**
  * Create a room-service order from guest menu
  * POST /api/public/room/orders
  * Body: { restaurantId, roomId, token, items, customerName, phone, notes, scheduledDelivery, paymentMethod }
