@@ -87,7 +87,7 @@ const OrderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['mpesa', 'emola', 'visa', 'cash', 'pending'], // Added 'visa' as generic card
+    enum: ['mpesa', 'emola', 'visa', 'cash', 'pending', 'room_account'], // room_account for room service billing
     default: 'pending'
   },
   paymentStatus: {
