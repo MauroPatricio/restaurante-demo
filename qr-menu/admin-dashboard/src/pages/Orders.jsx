@@ -126,12 +126,20 @@ export default function Orders() {
                                                 🛏️ Quarto {order.roomService?.roomNumber || '—'}
                                             </span>
                                         ) : order.table ? (
-                                            <span className="font-semibold text-blue-600">
-                                                {t('table_label')} {order.table.number || order.table}
+                                            <span className="font-semibold" style={{ color: '#2563eb' }}>
+                                                🪑 {t('table_label')} {order.table.number || order.table}
                                             </span>
-                                        ) : (
-                                            <span className="text-gray-400">-</span>
-                                        )}
+                                        ) : (() => {
+                                            // Fallback: extract number from customerName (e.g. "Garçom Mesa 17")
+                                            const match = order.customerName?.match(/mesa\s*(\d+)/i);
+                                            return match ? (
+                                                <span className="font-semibold" style={{ color: '#2563eb' }}>
+                                                    🪑 {t('table_label')} {match[1]}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            );
+                                        })()}
                                     </td>
                                     <td>{order.items?.length || 0} {t('items')}</td>
                                     <td className="font-semibold">{order.total} MT</td>
