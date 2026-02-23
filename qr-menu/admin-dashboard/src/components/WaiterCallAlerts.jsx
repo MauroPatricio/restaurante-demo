@@ -98,10 +98,16 @@ export default function WaiterCallAlerts() {
             await waiterCallAPI.resolve(callId);
             removeCall(callId);
         } catch (error) {
+            const status = error.response?.status;
+            // 400 = already resolved in DB — remove from UI silently
+            if (status === 400) {
+                removeCall(callId);
+                return;
+            }
             console.error('Failed to resolve call:', {
                 callId,
                 error: error.response?.data || error.message,
-                status: error.response?.status
+                status
             });
             alert(t('error_resolve_call') || 'Erro ao resolver chamada. Por favor, tente novamente.');
         }
