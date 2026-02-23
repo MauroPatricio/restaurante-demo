@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { analyticsAPI, orderAPI, tableAPI } from '../services/api';
+import { analyticsAPI } from '../services/analytics';
+import { orderAPI, tableAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
