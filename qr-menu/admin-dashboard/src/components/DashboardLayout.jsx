@@ -219,7 +219,7 @@ export default function DashboardLayout() {
             title: '🛎️ ROOM SERVICE',
             items: [
                 { icon: BedDouble, label: 'Gestão de Quartos', path: '/dashboard/room-service', show: hasPermission('manage_tables') || hasPermission('manage_settings') },
-                { icon: ShoppingBag, label: 'Pedidos de Quarto', path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders') },
+                { icon: ShoppingBag, label: 'Pedidos de Quarto', path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders'), isOrders: true },
             ]
         },
         {

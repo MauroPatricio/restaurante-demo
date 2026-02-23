@@ -24,6 +24,8 @@ export default function RoomOrderTracking() {
     const [error, setError] = useState('');
     const [prevStatus, setPrevStatus] = useState(null);
     const [showReadyAlert, setShowReadyAlert] = useState(false);
+    const [statusToast, setStatusToast] = useState(null); // { label, color, icon }
+    const toastTimerRef = useRef(null);
     const audioRef = useRef(null);
 
     /* ── Fetch order ── */
@@ -39,6 +41,13 @@ export default function RoomOrderTracking() {
                     try { audioRef.current?.play(); } catch { }
                     // Vibrate on any update too
                     try { navigator.vibrate?.([200, 50, 200]); } catch { }
+                    // Show status toast
+                    const step = STATUS_STEPS.find(s => s.key === newStatus);
+                    if (step) {
+                        setStatusToast({ label: step.label, color: step.color, icon: step.icon });
+                        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                        toastTimerRef.current = setTimeout(() => setStatusToast(null), 4000);
+                    }
                     // Full-screen alert only when "ready" (on its way)
                     if (newStatus === 'ready') {
                         setShowReadyAlert(true);
@@ -124,6 +133,24 @@ export default function RoomOrderTracking() {
 
     return (
         <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 460, margin: '0 auto' }}>
+            {/* Status toast overlay */}
+            {statusToast && (
+                <div style={{
+                    position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)',
+                    background: statusToast.color, color: 'white',
+                    borderRadius: 14, padding: '12px 20px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    boxShadow: `0 8px 24px ${statusToast.color}55`,
+                    zIndex: 10000, fontFamily: "'Inter',sans-serif",
+                    fontWeight: 700, fontSize: '0.95rem',
+                    animation: 'slideDown 0.4s ease',
+                    whiteSpace: 'nowrap'
+                }}>
+                    <span style={{ fontSize: '1.2rem' }}>{statusToast.icon}</span>
+                    {statusToast.label}
+                    <style>{`@keyframes slideDown{from{opacity:0;top:-20px}to{opacity:1;top:12px}}`}</style>
+                </div>
+            )}
             {/* Bell audio — plays on every status update */}
             <audio ref={audioRef} preload="auto">
                 <source src="/sound/bell.mp3" type="audio/mpeg" />

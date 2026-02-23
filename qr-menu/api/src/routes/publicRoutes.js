@@ -504,4 +504,44 @@ router.get('/room/order/:id', async (req, res) => {
     }
 });
 
+/**
+ * Room waiter call — guest requests waiter at their room
+ * POST /api/public/room/waiter-call
+ */
+router.post('/room/waiter-call', async (req, res) => {
+    try {
+        const { restaurantId, roomId, token, roomNumber } = req.body;
+
+        if (!restaurantId || !roomId || !token) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const isValidToken = validateTableToken(token, restaurantId, roomId);
+        if (!isValidToken) {
+            return res.status(403).json({ error: 'Invalid QR token' });
+        }
+
+        // Emit waiter:call socket event so admin WaiterCallAlerts panel lights up
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`restaurant:${restaurantId}`).emit('waiter:call', {
+                callId: `room-${roomId}-${Date.now()}`,
+                type: 'room-service',
+                tableId: roomId,
+                tableNumber: roomNumber || roomId,
+                roomNumber: roomNumber,
+                isRoom: true,
+                message: `🛏️ Quarto ${roomNumber} chama o garçom`,
+                timestamp: new Date().toISOString(),
+            });
+        }
+
+        res.json({ success: true, message: 'Garçom chamado com sucesso!' });
+    } catch (error) {
+        console.error('Room waiter call error:', error);
+        res.status(500).json({ error: 'Failed to call waiter' });
+    }
+});
+
 export default router;
+

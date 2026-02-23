@@ -133,9 +133,12 @@ export default function RoomMenuPage() {
     const [cart, setCart] = useState([]);
     const [customerName, setCustomerName] = useState('');
     const [notes, setNotes] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('room_account');
     const [submitting, setSubmitting] = useState(false);
     const [orderId, setOrderId] = useState(null);
     const [history, setHistory] = useState([]);
+    const [waiterCalling, setWaiterCalling] = useState(false);
+    const [waiterCalled, setWaiterCalled] = useState(false);
     const searchRef = useRef(null);
 
     /* ── Step 1: Validate QR ── */
@@ -211,7 +214,7 @@ export default function RoomMenuPage() {
                     items: cart.map(c => ({ item: c.item._id, qty: c.qty })),
                     customerName: customerName.trim() || `Quarto ${room?.number}`,
                     notes,
-                    paymentMethod: 'pending'
+                    paymentMethod
                 })
             });
             const data = await res.json();
@@ -233,6 +236,25 @@ export default function RoomMenuPage() {
             alert('Sem ligação. Tente novamente.');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    /* ── Waiter Call ── */
+    const callWaiter = async () => {
+        if (waiterCalling || waiterCalled) return;
+        setWaiterCalling(true);
+        try {
+            await fetch(`${API_URL}/public/room/waiter-call`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ restaurantId, roomId, token, roomNumber: room?.number })
+            });
+            setWaiterCalled(true);
+            setTimeout(() => setWaiterCalled(false), 30000); // reset after 30s
+        } catch {
+            alert('Não foi possível chamar o garçom. Tente novamente.');
+        } finally {
+            setWaiterCalling(false);
         }
     };
 
@@ -306,18 +328,28 @@ export default function RoomMenuPage() {
                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: '0 0 2px', fontSize: '0.72rem' }}>🏨 {restaurant?.name}</p>
                         <h1 style={{ color: 'white', margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>🛏️ Quarto {room?.number}{room?.label ? ` · ${room.label}` : ''}</h1>
                     </div>
-                    {/* History button */}
-                    <button
-                        onClick={() => setPhase('history')}
-                        style={{ position: 'relative', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 12, padding: '8px 12px', color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
-                    >
-                        📦 Pedidos
-                        {history.length > 0 && (
-                            <span style={{ background: '#f59e0b', color: 'white', borderRadius: '50%', width: 18, height: 18, fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: -6, right: -6 }}>
-                                {history.length}
-                            </span>
-                        )}
-                    </button>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'flex-start' }}>
+                        {/* Waiter call button */}
+                        <button
+                            onClick={callWaiter}
+                            disabled={waiterCalling}
+                            style={{ background: waiterCalled ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.15)', border: waiterCalled ? '1px solid rgba(16,185,129,0.5)' : 'none', borderRadius: 12, padding: '8px 12px', color: 'white', cursor: waiterCalling ? 'wait' : 'pointer', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                            {waiterCalling ? '⏳' : waiterCalled ? '✅ Chamado!' : '🔔 Garçom'}
+                        </button>
+                        {/* History button */}
+                        <button
+                            onClick={() => setPhase('history')}
+                            style={{ position: 'relative', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 12, padding: '8px 12px', color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6 }}
+                        >
+                            📦 Pedidos
+                            {history.length > 0 && (
+                                <span style={{ background: '#f59e0b', color: 'white', borderRadius: '50%', width: 18, height: 18, fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: -6, right: -6 }}>
+                                    {history.length}
+                                </span>
+                            )}
+                        </button>
+                    </div>
                 </div>
                 {/* Search */}
                 <div style={{ position: 'relative' }}>
@@ -425,6 +457,46 @@ export default function RoomMenuPage() {
                     </div>
                 ))}
 
+                {/* Payment Method Picker */}
+                <div style={{ background: 'white', borderRadius: 14, padding: 16, marginTop: 10 }}>
+                    <label style={{ ...S.label, marginTop: 0 }}>💳 Forma de Pagamento</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
+                        {[
+                            { id: 'room_account', icon: '🛏️', label: 'Quarto' },
+                            { id: 'cash', icon: '💵', label: 'Dinheiro' },
+                            { id: 'mpesa', icon: '📱', label: 'M-Pesa' },
+                            { id: 'emola', icon: '📲', label: 'e-Mola' },
+                            { id: 'visa', icon: '💳', label: 'Cartão' },
+                        ].map(m => (
+                            <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => setPaymentMethod(m.id)}
+                                style={{
+                                    padding: '12px 8px',
+                                    borderRadius: 12,
+                                    border: `2px solid ${paymentMethod === m.id ? '#10b981' : '#e2e8f0'}`,
+                                    background: paymentMethod === m.id ? '#f0fdf4' : '#f8fafc',
+                                    color: paymentMethod === m.id ? '#059669' : '#64748b',
+                                    fontWeight: 700,
+                                    fontSize: '0.82rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    transition: 'all 0.2s',
+                                    boxShadow: paymentMethod === m.id ? '0 4px 12px rgba(16,185,129,0.15)' : 'none'
+                                }}
+                            >
+                                <span style={{ fontSize: '1.3rem' }}>{m.icon}</span>
+                                {m.label}
+                                {paymentMethod === m.id && <span style={{ fontSize: '0.65rem', color: '#10b981' }}>✓ Selecionado</span>}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div style={{ background: 'white', borderRadius: 14, padding: 16, marginTop: 8 }}>
                     <label style={S.label}>O seu nome (opcional)</label>
                     <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={`Quarto ${room?.number}`} style={S.input} />
@@ -436,13 +508,19 @@ export default function RoomMenuPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem' }}>
                         <span>Total</span><span>{fmt(totalPrice)} MT</span>
                     </div>
-                    <p style={{ opacity: 0.55, fontSize: '0.78rem', margin: '6px 0 0' }}>💳 Faturação ao quarto · Pague no check-out</p>
+                    <p style={{ opacity: 0.55, fontSize: '0.78rem', margin: '6px 0 0' }}>
+                        {paymentMethod === 'room_account' ? '🛏️ Faturação ao quarto · Pague no check-out' :
+                            paymentMethod === 'cash' ? '💵 Pagamento em dinheiro na entrega' :
+                                paymentMethod === 'mpesa' ? '📱 Pagamento via M-Pesa na entrega' :
+                                    paymentMethod === 'emola' ? '📲 Pagamento via e-Mola na entrega' :
+                                        '💳 Pagamento com cartão na entrega'}
+                    </p>
                 </div>
 
                 <button
                     onClick={submitOrder}
                     disabled={submitting || cart.length === 0}
-                    style={{ width: '100%', marginTop: 14, padding: 16, background: submitting ? '#94a3b8' : 'linear-gradient(135deg,#10b981,#059669)', color: 'white', border: 'none', borderRadius: 16, fontWeight: 700, fontSize: '1.05rem', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
+                    style={{ width: '100%', marginTop: 14, marginBottom: 24, padding: 16, background: submitting ? '#94a3b8' : 'linear-gradient(135deg,#10b981,#059669)', color: 'white', border: 'none', borderRadius: 16, fontWeight: 700, fontSize: '1.05rem', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
                 >
                     {submitting ? '⏳ A enviar...' : '🛎️ Confirmar Pedido'}
                 </button>
