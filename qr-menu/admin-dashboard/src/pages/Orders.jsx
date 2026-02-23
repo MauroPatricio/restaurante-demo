@@ -121,7 +121,11 @@ export default function Orders() {
                                     </td>
                                     <td><span className="badge">{order.orderType}</span></td>
                                     <td>
-                                        {order.table ? (
+                                        {order.orderType === 'room-service' ? (
+                                            <span className="font-semibold" style={{ color: '#7c3aed' }}>
+                                                🛏️ Quarto {order.roomService?.roomNumber || '—'}
+                                            </span>
+                                        ) : order.table ? (
                                             <span className="font-semibold text-blue-600">
                                                 {t('table_label')} {order.table.number || order.table}
                                             </span>
