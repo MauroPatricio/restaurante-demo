@@ -2,6 +2,7 @@ import express from 'express';
 import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
 import Order from '../models/Order.js';
+import HotelRoom from '../models/HotelRoom.js';
 import { validateTableToken } from '../utils/qrSecurity.js';
 import { occupyTable } from '../controllers/tableStateController.js';
 
@@ -258,6 +259,205 @@ router.get('/orders/history', async (req, res) => {
     } catch (error) {
         console.error('Get history error:', error);
         res.status(500).json({ error: 'Failed to fetch history' });
+    }
+});
+
+
+// ===========================
+// ROOM SERVICE PUBLIC ROUTES
+// ===========================
+
+/**
+ * Validate a hotel room QR code
+ * GET /api/public/room/validate?r=restaurantId&room=roomId&token=xxx
+ */
+router.get('/room/validate', async (req, res) => {
+    try {
+        const { r: restaurantId, room: roomId, token } = req.query;
+
+        if (!restaurantId || !roomId || !token) {
+            return res.status(400).json({
+                valid: false,
+                error: 'Missing parameters',
+                message: 'Parâmetros incompletos. Por favor, escaneie o QR Code novamente.'
+            });
+        }
+
+        // Reuse table token validator (same HMAC logic, just different IDs)
+        const isValidToken = validateTableToken(token, restaurantId, roomId);
+        if (!isValidToken) {
+            return res.status(403).json({
+                valid: false,
+                error: 'Invalid QR code',
+                message: 'QR Code inválido. Por favor, escaneie novamente.'
+            });
+        }
+
+        const [restaurant, room] = await Promise.all([
+            Restaurant.findById(restaurantId).populate('subscription'),
+            HotelRoom.findById(roomId)
+        ]);
+
+        if (!restaurant || !restaurant.active) {
+            return res.status(403).json({ valid: false, message: 'Estabelecimento não disponível.' });
+        }
+        if (!restaurant.subscription || !['active', 'trial'].includes(restaurant.subscription.status)) {
+            return res.status(403).json({ valid: false, message: 'Serviço de quarto indisponível de momento.' });
+        }
+        if (!room) {
+            return res.status(404).json({ valid: false, message: 'Quarto não encontrado.' });
+        }
+        if (!room.active) {
+            return res.status(403).json({
+                valid: false,
+                message: 'Este quarto não está disponível para pedidos. Por favor contacte a receção.'
+            });
+        }
+
+        res.json({
+            valid: true,
+            restaurant: { _id: restaurant._id, name: restaurant.name, logo: restaurant.logo },
+            room: { _id: room._id, number: room.number, floor: room.floor, label: room.label }
+        });
+    } catch (error) {
+        console.error('Room QR validation error:', error);
+        res.status(500).json({ valid: false, error: 'Server error', message: 'Erro ao validar QR Code.' });
+    }
+});
+
+/**
+ * Create a room-service order from guest menu
+ * POST /api/public/room/orders
+ * Body: { restaurantId, roomId, token, items, customerName, phone, notes, scheduledDelivery, paymentMethod }
+ */
+router.post('/room/orders', async (req, res) => {
+    try {
+        const {
+            restaurantId, roomId, token,
+            items, customerName, phone, notes,
+            scheduledDelivery, paymentMethod = 'room_account'
+        } = req.body;
+
+        if (!restaurantId || !roomId || !token) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const isValidToken = validateTableToken(token, restaurantId, roomId);
+        if (!isValidToken) {
+            return res.status(403).json({ error: 'Invalid QR token' });
+        }
+
+        const [restaurant, room] = await Promise.all([
+            Restaurant.findById(restaurantId).populate('subscription'),
+            HotelRoom.findById(roomId)
+        ]);
+
+        if (!restaurant || !restaurant.active) {
+            return res.status(403).json({ error: 'Restaurant unavailable' });
+        }
+        if (!restaurant.subscription || !['active', 'trial'].includes(restaurant.subscription.status)) {
+            return res.status(402).json({ error: 'Subscription expired' });
+        }
+        if (!room || !room.active) {
+            return res.status(403).json({ error: 'Room unavailable' });
+        }
+
+        if (!items || items.length === 0) {
+            return res.status(400).json({ error: 'No items in order' });
+        }
+
+        // Import MenuItem for price calculation
+        const MenuItem = (await import('../models/MenuItem.js')).default;
+        const menuItemIds = items.map(i => i.item);
+        const menuItems = await MenuItem.find({ _id: { $in: menuItemIds } }).lean();
+        const menuMap = new Map(menuItems.map(m => [m._id.toString(), m]));
+
+        let subtotal = 0;
+        const populatedItems = [];
+
+        for (const orderItem of items) {
+            const mi = menuMap.get(orderItem.item.toString());
+            if (!mi) return res.status(404).json({ error: `Item não encontrado: ${orderItem.item}` });
+            if (!mi.available) return res.status(400).json({ error: `${mi.name} está indisponível` });
+
+            const qty = parseInt(orderItem.qty || 1);
+            const itemSubtotal = mi.price * qty;
+            populatedItems.push({ item: mi._id, qty, itemPrice: mi.price, subtotal: itemSubtotal });
+            subtotal += itemSubtotal;
+        }
+
+        const settings = restaurant.settings || {};
+        const tax = (subtotal * (settings.taxRate || 0)) / 100;
+        const total = subtotal + tax;
+
+        const newOrder = await Order.create({
+            restaurant: restaurantId,
+            orderType: 'room-service',
+            items: populatedItems,
+            subtotal,
+            tax,
+            total,
+            customerName: customerName || `Quarto ${room.number}`,
+            phone: phone || '000000000',
+            paymentMethod,
+            notes,
+            status: 'pending',
+            source: 'qr-menu',
+            roomService: {
+                room: room._id,
+                roomNumber: room.number,
+                scheduledDelivery: scheduledDelivery ? new Date(scheduledDelivery) : null
+            }
+        });
+
+        // Notify kitchen/admin via socket
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`restaurant:${restaurantId}`).emit('room:order:new', {
+                orderId: newOrder._id,
+                roomNumber: room.number,
+                floor: room.floor,
+                total: newOrder.total,
+                customerName: newOrder.customerName,
+                itemsCount: populatedItems.length,
+                status: 'pending'
+            });
+        }
+
+        res.status(201).json({
+            message: 'Pedido enviado com sucesso!',
+            order: {
+                _id: newOrder._id,
+                status: newOrder.status,
+                total: newOrder.total,
+                roomNumber: room.number
+            }
+        });
+
+    } catch (error) {
+        console.error('Room order creation error:', error);
+        res.status(500).json({ error: 'Failed to create room order', message: error.message });
+    }
+});
+
+/**
+ * Get single order for guest tracking
+ * GET /api/public/room/order/:id
+ */
+router.get('/room/order/:id', async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id)
+            .populate('items.item', 'name price imageUrl')
+            .select('status orderType total customerName roomService statusHistory estimatedReadyTime createdAt items');
+
+        if (!order || order.orderType !== 'room-service') {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        res.json({ order });
+    } catch (error) {
+        console.error('Get room order error:', error);
+        res.status(500).json({ error: 'Failed to fetch order' });
     }
 });
 

@@ -18,7 +18,7 @@ const OrderSchema = new mongoose.Schema({
   },
   orderType: {
     type: String,
-    enum: ['dine-in', 'takeaway', 'delivery'],
+    enum: ['dine-in', 'takeaway', 'delivery', 'room-service'],
     default: 'dine-in',
     index: true
   },
@@ -127,7 +127,14 @@ const OrderSchema = new mongoose.Schema({
     issuedAt: { type: Date, default: Date.now },
     issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     type: { type: String, enum: ['print', 'email', 'download', 'whatsapp'] }
-  }]
+  }],
+  // Room Service context (populated when orderType === 'room-service')
+  roomService: {
+    room: { type: mongoose.Schema.Types.ObjectId, ref: 'HotelRoom' },
+    roomNumber: String,
+    scheduledDelivery: Date, // Guest requested delivery time
+    deliveredAt: Date
+  }
 }, { timestamps: true });
 
 // Indexes for various queries

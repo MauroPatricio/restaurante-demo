@@ -329,6 +329,16 @@ export const waiterCallAPI = {
     acknowledge: (id) => api.post(`/waiter-calls/${id}/acknowledge`)
 };
 
+// Room Service API
+export const roomServiceAPI = {
+    getRooms: (restaurantId) => api.get(`/rooms/restaurant/${restaurantId}`),
+    createRoom: (data) => api.post('/rooms', data),
+    updateRoom: (id, data) => api.patch(`/rooms/${id}`, data),
+    deleteRoom: (id) => api.delete(`/rooms/${id}`),
+    regenerateQR: (id) => api.post(`/rooms/${id}/regenerate-qr`),
+    getOrders: (restaurantId, params) => api.get(`/rooms/orders/${restaurantId}`, { params })
+};
+
 export default api;
 
 

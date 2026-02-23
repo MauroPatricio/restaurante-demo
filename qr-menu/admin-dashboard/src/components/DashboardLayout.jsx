@@ -35,7 +35,8 @@ import {
     Volume2,
     VolumeX,
     Lock,
-    Store
+    Store,
+    BedDouble
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
 import SubscriptionBlockedScreen from './SubscriptionBlockedScreen';
@@ -212,6 +213,13 @@ export default function DashboardLayout() {
             title: t('restaurant_structure') || '🪑 ESTRUTURA DO RESTAURANTE',
             items: [
                 { icon: QrCode, label: t('tables'), path: '/dashboard/tables', show: hasPermission('manage_tables') },
+            ]
+        },
+        {
+            title: '🛎️ ROOM SERVICE',
+            items: [
+                { icon: BedDouble, label: 'Gestão de Quartos', path: '/dashboard/room-service', show: hasPermission('manage_tables') || hasPermission('manage_settings') },
+                { icon: ShoppingBag, label: 'Pedidos de Quarto', path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders') },
             ]
         },
         {

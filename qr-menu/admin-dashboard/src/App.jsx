@@ -44,6 +44,8 @@ import WaiterAnalytics from './pages/WaiterAnalytics';
 import WeeklyMenuManagement from './pages/WeeklyMenuManagement';
 
 import DashboardRedirect from './components/DashboardRedirect';
+import RoomServiceManagement from './pages/RoomServiceManagement';
+import RoomOrders from './pages/RoomOrders';
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -151,6 +153,8 @@ function AppContent() {
           <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="system-admin" element={<SystemAdmin />} />
           <Route path="settings" element={<AdminHub />} />
+          <Route path="room-service" element={<RoomServiceManagement />} />
+          <Route path="room-orders" element={<RoomOrders />} />
         </Route>
 
         <Route path="/owner-dashboard" element={

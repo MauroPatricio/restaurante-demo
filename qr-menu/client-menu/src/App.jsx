@@ -7,6 +7,8 @@ import Cart from './pages/Cart';
 import OrderStatus from './pages/OrderStatus';
 import OrderHistory from './pages/OrderHistory';
 import Maintenance from './pages/Maintenance';
+import RoomMenuPage from './pages/RoomMenuPage';
+import RoomOrderTracking from './pages/RoomOrderTracking';
 import { NotificationProvider } from './context/NotificationContext';
 import { LoadingProvider } from './context/LoadingContext';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -270,6 +272,9 @@ function App() {
                                 <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
                                 <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
                                 <Route path="/maintenance" element={<Maintenance />} />
+                                {/* Room Service Routes */}
+                                <Route path="/room/:restaurantId" element={<RoomMenuPage />} />
+                                <Route path="/room/:restaurantId/track/:orderId" element={<RoomOrderTracking />} />
                                 <Route path="/" element={<CodeEntry />} />
                             </Routes>
                         </div>
