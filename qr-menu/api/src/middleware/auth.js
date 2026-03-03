@@ -57,19 +57,40 @@ export const authenticateToken = async (req, res, next) => {
 
 // Middleware to check user roles
 export const authorizeRoles = (...allowedRoles) => {
+    // Flatten allowedRoles in case an array was passed as the first argument
+    const roles = allowedRoles.flat();
+
     return (req, res, next) => {
         if (!req.user) {
+            console.warn('[Authorize] No user found in request');
             return res.status(401).json({ error: 'Authentication required' });
         }
 
         // Check if role exists and its name matches allowed roles
-        // We use case-insensitive check for robustness
-        const userRoleName = req.user.role?.name;
+        const rawRole = req.user.role;
+        const userRoleName = rawRole?.name || (typeof rawRole === 'string' ? rawRole : null);
 
-        if (!userRoleName || !allowedRoles.some(role => role.toLowerCase() === userRoleName.toLowerCase())) {
+        if (!userRoleName) {
+            console.warn(`[Authorize] User ${req.user.email} has no valid role name. Raw role:`, JSON.stringify(rawRole));
+            return res.status(403).json({ error: 'Role not assigned', current: rawRole });
+        }
+
+        const isAuthorized = roles.some(role => {
+            if (typeof role !== 'string') return false;
+            if (!userRoleName) return false;
+            try {
+                return role.toLowerCase() === userRoleName.toString().toLowerCase();
+            } catch (e) {
+                console.error(`[Authorize] Crash during comparison for role "${role}" and userRole "${userRoleName}":`, e.message);
+                return false;
+            }
+        });
+
+        if (!isAuthorized) {
+            console.warn(`[Authorize] Forbidden: User ${req.user.email} (${userRoleName}) not in ${roles}`);
             return res.status(403).json({
                 error: 'Insufficient permissions',
-                required: allowedRoles,
+                required: roles,
                 current: userRoleName
             });
         }
@@ -102,8 +123,8 @@ export const checkSubscription = async (req, res, next) => {
             return res.status(404).json({ error: 'Restaurant not found' });
         }
 
-        // Check if user is System Admin - BYPASS SUBSCRIPTION CHECK
-        if (req.user?.role?.isSystem === true) {
+        // Check if user is Platform SuperAdmin - BYPASS SUBSCRIPTION CHECK
+        if (req.user?.role?.name === 'SuperAdmin' || req.user?.role?.name === 'PlatformAdmin') {
             req.restaurant = restaurant; // Still attach restaurant for context
             req.subscription = await Subscription.findById(restaurant.subscription); // Attach subscription if exists, but don't block
             return next();
@@ -119,9 +140,11 @@ export const checkSubscription = async (req, res, next) => {
         const subscription = await Subscription.findById(restaurant.subscription);
 
         if (!subscription || !subscription.isValid()) {
-            return res.status(403).json({
+            return res.status(402).json({
                 error: 'Subscription suspended or expired',
-                message: 'Please renew your subscription to continue using the service',
+                message: subscription?.status === 'pending_activation'
+                    ? 'A sua subscrição está pendente de ativação pelo administrador.'
+                    : 'A sua subscrição expirou ou foi suspensa. Por favor, renove para continuar.',
                 subscription: {
                     status: subscription?.status,
                     endDate: subscription?.currentPeriodEnd
@@ -134,7 +157,11 @@ export const checkSubscription = async (req, res, next) => {
         next();
     } catch (error) {
         console.error('Subscription check error:', error);
-        res.status(500).json({ error: 'Failed to verify subscription status' });
+        res.status(500).json({
+            error: 'Failed to verify subscription status',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 

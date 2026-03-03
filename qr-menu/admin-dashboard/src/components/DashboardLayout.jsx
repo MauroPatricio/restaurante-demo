@@ -36,7 +36,8 @@ import {
     VolumeX,
     Lock,
     Store,
-    BedDouble
+    BedDouble,
+    Landmark
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
 import SubscriptionBlockedScreen from './SubscriptionBlockedScreen';
@@ -205,6 +206,7 @@ export default function DashboardLayout() {
             title: t('financial_stock') || '📦 CONTROLO FINANCEIRO & STOCK',
             items: [
                 { icon: Package, label: t('stock_costs'), path: '/dashboard/stock', show: hasPermission('manage_settings'), isPremium: true },
+                { icon: Landmark, label: 'Contabilidade & Fiscal', path: '/dashboard/accounting', show: ['Owner', 'Manager', 'Contabilista'].includes(user?.role?.name) || user?.role?.isSystem, isPremium: true },
                 { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports'), isPremium: true },
                 { icon: CreditCard, label: t('subscription') || 'Subscrição', path: '/dashboard/subscription', show: ['Owner', 'Manager'].includes(user?.role?.name) },
             ]

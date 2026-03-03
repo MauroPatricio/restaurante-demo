@@ -35,6 +35,7 @@ import clientReactionRoutes from './clientReactionRoutes.js';
 import weeklyMenuRoutes from './weeklyMenuRoutes.js';
 import stockRoutes from './stockRoutes.js';
 import roomServiceRoutes from './roomServiceRoutes.js';
+import accountingRoutes from './accountingRoutes.js';
 
 // Table State Management
 import {
@@ -70,6 +71,7 @@ router.use('/client-reactions', clientReactionRoutes);
 router.use('/weekly-menus', weeklyMenuRoutes);
 router.use('/stock', stockRoutes);
 router.use('/rooms', roomServiceRoutes);
+router.use('/accounting', accountingRoutes);
 
 // ============ TABLE STATE MANAGEMENT ROUTES ============
 router.get('/tables/:id/current-session', authenticateToken, getTableCurrentSession);

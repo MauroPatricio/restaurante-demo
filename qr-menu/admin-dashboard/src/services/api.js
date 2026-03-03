@@ -339,6 +339,25 @@ export const roomServiceAPI = {
     getOrders: (restaurantId, params) => api.get(`/rooms/orders/${restaurantId}`, { params })
 };
 
+// Accounting API
+export const accountingAPI = {
+    getStats: () => api.get('/accounting/stats'),
+    getAccounts: () => api.get('/accounting/accounts'),
+    getInvoices: (params) => api.get('/accounting/invoices', { params }),
+    voidInvoice: (id, reason) => api.post(`/accounting/invoices/${id}/void`, { reason }),
+    getLedger: (params) => api.get('/accounting/ledger', { params }),
+    getTrialBalance: (params) => api.get('/accounting/trial-balance', { params }),
+    getCashSessions: () => api.get('/accounting/cash-sessions'),
+    openCashSession: (openingBalance) => api.post('/accounting/cash-sessions/open', { openingBalance }),
+    closeCashSession: (id, data) => api.post(`/accounting/cash-sessions/${id}/close`, data),
+    createTransaction: (data) => api.post('/accounting/transactions', data),
+    getPendingOrders: () => api.get('/accounting/pending-orders'),
+    postBatchTransactions: (orderIds) => api.post('/accounting/batch', { orderIds }),
+    getRazao: (params) => api.get('/accounting/razao', { params }),
+    getDRE: (params) => api.get('/accounting/dre', { params }),
+    getIVAReport: (params) => api.get('/accounting/iva-report', { params })
+};
+
 export default api;
 
 

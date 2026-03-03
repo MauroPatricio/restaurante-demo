@@ -26,8 +26,17 @@ import StockDashboard from './pages/StockDashboard';
 import Delivery from './pages/Delivery';
 import Reports from './pages/Reports';
 import ManagerDashboard from './pages/ManagerDashboard';
+import AccountingDashboard from './pages/AccountingDashboard';
+import FiscalInvoices from './pages/FiscalInvoices';
+import CashManagement from './pages/CashManagement';
+import PlanOfAccounts from './pages/PlanOfAccounts';
 import Clients from './pages/Clients';
 import HallDashboard from './pages/HallDashboard';
+import GeneralLedger from './pages/GeneralLedger';
+import Razao from './pages/reports/Razao';
+import DRE from './pages/reports/DRE';
+import ApuramentoIVA from './pages/reports/ApuramentoIVA';
+import BatchPosting from './pages/accounting/BatchPosting';
 import { SocketProvider } from './contexts/SocketContext';
 import './App.css';
 
@@ -144,6 +153,19 @@ function AppContent() {
               <Reports />
             </PremiumFeatureGate>
           } />
+          <Route path="accounting" element={
+            <PremiumFeatureGate featureName="Módulo Contabilístico & Fiscal">
+              <AccountingDashboard />
+            </PremiumFeatureGate>
+          } />
+          <Route path="accounting/invoices" element={<FiscalInvoices />} />
+          <Route path="accounting/cash" element={<CashManagement />} />
+          <Route path="accounting/accounts" element={<PlanOfAccounts />} />
+          <Route path="accounting/ledger" element={<GeneralLedger />} />
+          <Route path="accounting/batch" element={<BatchPosting />} />
+          <Route path="accounting/razao" element={<Razao />} />
+          <Route path="accounting/dre" element={<DRE />} />
+          <Route path="accounting/iva" element={<ApuramentoIVA />} />
           <Route path="clients" element={<Clients />} />
           <Route path="hall" element={<HallDashboard />} />
           <Route path="waiter-analytics" element={<WaiterAnalytics />} />

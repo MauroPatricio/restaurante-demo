@@ -5,6 +5,8 @@ import Subscription from '../models/Subscription.js';
 import Restaurant from '../models/Restaurant.js';
 import { sendOrderNotification } from './firebaseService.js';
 import { sendRenewalConfirmation } from './emailService.js';
+import { generateFiscalInvoice, setupDefaultAccounts } from './accountingService.js';
+import AuditLog from '../models/AuditLog.js';
 
 // Generate unique payment reference
 const generatePaymentReference = () => {
@@ -161,6 +163,25 @@ export const recordCashPayment = async (paymentData) => {
                 paymentMethod: 'cash',
                 paymentReference: reference
             });
+
+            // ENSURE ACCOUNTING SETUP AND GENERATE FISCAL INVOICE
+            try {
+                await setupDefaultAccounts(paymentData.restaurantId);
+                await generateFiscalInvoice(paymentData.orderId);
+
+                // Add Audit Log
+                await AuditLog.log({
+                    userId: paymentData.receivedBy,
+                    action: 'fiscal_invoice_generate',
+                    targetModel: 'Order',
+                    targetId: paymentData.orderId,
+                    restaurantId: paymentData.restaurantId,
+                    metadata: { notes: 'Gerada automaticamente via pagamento em numerário' }
+                });
+            } catch (accErr) {
+                console.error('Accounting Integration Error (Cash):', accErr);
+                // We don't block the payment flow, but we should log this
+            }
         }
 
         return {
@@ -211,6 +232,23 @@ export const processPaymentWebhook = async (webhookData) => {
                 const order = await Order.findById(payment.order);
                 if (order) {
                     await sendOrderNotification(order, 'payment-received');
+
+                    // GENERATE FISCAL INVOICE ON WEBHOOK SUCCESS
+                    try {
+                        await setupDefaultAccounts(payment.restaurant);
+                        await generateFiscalInvoice(payment.order);
+
+                        await AuditLog.log({
+                            userId: order.createdByWaiter || order.customerName || 'system',
+                            action: 'fiscal_invoice_generate',
+                            targetModel: 'Order',
+                            targetId: payment.order,
+                            restaurantId: payment.restaurant,
+                            metadata: { notes: 'Gerada automaticamente via webhook' }
+                        });
+                    } catch (accErr) {
+                        console.error('Accounting Integration Error (Webhook):', accErr);
+                    }
                 }
             }
 
