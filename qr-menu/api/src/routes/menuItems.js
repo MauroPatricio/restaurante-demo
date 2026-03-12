@@ -80,6 +80,10 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), upload
             costPrice,
             stockControlled,
             stock,
+            stockMin,
+            unit,
+            seasonal,
+            variablePrice,
             customizationOptions,
             nutritionalInfo
         } = req.body;
@@ -148,6 +152,10 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), upload
             costPrice,
             stockControlled,
             stock,
+            stockMin,
+            unit,
+            seasonal,
+            variablePrice,
             customizationOptions,
             nutritionalInfo,
             createdBy: req.user._id
@@ -283,6 +291,10 @@ router.patch('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), up
             costPrice,
             stockControlled,
             stock,
+            stockMin,
+            unit,
+            seasonal,
+            variablePrice,
             customizationOptions,
             nutritionalInfo
         } = req.body;
@@ -354,6 +366,10 @@ router.patch('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), up
         if (costPrice !== undefined) menuItem.costPrice = costPrice;
         if (stockControlled !== undefined) menuItem.stockControlled = stockControlled;
         if (stock !== undefined) menuItem.stock = stock;
+        if (stockMin !== undefined) menuItem.stockMin = stockMin;
+        if (unit !== undefined) menuItem.unit = unit;
+        if (seasonal !== undefined) menuItem.seasonal = seasonal;
+        if (variablePrice !== undefined) menuItem.variablePrice = variablePrice;
         if (customizationOptions !== undefined) menuItem.customizationOptions = customizationOptions;
         if (nutritionalInfo !== undefined) menuItem.nutritionalInfo = nutritionalInfo;
 

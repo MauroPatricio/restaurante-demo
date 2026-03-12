@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { analyticsAPI } from '../services/api';
 import {
     Search, Download, Users, Phone, Calendar,
-    DollarSign, UserCheck, Star, ArrowUpRight
+    DollarSign, UserCheck, Star, ArrowUpRight, Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
@@ -44,32 +44,38 @@ export default function Clients() {
         client.phone?.includes(searchTerm)
     );
 
+    const handleAnonymize = async (phone) => {
+        if (!window.confirm('Tem certeza que deseja remover este cliente? Os dados pessoais serão apagados permanentemente, mas o histórico de vendas será mantido para contabilidade.')) {
+            return;
+        }
+
+        try {
+            const restaurantId = user.restaurant._id || user.restaurant;
+            await analyticsAPI.deleteCustomer(restaurantId, phone);
+            fetchClients();
+        } catch (error) {
+            console.error('Failed to anonymize client:', error);
+            alert('Falha ao remover cliente');
+        }
+    };
+
     const exportCSV = () => {
         const headers = ["Nome", "Telefone", "Total Gasto", "Pedidos", "Favorito", "Mesas", "Ultima Visita"];
-        const rows = filteredClients.map(c => {
-            const sortedTable = (c.tables || [])
-                .filter(t => t !== null && t !== undefined)
-                .sort((a, b) => a - b)
-                .join(', ');
+        const rows = filteredClients.map(c => [
+            c.name || 'Cliente',
+            c.phone,
+            c.totalSpent,
+            c.orderCount,
+            c.favoriteItem || 'N/A',
+            (c.tables || []).join(', ') || 'N/A',
+            format(new Date(c.lastVisit), 'yyyy-MM-dd')
+        ]);
 
-            return [
-                c.name || 'Cliente',
-                c.phone,
-                c.totalSpent,
-                c.orderCount,
-                c.favoriteItem || 'N/A',
-                sortedTable || 'N/A',
-                format(new Date(c.lastVisit), 'yyyy-MM-dd')
-            ];
-        });
-
-        const csvContent = "data:text/csv;charset=utf-8,\ufeff"
-            + headers.join(",") + "\n"
-            + rows.map(e => e.join(",")).join("\n");
-
-        const encodedUri = encodeURI(csvContent);
+        const csvContent = "\ufeff" + [headers, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
+        link.setAttribute("href", url);
         link.setAttribute("download", `clientes_${format(new Date(), 'yyyy-MM-dd')}.csv`);
         document.body.appendChild(link);
         link.click();
@@ -193,6 +199,7 @@ export default function Clients() {
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>FAVORITO</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>MESAS</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>ÚLTIMA VISITA</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px', textAlign: 'right' }}>AÇÕES</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -255,6 +262,21 @@ export default function Clients() {
                                                 Desde {format(new Date(client.firstVisit), 'MMM yyyy', { locale: pt })}
                                             </div>
                                         </div>
+                                    </td>
+                                    <td style={{ padding: '20px 24px', textAlign: 'right' }}>
+                                        {!client.phone.startsWith('anon_') && (
+                                            <button
+                                                onClick={() => handleAnonymize(client.phone)}
+                                                style={{
+                                                    padding: '8px', color: '#ef4444', background: '#fef2f2',
+                                                    borderRadius: '8px', border: 'none', cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                title="Remover / Anonimizar"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

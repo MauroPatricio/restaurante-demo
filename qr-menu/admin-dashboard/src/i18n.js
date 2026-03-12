@@ -192,6 +192,7 @@ const resources = {
             "method_pos": "POS",
             "method_cash": "Cash",
             "method_transfer": "Bank Transfer",
+            "method_pending": "Pending",
             "confirm_payment": "Confirm Payment",
             "verify_receipt": "Verify Receipt",
             "reject": "Reject",
@@ -1343,9 +1344,10 @@ const resources = {
             "status_failed": "Falhou",
             "method_mpesa": "M-Pesa",
             "method_emola": "e-Mola",
-            "method_pos": "POS",
-            "method_cash": "Dinheiro",
+            "method_pos": "TPA / POS",
+            "method_cash": "Numerário",
             "method_transfer": "Transf. Bancária",
+            "method_pending": "Pendente",
             "confirm_btn": "Confirmar",
             "cancel_btn": "Cancelar",
             "start_preparing_btn": "Iniciar Preparo",
@@ -1595,6 +1597,52 @@ const resources = {
             "notes_label": "Observações",
             "notes_placeholder": "Justifique discrepâncias ou notas do turno...",
             "finish_shift_btn": "Finalizar Turno",
+
+            // Menu – Chaves em falta
+            "no_items": "Nenhum item encontrado.",
+
+            // Gestão de Stock (Formulário de Menu)
+            "stock_control_label": "Controlo de Stock",
+            "stock_control_desc": "Activar para gerir quantidades disponíveis",
+            "quantity_available": "Quantidade Disponível",
+            "quantity_available_hint": "Unidades actuais em stock",
+            "min_stock": "Stock Mínimo",
+            "min_stock_hint": "Alerta quando stock ≤ este valor",
+            "unit_of_measure": "Unidade de Medida",
+            "unit_of_measure_hint": "Ex: Garrafa, Kg, Litro",
+            "stock_active": "Activo",
+            "stock_inactive": "Inactivo",
+            "stock_status_ok": "Stock OK – {{qty}} {{unit}} disponível",
+            "stock_status_low": "Stock baixo – {{qty}} {{unit}} restantes (mínimo: {{min}})",
+            "stock_status_out": "Produto esgotado – será marcado como indisponível automaticamente",
+            "stock_badge_out": "ESGOTADO",
+            "stock_badge_low": "Stock Baixo",
+            "unit_unidade": "Unidade",
+            "unit_garrafa": "Garrafa",
+            "unit_kg": "Kg",
+            "unit_litro": "Litro",
+            "unit_caixa": "Caixa",
+            "unit_pacote": "Pacote",
+            "unit_porcao": "Porção",
+
+            // Balanço Patrimonial & Balancete
+            "balance_sheet": "Balanço Patrimonial",
+            "balance_sheet_desc": "Activos, Passivos e Capital Próprio",
+            "trial_balance_nav": "Balancete",
+            "trial_balance_nav_desc": "Movimentos débito/crédito por período",
+            "balance_equilibrado": "Balanço Equilibrado",
+            "balance_desequilibrado": "Balanço Desequilibrado – Verifique os lançamentos",
+
+            // Dashboard Contabilístico – novas métricas
+            "billing_today": "Facturação de Hoje",
+            "billing_today_desc": "Rendimentos gerados hoje",
+            "purchases_today": "Compras do Dia",
+            "purchases_today_desc": "Gastos registados hoje",
+            "vat_payable_16": "IVA a Pagar (16%)",
+            "vat_payable_16_desc": "IVA Liquidado – IVA Dedutível",
+            "cash_balance": "Saldo de Caixa",
+            "cash_balance_desc": "Caixa + Bancos + M-Pesa",
+            "iva_liquidado": "IVA Liquidado"
         }
     },
     es: {
@@ -1728,7 +1776,29 @@ const resources = {
             "start_preparing_btn": "Iniciar Preparación",
             "mark_ready_btn": "Marcar como Listo",
             "complete_btn": "Concluir",
-            "no_orders_found": "No se encontraron pedidos"
+            "no_orders_found": "No se encontraron pedidos",
+
+            // Menú – Claves que faltan
+            "no_items": "No se encontraron elementos.",
+            "stock_control_label": "Control de Stock",
+            "stock_control_desc": "Activar para gestionar cantidades disponibles",
+            "quantity_available": "Cantidad Disponible",
+            "quantity_available_hint": "Unidades actuales en stock",
+            "min_stock": "Stock Mínimo",
+            "min_stock_hint": "Alerta cuando stock ≤ este valor",
+            "unit_of_measure": "Unidad de Medida",
+            "unit_of_measure_hint": "Ej: Botella, Kg, Litro",
+            "stock_active": "Activo",
+            "stock_inactive": "Inactivo",
+            "stock_badge_out": "AGOTADO",
+            "stock_badge_low": "Stock Bajo",
+            "unit_unidade": "Unidad",
+            "unit_garrafa": "Botella",
+            "unit_kg": "Kg",
+            "unit_litro": "Litro",
+            "unit_caixa": "Caja",
+            "unit_pacote": "Paquete",
+            "unit_porcao": "Porción"
         }
     },
     fr: {
@@ -1821,7 +1891,29 @@ const resources = {
             "table_cleaning_message": "Cette table est en cours de nettoyage. Veuillez patienter un moment.",
             "confirm_delete": "Êtes-vous sûr de vouloir supprimer ceci?",
             "select_waiter": "Sélectionner un serveur",
-            "no_waiter": "Aucun serveur assigné"
+            "no_waiter": "Aucun serveur assigné",
+
+            // Menu – Clés manquantes
+            "no_items": "Aucun élément trouvé.",
+            "stock_control_label": "Contrôle du Stock",
+            "stock_control_desc": "Activer pour gérer les quantités disponibles",
+            "quantity_available": "Quantité Disponible",
+            "quantity_available_hint": "Unités actuelles en stock",
+            "min_stock": "Stock Minimum",
+            "min_stock_hint": "Alerte lorsque stock ≤ cette valeur",
+            "unit_of_measure": "Unité de Mesure",
+            "unit_of_measure_hint": "Ex: Bouteille, Kg, Litre",
+            "stock_active": "Actif",
+            "stock_inactive": "Inactif",
+            "stock_badge_out": "ÉPUISÉ",
+            "stock_badge_low": "Stock Bas",
+            "unit_unidade": "Unité",
+            "unit_garrafa": "Bouteille",
+            "unit_kg": "Kg",
+            "unit_litro": "Litre",
+            "unit_caixa": "Boîte",
+            "unit_pacote": "Paquet",
+            "unit_porcao": "Portion"
         }
     }
 };

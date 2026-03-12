@@ -37,6 +37,9 @@ import stockRoutes from './stockRoutes.js';
 import roomServiceRoutes from './roomServiceRoutes.js';
 import accountingRoutes from './accountingRoutes.js';
 
+import { processPaidOrderEntry } from '../services/accountingService.js';
+import AccountingTransaction from '../models/AccountingTransaction.js';
+
 // Table State Management
 import {
   getTableCurrentSession,
@@ -376,7 +379,7 @@ router.get('/menu/:restaurantId', async (req, res) => {
 
     // Use .lean() for read-only query and select only needed fields
     const items = await MenuItem.find(query)
-      .select('name price category subcategory description available imageUrl photo imagePublicId allergens prepTime sku eta featured tags variablePrice customizationOptions portionSize costPrice stockControlled stock seasonal')
+      .select('name price category subcategory description available imageUrl photo imagePublicId allergens prepTime sku eta featured tags variablePrice customizationOptions portionSize costPrice stockControlled stock stockMin unit seasonal')
       .lean()
       .sort({ category: 1, name: 1 });
 
@@ -543,6 +546,27 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
       io.to(`order-${order._id}`).emit('order-updated', order);
       // Also emit to restaurant room (e.g., for Kitchen Display System)
       io.to(`restaurant:${order.restaurant}`).emit('order-updated', order);
+    }
+
+    // Lançamento Contabilístico Automático (Venda & CMV)
+    if (order.status === 'completed' || order.paymentStatus === 'paid' || order.paymentStatus === 'completed') {
+      try {
+        const { processPaidOrderEntry } = await import('../services/accountingService.js');
+        const AccountingTransaction = (await import('../models/AccountingTransaction.js')).default;
+
+        const existingTx = await AccountingTransaction.findOne({
+          restaurant: order.restaurant,
+          sourceType: 'order',
+          sourceId: order._id
+        });
+
+        if (!existingTx) {
+          await processPaidOrderEntry(order.restaurant, order, req.user._id);
+          console.log(`[Contab] Lançamento automático gerado para o pedido ${order._id}`);
+        }
+      } catch (err) {
+        console.error('[Contab] Erro ao lançar contabilidade automática para pedido:', err.message);
+      }
     }
 
     res.json({

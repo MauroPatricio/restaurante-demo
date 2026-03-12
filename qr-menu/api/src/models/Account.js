@@ -21,6 +21,17 @@ const AccountSchema = new mongoose.Schema({
         enum: ['asset', 'liability', 'equity', 'revenue', 'expense'],
         required: true
     },
+    nature: {
+        type: String,
+        enum: ['debit', 'credit'],
+        required: false
+        // debit = assets, expenses (increase on debit)
+        // credit = liabilities, equity, revenue (increase on credit)
+    },
+    description: {
+        type: String,
+        default: ''
+    },
     class: {
         type: Number,
         enum: [1, 2, 3, 4, 5, 6, 7, 8], // PGC-NIRF Classes

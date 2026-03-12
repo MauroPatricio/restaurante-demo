@@ -1,6 +1,8 @@
 import MenuItem from '../models/MenuItem.js';
 import StockMovement from '../models/StockMovement.js';
 import Restaurant from '../models/Restaurant.js';
+import { processPurchaseEntry } from '../services/accountingService.js';
+
 
 /**
  * Restock menu item (add inventory)
@@ -20,12 +22,13 @@ export const restockItem = async (req, res) => {
             return res.status(404).json({ error: 'Menu item not found' });
         }
 
+        // Auto-activar controlo de stock se o item for reposto manualmente via dashboard
         if (!menuItem.stockControlled) {
-            return res.status(400).json({ error: 'This item does not have stock control enabled' });
+            menuItem.stockControlled = true;
         }
 
-        const quantityBefore = menuItem.stock;
-        menuItem.stock += parseInt(quantity);
+        const quantityBefore = menuItem.stock || 0;
+        menuItem.stock = quantityBefore + parseInt(quantity);
         const quantityAfter = menuItem.stock;
         await menuItem.save();
 
@@ -50,6 +53,31 @@ export const restockItem = async (req, res) => {
                 newStock: quantityAfter,
                 change: parseInt(quantity),
                 alert: false
+            });
+        }
+
+        // ─── Lançamento Contabilístico Automático de Compra ───
+        // Se o item tem custo unitário, gerar journal automático
+        const unitCost = req.body.unitCost || menuItem.costPrice;
+        const totalCost = unitCost * parseInt(quantity);
+        const payMethod = req.body.paymentMethod || 'cash';
+        const supplierId = req.body.supplierId || null;
+
+        if (totalCost > 0) {
+            processPurchaseEntry(
+                menuItem.restaurant.toString(),
+                {
+                    totalAmount: totalCost,
+                    ivaIncluded: true, // Assumes purchase price includes 16% IVA
+                    description: `Restock – ${menuItem.name} (${parseInt(quantity)} ${req.body.unit || 'un'})`,
+                    paymentMethod: payMethod,
+                    supplierId,
+                    sourceType: 'stock_restock'
+                },
+                userId
+            ).catch(err => {
+                // Non-blocking: log warning but don't fail the restock
+                console.warn(`[Contab] Aviso: Lançamento automático de compra para "${menuItem.name}" não registado (Plano de Contas não inicializado?):`, err.message);
             });
         }
 
@@ -87,12 +115,13 @@ export const adjustStock = async (req, res) => {
             return res.status(404).json({ error: 'Menu item not found' });
         }
 
+        // Se o utilizador tenta ajustar pelo painel de stock ativamos o controlo automaticamente caso esteja desligado
         if (!menuItem.stockControlled) {
-            return res.status(400).json({ error: 'This item does not have stock control enabled' });
+            menuItem.stockControlled = true;
         }
 
-        const quantityBefore = menuItem.stock;
-        menuItem.stock += parseInt(quantity); // Can be negative
+        const quantityBefore = menuItem.stock || 0;
+        menuItem.stock = quantityBefore + parseInt(quantity);
 
         if (menuItem.stock < 0) {
             return res.status(400).json({ error: 'Adjustment would result in negative stock' });
@@ -113,6 +142,25 @@ export const adjustStock = async (req, res) => {
             notes,
             performedBy: userId
         });
+
+        // ─── Lançamento Contabilístico Automático de Quebra ───
+        const movementType = type || (quantity < 0 ? 'waste' : 'adjustment');
+        if (movementType === 'waste' && quantity < 0 && menuItem.costPrice > 0) {
+            const totalWasteCost = Math.abs(parseInt(quantity)) * menuItem.costPrice;
+            const { processWasteEntry } = await import('../services/accountingService.js');
+
+            processWasteEntry(
+                menuItem.restaurant.toString(),
+                {
+                    menuItemId: menuItem._id,
+                    totalCost: totalWasteCost,
+                    description: `Quebra/Desperdício – ${menuItem.name} (${Math.abs(parseInt(quantity))} ${menuItem.unit || 'un'})`
+                },
+                userId
+            ).catch(err => {
+                console.warn(`[Contab] Aviso: Lançamento de quebra para "${menuItem.name}" não registado:`, err.message);
+            });
+        }
 
         // Emit Socket.IO event
         if (req.app.get('io')) {
@@ -232,10 +280,9 @@ export const getStockReport = async (req, res) => {
         const { restaurantId } = req.params;
         const { startDate, endDate } = req.query;
 
-        // Get all stock-controlled items
+        // Get all items to report on value regardless of stock switch
         const items = await MenuItem.find({
             restaurant: restaurantId,
-            stockControlled: true,
             active: true
         }).select('name stock costPrice price category');
 
@@ -310,26 +357,28 @@ export const getStockItems = async (req, res) => {
         const { restaurantId } = req.params;
 
         const items = await MenuItem.find({
-            restaurant: restaurantId,
-            stockControlled: true
+            restaurant: restaurantId
         })
             .populate('category', 'name')
-            .select('name stock costPrice price imageUrl category active')
+            .select('name stock costPrice price imageUrl category active stockControlled unit stockMin')
             .sort({ name: 1 });
 
         res.json({
             count: items.length,
             items: items.map(item => ({
-                id: item._id,
+                _id: item._id,
                 name: item.name,
-                stock: item.stock,
-                price: item.price,
-                costPrice: item.costPrice,
+                stock: item.stock || 0,
+                stockMin: item.stockMin || 0,
+                unit: item.unit || 'Unidade',
+                price: item.price || 0,
+                costPrice: item.costPrice || 0,
                 category: item.category,
                 imageUrl: item.imageUrl,
                 active: item.active,
-                status: item.stock === 0 ? 'out_of_stock' :
-                    item.stock <= 5 ? 'low_stock' : 'in_stock'
+                stockControlled: item.stockControlled,
+                status: (item.stock || 0) === 0 ? 'out_of_stock' :
+                    (item.stock || 0) <= 5 ? 'low_stock' : 'in_stock'
             }))
         });
     } catch (error) {

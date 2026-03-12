@@ -325,7 +325,7 @@ const Cart = () => {
                                 <input
                                     type="text"
                                     required
-                                    className="w-full p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
                                     placeholder={t('name_placeholder')}
@@ -336,7 +336,7 @@ const Cart = () => {
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('phone_placeholder')}
@@ -348,23 +348,26 @@ const Cart = () => {
                 </div>
 
                 {/* Bottom Bar with Footer Text */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 border-t border-gray-100 dark:border-gray-800 p-4 z-20 backdrop-blur-lg transition-colors">
+                <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 border-t border-gray-100 dark:border-gray-800 p-6 pb-8 z-20 backdrop-blur-lg transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
                     <button
                         form="checkout-form"
                         disabled={loading}
-                        className="w-full max-w-md mx-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-4 rounded-xl font-bold flex items-center justify-between hover:bg-black dark:hover:bg-gray-200 transition-all active:scale-[0.98] shadow-xl disabled:opacity-70 disabled:cursor-wait mb-4"
+                        className="w-full max-w-md mx-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-5 rounded-2xl font-bold flex items-center justify-between hover:bg-black dark:hover:bg-gray-200 transition-all active:scale-[0.98] shadow-2xl shadow-black/10 dark:shadow-white/5 disabled:opacity-70 disabled:cursor-wait mb-6 h-[70px]"
                     >
-                        <span>
+                        <span className="text-lg">
                             {loading ? (
-                                <div className="flex items-center gap-2">
-                                    <LoadingSpinner size={18} color="white" />
+                                <div className="flex items-center gap-3">
+                                    <LoadingSpinner size={22} color="white" />
                                     <span>{t('scanning')}</span>
                                 </div>
                             ) : t('confirm_order')}
                         </span>
-                        <span>{cartTotal} {t('currency')} <ArrowRight className="inline ml-1" size={18} /></span>
+                        <span className="text-xl flex items-center gap-2">
+                            {cartTotal} {t('currency')}
+                            <ArrowRight className="inline" size={24} />
+                        </span>
                     </button>
-                    <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold text-center uppercase tracking-widest">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold text-center uppercase tracking-[0.2em] opacity-80">
                         Desenvolvido por Nhiquela Serviços e Consultoria, LDA
                     </p>
                 </div>

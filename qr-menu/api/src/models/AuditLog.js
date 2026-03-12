@@ -11,23 +11,36 @@ const AuditLogSchema = new mongoose.Schema({
         type: String,
         required: true,
         enum: [
+            // Subscription
             'subscription_status_change',
             'subscription_create',
             'subscription_update',
             'subscription_delete',
+            // User management
             'user_create',
             'user_update',
             'user_delete',
+            // Restaurant
             'restaurant_create',
             'restaurant_update',
             'restaurant_delete',
+            // System
             'update_system_setting',
+            // Accounting – Accounts
             'accounting_account_create',
             'accounting_account_update',
+            'account_create',    // alias used in accountingController
+            'account_update',    // alias used in accountingController
+            // Accounting – Transactions
             'accounting_transaction_create',
             'accounting_transaction_void',
+            'transaction_void',              // alias used in accountingController
+            'manual_accounting_transaction', // manual entries
+            'purchase_entry',                // purchase journals
+            // Cash
             'cash_session_open',
             'cash_session_close',
+            // Fiscal
             'fiscal_invoice_generate',
             'fiscal_invoice_void'
         ],

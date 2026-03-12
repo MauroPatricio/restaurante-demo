@@ -21,7 +21,7 @@ const AccountingTransactionSchema = new mongoose.Schema({
     costCenter: {
         type: String,
         enum: ['Restaurante', 'Clínica', 'Microcrédito', 'Geral'],
-        default: 'Restaurante',
+        default: 'Geral',
         index: true
     },
     description: {
@@ -39,7 +39,7 @@ const AccountingTransactionSchema = new mongoose.Schema({
     },
     sourceType: {
         type: String,
-        enum: ['manual', 'order', 'payroll', 'expense'],
+        enum: ['manual', 'order', 'payroll', 'expense', 'stock_restock'],
         default: 'manual'
     },
     sourceId: {

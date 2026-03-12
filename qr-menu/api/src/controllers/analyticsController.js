@@ -264,7 +264,12 @@ export const getRestaurantStats = async (req, res) => {
         // For now, simple approximation or skip 'New/Returning' strict logic in aggregation
         // and just return Top Customers by Spend
         const topCustomers = await Order.aggregate([
-            { $match: { ...query, phone: { $exists: true, $ne: null } } },
+            {
+                $match: {
+                    ...query,
+                    phone: { $exists: true, $ne: null, $not: /^anon_/ }
+                }
+            },
             {
                 $group: {
                     _id: "$phone",
@@ -681,15 +686,25 @@ export const getInventoryReport = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const items = await MenuItem.find({ restaurant: id });
+        const items = await MenuItem.find({ restaurant: id })
+            .populate('category', 'name')
+            .select('name stock stockMin costPrice price imageUrl category active stockControlled unit')
+            .sort({ name: 1 });
 
         const stockStatus = items.map(item => ({
             _id: item._id,
             name: item.name,
             stock: item.stock || 0,
+            stockMin: item.stockMin || 0,
+            unit: item.unit || 'Unidade',
+            price: item.price || 0,
             costPrice: item.costPrice || 0,
+            category: item.category,
+            imageUrl: item.imageUrl,
+            active: item.active,
+            stockControlled: item.stockControlled,
             totalValue: (item.stock || 0) * (item.costPrice || 0),
-            status: (item.stock || 0) < 10 ? 'Low' : 'OK'
+            status: (item.stock || 0) < (item.stockMin || 5) ? 'Low' : 'OK'
         }));
 
         const totalStockValue = stockStatus.reduce((sum, item) => sum + item.totalValue, 0);
@@ -701,7 +716,7 @@ export const getInventoryReport = async (req, res) => {
                 lowStockCount: lowStockCount,
                 totalItems: items.length
             },
-            items: stockStatus.sort((a, b) => a.stock - b.stock)
+            items: stockStatus
         });
 
     } catch (error) {
@@ -716,7 +731,13 @@ export const getCustomerAnalytics = async (req, res) => {
         const restaurantId = new mongoose.Types.ObjectId(id);
 
         const basicStats = await Order.aggregate([
-            { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' } } },
+            {
+                $match: {
+                    restaurant: restaurantId,
+                    status: { $ne: 'cancelled' },
+                    phone: { $exists: true, $ne: null, $not: /^anon_/ }
+                }
+            },
             {
                 $lookup: {
                     from: "tables",
@@ -739,14 +760,20 @@ export const getCustomerAnalytics = async (req, res) => {
                     orderCount: { $count: {} },
                     lastVisit: { $max: "$createdAt" },
                     firstVisit: { $min: "$createdAt" },
-                    tables: { $addToSet: "$tableInfo.number" }
+                    tables: { $addToSet: { $ifNull: ["$tableInfo.number", "$tableNumber"] } }
                 }
             },
-            { $sort: { totalSpent: -1 } }
+            { $sort: { lastVisit: -1 } }
         ]);
 
         const favorites = await Order.aggregate([
-            { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' } } },
+            {
+                $match: {
+                    restaurant: restaurantId,
+                    status: { $ne: 'cancelled' },
+                    phone: { $exists: true, $ne: null, $not: /^anon_/ }
+                }
+            },
             { $unwind: "$items" },
             {
                 $group: {
@@ -773,7 +800,8 @@ export const getCustomerAnalytics = async (req, res) => {
                 ...c,
                 phone: c._id,
                 favoriteItem: fav?.favoriteItemId?.name || 'Vários',
-                isRecurring: c.orderCount > 1
+                isRecurring: c.orderCount > 1,
+                tables: (c.tables || []).filter(t => t !== null && t !== undefined).sort((a, b) => a - b)
             };
         });
 
@@ -791,6 +819,39 @@ export const getCustomerAnalytics = async (req, res) => {
     } catch (error) {
         console.error('Customer analytics error:', error);
         res.status(500).json({ error: 'Failed to fetch customer analytics' });
+    }
+};
+
+export const anonymizeCustomer = async (req, res) => {
+    try {
+        const { id, phone } = req.params;
+        const restaurantId = new mongoose.Types.ObjectId(id);
+
+        if (!phone || phone.startsWith('anon_')) {
+            return res.status(400).json({ error: 'Telefone inválido ou já anonimizado' });
+        }
+
+        const anonymousPhone = `anon_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+        const result = await Order.updateMany(
+            { restaurant: restaurantId, phone: phone },
+            {
+                $set: {
+                    customerName: 'Cliente Anónimo',
+                    phone: anonymousPhone,
+                    email: null,
+                    deliveryAddress: null
+                }
+            }
+        );
+
+        res.json({
+            message: 'Cliente anonimizado com sucesso',
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('Anonymize customer error:', error);
+        res.status(500).json({ error: 'Falha ao anonimizar cliente' });
     }
 };
 

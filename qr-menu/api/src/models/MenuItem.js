@@ -52,6 +52,12 @@ const MenuItemSchema = new mongoose.Schema({
   costPrice: { type: Number, default: 0 }, // For margin calculation
   stockControlled: { type: Boolean, default: false },
   stock: { type: Number, default: 0 }, // Current inventory count
+  stockMin: { type: Number, default: 0 }, // Minimum stock before alert
+  unit: {
+    type: String,
+    enum: ['Unidade', 'Garrafa', 'Kg', 'Litro', 'Caixa', 'Pacote', 'Porção'],
+    default: 'Unidade'
+  }, // Unit of measure for stock
   seasonal: String, // e.g. "Summer"
 
   // Operational

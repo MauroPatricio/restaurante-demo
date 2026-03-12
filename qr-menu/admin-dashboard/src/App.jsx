@@ -37,6 +37,8 @@ import Razao from './pages/reports/Razao';
 import DRE from './pages/reports/DRE';
 import ApuramentoIVA from './pages/reports/ApuramentoIVA';
 import BatchPosting from './pages/accounting/BatchPosting';
+import BalancoPatrimonial from './pages/reports/BalancoPatrimonial';
+import Balancete from './pages/reports/Balancete';
 import { SocketProvider } from './contexts/SocketContext';
 import './App.css';
 
@@ -166,6 +168,8 @@ function AppContent() {
           <Route path="accounting/razao" element={<Razao />} />
           <Route path="accounting/dre" element={<DRE />} />
           <Route path="accounting/iva" element={<ApuramentoIVA />} />
+          <Route path="accounting/balance-sheet" element={<BalancoPatrimonial />} />
+          <Route path="accounting/balancete" element={<Balancete />} />
           <Route path="clients" element={<Clients />} />
           <Route path="hall" element={<HallDashboard />} />
           <Route path="waiter-analytics" element={<WaiterAnalytics />} />

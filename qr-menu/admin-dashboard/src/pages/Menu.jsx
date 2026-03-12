@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { menuAPI, categoryAPI, subcategoryAPI, uploadAPI } from '../services/api';
-import { Plus, Edit, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, Package, AlertTriangle, CheckCircle, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ImageUpload from '../components/ImageUpload';
 
@@ -174,6 +174,25 @@ export default function Menu() {
                                         ))}
                                     </div>
 
+                                    {/* Stock Badge */}
+                                    {item.stockControlled && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            {item.stock === 0 ? (
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '700', background: '#fee2e2', color: '#dc2626', padding: '3px 8px', borderRadius: '20px' }}>
+                                                    <AlertTriangle size={12} /> ESGOTADO
+                                                </span>
+                                            ) : item.stockMin && item.stock <= item.stockMin ? (
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '700', background: '#fef3c7', color: '#d97706', padding: '3px 8px', borderRadius: '20px' }}>
+                                                    <AlertTriangle size={12} /> Stock Baixo: {item.stock} {item.unit || 'Un.'}
+                                                </span>
+                                            ) : (
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600', background: '#dcfce7', color: '#16a34a', padding: '3px 8px', borderRadius: '20px' }}>
+                                                    <CheckCircle size={12} /> {item.stock} {item.unit || 'Un.'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                                         <span style={{ fontSize: '0.8rem', color: '#888' }}>
                                             {item.portionSize && `${item.portionSize} • `}
@@ -263,6 +282,9 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
         variablePrice: item?.variablePrice || false,
         costPrice: item?.costPrice || 0,
         stockControlled: item?.stockControlled || false,
+        stock: item?.stock ?? 0,
+        stockMin: item?.stockMin ?? 0,
+        unit: item?.unit || 'Unidade',
         seasonal: item?.seasonal || '',
         tags: item?.tags?.join(', ') || ''
     });
@@ -436,74 +458,6 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                     {activeTab === 'general' && (
                         <div className="form-grid">
                             <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label>Name *</label>
-                                <input
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Category *</label>
-                                <select
-                                    value={formData.category}
-                                    onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
-                                    required
-                                >
-                                    <option value="">Select a category</option>
-                                    {categories.map(cat => (
-                                        <option key={cat._id} value={cat._id}>{cat.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label>{t('subcategory')}</label>
-                                <select
-                                    value={formData.subcategory}
-                                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                                    disabled={!formData.category || subcategories.length === 0}
-                                >
-                                    <option value="">None</option>
-                                    {subcategories.map(sub => (
-                                        <option key={sub._id} value={sub._id}>{sub.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Price (MT) *</label>
-                                <input
-                                    type="number"
-                                    value={formData.price}
-                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                    required
-                                    min="0"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>{t('sku')}</label>
-                                <input
-                                    type="text"
-                                    value={formData.sku}
-                                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                                    placeholder="e.g. BEV-001"
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label>Description</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    rows="3"
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                 <label>Product Image</label>
                                 {/* Register.jsx Philosophy: Direct Image Input & Preview */}
                                 <div className="center-upload" style={{ justifyContent: 'flex-start' }}>
@@ -581,6 +535,296 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                     </label>
                                 </div>
                             </div>
+
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label>Name *</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Category *</label>
+                                <select
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
+                                    required
+                                >
+                                    <option value="">Select a category</option>
+                                    {categories.map(cat => (
+                                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>{t('subcategory')}</label>
+                                <select
+                                    value={formData.subcategory}
+                                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                                    disabled={!formData.category || subcategories.length === 0}
+                                >
+                                    <option value="">None</option>
+                                    {subcategories.map(sub => (
+                                        <option key={sub._id} value={sub._id}>{sub.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* ──────────────────────────────────────────────── */}
+                            {/* STOCK MANAGEMENT SECTION (Moved here)             */}
+                            {/* ──────────────────────────────────────────────── */}
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <div style={{
+                                    background: '#f8fafc',
+                                    border: '1.5px solid #e2e8f0',
+                                    borderRadius: '16px',
+                                    padding: '20px',
+                                    marginTop: '4px'
+                                }}>
+                                    {/* Toggle */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.stockControlled ? '20px' : '0' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <Package size={18} style={{ color: '#6366f1' }} />
+                                            <div>
+                                                <p style={{ margin: 0, fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>Controlo de Stock</p>
+                                                <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Activar para gerir quantidades disponíveis</p>
+                                            </div>
+                                        </div >
+                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.stockControlled}
+                                                onChange={(e) => setFormData({ ...formData, stockControlled: e.target.checked })}
+                                                style={{ width: '18px', height: '18px', accentColor: '#6366f1', cursor: 'pointer' }}
+                                            />
+                                            <span style={{ fontSize: '13px', fontWeight: '700', color: formData.stockControlled ? '#6366f1' : '#94a3b8' }}>
+                                                {formData.stockControlled ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    {/* Stock Fields – shown only when stockControlled = true */}
+                                    {formData.stockControlled && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                                            {/* Custo Unitário (Reposidioned here) */}
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    Custo Unitário (Compra)
+                                                </label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <input
+                                                        type="number"
+                                                        value={formData.costPrice}
+                                                        onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                                                        min="0"
+                                                        placeholder="Ex: 50.00"
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '10px 14px',
+                                                            border: '1.5px solid #e2e8f0',
+                                                            borderRadius: '10px',
+                                                            fontSize: '14px',
+                                                            fontWeight: '700',
+                                                            color: '#1e293b',
+                                                            background: 'white',
+                                                            boxSizing: 'border-box'
+                                                        }}
+                                                    />
+                                                </div>
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Preço de custo para cálculo de margem</small>
+                                            </div>
+
+                                            {/* Quantidade Disponível */}
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    Quantidade Disponível *
+                                                </label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <input
+                                                        type="number"
+                                                        value={formData.stock}
+                                                        onChange={(e) => {
+                                                            const v = e.target.value;
+                                                            setFormData({ ...formData, stock: v === '' ? '' : Math.max(0, parseInt(v) || 0) });
+                                                        }}
+                                                        onFocus={(e) => e.target.select()}
+                                                        onBlur={(e) => {
+                                                            if (e.target.value === '') setFormData(prev => ({ ...prev, stock: 0 }));
+                                                        }}
+                                                        min="0"
+                                                        step="1"
+                                                        placeholder="Ex: 100"
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '10px 14px',
+                                                            border: '1.5px solid #e2e8f0',
+                                                            borderRadius: '10px',
+                                                            fontSize: '14px',
+                                                            fontWeight: '700',
+                                                            color: '#1e293b',
+                                                            background: 'white',
+                                                            boxSizing: 'border-box'
+                                                        }}
+                                                    />
+                                                </div>
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Unidades actuais em stock</small>
+                                            </div>
+
+                                            {/* Stock Mínimo */}
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    Stock Mínimo
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={formData.stockMin}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        setFormData({ ...formData, stockMin: v === '' ? '' : Math.max(0, parseInt(v) || 0) });
+                                                    }}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onBlur={(e) => {
+                                                        if (e.target.value === '') setFormData(prev => ({ ...prev, stockMin: 0 }));
+                                                    }}
+                                                    min="0"
+                                                    step="1"
+                                                    placeholder="Ex: 10"
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '10px 14px',
+                                                        border: '1.5px solid #e2e8f0',
+                                                        borderRadius: '10px',
+                                                        fontSize: '14px',
+                                                        fontWeight: '700',
+                                                        color: '#1e293b',
+                                                        background: 'white',
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                />
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Alerta quando stock ≤ este valor</small>
+                                            </div>
+
+                                            {/* Unidade de Medida */}
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    Unidade de Medida
+                                                </label>
+                                                <select
+                                                    value={formData.unit}
+                                                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '10px 14px',
+                                                        border: '1.5px solid #e2e8f0',
+                                                        borderRadius: '10px',
+                                                        fontSize: '14px',
+                                                        fontWeight: '600',
+                                                        color: '#1e293b',
+                                                        background: 'white',
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                >
+                                                    <option value="Unidade">Unidade</option>
+                                                    <option value="Garrafa">Garrafa</option>
+                                                    <option value="Kg">Kg</option>
+                                                    <option value="Litro">Litro</option>
+                                                    <option value="Caixa">Caixa</option>
+                                                    <option value="Pacote">Pacote</option>
+                                                    <option value="Porção">Porção</option>
+                                                </select>
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Ex: Garrafa, Kg, Litro</small>
+                                            </div>
+
+                                            {/* Live status preview */}
+                                            <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', marginTop: '4px' }}>
+                                                <div style={{
+                                                    flex: 1,
+                                                    padding: '12px 16px',
+                                                    borderRadius: '10px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    background: formData.stock === 0
+                                                        ? '#fee2e2'
+                                                        : formData.stockMin && formData.stock <= formData.stockMin
+                                                            ? '#fef3c7'
+                                                            : '#dcfce7',
+                                                    border: `1.5px solid ${formData.stock === 0 ? '#fca5a5' : formData.stockMin && formData.stock <= formData.stockMin ? '#fde68a' : '#86efac'}`
+                                                }}>
+                                                    {formData.stock === 0
+                                                        ? <AlertTriangle size={16} style={{ color: '#dc2626' }} />
+                                                        : formData.stockMin && formData.stock <= formData.stockMin
+                                                            ? <AlertTriangle size={16} style={{ color: '#d97706' }} />
+                                                            : <CheckCircle size={16} style={{ color: '#16a34a' }} />
+                                                    }
+                                                    <span style={{ fontSize: '13px', fontWeight: '700', color: formData.stock === 0 ? '#dc2626' : formData.stockMin && formData.stock <= formData.stockMin ? '#92400e' : '#166534' }}>
+                                                        {formData.stock === 0
+                                                            ? '⚠ Produto esgotado'
+                                                            : formData.stockMin && formData.stock <= formData.stockMin
+                                                                ? `⚠ Stock baixo – ${formData.stock} ${formData.unit} restantes`
+                                                                : `✓ Stock OK – ${formData.stock} ${formData.unit} disponível`
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {formData.price > 0 && formData.costPrice > 0 && (
+                                                <div style={{ gridColumn: 'span 3', marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
+                                                    <div style={{
+                                                        fontSize: '14px',
+                                                        padding: '10px 20px',
+                                                        background: ((formData.price - formData.costPrice) / formData.price) > 0.5 ? '#ecfdf5' : (((formData.price - formData.costPrice) / formData.price) > 0.2 ? '#fffbeb' : '#fef2f2'),
+                                                        color: ((formData.price - formData.costPrice) / formData.price) > 0.5 ? '#10b981' : (((formData.price - formData.costPrice) / formData.price) > 0.2 ? '#f59e0b' : '#ef4444'),
+                                                        borderRadius: '12px',
+                                                        fontWeight: '800',
+                                                        border: `1.5px solid ${((formData.price - formData.costPrice) / formData.price) > 0.5 ? '#86efac' : (((formData.price - formData.costPrice) / formData.price) > 0.2 ? '#fde68a' : '#fca5a5')}`,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '12px'
+                                                    }}>
+                                                        <DollarSign size={18} />
+                                                        Margem de Lucro: {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} MT por item)
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Price (MT) *</label>
+                                <input
+                                    type="number"
+                                    value={formData.price}
+                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    required
+                                    min="0"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>{t('sku')}</label>
+                                <input
+                                    type="text"
+                                    value={formData.sku}
+                                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                                    placeholder="e.g. BEV-001"
+                                />
+                            </div>
+
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label>Description</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    rows="3"
+                                />
+                            </div>
+
                         </div>
                     )}
 
@@ -652,15 +896,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                     {/* BUSINESS TAB */}
                     {activeTab === 'business' && (
                         <div className="form-grid">
-                            <div className="form-group">
-                                <label>{t('cost_price')}</label>
-                                <input
-                                    type="number"
-                                    value={formData.costPrice}
-                                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                                    min="0"
-                                />
-                            </div>
+                            {/* Removed costPrice from here as it moved to Stock section */}
 
                             <div className="form-group">
                                 <label>{t('seasonal')}</label>
@@ -707,15 +943,11 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                     </label>
                                 </div>
 
-                                <div className="checkbox-row">
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.stockControlled}
-                                            onChange={(e) => setFormData({ ...formData, stockControlled: e.target.checked })}
-                                        />
-                                        {t('stock_controlled')}
-                                    </label>
+                                {/* Note: stockControlled moved to General tab */}
+                                <div style={{ padding: '10px 14px', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #bae6fd' }}>
+                                    <p style={{ margin: 0, fontSize: '12px', color: '#0369a1', fontWeight: '600' }}>
+                                        ℹ O controlo de stock (quantidade, stock mínimo e unidade) está disponível no separador <strong>Geral</strong>.
+                                    </p>
                                 </div>
 
                             </div>

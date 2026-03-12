@@ -9,7 +9,8 @@ import {
     ArrowRight, Wallet, CheckCircle, AlertCircle,
     ArrowUpRight, ArrowDownRight, Printer, Search,
     Filter, X, ShieldCheck, PieChart, MoreVertical, Clock,
-    CheckSquare, Activity, Percent
+    CheckSquare, Activity, Percent, Scale, BarChart3,
+    ShoppingCart, Banknote, CreditCard
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
@@ -180,38 +181,71 @@ export default function AccountingDashboard() {
                 </div>
             </div>
 
-            {/* Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '64px' }}>
+            {/* Metrics – Row 1: Key Financial KPIs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '32px' }}>
                 <MetricCard
-                    title={t('gross_sales')}
-                    value={`${(stats?.revenue || 0).toLocaleString()} ${currency} `}
-                    subValue={t('gross_sales_desc')}
+                    title="Faturação de Hoje"
+                    value={`${(stats?.todayBilling || 0).toLocaleString()} ${currency}`}
+                    subValue="Rendimentos gerados hoje"
                     icon={TrendingUp}
                     color="#4f46e5"
-                    trend={12.5}
+                    trend={null}
                 />
                 <MetricCard
-                    title={t('actual_expenses')}
-                    value={`${(stats?.expenses || 0).toLocaleString()} ${currency} `}
-                    subValue={t('actual_expenses_desc')}
-                    icon={TrendingDown}
+                    title="Compras do Dia"
+                    value={`${(stats?.totalPurchases || 0).toLocaleString()} ${currency}`}
+                    subValue="Gastos registados hoje"
+                    icon={ShoppingCart}
                     color="#ef4444"
-                    trend={-5.2}
+                    trend={null}
                 />
                 <MetricCard
-                    title={t('vat_payable')}
-                    value={`${(stats?.taxPayable || 0).toLocaleString()} ${currency} `}
-                    subValue={t('vat_payable_desc')}
+                    title="IVA a Pagar (16%)"
+                    value={`${(stats?.taxPayable || 0).toLocaleString()} ${currency}`}
+                    subValue="IVA Liquidado – IVA Dedutível"
                     icon={Landmark}
                     color="#f59e0b"
                 />
                 <MetricCard
-                    title={t('net_profit')}
-                    value={`${(stats?.netProfit || 0).toLocaleString()} ${currency} `}
-                    subValue={t('net_profit_desc')}
-                    icon={Wallet}
+                    title="Saldo de Caixa"
+                    value={`${(stats?.cashBalance || 0).toLocaleString()} ${currency}`}
+                    subValue="Caixa + Bancos + M-Pesa"
+                    icon={Banknote}
                     color="#10b981"
-                    trend={8.4}
+                />
+            </div>
+            {/* Metrics – Row 2: Period Totals */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '48px' }}>
+                <MetricCard
+                    title={t('gross_sales')}
+                    value={`${(stats?.revenue || 0).toLocaleString()} ${currency}`}
+                    subValue="Total acumulado de rendimentos"
+                    icon={TrendingUp}
+                    color="#4f46e5"
+                    trend={null}
+                />
+                <MetricCard
+                    title={t('actual_expenses')}
+                    value={`${(stats?.expenses || 0).toLocaleString()} ${currency}`}
+                    subValue="Total acumulado de gastos"
+                    icon={TrendingDown}
+                    color="#ef4444"
+                    trend={null}
+                />
+                <MetricCard
+                    title={t('net_profit')}
+                    value={`${(stats?.netProfit || 0).toLocaleString()} ${currency}`}
+                    subValue="Rendimentos – Gastos do período"
+                    icon={Wallet}
+                    color={stats?.netProfit >= 0 ? '#10b981' : '#ef4444'}
+                    trend={null}
+                />
+                <MetricCard
+                    title="IVA Liquidado"
+                    value={`${(stats?.ivaLiquidado || 0).toLocaleString()} ${currency}`}
+                    subValue={`IVA Dedutível: ${(stats?.ivaDedutivel || 0).toLocaleString()} ${currency}`}
+                    icon={Percent}
+                    color="#8b5cf6"
                 />
             </div>
 
@@ -274,10 +308,24 @@ export default function AccountingDashboard() {
                             />
                             <NavCard
                                 title="Apuramento de IVA"
-                                description="IVA Liquidado vs Dedutível"
+                                description="IVA Liquidado vs Dedutível (16%)"
                                 icon={Percent}
                                 color="#ef4444"
                                 onClick={() => navigate('/dashboard/accounting/iva')}
+                            />
+                            <NavCard
+                                title="Balancete"
+                                description="Movimentos débito/crédito por período"
+                                icon={BarChart3}
+                                color="#0891b2"
+                                onClick={() => navigate('/dashboard/accounting/balancete')}
+                            />
+                            <NavCard
+                                title="Balanço Patrimonial"
+                                description="Activos, Passivos e Capital Próprio"
+                                icon={Scale}
+                                color="#7c3aed"
+                                onClick={() => navigate('/dashboard/accounting/balance-sheet')}
                             />
                         </div>
                     </section>
