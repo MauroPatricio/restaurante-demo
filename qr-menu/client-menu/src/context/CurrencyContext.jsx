@@ -6,6 +6,8 @@ const CurrencyContext = createContext();
 export const CurrencyProvider = ({ children }) => {
     const [currency, setCurrency] = useState(localStorage.getItem('preferred_currency') || 'MZN');
     const [restaurantSettings, setRestaurantSettings] = useState(null);
+    const [rates, setRates] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadRates = async () => {
