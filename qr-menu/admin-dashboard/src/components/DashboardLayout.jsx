@@ -236,6 +236,7 @@ export default function DashboardLayout() {
             items: [
                 { icon: Settings, label: t('system_admin_hub'), path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
                 { icon: CreditCard, label: t('subscription_management_admin') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.name === 'System Admin' },
+                { icon: Info, label: t('about_us'), path: '/dashboard/about-us', show: true },
             ]
         }
     ];

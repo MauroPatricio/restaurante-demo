@@ -57,6 +57,7 @@ import WeeklyMenuManagement from './pages/WeeklyMenuManagement';
 import DashboardRedirect from './components/DashboardRedirect';
 import RoomServiceManagement from './pages/RoomServiceManagement';
 import RoomOrders from './pages/RoomOrders';
+import AboutUs from './pages/AboutUs';
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -181,6 +182,7 @@ function AppContent() {
           <Route path="settings" element={<AdminHub />} />
           <Route path="room-service" element={<RoomServiceManagement />} />
           <Route path="room-orders" element={<RoomOrders />} />
+          <Route path="about-us" element={<AboutUs />} />
         </Route>
 
         <Route path="/owner-dashboard" element={
