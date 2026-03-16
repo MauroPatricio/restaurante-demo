@@ -13,7 +13,7 @@ const DONE_STATUSES = ['served', 'completed', 'cancelled'];
 const POLL_MS = 12000;
 
 const STATUS_STEPS = [
-    { key: 'pending', label: 'order_status_received', icon: '📋', color: '#f59e0b', desc: 'order_status_received_desc' },
+    { key: 'pending', label: 'order_status_pending', icon: '📋', color: '#f59e0b', desc: 'order_status_pending_desc' },
     { key: 'confirmed', label: 'order_status_confirmed', icon: '✅', color: '#3b82f6', desc: 'order_status_confirmed_desc' },
     { key: 'preparing', label: 'order_status_preparing', icon: '👨‍🍳', color: '#8b5cf6', desc: 'order_status_preparing_desc' },
     { key: 'ready', label: 'order_status_ready', icon: '🍽️', color: '#10b981', desc: 'order_status_ready_desc' },
@@ -229,7 +229,7 @@ export default function OrderStatus() {
                         {isCancelled ? '❌' : currentStep?.icon || '📋'}
                     </div>
                     <h2 style={{ margin: '0 0 6px', fontSize: '1.4rem', fontWeight: 800, color: isCancelled ? '#be123c' : '#1e293b' }}>
-                        {isCancelled ? t('order_status_cancelled') : t(currentStep?.label || 'order_status_received')}
+                        {isCancelled ? t('order_status_cancelled') : t(currentStep?.label || 'order_status_pending')}
                     </h2>
                     <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: '0.85rem' }}>
                         {isCancelled ? t('order_cancelled_msg') : t(currentStep?.desc)}

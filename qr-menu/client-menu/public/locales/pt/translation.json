@@ -68,8 +68,8 @@
     "order_status_preparing_desc": "O seu pedido está a ser preparado agora.",
     "order_status_ready": "Pronto para Servir",
     "order_status_ready_desc": "O seu pedido está pronto! O garçom já vem.",
-    "order_status_received": "Pedido Recebido",
-    "order_status_received_desc": "O seu pedido foi recebido pela cozinha.",
+    "order_status_pending": "Pedido Recebido",
+    "order_status_pending_desc": "O seu pedido foi recebido pela cozinha.",
     "order_status_served": "Servido",
     "order_status_served_desc": "Bom apetite! 🍽️",
     "order_tracking": "Acompanhamento do Pedido",
@@ -111,5 +111,12 @@
     "waiter": "Garçom",
     "waiter_coming": "O garçom está a caminho da sua mesa.",
     "waiter_on_way": "O garçom está a caminho!",
-    "your_name_label": "Seu Nome"
+    "your_name_label": "Seu Nome",
+    "call_waiter": "Chamar Garçom",
+    "calling": "Chamando...",
+    "waiter_called_title": "Garçom Chamado!",
+    "waiter_confirmation_msg": "Um garçom foi notificado e virá à sua mesa em breve.",
+    "waiter_call_error": "Erro ao chamar garçom. Por favor, tente novamente.",
+    "waiter_active_call": "Já existe um pedido ativo para esta mesa.",
+    "waiter_call_cooldown": "Por favor, aguarde {{seconds}} segundos antes de chamar novamente."
 }

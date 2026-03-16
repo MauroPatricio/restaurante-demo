@@ -78,10 +78,16 @@ export default function WaiterCallAlerts() {
             await waiterCallAPI.acknowledge(callId);
             localAcknowledge(callId);
         } catch (error) {
+            const status = error.response?.status;
+            // 400 = already acknowledged in DB — update UI silently
+            if (status === 400) {
+                localAcknowledge(callId);
+                return;
+            }
             console.error('Failed to acknowledge call:', {
                 callId,
                 error: error.response?.data || error.message,
-                status: error.response?.status
+                status
             });
             alert(t('error_acknowledge_call') || 'Erro ao reconhecer chamada. Por favor, tente novamente.');
         }
