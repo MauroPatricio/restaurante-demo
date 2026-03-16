@@ -37,7 +37,8 @@ import {
     Lock,
     Store,
     BedDouble,
-    Landmark
+    Landmark,
+    Info
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
 import SubscriptionBlockedScreen from './SubscriptionBlockedScreen';
