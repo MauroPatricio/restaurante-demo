@@ -206,13 +206,13 @@ router.post('/tables', authenticateToken, authorizeRoles('owner', 'admin', 'mana
     table.qrCode = qrCode;
     await table.save();
 
-    // Emit real-time update
+    // Emit real-time update with full populated table
     const io = req.app.get('io');
     if (io) {
+      const populatedTable = await Table.findById(table._id).populate('assignedWaiterId', 'name email');
       io.to(`restaurant:${restaurant}`).emit('table:updated', {
         action: 'create',
-        tableId: table._id,
-        tableNumber: table.number
+        table: populatedTable
       });
     }
 
@@ -307,13 +307,13 @@ router.patch('/tables/:id', authenticateToken, authorizeRoles('owner', 'admin', 
       return res.status(404).json({ error: 'Table not found' });
     }
 
-    // Emit real-time update
+    // Emit real-time update with full populated table
     const io = req.app.get('io');
     if (io) {
+      const populatedTable = await Table.findById(table._id).populate('assignedWaiterId', 'name email');
       io.to(`restaurant:${table.restaurant}`).emit('table:updated', {
         action: 'update',
-        tableId: table._id,
-        tableNumber: table.number
+        table: populatedTable
       });
     }
 
@@ -341,8 +341,7 @@ router.delete('/tables/:id', authenticateToken, authorizeRoles('owner', 'admin',
     if (io) {
       io.to(`restaurant:${table.restaurant}`).emit('table:updated', {
         action: 'delete',
-        tableId: table._id,
-        tableNumber: table.number
+        tableId: table._id
       });
     }
 

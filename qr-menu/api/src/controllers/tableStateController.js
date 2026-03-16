@@ -105,10 +105,10 @@ export const freeTable = async (req, res) => {
         // Emit real-time update via Socket.IO
         const io = req.app.get('io');
         if (io) {
+            const populatedTable = await Table.findById(table._id).populate('assignedWaiterId', 'name email');
             io.to(`restaurant:${table.restaurant}`).emit('table:status-updated', {
-                tableId: table._id,
-                tableNumber: table.number,
-                status: 'free',
+                action: 'status',
+                table: populatedTable,
                 previousStatus: 'occupied',
                 changedBy: userId,
                 timestamp: new Date()
@@ -171,10 +171,10 @@ export const occupyTable = async (tableId, userId, restaurantId, io = null) => {
 
         // Emit real-time update via Socket.IO
         if (io) {
+            const populatedTable = await Table.findById(table._id).populate('assignedWaiterId', 'name email');
             io.to(`restaurant:${restaurantId}`).emit('table:status-updated', {
-                tableId: table._id,
-                tableNumber: table.number,
-                status: 'occupied',
+                action: 'status',
+                table: populatedTable,
                 previousStatus: 'free',
                 changedBy: userId,
                 timestamp: new Date()
@@ -287,10 +287,10 @@ export const updateTableStatus = async (req, res) => {
         // Emit real-time update via Socket.IO
         const io = req.app.get('io');
         if (io) {
+            const populatedTable = await Table.findById(table._id).populate('assignedWaiterId', 'name email');
             io.to(`restaurant:${table.restaurant}`).emit('table:status-updated', {
-                tableId: table._id,
-                tableNumber: table.number,
-                status,
+                action: 'status',
+                table: populatedTable,
                 previousStatus,
                 changedBy: userId,
                 timestamp: new Date()

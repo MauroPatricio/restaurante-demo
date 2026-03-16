@@ -49,14 +49,32 @@ export default function Tables() {
 
             // Listen for real-time refresh events
             const handleRefresh = (e) => {
-                const { type } = e.detail || {};
-                // Only refresh relevant data if specified, otherwise refresh all
+                const { type, action, data } = e.detail || {};
+                
+                // If we have full table data, update state directly for "instant" feel
+                if (type === 'table' && data && data.table) {
+                    const receivedTable = data.table;
+                    if (action === 'updated' || action === 'status') {
+                        setTables(prev => prev.map(t => t._id === receivedTable._id ? receivedTable : t));
+                    } else if (action === 'create') {
+                        setTables(prev => {
+                            if (prev.some(t => t._id === receivedTable._id)) return prev;
+                            return [...prev, receivedTable].sort((a, b) => a.number - b.number);
+                        });
+                    }
+                }
+
+                if (type === 'table' && action === 'delete' && data && data.tableId) {
+                    setTables(prev => prev.filter(t => t._id !== data.tableId));
+                }
+
+                // Still perform background sync for safety/consistency
                 if (!type || type === 'table' || type === 'order' || type === 'call') {
                     fetchTables(true);
                     fetchActiveOrders(true);
                 }
             };
-
+            
             window.addEventListener('data-refresh', handleRefresh);
 
             const interval = setInterval(fetchActiveOrders, 30000); // Poll every 30s as backup
@@ -148,14 +166,27 @@ export default function Tables() {
             };
 
             if (editingTable) {
-                await tableAPI.update(editingTable, payload);
-            } else {
-                await tableAPI.create(payload);
-            }
+                // Optimistic Update
+                const previousTables = [...tables];
+                setTables(prev => prev.map(t => 
+                    t._id === editingTable ? { ...t, ...payload } : t
+                ));
+                setShowModal(false);
 
-            setShowModal(false);
-            fetchTables();
-            if (editingTable) alert(t('item_saved_success'));
+                try {
+                    await tableAPI.update(editingTable, payload);
+                    fetchTables(true); // Background sync
+                } catch (err) {
+                    setTables(previousTables); // Rollback
+                    alert(t('failed_update_table'));
+                    setShowModal(true); // Re-open
+                }
+            } else {
+                // Creation waits for ID, but we close modal immediately
+                setShowModal(false);
+                await tableAPI.create(payload);
+                fetchTables();
+            }
         } catch (error) {
             console.error('Save failed:', error);
             alert(t('failed_save_table'));
