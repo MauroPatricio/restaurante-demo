@@ -271,6 +271,7 @@ export default function Menu() {
                     t={t}
                     restaurantId={restaurantId}
                     categories={categories}
+                    supportedCurrencies={supportedCurrencies}
                     onClose={() => {
                         setShowModal(false);
                         setEditItem(null);
@@ -300,7 +301,7 @@ export default function Menu() {
 }
 
 // Menu Item Modal Component
-function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categories, supportedCurrencies }) {
+function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categories, supportedCurrencies = [] }) {
     const [activeTab, setActiveTab] = useState('general');
     const [subcategories, setSubcategories] = useState([]);
     const [formData, setFormData] = useState({
