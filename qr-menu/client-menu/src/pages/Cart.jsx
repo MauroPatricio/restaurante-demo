@@ -198,7 +198,7 @@ const Cart = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-44 transition-colors duration-200 flex flex-col items-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12 transition-colors duration-200 flex flex-col items-center">
             {/* Header - Stretches to max-w or full width wrapper */}
             <div className="w-full bg-white dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-30 shadow-sm border-b border-gray-100 transition-colors duration-200">
                 <div className="max-w-[480px] mx-auto p-4 flex items-center justify-between">
@@ -277,11 +277,10 @@ const Cart = () => {
                     </div>
                 </div>
 
-                {/* Guest Details Form */}
+                {/* Form Section */}
                 <div className="space-y-4">
-                    <h3 className="font-black text-gray-900 dark:text-white text-xs uppercase tracking-widest ml-1 opacity-60">{t('order_details')}</h3>
-                    
                     <form id="checkout-form" onSubmit={handleCheckout} className="space-y-4">
+                        {/* Payment Method - Now part of flow */}
                         <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-4">{t('payment_method_label')}</label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -317,6 +316,7 @@ const Cart = () => {
                             </div>
                         </div>
 
+                        {/* Customer Details */}
                         <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors space-y-4">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2">{t('your_name_label')}</label>
@@ -341,6 +341,7 @@ const Cart = () => {
                                     inputMode="tel"
                                 />
                             </div>
+
                             {error && (
                                 <motion.div 
                                     initial={{ opacity: 0, y: -10 }}
@@ -351,6 +352,21 @@ const Cart = () => {
                                     {error}
                                 </motion.div>
                             )}
+
+                            {/* Confirm Button - Now internal to form flow */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full mt-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 rounded-[10px] h-[48px] font-black flex items-center justify-between hover:scale-[1.01] active:scale-[0.99] transition-all shadow-xl shadow-black/10 dark:shadow-white/5 disabled:opacity-70 disabled:cursor-not-allowed group overflow-hidden"
+                            >
+                                <div className="flex items-center gap-3">
+                                    {loading ? <LoadingSpinner size={16} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={18} className="text-primary-500" />}
+                                    <span className="text-xs uppercase tracking-widest">{loading ? t('scanning') : t('confirm_order')}</span>
+                                </div>
+                                <span className="text-base font-black">
+                                    {formatCurrency(convertedTotal, preferredCurrency, locale)}
+                                </span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -361,31 +377,8 @@ const Cart = () => {
                     </p>
                 </div>
             </div>
-
-            {/* Bottom Sticky Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pb-8 transition-colors duration-200">
-                <div className="max-w-[480px] mx-auto">
-                    <button
-                        form="checkout-form"
-                        disabled={loading}
-                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-4 rounded-2xl font-black flex items-center justify-between hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/20 dark:shadow-white/10 disabled:opacity-70 disabled:cursor-not-allowed h-[68px] overflow-hidden group"
-                    >
-                        <div className="flex flex-col items-start transition-transform duration-300 group-hover:-translate-y-1">
-                            <span className="text-[10px] uppercase tracking-widest opacity-60 mb-0.5">{loading ? t('scanning') : t('confirm_order')}</span>
-                            <span className="text-sm font-black flex items-center gap-2">
-                                {loading ? <LoadingSpinner size={16} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={18} className="text-primary-500" />}
-                                {t('checkout').toUpperCase()}
-                            </span>
-                        </div>
-                        <div className="bg-white/10 dark:bg-black/5 px-4 py-2 rounded-xl border border-white/10 dark:border-black/5">
-                            <span className="text-lg font-black tracking-tight">
-                                {formatCurrency(convertedTotal, preferredCurrency, locale)}
-                            </span>
-                        </div>
-                    </button>
-                </div>
-            </div>
         </div>
+
 
     );
 };
