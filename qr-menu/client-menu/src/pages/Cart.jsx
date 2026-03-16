@@ -182,8 +182,8 @@ const Cart = () => {
                 <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                     <ShoppingBag size={40} className="text-gray-300 dark:text-gray-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t('cart_empty') || 'Seu carrinho está vazio'}</h2>
-                <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-xs">{t('cart_empty_msg') || 'Adicione itens deliciosos do menu para começar seu pedido!'}</p>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t('cart_empty')}</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-xs">{t('cart_empty_msg')}</p>
                 <button
                     onClick={() => navigate(getMenuUrl(restaurantId, searchParams))}
                     className="text-primary-600 dark:text-primary-400 font-bold flex items-center gap-2 hover:underline"
@@ -279,7 +279,7 @@ const Cart = () => {
                                         {method === 'cash' && <Wallet size={20} />}
                                     </div>
                                     <span className="text-[10px] font-black uppercase tracking-tight">
-                                        {method === 'visa' ? 'VISA' : method}
+                                        {t(`payment_${method}`)}
                                     </span>
                                     {paymentMethod === method && (
                                         <div className="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center text-white">

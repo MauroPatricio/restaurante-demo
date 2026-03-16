@@ -229,10 +229,10 @@ export default function OrderStatus() {
                         {isCancelled ? '❌' : currentStep?.icon || '📋'}
                     </div>
                     <h2 style={{ margin: '0 0 6px', fontSize: '1.4rem', fontWeight: 800, color: isCancelled ? '#be123c' : '#1e293b' }}>
-                        {isCancelled ? t('order_status_cancelled') : currentStep?.label || t('order_status_received')}
+                        {isCancelled ? t('order_status_cancelled') : t(currentStep?.label || 'order_status_received')}
                     </h2>
                     <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: '0.85rem' }}>
-                        {isCancelled ? t('order_cancelled_msg') : currentStep?.desc}
+                        {isCancelled ? t('order_cancelled_msg') : t(currentStep?.desc)}
                     </p>
                     <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
                         {elapsed(order.createdAt)}
@@ -277,7 +277,7 @@ export default function OrderStatus() {
                                         )}
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', color: isVisuallyActive ? '#1e293b' : '#cbd5e1' }}>{step.label}</p>
+                                        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', color: isVisuallyActive ? '#1e293b' : '#cbd5e1' }}>{t(step.label)}</p>
                                         {isInProgress && (
                                             <p style={{ margin: 0, fontSize: '0.75rem', color: step.color, fontWeight: 700 }}>● {t('in_progress')}…</p>
                                         )}

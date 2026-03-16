@@ -38,7 +38,7 @@ const OrderHistory = () => {
                 setOrders(res.data.orders);
             } catch (err) {
                 console.error(err);
-                setError('Failed to load history');
+                setError(t('failed_to_load'));
             } finally {
                 setLoading(false);
             }
@@ -119,7 +119,7 @@ const OrderHistory = () => {
                             </div>
 
                             <div className="text-xs text-gray-500 line-clamp-1 bg-gray-50/50 p-2 rounded-lg border border-gray-50 italic">
-                                {order.items.map(i => `${i.qty}x ${i.item?.name || 'Item'}`).join(', ')}
+                                {order.items.map(i => `${i.qty}x ${i.item?.name || t('item_label')}`).join(', ')}
                             </div>
 
                             <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center text-primary-600 text-xs font-bold uppercase tracking-wider">
