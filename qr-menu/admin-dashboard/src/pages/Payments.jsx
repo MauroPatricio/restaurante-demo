@@ -169,7 +169,7 @@ export default function Payments() {
                                             <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{order.customerName || 'Walk-in'}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 font-black text-gray-900 dark:text-white">{order.total} MT</td>
+                                    <td className="px-6 py-4 font-black text-gray-900 dark:text-white">{order.total} {order.currency === 'MZN' ? 'MT' : (order.currency || 'MT')}</td>
                                     <td className="px-6 py-4">
                                         <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold text-[10px] rounded-lg uppercase tracking-wider">
                                             {t(`method_${(order.paymentMethod || '').toLowerCase()}`) || order.paymentMethod}
@@ -327,11 +327,11 @@ export default function Payments() {
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{item.item?.name || 'Item'}</span>
-                                                        <span className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-wider">{item.qty}x {item.itemPrice || item.item?.price} MT</span>
+                                                        <span className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-wider">{item.qty}x {item.itemPrice || item.item?.price} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-sm font-black text-gray-900 dark:text-white">{item.subtotal} MT</span>
+                                                    <span className="text-sm font-black text-gray-900 dark:text-white">{item.subtotal} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -341,18 +341,18 @@ export default function Payments() {
                                     <div className="p-4 bg-gray-100/50 dark:bg-gray-800/50 space-y-1.5 border-t border-gray-200 dark:border-gray-700">
                                         <div className="flex justify-between text-[11px] font-bold">
                                             <span className="text-gray-400 uppercase tracking-widest">{t('subtotal')}</span>
-                                            <span className="text-gray-600 dark:text-gray-300">{selectedOrder.subtotal} MT</span>
+                                            <span className="text-gray-600 dark:text-gray-300">{selectedOrder.subtotal} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
                                         </div>
                                         {selectedOrder.tax > 0 && (
                                             <div className="flex justify-between text-[11px] font-bold">
                                                 <span className="text-gray-400 uppercase tracking-widest">{t('tax')}</span>
-                                                <span className="text-gray-600 dark:text-gray-300">{selectedOrder.tax} MT</span>
+                                                <span className="text-gray-600 dark:text-gray-300">{selectedOrder.tax} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
                                             </div>
                                         )}
                                         {selectedOrder.discount > 0 && (
                                             <div className="flex justify-between text-[11px] font-bold text-rose-500">
                                                 <span className="uppercase tracking-widest">{t('discount')}</span>
-                                                <span>-{selectedOrder.discount} MT</span>
+                                                <span>-{selectedOrder.discount} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
                                             </div>
                                         )}
                                     </div>
@@ -361,7 +361,7 @@ export default function Payments() {
 
                             <div className="p-5 bg-emerald-600 dark:bg-emerald-500 rounded-[24px] text-white flex justify-between items-center shadow-lg shadow-emerald-500/20">
                                 <span className="font-bold text-xs uppercase tracking-widest opacity-80">Total a Confirmar</span>
-                                <span className="text-2xl font-black">{selectedOrder.total} MT</span>
+                                <span className="text-2xl font-black">{selectedOrder.total} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
                             </div>
                         </div>
 

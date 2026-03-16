@@ -331,14 +331,14 @@ export default function OrderStatus() {
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < order.items.length - 1 ? '1px solid #f1f5f9' : 'none', fontSize: '0.88rem' }}>
                             <span style={{ color: '#1e293b' }}>{it.qty || it.quantity || 1}× {it.item?.name || it.name}</span>
                             <span style={{ fontWeight: 700, color: '#312e81' }}>
-                                {it.subtotal || (it.itemPrice || 0) * (it.qty || 1)} MT
+                                {it.subtotal || (it.itemPrice || 0) * (it.qty || 1)} {order.currency === 'MZN' ? 'MT' : (order.currency || 'MT')}
                             </span>
                         </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTop: '2px solid #f1f5f9', fontWeight: 800, fontSize: '1rem' }}>
                         <span>{t('total')}</span>
                         <span style={{ color: '#312e81' }}>
-                            {order.total} MT
+                            {order.total} {order.currency === 'MZN' ? 'MT' : (order.currency || 'MT')}
                         </span>
                     </div>
                 </div>

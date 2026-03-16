@@ -152,7 +152,9 @@ export default function Menu() {
                             <div className="menu-card-content">
                                 <div className="menu-card-header">
                                     <h3>{item.name}</h3>
-                                    <span className="menu-card-price">{item.price} MT</span>
+                                    <span className="menu-card-price">
+                                        {item.price} {item.currency === 'MZN' ? 'MT' : (item.currency || 'MT')}
+                                    </span>
                                 </div>
                                 <p className="menu-card-description">{item.description}</p>
                                 <div className="menu-card-meta" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
@@ -285,6 +287,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
         stock: item?.stock ?? 0,
         stockMin: item?.stockMin ?? 0,
         unit: item?.unit || 'Unidade',
+        currency: item?.currency || 'MZN',
         seasonal: item?.seasonal || '',
         tags: item?.tags?.join(', ') || ''
     });
@@ -778,7 +781,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         gap: '12px'
                                                     }}>
                                                         <DollarSign size={18} />
-                                                        {t('profit_margin')} {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} MT {t('per_item')})
+                                                        {t('profit_margin')} {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} {formData.currency === 'MZN' ? 'MT' : (formData.currency || 'MT')} {t('per_item')})
                                                     </div>
                                                 </div>
                                             )}
@@ -788,14 +791,28 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                             </div>
 
                             <div className="form-group">
-                                <label>Price (MT) *</label>
-                                <input
-                                    type="number"
-                                    value={formData.price}
-                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                    required
-                                    min="0"
-                                />
+                                <label>{t('price_required')}</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        type="number"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                        required
+                                        min="0"
+                                        style={{ flex: 1 }}
+                                    />
+                                    <select
+                                        value={formData.currency}
+                                        onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                                        style={{ width: '100px', fontWeight: 'bold' }}
+                                    >
+                                        <option value="MZN">MT (MZN)</option>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="ZAR">ZAR (R)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div className="form-group">

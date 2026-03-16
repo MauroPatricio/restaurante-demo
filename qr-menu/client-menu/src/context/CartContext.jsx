@@ -79,6 +79,9 @@ export const CartProvider = ({ children }) => {
     }, 0);
 
     const cartCount = cart.reduce((acc, item) => acc + item.qty, 0);
+    
+    // Determine cart currency based on items (assuming first item's currency for simplicity, or MZN)
+    const cartCurrency = cart.length > 0 ? (cart[0].currency || 'MZN') : 'MZN';
 
     const checkRestaurant = (currentId) => {
         if (restaurantId && restaurantId !== currentId && cart.length > 0) {
@@ -101,6 +104,7 @@ export const CartProvider = ({ children }) => {
         clearCart,
         cartTotal,
         cartCount,
+        cartCurrency,
         checkRestaurant
     };
 

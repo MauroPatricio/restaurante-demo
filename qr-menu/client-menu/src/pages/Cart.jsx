@@ -20,7 +20,7 @@ const Cart = () => {
     const { restaurantId } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { cart, removeFromCart, updateQty, cartTotal, clearCart } = useCart();
+    const { cart, removeFromCart, updateQty, cartTotal, clearCart, cartCurrency } = useCart();
     const { t, i18n } = useTranslation();
     const { joinOrderRoom } = useNotification();
 
@@ -95,7 +95,7 @@ const Cart = () => {
                 phone: phone.trim(),
                 paymentMethod,
                 notes: '',
-                currency: 'MZN'
+                currency: cartCurrency
             };
 
             console.log('🚀 ENVIANDO PEDIDO AO SERVIDOR:', {
@@ -216,7 +216,7 @@ const Cart = () => {
                             <div className="flex-1">
                                 <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{item.name}</h3>
                                 <p className="text-primary-600 dark:text-primary-400 font-extrabold text-base mt-1">
-                                    {item.price * item.qty} MT
+                                    {item.price * item.qty} {item.currency === 'MZN' ? 'MT' : (item.currency || 'MT')}
                                 </p>
                             </div>
                             <div className="flex items-center gap-4">
@@ -251,7 +251,7 @@ const Cart = () => {
                 <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors">
                     <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('total')}</span>
                     <span className="text-2xl font-black text-primary-600 dark:text-primary-400">
-                        {cartTotal} MT
+                        {cartTotal} {cartCurrency === 'MZN' ? 'MT' : (cartCurrency || 'MT')}
                     </span>
                 </div>
 
@@ -336,7 +336,7 @@ const Cart = () => {
                                 <span className="text-sm uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
                             </div>
                             <span className="text-xl font-black">
-                                {cartTotal} MT
+                                {cartTotal} {cartCurrency === 'MZN' ? 'MT' : (cartCurrency || 'MT')}
                             </span>
                         </button>
                     </div>

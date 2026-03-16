@@ -495,7 +495,7 @@ const Menu = () => {
                                 <div className="flex items-center justify-between mt-2">
                                     <div className="flex items-center gap-1">
                                         <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">
-                                            <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1.05rem' }}>{item.price} MT</span>
+                                            <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1.05rem' }}>{item.price} {item.currency === 'MZN' ? 'MT' : (item.currency || 'MT')}</span>
                                         </span>
                                     </div>
 

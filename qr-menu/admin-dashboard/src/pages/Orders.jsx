@@ -208,7 +208,7 @@ export default function Orders() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-black text-gray-900 dark:text-white">{order.total} MT</span>
+                                            <span className="text-sm font-black text-gray-900 dark:text-white">{order.total} {order.currency === 'MZN' ? 'MT' : (order.currency || 'MT')}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`status-badge ${statusColors[order.status]}`}>
