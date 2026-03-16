@@ -311,23 +311,52 @@ export default function Payments() {
                                 </div>
                             </div>
 
-                            <div className="mb-6 space-y-2">
-                                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Comprovativo</span>
-                                {selectedOrder.receiptUrl ? (
-                                    <div className="relative group">
-                                        <img src={selectedOrder.receiptUrl} alt="Receipt" className="w-full h-auto max-h-[400px] object-contain rounded-2xl border-4 border-gray-50 dark:border-gray-900 shadow-md" />
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                                            <a href={selectedOrder.receiptUrl} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest">Ver Tamanho Real</a>
-                                        </div>
+                            <div className="mb-6">
+                                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1 mb-3">{t('order_items')}</span>
+                                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                        {(selectedOrder.items || []).map((item, idx) => (
+                                            <div key={idx} className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-white dark:hover:bg-gray-800 transition-colors">
+                                                <div className="flex gap-3 items-center">
+                                                    <div className="h-10 w-10 min-w-[40px] bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 font-bold overflow-hidden shadow-inner">
+                                                        {item.item?.imageUrl || item.item?.image ? (
+                                                            <img src={item.item.imageUrl || item.item.image} alt={item.item?.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="text-xs">{item.qty}x</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{item.item?.name || 'Item'}</span>
+                                                        <span className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-wider">{item.qty}x {item.itemPrice || item.item?.price} MT</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-sm font-black text-gray-900 dark:text-white">{item.subtotal} MT</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                                        <div className="h-12 w-12 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full text-gray-300 shadow-sm mb-3">
-                                            <FileText size={24} />
+                                    
+                                    {/* Breakdown */}
+                                    <div className="p-4 bg-gray-100/50 dark:bg-gray-800/50 space-y-1.5 border-t border-gray-200 dark:border-gray-700">
+                                        <div className="flex justify-between text-[11px] font-bold">
+                                            <span className="text-gray-400 uppercase tracking-widest">{t('subtotal')}</span>
+                                            <span className="text-gray-600 dark:text-gray-300">{selectedOrder.subtotal} MT</span>
                                         </div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('no_receipt_image') || 'Nenhuma imagem enviada'}</p>
+                                        {selectedOrder.tax > 0 && (
+                                            <div className="flex justify-between text-[11px] font-bold">
+                                                <span className="text-gray-400 uppercase tracking-widest">{t('tax')}</span>
+                                                <span className="text-gray-600 dark:text-gray-300">{selectedOrder.tax} MT</span>
+                                            </div>
+                                        )}
+                                        {selectedOrder.discount > 0 && (
+                                            <div className="flex justify-between text-[11px] font-bold text-rose-500">
+                                                <span className="uppercase tracking-widest">{t('discount')}</span>
+                                                <span>-{selectedOrder.discount} MT</span>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             <div className="p-5 bg-emerald-600 dark:bg-emerald-500 rounded-[24px] text-white flex justify-between items-center shadow-lg shadow-emerald-500/20">
