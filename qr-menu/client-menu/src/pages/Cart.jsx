@@ -203,10 +203,10 @@ const Cart = () => {
             <div className="w-full bg-white dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-30 shadow-sm border-b border-gray-100 transition-colors duration-200">
                 <div className="max-w-5xl mx-auto p-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
-                            <ArrowLeft size={20} />
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
+                            <ArrowLeft size={24} />
                         </button>
-                        <h1 className="text-base font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
                     </div>
                 </div>
             </div>
@@ -215,10 +215,10 @@ const Cart = () => {
                 {/* Cart Items - More compact */}
                 <div className="space-y-2">
                     {cart.map((item, index) => (
-                        <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-3 transition-colors overflow-hidden">
+                        <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 transition-colors overflow-hidden">
                             <div className="flex-1">
-                                <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-tight">{item.name}</h3>
-                                <p className="text-primary-600 dark:text-primary-400 font-extrabold text-[12px] mt-0.5">
+                                <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{item.name}</h3>
+                                <p className="text-primary-600 dark:text-primary-400 font-extrabold text-base mt-1">
                                     {formatCurrency(
                                         convertCurrency(item.price, item.currency || 'MZN', preferredCurrency, rates),
                                         preferredCurrency,
@@ -226,28 +226,28 @@ const Cart = () => {
                                     )}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-0.5 border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-1 border border-gray-100 dark:border-gray-700">
                                     <button
                                         onClick={() => updateQty(index, -1)}
-                                        className="w-6 h-6 flex items-center justify-center rounded-md bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm disabled:opacity-30"
+                                        className="w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm disabled:opacity-30"
                                         disabled={item.qty <= 1}
                                     >
-                                        <Minus size={10} strokeWidth={3} />
+                                        <Minus size={16} strokeWidth={3} />
                                     </button>
-                                    <span className="font-bold text-[12px] w-3 text-center text-gray-900 dark:text-white">{item.qty}</span>
+                                    <span className="font-bold text-lg w-4 text-center text-gray-900 dark:text-white">{item.qty}</span>
                                     <button
                                         onClick={() => updateQty(index, 1)}
-                                        className="w-6 h-6 flex items-center justify-center rounded-md bg-primary-600 text-white"
+                                        className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary-600 text-white"
                                     >
-                                        <Plus size={10} strokeWidth={3} />
+                                        <Plus size={16} strokeWidth={3} />
                                     </button>
                                 </div>
                                 <button
                                     onClick={() => removeFromCart(index)}
-                                    className="text-gray-300 hover:text-red-500 dark:text-gray-600 transition-colors p-1"
+                                    className="text-gray-300 hover:text-red-500 dark:text-gray-600 transition-colors p-2"
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={20} />
                                 </button>
                             </div>
                         </div>
@@ -255,9 +255,9 @@ const Cart = () => {
                 </div>
 
                 {/* Totals - Smaller */}
-                <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('total')}</span>
-                    <span className="text-lg font-black text-primary-600 dark:text-primary-400">
+                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors">
+                    <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('total')}</span>
+                    <span className="text-2xl font-black text-primary-600 dark:text-primary-400">
                         {formatCurrency(convertedTotal, preferredCurrency, locale)}
                     </span>
                 </div>
@@ -265,27 +265,27 @@ const Cart = () => {
                 {/* Form Section - Compacted */}
                 <form id="checkout-form" onSubmit={handleCheckout} className="space-y-3 flex flex-col flex-1">
                     {/* Payment Method - Compact Grid */}
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('payment_method_label')}</label>
+                    <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{t('payment_method_label')}</label>
                         <div className="grid grid-cols-4 gap-2">
                             {['mpesa', 'emola', 'visa', 'cash'].map((method) => (
                                 <button
                                     key={method}
                                     type="button"
                                     onClick={() => setPaymentMethod(method)}
-                                    className={`relative flex flex-col items-center justify-center py-2 rounded-xl border-2 transition-all ${
+                                    className={`relative flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all ${
                                         paymentMethod === method 
                                             ? 'bg-primary-50 dark:bg-primary-900/10 border-primary-500 text-primary-700 dark:text-primary-400' 
                                             : 'bg-gray-50/30 dark:bg-gray-900/20 border-gray-100 dark:border-gray-700 text-gray-400'
                                     }`}
                                 >
-                                    <div className="mb-0.5">
-                                        {method === 'mpesa' && <Smartphone size={14} />}
-                                        {method === 'emola' && <Smartphone size={14} />}
-                                        {method === 'visa' && <CreditCard size={14} />}
-                                        {method === 'cash' && <Wallet size={14} />}
+                                    <div className="mb-1.5">
+                                        {method === 'mpesa' && <Smartphone size={20} />}
+                                        {method === 'emola' && <Smartphone size={20} />}
+                                        {method === 'visa' && <CreditCard size={20} />}
+                                        {method === 'cash' && <Wallet size={20} />}
                                     </div>
-                                    <span className="text-[8px] font-black uppercase tracking-tight">
+                                    <span className="text-[10px] font-black uppercase tracking-tight">
                                         {method === 'visa' ? 'VISA' : method}
                                     </span>
                                     {paymentMethod === method && (
@@ -299,25 +299,25 @@ const Cart = () => {
                     </div>
 
                     {/* Customer Info - Combined and Slimmer */}
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
-                        <div className="space-y-3">
+                    <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+                        <div className="space-y-4">
                             <div>
-                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('your_name_label')}</label>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">{t('your_name_label')}</label>
                                 <input
                                     type="text"
                                     required
-                                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg outline-none text-gray-900 dark:text-white placeholder:text-gray-300 text-xs font-semibold"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl outline-none text-gray-900 dark:text-white placeholder:text-gray-300 text-base font-semibold"
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
                                     placeholder={t('name_placeholder')}
                                 />
                             </div>
                             <div>
-                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('phone_label')}</label>
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">{t('phone_label')}</label>
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg outline-none text-gray-900 dark:text-white placeholder:text-gray-300 text-xs font-semibold"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl outline-none text-gray-900 dark:text-white placeholder:text-gray-300 text-base font-semibold"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('phone_placeholder')}
@@ -336,13 +336,13 @@ const Cart = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-[10px] h-[48px] font-black flex items-center justify-between px-5 hover:scale-[1.01] active:scale-[0.99] transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed group overflow-hidden mt-1"
+                            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl h-[64px] font-black flex items-center justify-between px-6 hover:scale-[1.01] active:scale-[0.99] transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed group overflow-hidden mt-2"
                         >
-                            <div className="flex items-center gap-2">
-                                {loading ? <LoadingSpinner size={14} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={16} className="text-primary-500 transition-transform group-hover:translate-x-1" />}
-                                <span className="text-[10px] uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
+                            <div className="flex items-center gap-3">
+                                {loading ? <LoadingSpinner size={20} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={20} className="text-primary-500 transition-transform group-hover:translate-x-1" />}
+                                <span className="text-sm uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
                             </div>
-                            <span className="text-base font-black">
+                            <span className="text-xl font-black">
                                 {formatCurrency(convertedTotal, preferredCurrency, locale)}
                             </span>
                         </button>
