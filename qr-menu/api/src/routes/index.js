@@ -411,7 +411,7 @@ router.get('/menu/:restaurantId', async (req, res) => {
 
     // Use .lean() for read-only query and select only needed fields
     const items = await MenuItem.find(query)
-      .select('name price category subcategory description available imageUrl photo imagePublicId allergens prepTime sku eta featured tags variablePrice customizationOptions portionSize costPrice stockControlled stock stockMin unit seasonal')
+      .select('name price currency category subcategory description available imageUrl photo imagePublicId allergens prepTime sku eta featured tags variablePrice customizationOptions portionSize costPrice stockControlled stock stockMin unit seasonal')
       .lean()
       .sort({ category: 1, name: 1 });
 
