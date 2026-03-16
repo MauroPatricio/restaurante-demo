@@ -46,17 +46,31 @@ export default function Tables() {
             fetchTables();
             fetchActiveOrders();
             fetchWaiters(); // Load waiters for ID lookup
-            const interval = setInterval(fetchActiveOrders, 30000); // Poll every 30s
+
+            // Listen for real-time refresh events
+            const handleRefresh = (e) => {
+                const { type } = e.detail || {};
+                // Only refresh relevant data if specified, otherwise refresh all
+                if (!type || type === 'table' || type === 'order' || type === 'call') {
+                    fetchTables(true);
+                    fetchActiveOrders(true);
+                }
+            };
+
+            window.addEventListener('data-refresh', handleRefresh);
+
+            const interval = setInterval(fetchActiveOrders, 30000); // Poll every 30s as backup
 
             return () => {
+                window.removeEventListener('data-refresh', handleRefresh);
                 clearInterval(interval);
             };
         }
     }, [user]);
 
-    const fetchTables = async () => {
+    const fetchTables = async (isBackground = false) => {
         try {
-            const response = await tableAPI.getAll(user.restaurant._id || user.restaurant);
+            const response = await tableAPI.getAll(user.restaurant._id || user.restaurant, { background: isBackground });
             setTables(response.data.tables || []);
         } catch (error) {
             console.error('Failed to fetch tables:', error);
@@ -76,11 +90,11 @@ export default function Tables() {
         }
     };
 
-    const fetchActiveOrders = async () => {
+    const fetchActiveOrders = async (isBackground = false) => {
         try {
             const statuses = ['pending', 'confirmed', 'preparing', 'ready'];
             const requests = statuses.map(status =>
-                orderAPI.getAll(user.restaurant._id || user.restaurant, { status })
+                orderAPI.getAll(user.restaurant._id || user.restaurant, { status }, { background: isBackground })
             );
             const responses = await Promise.all(requests);
             const allActive = responses.flatMap(r => r.data.orders || []);
@@ -150,10 +164,17 @@ export default function Tables() {
 
     const handleDelete = async (id) => {
         if (!confirm(t('confirm_delete') || 'Are you sure?')) return;
+        
+        // Optimistic delete
+        const previousTables = [...tables];
+        setTables(prev => prev.filter(t => t._id !== id));
+
         try {
             await tableAPI.delete(id);
+            // Real-time event will handle final sync, but we force refresh to be safe
             fetchTables();
         } catch (error) {
+            setTables(previousTables); // Rollback
             alert(t('failed_delete_table'));
         }
     };
@@ -294,13 +315,20 @@ export default function Tables() {
     };
 
     const handleFreeTable = async (tableId) => {
+        // Optimistic status update
+        setTables(prev => prev.map(t => 
+            t._id === tableId ? { ...t, status: 'free' } : t
+        ));
+
         try {
             await tableAPI.freeTable(tableId);
-            alert(t('free_table_success'));
+            // alert(t('free_table_success')); // Removed alert to avoid blocking UI on immediate update
             setShowSessionModal(false);
             fetchTables();
             fetchActiveOrders();
         } catch (error) {
+            // Re-fetch to correct state on error
+            fetchTables();
             console.error('Failed to free table:', error);
             alert(error.response?.data?.message || t('free_table_error'));
         }

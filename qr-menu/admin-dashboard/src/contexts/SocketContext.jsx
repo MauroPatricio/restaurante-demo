@@ -166,13 +166,16 @@ export const SocketProvider = ({ children }) => {
             // If user is already on Orders page, maybe distinct logic? 
             // For now, always ring unless disabled.
             setIsRinging(true);
+
+            // 3. Broadcast refresh to any listening components (e.g., Tables dashboard)
+            window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'order', action: 'new' } }));
         });
 
         // Room-service orders — same notification as dine-in
         newSocket.on('room:order:new', (data) => {
-
             setPendingCount(prev => prev + 1);
             setIsRinging(true);
+            window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'order', action: 'new' } }));
         });
 
         newSocket.on('order-updated', (data) => {
@@ -206,6 +209,9 @@ export const SocketProvider = ({ children }) => {
             if (data.status === 'ready' && audioEnabled) {
                 playReadySound();
             }
+
+            // Broadcast refresh
+            window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'order', action: 'update', data } }));
         });
 
         // Waiter Calls (Preserve existing logic)
@@ -214,6 +220,7 @@ export const SocketProvider = ({ children }) => {
                 if (prev.some(call => call.callId === data.callId)) return prev;
                 return [...prev, data];
             });
+            window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'call', action: 'new', data } }));
         });
 
         newSocket.on('waiter:call:acknowledged', (data) => {
@@ -224,6 +231,16 @@ export const SocketProvider = ({ children }) => {
 
         newSocket.on('waiter:call:resolved', (data) => {
             setActiveCalls(prev => prev.filter(call => call.callId !== data.callId));
+            window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'call', action: 'resolved', data } }));
+        });
+
+        // --- Table Events ---
+        newSocket.on('table:updated', (data) => {
+            window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'table', action: 'updated', data } }));
+        });
+
+        newSocket.on('table:status-updated', (data) => {
+            window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'table', action: 'status', data } }));
         });
 
         // --- Subscription Events ---
