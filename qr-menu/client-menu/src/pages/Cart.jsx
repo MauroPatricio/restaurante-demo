@@ -198,7 +198,7 @@ const Cart = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors duration-200">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-36 transition-colors duration-200">
             {/* Header */}
             <div className="bg-white dark:bg-gray-900 dark:border-gray-800 p-4 sticky top-0 z-10 shadow-sm border-b border-gray-100 flex items-center justify-between transition-colors duration-200">
                 <div className="flex items-center gap-4">
@@ -277,7 +277,7 @@ const Cart = () => {
                 <div className="space-y-3">
                     <h3 className="font-bold text-gray-900 dark:text-white text-sm ml-1">{t('order_details')}</h3>
                     <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-                        <form id="checkout-form" onSubmit={handleCheckout} className="space-y-5">
+                        <form id="checkout-form" onSubmit={handleCheckout} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('payment_method_label')}</label>
                                 <div className="grid grid-cols-2 gap-4">
@@ -287,14 +287,14 @@ const Cart = () => {
                                             type="button"
                                             onClick={() => setPaymentMethod(method)}
                                             style={{
-                                                height: '110px',
-                                                borderRadius: '24px',
+                                                height: '90px',
+                                                borderRadius: '20px',
                                                 border: '2px solid',
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                gap: '12px',
+                                                gap: '8px',
                                                 transition: 'all 0.3s',
                                                 position: 'relative',
                                                 overflow: 'hidden',
@@ -306,9 +306,9 @@ const Cart = () => {
                                             className="group relative"
                                         >
                                             <div style={{
-                                                width: '44px',
-                                                height: '44px',
-                                                borderRadius: '14px',
+                                                width: '36px',
+                                                height: '36px',
+                                                borderRadius: '12px',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -316,10 +316,10 @@ const Cart = () => {
                                                 color: paymentMethod === method ? 'white' : '#94a3b8',
                                                 transition: 'all 0.3s'
                                             }} className="group-hover:scale-110">
-                                                {method === 'mpesa' && <Smartphone size={24} />}
-                                                {method === 'emola' && <Wallet size={24} />}
-                                                {method === 'visa' && <CreditCard size={24} />}
-                                                {method === 'cash' && <Wallet size={24} />}
+                                                {method === 'mpesa' && <Smartphone size={20} />}
+                                                {method === 'emola' && <Wallet size={20} />}
+                                                {method === 'visa' && <CreditCard size={20} />}
+                                                {method === 'cash' && <Wallet size={20} />}
                                             </div>
                                             <span className="capitalize font-black text-xs tracking-widest">{method === 'visa' ? 'VISA / MASTERCARD' : method.toUpperCase()}</span>
                                             {paymentMethod === method && (
@@ -348,7 +348,7 @@ const Cart = () => {
                                 <input
                                     type="text"
                                     required
-                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
+                                    className="w-full p-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
                                     placeholder={t('name_placeholder')}
@@ -359,7 +359,7 @@ const Cart = () => {
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
+                                    className="w-full p-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('phone_placeholder')}
@@ -371,23 +371,23 @@ const Cart = () => {
                 </div>
 
                 {/* Bottom Bar with Footer Text */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 border-t border-gray-100 dark:border-gray-800 p-6 pb-8 z-20 backdrop-blur-lg transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+                <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 border-t border-gray-100 dark:border-gray-800 p-4 pb-6 z-20 backdrop-blur-lg transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
                     <button
                         form="checkout-form"
                         disabled={loading}
-                        className="w-full max-w-md mx-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-5 rounded-2xl font-bold flex items-center justify-between hover:bg-black dark:hover:bg-gray-200 transition-all active:scale-[0.98] shadow-2xl shadow-black/10 dark:shadow-white/5 disabled:opacity-70 disabled:cursor-wait mb-6 h-[70px]"
+                        className="w-full max-w-md mx-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-4 rounded-xl font-bold flex items-center justify-between hover:bg-black dark:hover:bg-gray-200 transition-all active:scale-[0.98] shadow-2xl shadow-black/10 dark:shadow-white/5 disabled:opacity-70 disabled:cursor-wait mb-4 h-[60px]"
                     >
-                        <span className="text-lg">
+                        <span className="text-base font-black uppercase tracking-tight">
                             {loading ? (
                                 <div className="flex items-center gap-3">
-                                    <LoadingSpinner size={22} color="white" />
+                                    <LoadingSpinner size={20} color="white" />
                                     <span>{t('scanning')}</span>
                                 </div>
                             ) : t('confirm_order')}
                         </span>
-                        <span className="text-xl flex items-center gap-2">
+                        <span className="text-lg font-black flex items-center gap-2">
                             {formatCurrency(convertedTotal, preferredCurrency, locale)}
-                            <ArrowRight className="inline" size={24} />
+                            <ArrowRight className="inline" size={20} />
                         </span>
                     </button>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold text-center uppercase tracking-[0.2em] opacity-80">
