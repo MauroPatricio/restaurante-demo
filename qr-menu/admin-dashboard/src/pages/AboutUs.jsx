@@ -35,7 +35,7 @@ export default function AboutUs() {
                     <Info size={32} />
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                    Nhiquela Serviços e Consultoria, LDA
+                    {t('about_us_company_name')}
                 </h1>
                 <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
                     {t('about_us_description_1')}
@@ -107,7 +107,7 @@ export default function AboutUs() {
                     <div className="space-y-4">
                         <div className="flex flex-col">
                             <span className="text-sm text-gray-500 dark:text-gray-500">{t('about_us_company')}</span>
-                            <span className="font-medium text-gray-900 dark:text-white">Nhiquela Serviços e Consultoria, LDA</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{t('about_us_company_name')}</span>
                         </div>
                         <div className="flex items-start gap-3">
                             <MapPin className="text-gray-400 mt-1" size={18} />
@@ -120,8 +120,8 @@ export default function AboutUs() {
                             <Globe className="text-gray-400" size={18} />
                             <div className="flex flex-col">
                                 <span className="text-sm text-gray-500 dark:text-gray-500">{t('about_us_website')}</span>
-                                <a href="https://nhiquelaservicos.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                    nhiquelaservicos.com
+                                <a href={t('about_us_website_href')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                    {t('about_us_website_val')}
                                 </a>
                             </div>
                         </div>
@@ -139,8 +139,8 @@ export default function AboutUs() {
                             <MessagesSquare className="text-emerald-500" size={18} />
                             <div className="flex flex-col">
                                 <span className="text-sm text-gray-500 dark:text-gray-500">{t('about_us_phone_whatsapp')}</span>
-                                <a href="https://wa.me/258853600036" target="_blank" rel="noopener noreferrer" className="text-gray-900 dark:text-white font-medium hover:text-emerald-500 transition-colors">
-                                    +258 85 360 0036
+                                <a href={t('about_us_phone_href')} target="_blank" rel="noopener noreferrer" className="text-gray-900 dark:text-white font-medium hover:text-emerald-500 transition-colors">
+                                    {t('about_us_phone_val')}
                                 </a>
                             </div>
                         </div>
@@ -148,8 +148,8 @@ export default function AboutUs() {
                             <Mail className="text-blue-500" size={18} />
                             <div className="flex flex-col">
                                 <span className="text-sm text-gray-500 dark:text-gray-500">{t('about_us_email')}</span>
-                                <a href="mailto:nhiquelaservicosconsultoria@gmail.com" className="text-gray-900 dark:text-white font-medium hover:text-blue-500 transition-colors">
-                                    nhiquelaservicosconsultoria@gmail.com
+                                <a href={`mailto:${t('about_us_email_val')}`} className="text-gray-900 dark:text-white font-medium hover:text-blue-500 transition-colors">
+                                    {t('about_us_email_val')}
                                 </a>
                             </div>
                         </div>
