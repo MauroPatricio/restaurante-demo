@@ -78,7 +78,7 @@ export const CartProvider = ({ children }) => {
 
     const cartTotal = cart.reduce((total, item) => {
         const itemUnitPrice = item.price + (item.customizations?.reduce((acc, c) => acc + (c.priceModifier || 0), 0) || 0);
-        const convertedPrice = convertCurrency(itemUnitPrice, item.currency || 'MZN', preferredCurrency, rates);
+        const convertedPrice = convertCurrency(itemUnitPrice, item.currency || 'MZN', preferredCurrency || 'MZN', rates);
         return total + (convertedPrice * item.qty);
     }, 0);
 

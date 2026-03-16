@@ -338,7 +338,7 @@ const Cart = () => {
                                 <span className="text-sm uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
                             </div>
                             <span className="text-xl font-black">
-                                {cartTotal} {cartCurrency === 'MZN' ? 'MT' : (cartCurrency || 'MT')}
+                                {formatPrice(cartTotal)}
                             </span>
                         </button>
                     </div>
