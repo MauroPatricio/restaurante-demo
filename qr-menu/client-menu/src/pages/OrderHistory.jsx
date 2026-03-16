@@ -6,16 +6,15 @@ import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { API_URL } from '../config/api';
 import { formatDateTime } from '../utils/dateUtils';
-import { useCurrency } from '../context/CurrencyContext';
-import { convertCurrency, formatCurrency } from '../utils/currencyUtils';
-import CurrencySwitcher from '../components/CurrencySwitcher';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { API_URL } from '../config/api';
+import { formatDateTime } from '../utils/dateUtils';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const OrderHistory = () => {
     const { restaurantId } = useParams();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
-    const { currency: preferredCurrency, rates } = useCurrency();
 
     const locale = i18n.language === 'pt' ? 'pt-MZ' : i18n.language;
     const [orders, setOrders] = useState([]);
@@ -79,7 +78,6 @@ const OrderHistory = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <LanguageSwitcher />
-                    <CurrencySwitcher />
                 </div>
             </div>
 
@@ -118,11 +116,7 @@ const OrderHistory = () => {
                                 </div>
                                 <div className="text-right">
                                     <span className="font-black text-gray-900">
-                                        {formatCurrency(
-                                            convertCurrency(order.total, order.currency || 'MZN', preferredCurrency, rates),
-                                            preferredCurrency,
-                                            locale
-                                        )}
+                                        {order.total} MT
                                     </span>
                                 </div>
                             </div>

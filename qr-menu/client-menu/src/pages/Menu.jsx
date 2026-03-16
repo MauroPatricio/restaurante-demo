@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
 import { useCart } from '../context/CartContext';
-import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle } from 'lucide-react';
+import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle, X } from 'lucide-react';
 import api from '../services/api';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,16 +15,12 @@ import ReactionButtons from '../components/ReactionButtons';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { createWaiterCall, createClientReaction } from '../services/waiterCallAPI';
 import { formatDate, formatTime } from '../utils/dateUtils';
-import { useCurrency } from '../context/CurrencyContext';
-import { convertCurrency, formatCurrency } from '../utils/currencyUtils';
-import CurrencySwitcher from '../components/CurrencySwitcher';
 
 const Menu = () => {
     const { restaurantId } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { t, i18n } = useTranslation();
-    const { currency: preferredCurrency, rates } = useCurrency();
 
     // Logic: Get table from URL OR LocalStorage
     // Support both 't' (short) and 'table' (long)
@@ -124,7 +120,7 @@ const Menu = () => {
 
 
     // Real-time Context
-    const { joinRestaurantRoom, joinTableRoom, lastMenuUpdate, lastTableUpdate, isOnline } = useNotification();
+    const { joinRestaurantRoom, joinTableRoom, joinOrderRoom, lastMenuUpdate, lastTableUpdate, isOnline } = useNotification();
 
     // Join Rooms
     useEffect(() => {
@@ -229,7 +225,6 @@ const Menu = () => {
             return;
         }
 
-        setLoadingOrders(true);
         setLoadingOrders(true);
         try {
             const response = await api.get(`/orders/restaurant/${restaurantId}`, {
@@ -414,7 +409,7 @@ const Menu = () => {
                     <LanguageSwitcher />
                 </div>
                 <div className="p-3">
-                    <CurrencySwitcher />
+                    {/* <CurrencySwitcher /> */}
                 </div>
 
                 <div className="p-3 flex items-center gap-2 pt-0">
@@ -500,11 +495,7 @@ const Menu = () => {
                                 <div className="flex items-center justify-between mt-2">
                                     <div className="flex items-center gap-1">
                                         <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">
-                                            {formatCurrency(
-                                                convertCurrency(item.price, item.currency || 'MZN', preferredCurrency, rates),
-                                                preferredCurrency,
-                                                i18n.language === 'pt' ? 'pt-MZ' : i18n.language
-                                            )}
+                                            <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1.05rem' }}>{item.price} MT</span>
                                         </span>
                                     </div>
 

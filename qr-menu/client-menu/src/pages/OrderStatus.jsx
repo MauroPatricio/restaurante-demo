@@ -8,9 +8,8 @@ import { getMenuUrl } from '../utils/navigation';
 import { SOCKET_URL } from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import { useCurrency } from '../context/CurrencyContext';
-import { convertCurrency, formatCurrency } from '../utils/currencyUtils';
-import CurrencySwitcher from '../components/CurrencySwitcher';
+import LoadingSpinner from '../components/LoadingSpinner';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const DONE_STATUSES = ['served', 'completed', 'cancelled'];
 const POLL_MS = 12000;
@@ -22,7 +21,6 @@ export default function OrderStatus() {
     const navigate = useNavigate();
     const location = useLocation();
     const { t, i18n } = useTranslation();
-    const { currency: preferredCurrency, rates } = useCurrency();
 
     const locale = i18n.language === 'pt' ? 'pt-MZ' : i18n.language;
 
@@ -198,7 +196,6 @@ export default function OrderStatus() {
                     </button>
                     <div className="flex items-center gap-2">
                         <LanguageSwitcher />
-                        <CurrencySwitcher />
                     </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -335,22 +332,14 @@ export default function OrderStatus() {
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < order.items.length - 1 ? '1px solid #f1f5f9' : 'none', fontSize: '0.88rem' }}>
                             <span style={{ color: '#1e293b' }}>{it.qty || it.quantity || 1}× {it.item?.name || it.name}</span>
                             <span style={{ fontWeight: 700, color: '#312e81' }}>
-                                {formatCurrency(
-                                    convertCurrency(it.subtotal || (it.itemPrice || 0) * (it.qty || 1), order.currency || 'MZN', preferredCurrency, rates),
-                                    preferredCurrency,
-                                    locale
-                                )}
+                                {it.subtotal || (it.itemPrice || 0) * (it.qty || 1)} MT
                             </span>
                         </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTop: '2px solid #f1f5f9', fontWeight: 800, fontSize: '1rem' }}>
                         <span>{t('total')}</span>
                         <span style={{ color: '#312e81' }}>
-                            {formatCurrency(
-                                convertCurrency(order.total, order.currency || 'MZN', preferredCurrency, rates),
-                                preferredCurrency,
-                                locale
-                            )}
+                            {order.total} MT
                         </span>
                     </div>
                 </div>

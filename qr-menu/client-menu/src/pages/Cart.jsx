@@ -13,9 +13,6 @@ import { useSound } from '../hooks/useSound';
 import bellSound from '../sound/bell.mp3';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getMenuUrl } from '../utils/navigation';
-import { useCurrency } from '../context/CurrencyContext';
-import { convertCurrency, formatCurrency } from '../utils/currencyUtils';
-import CurrencySwitcher from '../components/CurrencySwitcher';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Cart = () => {
@@ -25,12 +22,8 @@ const Cart = () => {
     const { cart, removeFromCart, updateQty, cartTotal, clearCart } = useCart();
     const { t, i18n } = useTranslation();
     const { joinOrderRoom } = useNotification();
-    const { currency: preferredCurrency, rates } = useCurrency();
 
     const locale = i18n.language === 'pt' ? 'pt-MZ' : i18n.language;
-
-    // Converted total for display
-    const convertedTotal = convertCurrency(cartTotal, 'MZN', preferredCurrency, rates);
 
     // Idempotency lock
     const submitLock = useRef(false);
@@ -219,11 +212,7 @@ const Cart = () => {
                             <div className="flex-1">
                                 <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{item.name}</h3>
                                 <p className="text-primary-600 dark:text-primary-400 font-extrabold text-base mt-1">
-                                    {formatCurrency(
-                                        convertCurrency(item.price, item.currency || 'MZN', preferredCurrency, rates),
-                                        preferredCurrency,
-                                        locale
-                                    )}
+                                    {item.price * item.qty} MT
                                 </p>
                             </div>
                             <div className="flex items-center gap-4">
@@ -258,7 +247,7 @@ const Cart = () => {
                 <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors">
                     <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('total')}</span>
                     <span className="text-2xl font-black text-primary-600 dark:text-primary-400">
-                        {formatCurrency(convertedTotal, preferredCurrency, locale)}
+                        {cartTotal} MT
                     </span>
                 </div>
 
@@ -343,7 +332,7 @@ const Cart = () => {
                                 <span className="text-sm uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
                             </div>
                             <span className="text-xl font-black">
-                                {formatCurrency(convertedTotal, preferredCurrency, locale)}
+                                {cartTotal} MT
                             </span>
                         </button>
                     </div>
