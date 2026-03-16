@@ -8,8 +8,6 @@ import { getMenuUrl } from '../utils/navigation';
 import { SOCKET_URL } from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import LoadingSpinner from '../components/LoadingSpinner';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const DONE_STATUSES = ['served', 'completed', 'cancelled'];
 const POLL_MS = 12000;

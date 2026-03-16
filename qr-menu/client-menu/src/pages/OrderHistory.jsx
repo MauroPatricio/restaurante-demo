@@ -6,9 +6,6 @@ import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { API_URL } from '../config/api';
 import { formatDateTime } from '../utils/dateUtils';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { API_URL } from '../config/api';
-import { formatDateTime } from '../utils/dateUtils';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const OrderHistory = () => {
