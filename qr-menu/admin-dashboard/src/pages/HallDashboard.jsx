@@ -229,10 +229,10 @@ export default function HallDashboard() {
 
     const getStatusInfo = (status) => {
         switch (status) {
-            case 'free': return { color: '#10b981', label: 'Livre', bg: '#ecfdf5' };
-            case 'occupied': return { color: '#ef4444', label: 'Ocupada', bg: '#fef2f2' };
-            case 'reserved': return { color: '#f59e0b', label: 'Reservada', bg: '#fffbeb' };
-            case 'cleaning': return { color: '#3b82f6', label: 'Em Limpeza', bg: '#eff6ff' };
+            case 'free': return { color: '#10b981', label: t('free'), bg: '#ecfdf5' };
+            case 'occupied': return { color: '#ef4444', label: t('occupied'), bg: '#fef2f2' };
+            case 'reserved': return { color: '#f59e0b', label: t('reserved'), bg: '#fffbeb' };
+            case 'cleaning': return { color: '#3b82f6', label: t('cleaning'), bg: '#eff6ff' };
             default: return { color: '#64748b', label: status, bg: '#f8fafc' };
         }
     };
@@ -262,13 +262,13 @@ export default function HallDashboard() {
                         <div style={{ padding: '8px', background: 'white', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', borderRadius: '12px', color: '#10b981' }}>
                             <Sparkles size={20} />
                         </div>
-                        <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#059669' }}>Terminal de Gestão de Salão</span>
+                        <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#059669' }}>{t('hall_terminal_title')}</span>
                     </div>
                     <h1 style={{ fontSize: '48px', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.05em', lineHeight: 1.1 }}>
-                        Monitor de <span style={{ color: '#10b981' }}>Ocupação</span>
+                        {t('monitor')} <span style={{ color: '#10b981' }}>{t('occupancy')}</span>
                     </h1>
                     <p style={{ color: '#94a3b8', fontWeight: '700', fontSize: '14px', margin: 0 }}>
-                        Análise de fluxo, pedidos e solicitações em tempo real
+                        {t('hall_dashboard_desc')}
                     </p>
                 </div>
                 <div>
@@ -292,7 +292,7 @@ export default function HallDashboard() {
                         className="hover-scale group"
                     >
                         <Zap size={20} style={{ transition: 'color 0.3s' }} className="group-hover:text-yellow-400" />
-                        Solicitações Ativas
+                        {t('active_requests')}
                         {activeCalls.length > 0 && (
                             <span style={{
                                 background: '#ef4444',
@@ -312,32 +312,32 @@ export default function HallDashboard() {
             {/* Dashboards Section */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '48px' }}>
                 <KpiCard
-                    title="Mesas Total"
+                    title={t('total_tables')}
                     value={summary.totalTables || 0}
                     icon={LayoutGrid}
                     color="#3b82f6"
                 />
                 <KpiCard
-                    title="Mesas Livres"
+                    title={t('free_tables')}
                     value={summary.freeCount || 0}
                     icon={CheckCircle}
                     color="#10b981"
                 />
                 <KpiCard
-                    title="Mesas Ocupadas"
+                    title={t('occupied_tables')}
                     value={summary.occupiedCount || 0}
                     icon={Timer}
                     color="#ef4444"
                 />
                 <KpiCard
-                    title="Mesa Destaque"
+                    title={t('highlight_table')}
                     value={summary.mostRequestedTable ? (summary.mostRequestedTable.number < 10 ? `0${summary.mostRequestedTable.number}` : summary.mostRequestedTable.number) : '--'}
                     subValue={`#${summary.mostRequestedTable?.requests || 0}`}
                     icon={TrendingUp}
                     color="#f59e0b"
                 />
                 <KpiCard
-                    title="Solicitações"
+                    title={t('requests_today')}
                     value={tables.filter(t => t.callsToday > 0).length}
                     icon={Zap}
                     color="#8b5cf6"
@@ -362,7 +362,7 @@ export default function HallDashboard() {
                     <Search size={20} style={{ position: 'absolute', left: '20px', color: '#cbd5e1' }} />
                     <input
                         type="text"
-                        placeholder="Pesquisar por número ou localização..."
+                        placeholder={t('search_tables_placeholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{
@@ -401,9 +401,7 @@ export default function HallDashboard() {
                                 boxShadow: statusFilter === status ? '0 10px 20px -5px rgba(15, 23, 42, 0.2)' : 'none'
                             }}
                         >
-                            {status === 'all' ? 'Todos' :
-                                status === 'free' ? 'Livre' :
-                                    status === 'occupied' ? 'Ocupada' : 'Limpeza'}
+                            {t(status)}
                         </button>
                     ))}
                 </div>
@@ -419,11 +417,11 @@ export default function HallDashboard() {
                 boxShadow: '0 32px 64px -16px rgba(0,0,0,0.08)'
             }}>
                 <div style={{ padding: '24px 40px', display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 160px', borderBottom: '1px solid #f1f5f9', background: 'rgba(248, 250, 252, 0.5)', width: '100%', gap: '20px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Identificação</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Estado Atual</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>Capacidade</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>Atividade Hoje</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'right' }}>Controles</span>
+                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('table_identification')}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('table_status')}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{t('capacity')}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{t('today_activity')}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'right' }}>{t('controls')}</span>
                 </div>
 
                 <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
@@ -463,7 +461,7 @@ export default function HallDashboard() {
                                         {table.number < 10 ? `0${table.number}` : table.number}
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.02em' }}>{table.location || 'Salão Principal'}</div>
+                                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.02em' }}>{table.location || t('main_hall')}</div>
                                         <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ID: {table._id.slice(-6).toUpperCase()}</div>
                                     </div>
                                 </div>
@@ -499,12 +497,12 @@ export default function HallDashboard() {
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
                                     <div style={{ textAlign: 'center' }}>
                                         <div style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.05em' }}>{table.ordersToday}</div>
-                                        <div style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Pedidos</div>
+                                        <div style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('orders')}</div>
                                     </div>
                                     <div style={{ width: '1px', height: '32px', background: '#f1f5f9' }} />
                                     <div style={{ textAlign: 'center' }}>
                                         <div style={{ fontSize: '18px', fontWeight: '900', color: '#10b981', letterSpacing: '-0.05em' }}>{table.callsToday}</div>
-                                        <div style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Chamadas</div>
+                                        <div style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('calls')}</div>
                                     </div>
                                 </div>
 
@@ -537,7 +535,7 @@ export default function HallDashboard() {
                     {filteredTables.length === 0 && (
                         <div className="py-20 text-center">
                             <Info size={48} className="mx-auto text-slate-200 mb-4" />
-                            <p className="text-slate-400 font-bold">Nenhuma mesa encontrada com estes critérios.</p>
+                            <p className="text-slate-400 font-bold">{t('no_tables_found_criteria')}</p>
                         </div>
                     )}
                 </div>
