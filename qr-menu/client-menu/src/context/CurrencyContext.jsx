@@ -23,9 +23,10 @@ export const CurrencyProvider = ({ children }) => {
         loadRates();
     }, []);
 
-    // Sync with restaurant default currency if no user preference
+    // Sync with restaurant default currency - FORCE it if settings change
     useEffect(() => {
-        if (restaurantSettings?.defaultCurrency && !localStorage.getItem('preferred_currency')) {
+        if (restaurantSettings?.defaultCurrency) {
+            console.log('🔄 Syncing currency with restaurant default:', restaurantSettings.defaultCurrency);
             setCurrency(restaurantSettings.defaultCurrency);
         }
     }, [restaurantSettings]);
