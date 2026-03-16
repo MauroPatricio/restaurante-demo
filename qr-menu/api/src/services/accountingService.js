@@ -18,41 +18,39 @@ export const setupDefaultAccounts = async (restaurantId) => {
     const defaultAccounts = [
         // Classe 1: Meios Financeiros
         { code: '11', name: 'Caixa', type: 'asset', nature: 'debit', class: 1, isGroup: true },
-        { code: '111', name: 'Caixa Central', type: 'asset', nature: 'debit', class: 1, parentCode: '11' },
+        { code: '111', name: 'Caixa Geral', type: 'asset', nature: 'debit', class: 1, parentCode: '11' },
         { code: '12', name: 'Bancos', type: 'asset', nature: 'debit', class: 1, isGroup: true },
         { code: '121', name: 'Depósitos à Ordem', type: 'asset', nature: 'debit', class: 1, parentCode: '12' },
-        { code: '13', name: 'Carteiras Móveis (M-Pesa / e-Mola)', type: 'asset', nature: 'debit', class: 1 },
+        { code: '13', name: 'Outros instrumentos financeiros', type: 'asset', nature: 'debit', class: 1, isGroup: true },
+        { code: '131', name: 'Carteiras Móveis (M-Pesa / e-Mola)', type: 'asset', nature: 'debit', class: 1, parentCode: '13' },
 
-        // Classe 2: Terceiros e IVA
-        { code: '21', name: 'Clientes', type: 'asset', nature: 'debit', class: 2, isGroup: true },
-        { code: '211', name: 'Clientes c/c', type: 'asset', nature: 'debit', class: 2, parentCode: '21' },
-        { code: '22', name: 'Fornecedores', type: 'liability', nature: 'credit', class: 2, isGroup: true },
-        { code: '221', name: 'Fornecedores c/c', type: 'liability', nature: 'credit', class: 2, parentCode: '22' },
-        { code: '24', name: 'Estado', type: 'liability', nature: 'credit', class: 2, isGroup: true },
-        { code: '243', name: 'IVA (16%)', type: 'liability', nature: 'credit', class: 2, isGroup: true, parentCode: '24' },
-        { code: '2432', name: 'IVA Dedutível', type: 'asset', nature: 'debit', class: 2, isTaxAccount: true, parentCode: '243', description: 'IVA suportado nas compras' },
-        { code: '2433', name: 'IVA Liquidado', type: 'liability', nature: 'credit', class: 2, isTaxAccount: true, parentCode: '243', description: 'IVA cobrado nas vendas' },
-        { code: '2435', name: 'IVA a Pagar', type: 'liability', nature: 'credit', class: 2, isTaxAccount: true, parentCode: '243', description: 'IVA apurado a entregar ao Estado' },
+        // Classe 2: Inventários e Biológicos
+        { code: '22', name: 'Mercadorias', type: 'asset', nature: 'debit', class: 2, description: 'Stock de mercadorias' },
+        { code: '26', name: 'Matérias-Primas', type: 'asset', nature: 'debit', class: 2, description: 'Ingredientes de cozinha' },
 
-        // Classe 3: Inventários
-        { code: '31', name: 'Mercadorias', type: 'asset', nature: 'debit', class: 3, description: 'Stock de mercadorias' },
-        { code: '32', name: 'Matérias-Primas', type: 'asset', nature: 'debit', class: 3, description: 'Ingredientes de cozinha' },
+        // Classe 4: Terceiros e IVA
+        { code: '41', name: 'Clientes', type: 'asset', nature: 'debit', class: 4, isGroup: true },
+        { code: '411', name: 'Clientes c/c', type: 'asset', nature: 'debit', class: 4, parentCode: '41' },
+        { code: '42', name: 'Fornecedores', type: 'liability', nature: 'credit', class: 4, isGroup: true },
+        { code: '421', name: 'Fornecedores c/c', type: 'liability', nature: 'credit', class: 4, parentCode: '42' },
+        { code: '44', name: 'Estado', type: 'liability', nature: 'credit', class: 4, isGroup: true },
+        { code: '443', name: 'IVA', type: 'liability', nature: 'credit', class: 4, isGroup: true, parentCode: '44' },
+        { code: '4432', name: 'IVA Dedutível', type: 'asset', nature: 'debit', class: 4, isTaxAccount: true, parentCode: '443', description: 'IVA suportado nas compras' },
+        { code: '4433', name: 'IVA Liquidado', type: 'liability', nature: 'credit', class: 4, isTaxAccount: true, parentCode: '443', description: 'IVA cobrado nas vendas' },
+        { code: '4435', name: 'IVA a Pagar', type: 'liability', nature: 'credit', class: 4, isTaxAccount: true, parentCode: '443', description: 'IVA apurado a entregar ao Estado' },
 
         // Classe 5: Capital Próprio
-        { code: '51', name: 'Capital Social', type: 'equity', nature: 'credit', class: 5 },
-        { code: '59', name: 'Resultado Líquido do Exercício', type: 'equity', nature: 'credit', class: 5 },
+        { code: '511', name: 'Capital Social', type: 'equity', nature: 'credit', class: 5 },
+        { code: '59', name: 'Resultados Transitados', type: 'equity', nature: 'credit', class: 5 },
 
         // Classe 6: Gastos
-        { code: '61', name: 'Custo das Mercadorias Vendidas (CMV)', type: 'expense', nature: 'debit', class: 6 },
-        { code: '62', name: 'Gastos com Pessoal', type: 'expense', nature: 'debit', class: 6, description: 'Salários e encargos sociais' },
+        { code: '611', name: 'Custo das mercadorias vendidas ou consumidas', type: 'expense', nature: 'debit', class: 6 },
+        { code: '622', name: 'Remunerações dos trabalhadores', type: 'expense', nature: 'debit', class: 6, description: 'Salários e encargos sociais' },
         { code: '63', name: 'Fornecimentos e Serviços de Terceiros', type: 'expense', nature: 'debit', class: 6 },
 
         // Classe 7: Rendimentos
         { code: '71', name: 'Vendas', type: 'revenue', nature: 'credit', class: 7, isGroup: true },
         { code: '711', name: 'Venda de Refeições / Restaurante', type: 'revenue', nature: 'credit', class: 7, parentCode: '71' },
-        { code: '712', name: 'Venda de Bebidas', type: 'revenue', nature: 'credit', class: 7, parentCode: '71' },
-        { code: '72', name: 'Prestações de Serviços', type: 'revenue', nature: 'credit', class: 7, isGroup: true },
-        { code: '721', name: 'Serviço de Delivery', type: 'revenue', nature: 'credit', class: 7, parentCode: '72' },
     ];
 
     const createdAccounts = {};
@@ -141,7 +139,7 @@ const recordSaleTransaction = async (invoice, order) => {
 
     const accounts = await Account.find({
         restaurant: restaurantId,
-        code: { $in: ['111', '11', '2433', '711', '71', '211', '21'] }
+        code: { $in: ['111', '11', '4433', '711', '71', '411', '41'] }
     });
 
     const getAccount = (codes) => {
@@ -154,12 +152,12 @@ const recordSaleTransaction = async (invoice, order) => {
     };
 
     const accSales = getAccount(['711', '71']);
-    const accTax = getAccount('2433');
+    const accTax = getAccount('4433');
     const accCash = getAccount(['111', '11']);
-    const accClients = getAccount(['211', '21']);
+    const accClients = getAccount(['411', '41']);
 
     if (!accSales || !accCash || !accClients) {
-        throw new Error('Contas contabilísticas (711, 111/211) não configuradas para este restaurante');
+        throw new Error('Contas contabilísticas (711, 111/411) não configuradas para este restaurante');
     }
 
     const transactionItems = [];
@@ -350,16 +348,16 @@ export const processPaidOrderEntry = async (restaurantId, order, userId) => {
     };
 
     const accSales = getAccount(['711', '71']);
-    const accTax = getAccount('2433'); // IVA Liquidado
+    const accTax = getAccount('4433'); // IVA Liquidado
 
     // Determine debit account based on payment method
     let accDebit;
     if (order.paymentStatus !== 'completed') {
-        accDebit = getAccount(['211', '21']); // Clients C/C
+        accDebit = getAccount(['411', '41']); // Clients C/C
     } else {
         switch ((order.paymentMethod || '').toLowerCase()) {
             case 'm-pesa': case 'mpesa': case 'e-mola': case 'emola':
-                accDebit = getAccount('13'); // Carteiras Móveis
+                accDebit = getAccount(['131', '13']); // Carteiras Móveis
                 break;
             case 'pos': case 'transfer': case 'visa':
                 accDebit = getAccount(['121', '12']); // Bancos
@@ -371,7 +369,7 @@ export const processPaidOrderEntry = async (restaurantId, order, userId) => {
     }
 
     if (!accSales || !accDebit) {
-        throw new Error('Contas PGC-NIRF obrigatórias (711, 111/121/211) não encontradas. Execute o seed do Plano de Contas.');
+        throw new Error('Contas PGC-NIRF obrigatórias (711, 111/121/411) não encontradas. Execute o seed do Plano de Contas.');
     }
 
     // IVA calculation: extract 16% from gross total (inclusive)
@@ -395,8 +393,8 @@ export const processPaidOrderEntry = async (restaurantId, order, userId) => {
     }
 
     // CMV (Cost of Goods Sold) – if product costs are available
-    const accCMV = getAccount('61');
-    const accInventory = getAccount(['32', '31']);
+    const accCMV = getAccount(['611', '61']);
+    const accInventory = getAccount(['26', '22']);
     let totalCost = 0;
 
     if (order.items && order.items.length > 0) {
@@ -453,15 +451,15 @@ export const processPurchaseEntry = async (restaurantId, purchaseData, userId) =
     const { totalAmount, ivaIncluded = true, description, supplierId, paymentMethod } = purchaseData;
 
     // Inventory/Purchases account
-    const accInventory = getAccount(['32', '31']); // Matérias-Primas or Mercadorias
-    const accIVADed = getAccount('2432');       // IVA Dedutível
+    const accInventory = getAccount(['26', '22']); // Matérias-Primas or Mercadorias
+    const accIVADed = getAccount('4432');       // IVA Dedutível
 
     // Credit account (who we pay)
     let accCredit;
     if (supplierId || (paymentMethod || '').toLowerCase() === 'credit') {
-        accCredit = getAccount(['221', '22']); // Fornecedores
+        accCredit = getAccount(['421', '42']); // Fornecedores
     } else if ((paymentMethod || '').toLowerCase() === 'mpesa' || (paymentMethod || '').toLowerCase() === 'emola') {
-        accCredit = getAccount('13'); // Mobile wallets
+        accCredit = getAccount(['131', '13']); // Mobile wallets
     } else if ((paymentMethod || '').toLowerCase() === 'bank' || (paymentMethod || '').toLowerCase() === 'transfer') {
         accCredit = getAccount(['121', '12']); // Banco
     } else {
@@ -469,7 +467,7 @@ export const processPurchaseEntry = async (restaurantId, purchaseData, userId) =
     }
 
     if (!accInventory || !accCredit) {
-        throw new Error('Contas PGC-NIRF obrigatórias (31/32, 111/221) não encontradas para lançar a compra.');
+        throw new Error('Contas PGC-NIRF obrigatórias (22/26, 111/421) não encontradas para lançar a compra.');
     }
 
     // Calculate net cost and IVA (16%)
@@ -520,9 +518,9 @@ export const processPayrollEntry = async (restaurantId, payroll, userId) => {
         return null;
     };
 
-    const accExpense = getAccount(['621', '62']); // Remunerações / Gastos com Pessoal
+    const accExpense = getAccount(['622', '621', '62']); // Remunerações / Gastos com Pessoal
     const accCash = getAccount(['121', '111']); // Bancos ou Caixa
-    const accSalPayable = getAccount('25'); // Trabalhadores – Remunerações a Pagar
+    const accSalPayable = getAccount('4621'); // Trabalhadores – Remunerações a Pagar
 
     if (!accExpense || !accCash) {
         throw new Error('Contas PGC obrigatórias (62, 121/111) não encontradas para processamento da folha de salários.');
@@ -604,11 +602,11 @@ export const processWasteEntry = async (restaurantId, wasteData, userId) => {
 
     if (totalCost <= 0) return null; // Nothing to post if cost is 0
 
-    const accCMV = getAccount('61');
-    const accInventory = getAccount(['32', '31']);
+    const accCMV = getAccount(['611', '61']);
+    const accInventory = getAccount(['26', '22']);
 
     if (!accCMV || !accInventory) {
-        throw new Error('Contas PGC obrigatórias (61, 31/32) não encontradas para lançar a quebra de stock.');
+        throw new Error('Contas PGC obrigatórias (611, 22/26) não encontradas para lançar a quebra de stock.');
     }
 
     const items = [

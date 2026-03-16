@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
 import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
+import { fetchExchangeRates, convertCurrency, formatCurrency } from '../utils/currencyUtils';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -101,10 +102,27 @@ const OwnerDashboard = () => {
     const { t, i18n } = useTranslation();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [rates, setRates] = useState(null);
+    const [displayCurrency, setDisplayCurrency] = useState('MZN');
 
     useEffect(() => {
-        fetchStats();
+        const init = async () => {
+            await Promise.all([
+                fetchStats(),
+                fetchRates()
+            ]);
+        };
+        init();
     }, []);
+
+    const fetchRates = async () => {
+        try {
+            const r = await fetchExchangeRates();
+            setRates(r);
+        } catch (error) {
+            console.error('Failed to fetch rates:', error);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -197,7 +215,7 @@ const OwnerDashboard = () => {
                     <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }}></div>
                     {t('clear_data') || 'Limpar Dados'}
                 </button>
-                <div className="language-switcher" style={{ marginLeft: '16px' }}>
+                <div className="language-switcher" style={{ marginLeft: '16px', display: 'flex', gap: '8px' }}>
                     <select
                         onChange={(e) => i18n.changeLanguage(e.target.value)}
                         value={i18n.language}
@@ -208,6 +226,18 @@ const OwnerDashboard = () => {
                         <option value="es">ES</option>
                         <option value="fr">FR</option>
                     </select>
+
+                    <select
+                        onChange={(e) => setDisplayCurrency(e.target.value)}
+                        value={displayCurrency}
+                        style={{ padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', fontWeight: '600' }}
+                    >
+                        <option value="MZN">MZN</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="ZAR">ZAR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
                 </div>
             </div>
 
@@ -216,8 +246,12 @@ const OwnerDashboard = () => {
                 <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('total_revenue_cap')}</p>
-                        <h3 style={{ fontSize: '36px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {stats?.totalRevenue?.toLocaleString()} <span style={{ fontSize: '20px', color: '#94a3b8' }}>MT</span>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
+                            {formatCurrency(
+                                convertCurrency(stats?.totalRevenue || 0, 'MZN', displayCurrency, rates),
+                                displayCurrency,
+                                i18n.language === 'pt' ? 'pt-MZ' : i18n.language
+                            )}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#4f46e5', '#eef2ff')}>
@@ -320,15 +354,22 @@ const OwnerDashboard = () => {
                     </div>
                     <div style={{ height: '350px' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats?.revenueByRestaurant} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                            <BarChart
+                                data={stats?.revenueByRestaurant?.map(r => ({
+                                    ...r,
+                                    convertedRevenue: convertCurrency(r.revenue, 'MZN', displayCurrency, rates)
+                                }))}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                            >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                                 <Tooltip
                                     cursor={{ fill: '#f1f5f9' }}
+                                    formatter={(value) => [formatCurrency(value, displayCurrency), t('revenue')]}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                                 />
-                                <Bar dataKey="revenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={50} />
+                                <Bar dataKey="convertedRevenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={50} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -396,15 +437,23 @@ const OwnerDashboard = () => {
                                         </div>
                                     </td>
                                     <td style={{ fontWeight: '600', color: '#1e293b' }}>
-                                        {rest.revenue.toLocaleString()} MT
+                                        {formatCurrency(
+                                            convertCurrency(rest.revenue, 'MZN', displayCurrency, rates),
+                                            displayCurrency,
+                                            i18n.language === 'pt' ? 'pt-MZ' : i18n.language
+                                        )}
                                     </td>
                                     <td>
                                         <span className="badge" style={{ background: '#f1f5f9', color: '#475569', fontSize: '14px' }}>
-                                            {rest.orders} orders
+                                            {rest.orders} {t('orders')}
                                         </span>
                                     </td>
                                     <td style={{ color: '#64748b' }}>
-                                        {rest.orders > 0 ? (rest.revenue / rest.orders).toFixed(0) : 0} MT
+                                        {formatCurrency(
+                                            convertCurrency(rest.orders > 0 ? (rest.revenue / rest.orders) : 0, 'MZN', displayCurrency, rates),
+                                            displayCurrency,
+                                            i18n.language === 'pt' ? 'pt-MZ' : i18n.language
+                                        )}
                                     </td>
                                     <td>
                                         <span style={{

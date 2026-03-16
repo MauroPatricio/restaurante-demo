@@ -173,7 +173,7 @@ export default function Dashboard() {
 
     if (!restaurantId) return (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#64748b' }}>
-            Please select a restaurant to view the dashboard.
+            {t('select_restaurant_prompt')}
         </div>
     );
 
@@ -199,44 +199,44 @@ export default function Dashboard() {
                     <div style={{ padding: '8px', background: 'white', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', borderRadius: '12px', color: '#6366f1' }}>
                         <Sparkles size={20} />
                     </div>
-                    <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#4f46e5' }}>Painel Operacional</span>
+                    <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#4f46e5' }}>{t('operational_dashboard')}</span>
                 </div>
                 <h1 style={{ fontSize: '48px', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.05em', lineHeight: 1.1 }}>
-                    Analytics & <span style={{ color: '#6366f1' }}>Performance</span>
+                    {t('analytics_and')} <span style={{ color: '#6366f1' }}>{t('performance')}</span>
                 </h1>
                 <p style={{ color: '#94a3b8', fontWeight: '700', fontSize: '14px', margin: 0 }}>
-                    Monitoramento estratégico de vendas e produtividade
+                    {t('monitor_desc')}
                 </p>
             </div>
 
             {/* KPI Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '48px' }}>
                 <DashboardKpi
-                    title="Pedidos Ativos"
+                    title={t('active_orders')}
                     value={realtime.activeOrders || 0}
                     icon={Utensils}
                     color="#3b82f6"
                 />
                 <DashboardKpi
-                    title="Pedidos Pendentes"
+                    title={t('pending_orders')}
                     value={realtime.pendingOrders || 0}
                     icon={AlertCircle}
                     color="#f59e0b"
                 />
                 <DashboardKpi
-                    title="Concluídos (Hoje)"
+                    title={t('completed_today')}
                     value={realtime.completedOrders || 0}
                     icon={CheckCircle}
                     color="#10b981"
                 />
                 <DashboardKpi
-                    title="Mesas Ocupadas"
+                    title={t('occupied_tables')}
                     value={realtime.occupiedTables || 0}
                     icon={Coffee}
                     color="#6366f1"
                 />
                 <DashboardKpi
-                    title="Solicitações"
+                    title={t('active_alerts')}
                     value={realtime.activeWaiterCalls || 0}
                     icon={Users}
                     color="#ef4444"
@@ -256,12 +256,12 @@ export default function Dashboard() {
                 <div style={{ ...sectionStyle, flex: 2, minWidth: '400px', marginBottom: 0 }} className="group">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
                         <div>
-                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Atividade por Horário</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Picos de Pedidos</p>
+                            <h3 className="text-xl font-black text-slate-800 tracking-tight">{t('activity_by_hour')}</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{t('peak_hours')}</p>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="p-3 bg-slate-50 rounded-xl">
                             <BarChart3 size={16} className="text-indigo-500" />
-                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Volume de Vendas</span>
+                            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{t('sales_volume')}</span>
                         </div>
                     </div>
                     <div style={{ height: '350px' }}>
@@ -288,8 +288,8 @@ export default function Dashboard() {
 
                 <div style={{ ...sectionStyle, flex: 1, minWidth: '300px', marginBottom: 0 }} className="group">
                     <div className="mb-8">
-                        <h3 className="text-xl font-black text-slate-800 tracking-tight">Pedidos por Turno</h3>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Distribuição de Fluxo</p>
+                        <h3 className="text-xl font-black text-slate-800 tracking-tight">{t('orders_by_shift')}</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{t('flow_distribution')}</p>
                     </div>
                     <div style={{ height: '350px' }}>
                         <ResponsiveContainer width="100%" height="100%">

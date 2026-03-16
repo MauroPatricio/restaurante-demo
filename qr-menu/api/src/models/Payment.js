@@ -42,7 +42,7 @@ const PaymentSchema = new mongoose.Schema({
     },
     currency: {
         type: String,
-        default: 'MT'
+        default: 'MZN'
     },
     receipt: {
         type: String // File path for bank receipt uploads (BIM/BCI)

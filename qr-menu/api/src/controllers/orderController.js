@@ -32,7 +32,8 @@ export const processOrderCreation = async ({
     isStaff = false,
     createdByWaiterId = null, // NEW: Track waiter ID for analytics
     io, // socket.io instance
-    tableSessionId // optional, if already known
+    tableSessionId, // optional, if already known
+    currency = 'MZN' // NEW: Order currency
 }) => {
 
     // 1. Validations
@@ -207,7 +208,7 @@ export const processOrderCreation = async ({
     } else if (table.status === 'free' || !table.currentSessionId) {
         // Create new session
         const userId = isStaff ? 'staff-created' : null; // Logic for user linkage?
-        session = await occupyTable(tableId, userId, restaurantId);
+        session = await occupyTable(tableId, userId, restaurantId, io);
     } else {
         // Join existing
         session = { _id: table.currentSessionId };
@@ -236,6 +237,7 @@ export const processOrderCreation = async ({
         serviceCharge,
         deliveryFee,
         total,
+        currency: restaurant.settings?.currency || 'MZN', // Always save in restaurant base currency
         customerName: customerName || 'Cliente',
         phone: phone || '800000000',
         email,

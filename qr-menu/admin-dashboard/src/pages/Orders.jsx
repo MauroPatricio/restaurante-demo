@@ -6,20 +6,89 @@ import { Eye, RefreshCw, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonList } from '../components/Skeleton';
+import { useSocket } from '../contexts/SocketContext';
+import { useSound } from '../hooks/useSound';
 import ReceiptModal from '../components/ReceiptModal';
 
 export default function Orders() {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { socket } = useSocket();
     const [orders, setOrders] = useState([]);
     const [filter, setFilter] = useState('all');
     const [loading, setLoading] = useState(true);
+    const [newOrderIds, setNewOrderIds] = useState(new Set()); // For highlighting
+    const { play: playNewOrder } = useSound('/sounds/glass.mp3');
 
     useEffect(() => {
         if (user?.restaurant) {
             fetchOrders();
         }
     }, [user, filter]);
+
+    // Socket listeners for real-time updates
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewOrder = (newOrder) => {
+            console.log('OrdersPage: New order received', newOrder);
+
+            // Only add if it matches current filter or filter is 'all'
+            if (filter === 'all' || filter === 'pending') {
+                setOrders(prev => {
+                    // Check if already exists
+                    if (prev.find(o => o._id === newOrder._id || o._id === newOrder.orderId)) return prev;
+
+                    // Add to list (at the top since it's most recent)
+                    return [newOrder, ...prev];
+                });
+
+                // Play sound
+                playNewOrder();
+
+                // Highlight briefly
+                const orderId = newOrder._id || newOrder.orderId;
+                setNewOrderIds(prev => new Set([...prev, orderId]));
+                setTimeout(() => {
+                    setNewOrderIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(orderId);
+                        return next;
+                    });
+                }, 5000);
+            }
+        };
+
+        const handleOrderUpdate = (updatedOrder) => {
+            console.log('OrdersPage: Order updated', updatedOrder);
+
+            setOrders(prev => {
+                const index = prev.findIndex(o => o._id === updatedOrder._id);
+                if (index === -1) {
+                    // If not in list but now matches filter, maybe we should fetch?
+                    // For now, only update if already present
+                    return prev;
+                }
+
+                // If filter is active and new status doesn't match, remove it
+                if (filter !== 'all' && updatedOrder.status !== filter) {
+                    return prev.filter(o => o._id !== updatedOrder._id);
+                }
+
+                const newOrders = [...prev];
+                newOrders[index] = { ...newOrders[index], ...updatedOrder };
+                return newOrders;
+            });
+        };
+
+        socket.on('order:new', handleNewOrder);
+        socket.on('order-updated', handleOrderUpdate);
+
+        return () => {
+            socket.off('order:new', handleNewOrder);
+            socket.off('order-updated', handleOrderUpdate);
+        };
+    }, [socket, filter, playNewOrder]);
 
     const fetchOrders = async () => {
         try {
@@ -36,11 +105,17 @@ export default function Orders() {
 
     const updateOrderStatus = async (orderId, newStatus) => {
         try {
+            // Optimistic Update
+            setOrders(prev => prev.map(o =>
+                o._id === orderId ? { ...o, status: newStatus } : o
+            ));
+
             await orderAPI.updateStatus(orderId, newStatus);
-            fetchOrders();
+            // No need to fetchOrders(), socket or optimistic update handled it
         } catch (error) {
             console.error('Failed to update order:', error);
             alert(t('error_update_order') || 'Failed to update order status');
+            fetchOrders(); // Rollback on error
         }
     };
 
@@ -110,7 +185,14 @@ export default function Orders() {
                         </thead>
                         <tbody>
                             {orders.map(order => (
-                                <tr key={order._id}>
+                                <tr
+                                    key={order._id}
+                                    style={{
+                                        transition: 'all 0.5s ease',
+                                        backgroundColor: newOrderIds.has(order._id) ? '#fff7ed' : 'transparent',
+                                        borderLeft: newOrderIds.has(order._id) ? '4px solid #f97316' : 'none'
+                                    }}
+                                >
                                     <td className="font-mono">#{order._id.slice(-6).toUpperCase()}</td>
                                     <td>{format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</td>
                                     <td>

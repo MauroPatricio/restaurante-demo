@@ -102,6 +102,19 @@ export const freeTable = async (req, res) => {
         table.statusChangedBy = userId;
         await table.save();
 
+        // Emit real-time update via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`restaurant:${table.restaurant}`).emit('table:status-updated', {
+                tableId: table._id,
+                tableNumber: table.number,
+                status: 'free',
+                previousStatus: 'occupied',
+                changedBy: userId,
+                timestamp: new Date()
+            });
+        }
+
         res.json({
             message: 'Table freed successfully',
             table: {
@@ -121,7 +134,7 @@ export const freeTable = async (req, res) => {
  * Occupy a table and create a new session
  * This is called automatically when creating an order
  */
-export const occupyTable = async (tableId, userId, restaurantId) => {
+export const occupyTable = async (tableId, userId, restaurantId, io = null) => {
     try {
         const table = await Table.findById(tableId);
 
@@ -155,6 +168,18 @@ export const occupyTable = async (tableId, userId, restaurantId) => {
         table.lastStatusChange = new Date();
         table.statusChangedBy = userId;
         await table.save();
+
+        // Emit real-time update via Socket.IO
+        if (io) {
+            io.to(`restaurant:${restaurantId}`).emit('table:status-updated', {
+                tableId: table._id,
+                tableNumber: table.number,
+                status: 'occupied',
+                previousStatus: 'free',
+                changedBy: userId,
+                timestamp: new Date()
+            });
+        }
 
         return session;
     } catch (error) {

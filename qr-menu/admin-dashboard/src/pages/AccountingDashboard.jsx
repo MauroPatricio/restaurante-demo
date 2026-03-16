@@ -15,6 +15,7 @@ import {
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
 import TransactionModal from '../components/TransactionModal';
+import { fetchExchangeRates, convertCurrency, formatCurrency } from '../utils/currencyUtils';
 
 const MetricCard = ({ title, value, subValue, icon: Icon, color, trend }) => (
     <div style={{
@@ -106,25 +107,43 @@ const NavCard = ({ title, description, icon: Icon, color, onClick }) => {
 
 export default function AccountingDashboard() {
     const { user } = useAuth();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(null);
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+    const [rates, setRates] = useState(null);
+    const [displayCurrency, setDisplayCurrency] = useState('MZN');
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await accountingAPI.getStats();
-                setStats(res.data);
-            } catch (error) {
-                console.error('Failed to fetch accounting stats:', error);
-            } finally {
-                setLoading(false);
-            }
+        const init = async () => {
+            await Promise.all([
+                fetchStats(),
+                fetchRates()
+            ]);
         };
-        fetchStats();
+        init();
     }, []);
+
+    const fetchRates = async () => {
+        try {
+            const r = await fetchExchangeRates();
+            setRates(r);
+        } catch (error) {
+            console.error('Failed to fetch rates:', error);
+        }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const res = await accountingAPI.getStats();
+            setStats(res.data);
+        } catch (error) {
+            console.error('Failed to fetch accounting stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) return (
         <div className="p-8">
@@ -160,6 +179,17 @@ export default function AccountingDashboard() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
+                    <select
+                        onChange={(e) => setDisplayCurrency(e.target.value)}
+                        value={displayCurrency}
+                        style={{ padding: '14px 20px', borderRadius: '20px', background: 'white', border: '1px solid #f1f5f9', fontWeight: '800', fontSize: '13px', outline: 'none' }}
+                    >
+                        <option value="MZN">MZN</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="ZAR">ZAR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
                     <button style={{
                         padding: '14px 24px', borderRadius: '20px', background: 'white', border: '1px solid #f1f5f9',
                         color: '#1e293b', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px',
@@ -176,7 +206,7 @@ export default function AccountingDashboard() {
                             display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'
                         }}>
                         <Calculator size={18} />
-                        {t('new_transaction') || 'Nova Transação'}
+                        {t('new_transaction')}
                     </button>
                 </div>
             </div>
@@ -184,32 +214,32 @@ export default function AccountingDashboard() {
             {/* Metrics – Row 1: Key Financial KPIs */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '32px' }}>
                 <MetricCard
-                    title="Faturação de Hoje"
-                    value={`${(stats?.todayBilling || 0).toLocaleString()} ${currency}`}
-                    subValue="Rendimentos gerados hoje"
+                    title={t('today_billing')}
+                    value={formatCurrency(convertCurrency(stats?.todayBilling || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={t('today_billing_desc')}
                     icon={TrendingUp}
                     color="#4f46e5"
                     trend={null}
                 />
                 <MetricCard
-                    title="Compras do Dia"
-                    value={`${(stats?.totalPurchases || 0).toLocaleString()} ${currency}`}
-                    subValue="Gastos registados hoje"
+                    title={t('daily_purchases')}
+                    value={formatCurrency(convertCurrency(stats?.totalPurchases || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={t('daily_purchases_desc')}
                     icon={ShoppingCart}
                     color="#ef4444"
                     trend={null}
                 />
                 <MetricCard
-                    title="IVA a Pagar (16%)"
-                    value={`${(stats?.taxPayable || 0).toLocaleString()} ${currency}`}
-                    subValue="IVA Liquidado – IVA Dedutível"
+                    title={t('tax_payable')}
+                    value={formatCurrency(convertCurrency(stats?.taxPayable || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={t('tax_payable_desc')}
                     icon={Landmark}
                     color="#f59e0b"
                 />
                 <MetricCard
-                    title="Saldo de Caixa"
-                    value={`${(stats?.cashBalance || 0).toLocaleString()} ${currency}`}
-                    subValue="Caixa + Bancos + M-Pesa"
+                    title={t('cash_balance')}
+                    value={formatCurrency(convertCurrency(stats?.cashBalance || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={t('cash_balance_desc')}
                     icon={Banknote}
                     color="#10b981"
                 />
@@ -218,32 +248,32 @@ export default function AccountingDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '48px' }}>
                 <MetricCard
                     title={t('gross_sales')}
-                    value={`${(stats?.revenue || 0).toLocaleString()} ${currency}`}
-                    subValue="Total acumulado de rendimentos"
+                    value={formatCurrency(convertCurrency(stats?.revenue || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={t('gross_sales_desc')}
                     icon={TrendingUp}
                     color="#4f46e5"
                     trend={null}
                 />
                 <MetricCard
                     title={t('actual_expenses')}
-                    value={`${(stats?.expenses || 0).toLocaleString()} ${currency}`}
-                    subValue="Total acumulado de gastos"
+                    value={formatCurrency(convertCurrency(stats?.expenses || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={t('actual_expenses_desc')}
                     icon={TrendingDown}
                     color="#ef4444"
                     trend={null}
                 />
                 <MetricCard
                     title={t('net_profit')}
-                    value={`${(stats?.netProfit || 0).toLocaleString()} ${currency}`}
-                    subValue="Rendimentos – Gastos do período"
+                    value={formatCurrency(convertCurrency(stats?.netProfit || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={t('net_profit_desc')}
                     icon={Wallet}
                     color={stats?.netProfit >= 0 ? '#10b981' : '#ef4444'}
                     trend={null}
                 />
                 <MetricCard
-                    title="IVA Liquidado"
-                    value={`${(stats?.ivaLiquidado || 0).toLocaleString()} ${currency}`}
-                    subValue={`IVA Dedutível: ${(stats?.ivaDedutivel || 0).toLocaleString()} ${currency}`}
+                    title={t('vat_collected')}
+                    value={formatCurrency(convertCurrency(stats?.ivaLiquidado || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    subValue={`${t('vat_deductible')}: ${formatCurrency(convertCurrency(stats?.ivaDedutivel || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}`}
                     icon={Percent}
                     color="#8b5cf6"
                 />
@@ -286,43 +316,43 @@ export default function AccountingDashboard() {
                                 onClick={() => navigate('/dashboard/accounting/ledger')}
                             />
                             <NavCard
-                                title="Pendentes em Lote"
-                                description="Processar múltiplos pedidos de uma vez"
+                                title={t('batch_pending')}
+                                description={t('batch_pending_desc')}
                                 icon={CheckSquare}
                                 color="#8b5cf6"
                                 onClick={() => navigate('/dashboard/accounting/batch')}
                             />
                             <NavCard
-                                title="Razão"
-                                description="Extrato de movimentos por conta"
+                                title={t('general_ledger_title')}
+                                description={t('general_ledger_desc')}
                                 icon={Activity}
                                 color="#ec4899"
                                 onClick={() => navigate('/dashboard/accounting/razao')}
                             />
                             <NavCard
-                                title="Dem. de Resultados"
-                                description="Receitas, despesas e lucro (DRE)"
+                                title={t('income_statement')}
+                                description={t('income_statement_desc')}
                                 icon={TrendingUp}
                                 color="#0ea5e9"
                                 onClick={() => navigate('/dashboard/accounting/dre')}
                             />
                             <NavCard
-                                title="Apuramento de IVA"
-                                description="IVA Liquidado vs Dedutível (16%)"
+                                title={t('vat_clearance')}
+                                description={t('vat_clearance_desc')}
                                 icon={Percent}
                                 color="#ef4444"
                                 onClick={() => navigate('/dashboard/accounting/iva')}
                             />
                             <NavCard
-                                title="Balancete"
-                                description="Movimentos débito/crédito por período"
+                                title={t('trial_balance')}
+                                description={t('trial_balance_desc')}
                                 icon={BarChart3}
                                 color="#0891b2"
                                 onClick={() => navigate('/dashboard/accounting/balancete')}
                             />
                             <NavCard
-                                title="Balanço Patrimonial"
-                                description="Activos, Passivos e Capital Próprio"
+                                title={t('balance_sheet')}
+                                description={t('balance_sheet_desc')}
                                 icon={Scale}
                                 color="#7c3aed"
                                 onClick={() => navigate('/dashboard/accounting/balance-sheet')}

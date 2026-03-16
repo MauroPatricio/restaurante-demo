@@ -56,8 +56,7 @@ api.interceptors.response.use(
                 // Exponential backoff or simple delay? Let's trying once more after 1s
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Manually restart loading since the previous one stopped on error
-                loadingManager.start();
+                // Manually restart loading since the previous one stopped on error (Wait, no, it will be called by request interceptor)
                 return api(config);
             }
         }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { loadingManager } from '../utils/loadingManager';
 import GlobalLoader from '../components/GlobalLoader';
+import { AnimatePresence } from 'framer-motion';
 
 const LoadingContext = createContext();
 
@@ -26,13 +27,16 @@ export const LoadingProvider = ({ children }) => {
     return (
         <LoadingContext.Provider value={{ ...loadingState, showLoading, hideLoading }}>
             {children}
-            {loadingState.isLoading && (
-                <GlobalLoader
-                    mode="fullscreen"
-                    size="lg"
-                    message={loadingState.message}
-                />
-            )}
+            <AnimatePresence>
+                {loadingState.isLoading && (
+                    <GlobalLoader
+                        key="global-loader"
+                        mode="fullscreen"
+                        size="lg"
+                        message={loadingState.message}
+                    />
+                )}
+            </AnimatePresence>
         </LoadingContext.Provider>
     );
 };

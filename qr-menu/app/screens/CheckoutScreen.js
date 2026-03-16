@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { useCart } from '../contexts/CartContext';
 import { orderAPI } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 export default function CheckoutScreen({ navigation }) {
+    const { t } = useTranslation();
     const {
         items,
         total,
@@ -45,11 +47,11 @@ export default function CheckoutScreen({ navigation }) {
             };
 
             const response = await orderAPI.createOrder(orderData);
-            Alert.alert('Success', 'Order placed successfully!');
+            Alert.alert(t('success'), t('order_placed'));
             clearCart();
             navigation.navigate('OrderStatus', { orderId: response.data.order.id });
         } catch (error) {
-            Alert.alert('Error', 'Failed to place order. Please try again.');
+            Alert.alert(t('error'), t('failed_place_order'));
             console.error(error);
         }
     };
@@ -59,7 +61,7 @@ export default function CheckoutScreen({ navigation }) {
             <ScrollView style={styles.scrollView}>
                 {/* Order Type */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Order Type</Text>
+                    <Text style={styles.sectionTitle}>{t('order_type')}</Text>
                     <View style={styles.orderTypeContainer}>
                         {['dine-in', 'takeaway', 'delivery'].map((type) => (
                             <TouchableOpacity
@@ -74,8 +76,8 @@ export default function CheckoutScreen({ navigation }) {
                                     styles.orderTypeText,
                                     orderType === type && styles.orderTypeTextActive,
                                 ]}>
-                                    {type === 'dine-in' ? '🍽️ Dine-in' :
-                                        type === 'takeaway' ? '🥡 Takeaway' : '🚚 Delivery'}
+                                    {type === 'dine-in' ? `🍽️ ${t('dine_in')}` :
+                                        type === 'takeaway' ? `🥡 ${t('takeaway')}` : `🚚 ${t('delivery')}`}
                                 </Text>
                             </TouchableOpacity>
                         ))}
@@ -85,13 +87,13 @@ export default function CheckoutScreen({ navigation }) {
                 {/* Delivery Address (if delivery) */}
                 {orderType === 'delivery' && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Delivery Address</Text>
+                        <Text style={styles.sectionTitle}>{t('delivery_address')}</Text>
                         <TouchableOpacity
                             style={styles.addressButton}
                             onPress={() => navigation.navigate('DeliveryAddress')}
                         >
                             <Text style={styles.addressText}>
-                                {deliveryAddress || 'Add delivery address'}
+                                {deliveryAddress || t('add_delivery_address')}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -99,7 +101,7 @@ export default function CheckoutScreen({ navigation }) {
 
                 {/* Payment Method */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Payment Method</Text>
+                    <Text style={styles.sectionTitle}>{t('payment_method')}</Text>
                     {['cash', 'mpesa', 'emola'].map((method) => (
                         <TouchableOpacity
                             key={method}
@@ -114,8 +116,8 @@ export default function CheckoutScreen({ navigation }) {
                                     {method === 'cash' ? '💵' : method === 'mpesa' ? '📱' : '📲'}
                                 </Text>
                                 <Text style={styles.paymentName}>
-                                    {method === 'cash' ? 'Cash on Delivery' :
-                                        method === 'mpesa' ? 'M-Pesa' : 'e-Mola'}
+                                    {method === 'cash' ? t('cash_on_delivery') :
+                                        method === 'mpesa' ? t('mpesa') : t('emola')}
                                 </Text>
                             </View>
                             {selectedPayment === method && (
@@ -127,10 +129,10 @@ export default function CheckoutScreen({ navigation }) {
 
                 {/* Order Summary */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Order Summary</Text>
+                    <Text style={styles.sectionTitle}>{t('order_summary')}</Text>
                     <View style={styles.summaryCard}>
-                        <Text style={styles.summaryText}>{items.length} items</Text>
-                        <Text style={styles.summaryPrice}>{total.toFixed(2)} MT</Text>
+                        <Text style={styles.summaryText}>{items.length === 1 ? t('items_count_one') : t('items_count', { count: items.length })}</Text>
+                        <Text style={styles.summaryPrice}>{total.toFixed(2)} {t('currency') || 'MT'}</Text>
                     </View>
                 </View>
             </ScrollView>
@@ -141,7 +143,7 @@ export default function CheckoutScreen({ navigation }) {
                     onPress={handlePlaceOrder}
                 >
                     <Text style={styles.placeOrderButtonText}>
-                        Place Order - {total.toFixed(2)} MT
+                        {t('place_order')} - {total.toFixed(2)} {t('currency') || 'MT'}
                     </Text>
                 </TouchableOpacity>
             </View>

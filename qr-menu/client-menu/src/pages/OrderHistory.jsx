@@ -6,11 +6,18 @@ import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { API_URL } from '../config/api';
 import { formatDateTime } from '../utils/dateUtils';
+import { useCurrency } from '../context/CurrencyContext';
+import { convertCurrency, formatCurrency } from '../utils/currencyUtils';
+import CurrencySwitcher from '../components/CurrencySwitcher';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const OrderHistory = () => {
     const { restaurantId } = useParams();
     const navigate = useNavigate();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { currency: preferredCurrency, rates } = useCurrency();
+
+    const locale = i18n.language === 'pt' ? 'pt-MZ' : i18n.language;
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -63,11 +70,17 @@ const OrderHistory = () => {
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header */}
-            <div className="bg-white p-4 sticky top-0 z-10 shadow-sm flex items-center gap-4">
-                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full">
-                    <ArrowLeft size={24} className="text-gray-600" />
-                </button>
-                <h1 className="text-lg font-bold text-gray-900">{t('order_history_title')}</h1>
+            <div className="bg-white p-4 sticky top-0 z-10 shadow-sm flex items-center justify-between border-b border-gray-100">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full">
+                        <ArrowLeft size={24} className="text-gray-600" />
+                    </button>
+                    <h1 className="text-lg font-bold text-gray-900">{t('order_history_title')}</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                    <LanguageSwitcher />
+                    <CurrencySwitcher />
+                </div>
             </div>
 
             <div className="p-4 space-y-4">
@@ -104,7 +117,13 @@ const OrderHistory = () => {
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <span className="font-black text-gray-900">{order.total} {t('currency')}</span>
+                                    <span className="font-black text-gray-900">
+                                        {formatCurrency(
+                                            convertCurrency(order.total, order.currency || 'MZN', preferredCurrency, rates),
+                                            preferredCurrency,
+                                            locale
+                                        )}
+                                    </span>
                                 </div>
                             </div>
 

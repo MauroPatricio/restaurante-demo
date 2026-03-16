@@ -1,6 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * GlobalLoader - Componente unificado de loading para todo o sistema
@@ -21,6 +22,8 @@ const GlobalLoader = ({
     color = '',
     className = ''
 }) => {
+    const { t } = useTranslation();
+
     // Converter size para pixels
     const getIconSize = () => {
         if (typeof size === 'number') return size;
@@ -40,10 +43,16 @@ const GlobalLoader = ({
     // Modo Fullscreen - Overlay completo com backdrop blur
     if (mode === 'fullscreen') {
         return (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
                     className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center max-w-sm w-full text-center"
                 >
                     <motion.div
@@ -58,19 +67,19 @@ const GlobalLoader = ({
                         <>
                             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{message}</h3>
                             <p className="text-gray-500 dark:text-gray-400 text-sm animate-pulse">
-                                Por favor, aguarde...
+                                {t('please_wait')}
                             </p>
                         </>
                     ) : (
                         <>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">A processar...</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('processing')}</h3>
                             <p className="text-gray-500 dark:text-gray-400 text-sm animate-pulse">
-                                Por favor, aguarde enquanto processamos sua solicitação.
+                                {t('processing_request')}
                             </p>
                         </>
                     )}
                 </motion.div>
-            </div>
+            </motion.div>
         );
     }
 
@@ -79,7 +88,8 @@ const GlobalLoader = ({
         return (
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 0.8, x: 0 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
                 className="fixed top-6 right-6 z-[9998] pointer-events-none flex items-center gap-2"
             >
                 <motion.div

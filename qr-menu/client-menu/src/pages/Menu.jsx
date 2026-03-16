@@ -9,17 +9,22 @@ import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../config/api';
 import ThemeToggle from '../components/ThemeToggle';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import WaiterCallButton from '../components/WaiterCallButton';
 import ReactionButtons from '../components/ReactionButtons';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { createWaiterCall, createClientReaction } from '../services/waiterCallAPI';
 import { formatDate, formatTime } from '../utils/dateUtils';
+import { useCurrency } from '../context/CurrencyContext';
+import { convertCurrency, formatCurrency } from '../utils/currencyUtils';
+import CurrencySwitcher from '../components/CurrencySwitcher';
 
 const Menu = () => {
     const { restaurantId } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { currency: preferredCurrency, rates } = useCurrency();
 
     // Logic: Get table from URL OR LocalStorage
     // Support both 't' (short) and 'table' (long)
@@ -149,16 +154,22 @@ const Menu = () => {
 
             try {
                 setLoading(true);
-                const t = Date.now(); // Cache buster
+                const timestamp = Date.now(); // Cache buster
                 const [restRes, menuRes, catRes] = await Promise.all([
                     api.get(`/restaurants/${restaurantId}`),
-                    api.get(`/menu/${restaurantId}?available=true&_t=${t}`),
+                    api.get(`/menu/${restaurantId}?available=true&_t=${timestamp}`),
                     api.get(`/menu/${restaurantId}/categories`)
                 ]);
 
                 const restaurantData = restRes.data.restaurant;
                 const itemsData = menuRes.data.items;
-                const categoriesData = ['All', ...(catRes.data.categories || [])];
+                const categoriesDataRaw = catRes.data.categories || [];
+                // Remove potential duplicates or 'All' strings from backend before adding our own
+                const uniqueCategories = categoriesDataRaw.filter(c => {
+                    const name = typeof c === 'object' ? c.name : c;
+                    return name !== 'All' && name !== t('filter_all');
+                });
+                const categoriesData = ['All', ...uniqueCategories];
 
                 setRestaurant(restaurantData);
                 setMenuItems(itemsData);
@@ -174,7 +185,7 @@ const Menu = () => {
                 }));
             } catch (err) {
                 console.error(err);
-                setError('Failed to load menu. Please scan QR Code again.');
+                setError(t('failed_to_load'));
             } finally {
                 setLoading(false);
             }
@@ -340,7 +351,7 @@ const Menu = () => {
                         {restaurant && (
                             <span
                                 className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)] ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}
-                                title={isOnline ? 'Conectado' : 'Desconectado'}
+                                title={isOnline ? t('connected') : t('disconnected')}
                             />
                         )}
                     </motion.h1>
@@ -398,8 +409,15 @@ const Menu = () => {
 
 
             {/* Sticky Header with Search & Filters */}
-            <div className="sticky top-0 z-20 glass dark:bg-gray-900/90 dark:border-gray-800 shadow-sm pb-2 transition-colors duration-200">
-                <div className="p-3 flex items-center gap-2">
+            <div className="sticky top-0 z-20 glass dark:bg-gray-900/90 dark:border-gray-800 shadow-sm transition-colors duration-200">
+                <div className="p-3 pb-0">
+                    <LanguageSwitcher />
+                </div>
+                <div className="p-3">
+                    <CurrencySwitcher />
+                </div>
+
+                <div className="p-3 flex items-center gap-2 pt-0">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-2.5 text-gray-400 h-4 w-4" />
                         <input
@@ -466,7 +484,7 @@ const Menu = () => {
                                 )}
                                 {item.popular && (
                                     <div className="absolute top-1 left-1 bg-yellow-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-yellow-900 flex items-center gap-0.5 shadow-sm">
-                                        <Star size={8} fill="currentColor" /> POPULAR
+                                        <Star size={8} fill="currentColor" /> {t('popular')}
                                     </div>
                                 )}
                             </div>
@@ -480,9 +498,14 @@ const Menu = () => {
                                 </div>
 
                                 <div className="flex items-center justify-between mt-2">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">{item.price}</span>
-                                        <span className="text-xs text-gray-400 font-medium">MT</span>
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">
+                                            {formatCurrency(
+                                                convertCurrency(item.price, item.currency || 'MZN', preferredCurrency, rates),
+                                                preferredCurrency,
+                                                i18n.language === 'pt' ? 'pt-MZ' : i18n.language
+                                            )}
+                                        </span>
                                     </div>
 
                                     {(() => {
@@ -596,7 +619,7 @@ const Menu = () => {
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 25 }}
-                            className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl w-full max-w-xl max-h-[85vh] overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800"
+                            className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl w-full max-w-xl max-h-[85vh] overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800 relative"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Modal Header */}
@@ -677,7 +700,7 @@ const Menu = () => {
                                                                 {item.qty}x
                                                             </span>
                                                             <div className="flex-1">
-                                                                <span className="text-gray-700 dark:text-gray-200 font-medium leading-tight block">{item.item?.name || 'Item'}</span>
+                                                                <span className="text-gray-700 dark:text-gray-200 font-medium leading-tight block">{item.item?.name || t('item_label')}</span>
                                                                 {item.customizations?.length > 0 && (
                                                                     <p className="text-[10px] text-gray-400 mt-0.5">
                                                                         {item.customizations.map(c => c.name).join(', ')}

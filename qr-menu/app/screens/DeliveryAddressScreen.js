@@ -10,8 +10,10 @@ import {
     Alert
 } from 'react-native';
 import { useCart } from '../contexts/CartContext';
+import { useTranslation } from 'react-i18next';
 
 export default function DeliveryAddressScreen({ navigation }) {
+    const { t } = useTranslation();
     const { deliveryAddress, setDeliveryAddress } = useCart();
 
     // Parse existing address if available
@@ -26,19 +28,19 @@ export default function DeliveryAddressScreen({ navigation }) {
 
     const handleSave = () => {
         if (!street.trim()) {
-            Alert.alert('Required', 'Please enter your street address');
+            Alert.alert(t('required'), t('address_required'));
             return;
         }
 
         if (!phone.trim()) {
-            Alert.alert('Required', 'Please enter your contact phone number');
+            Alert.alert(t('required'), t('phone_required'));
             return;
         }
 
         // Validate phone format (simple validation)
         const phoneRegex = /^\+?258[0-9]{9}$/;
         if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
-            Alert.alert('Invalid Phone', 'Please enter a valid Mozambican phone number (e.g., +258841234567)');
+            Alert.alert(t('invalid_phone'), t('invalid_phone_msg'));
             return;
         }
 
@@ -52,7 +54,7 @@ export default function DeliveryAddressScreen({ navigation }) {
         };
 
         setDeliveryAddress(address);
-        Alert.alert('Success', 'Delivery address saved!');
+        Alert.alert(t('success'), t('address_saved'));
         navigation.goBack();
     };
 
@@ -60,15 +62,15 @@ export default function DeliveryAddressScreen({ navigation }) {
         <SafeAreaView style={styles.container}>
             <ScrollView style={styles.scrollView}>
                 <View style={styles.content}>
-                    <Text style={styles.title}>Delivery Address</Text>
-                    <Text style={styles.subtitle}>Where should we deliver your order?</Text>
+                    <Text style={styles.title}>{t('delivery_address')}</Text>
+                    <Text style={styles.subtitle}>{t('where_deliver')}</Text>
 
                     {/* Street Address */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Street Address *</Text>
+                        <Text style={styles.label}>{t('street_address')} *</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Enter street name and number"
+                            placeholder={t('street_placeholder')}
                             value={street}
                             onChangeText={setStreet}
                             autoCapitalize="words"
@@ -77,10 +79,10 @@ export default function DeliveryAddressScreen({ navigation }) {
 
                     {/* Apartment/Floor */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Apartment / Floor (Optional)</Text>
+                        <Text style={styles.label}>{t('apartment_floor')}</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="e.g., Apt 4B, 2nd Floor"
+                            placeholder={t('apartment_placeholder')}
                             value={apartment}
                             onChangeText={setApartment}
                             autoCapitalize="words"
@@ -89,10 +91,10 @@ export default function DeliveryAddressScreen({ navigation }) {
 
                     {/* City */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>City *</Text>
+                        <Text style={styles.label}>{t('city')} *</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Enter city"
+                            placeholder={t('city_placeholder')}
                             value={city}
                             onChangeText={setCity}
                             autoCapitalize="words"
@@ -101,7 +103,7 @@ export default function DeliveryAddressScreen({ navigation }) {
 
                     {/* Contact Phone */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Contact Phone *</Text>
+                        <Text style={styles.label}>{t('contact_phone')} *</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="+258841234567"
@@ -110,15 +112,15 @@ export default function DeliveryAddressScreen({ navigation }) {
                             keyboardType="phone-pad"
                             autoCapitalize="none"
                         />
-                        <Text style={styles.hint}>Format: +258XXXXXXXXX</Text>
+                        <Text style={styles.hint}>{t('phone_format_hint')}</Text>
                     </View>
 
                     {/* Delivery Instructions */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Delivery Instructions (Optional)</Text>
+                        <Text style={styles.label}>{t('delivery_instructions')}</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
-                            placeholder="e.g., Ring doorbell, Leave at gate, etc."
+                            placeholder={t('instructions_placeholder')}
                             value={instructions}
                             onChangeText={setInstructions}
                             multiline
@@ -131,7 +133,7 @@ export default function DeliveryAddressScreen({ navigation }) {
                     <View style={styles.infoBox}>
                         <Text style={styles.infoIcon}>ℹ️</Text>
                         <Text style={styles.infoText}>
-                            Please ensure your address is correct. Delivery fee: 50 MT
+                            {t('address_correct_check')}
                         </Text>
                     </View>
                 </View>
@@ -140,7 +142,7 @@ export default function DeliveryAddressScreen({ navigation }) {
             {/* Save Button */}
             <View style={styles.footer}>
                 <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                    <Text style={styles.saveButtonText}>Save Address</Text>
+                    <Text style={styles.saveButtonText}>{t('save_address')}</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>

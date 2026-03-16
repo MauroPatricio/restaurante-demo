@@ -30,6 +30,10 @@ const MenuItemSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  currency: {
+    type: String,
+    default: 'MZN'
+  },
   // --- Image Fields ---
   imageUrl: {
     type: String,

@@ -138,13 +138,13 @@ export default function DashboardLayout() {
                 },
                 {
                     icon: LayoutDashboard,
-                    label: t('dashboard') || 'Painel Geral',
+                    label: t('dashboard_general'),
                     path: '/dashboard/analytics',
                     show: hasPermission('view_reports') || hasPermission('manage_settings')
                 },
                 {
                     icon: LayoutDashboard,
-                    label: t('waiter_dashboard') || 'Dashboard de Garçom',
+                    label: t('waiter_dashboard_label'),
                     path: '/dashboard/waiter',
                     show: hasPermission('take_orders')
                 },
@@ -156,7 +156,7 @@ export default function DashboardLayout() {
                 },
                 {
                     icon: LayoutGrid,
-                    label: t('hall_details') || 'Detalhes da Mesa',
+                    label: t('hall_details_label'),
                     path: '/dashboard/hall',
                     show: hasPermission('view_reports') || hasPermission('manage_tables')
                 },
@@ -189,7 +189,7 @@ export default function DashboardLayout() {
             items: [
                 {
                     icon: UsersIcon,
-                    label: t('clients') || 'Clientes',
+                    label: t('clients_label'),
                     path: '/dashboard/clients',
                     show: hasPermission('view_reports') || hasPermission('manage_orders')
                 },
@@ -206,9 +206,9 @@ export default function DashboardLayout() {
             title: t('financial_stock') || '📦 CONTROLO FINANCEIRO & STOCK',
             items: [
                 { icon: Package, label: t('stock_costs'), path: '/dashboard/stock-management', show: hasPermission('manage_settings'), isPremium: true },
-                { icon: Landmark, label: 'Contabilidade & Fiscal', path: '/dashboard/accounting', show: ['Owner', 'Manager', 'Contabilista'].includes(user?.role?.name) || user?.role?.isSystem, isPremium: true },
+                { icon: Landmark, label: t('accounting_fiscal'), path: '/dashboard/accounting', show: ['Owner', 'Manager', 'Contabilista'].includes(user?.role?.name) || user?.role?.isSystem, isPremium: true },
                 { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports'), isPremium: true },
-                { icon: CreditCard, label: t('subscription') || 'Subscrição', path: '/dashboard/subscription', show: ['Owner', 'Manager'].includes(user?.role?.name) },
+                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: ['Owner', 'Manager'].includes(user?.role?.name) },
             ]
         },
         {
@@ -218,10 +218,10 @@ export default function DashboardLayout() {
             ]
         },
         {
-            title: '🛎️ ROOM SERVICE',
+            title: t('room_service'),
             items: [
-                { icon: BedDouble, label: 'Gestão de Quartos', path: '/dashboard/room-service', show: hasPermission('manage_tables') || hasPermission('manage_settings') },
-                { icon: ShoppingBag, label: 'Pedidos de Quarto', path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders'), isOrders: true },
+                { icon: BedDouble, label: t('room_management'), path: '/dashboard/room-service', show: hasPermission('manage_tables') || hasPermission('manage_settings') },
+                { icon: ShoppingBag, label: t('room_orders'), path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders'), isOrders: true },
             ]
         },
         {
@@ -234,7 +234,7 @@ export default function DashboardLayout() {
         {
             title: t('system_administration') || '⚙️ SISTEMA & ADMINISTRAÇÃO',
             items: [
-                { icon: Settings, label: t('system_admin_hub') || 'Administração do Sistema', path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
+                { icon: Settings, label: t('system_admin_hub'), path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
                 { icon: CreditCard, label: t('subscription_management_admin') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.name === 'System Admin' || user?.role?.isSystem },
             ]
         }
@@ -411,7 +411,7 @@ export default function DashboardLayout() {
                         </div>
 
                         <div className="restaurant-details">
-                            <h3>{restaurantData?.name || 'Restaurante'}</h3>
+                            <h3>{restaurantData?.name || t('restaurant')}</h3>
                             <div className="flex flex-col gap-1">
                                 <span className="user-role">
                                     {user?.role?.name || user?.role || 'User'}
@@ -501,7 +501,7 @@ export default function DashboardLayout() {
                         >
                             {sidebarOpen ? <X size={24} /> : <MenuIcon size={24} />}
                         </button>
-                        <h1 className="header-title">{t('welcome')}, {user?.name}</h1>
+                        <h1 className="header-title">{t('welcome_user', { name: user?.name })}</h1>
                     </div>
 
                     <div className="header-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>

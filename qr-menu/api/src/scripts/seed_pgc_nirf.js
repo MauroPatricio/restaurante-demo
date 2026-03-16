@@ -10,103 +10,87 @@ dotenv.config();
 //         'credit' = Passivos, Capital Próprio e Rendimentos (saldo normal a Crédito)
 const PGC_ACCOUNTS = [
     // ─────────────────────────────────────────────
-    // CLASSE 1 – Meios Financeiros Líquidos
+    // CLASSE 1 – MEIOS FINANCEIROS
     // ─────────────────────────────────────────────
     { code: '11', name: 'Caixa', type: 'asset', class: 1, nature: 'debit', isGroup: true, description: 'Dinheiro físico em caixa' },
-    { code: '111', name: 'Caixa Central', type: 'asset', class: 1, nature: 'debit', parentCode: '11', description: 'Caixa central do estabelecimento' },
-    { code: '112', name: 'Fundos Fixos de Maneio (Trocos)', type: 'asset', class: 1, nature: 'debit', parentCode: '11', description: 'Fundo de troco permanente' },
-
-    { code: '12', name: 'Bancos', type: 'asset', class: 1, nature: 'debit', isGroup: true, description: 'Depósitos bancários' },
-    { code: '121', name: 'Depósitos à Ordem', type: 'asset', class: 1, nature: 'debit', parentCode: '12', description: 'Contas bancárias à ordem (BCI, BIM, Absa, etc.)' },
-
-    { code: '13', name: 'Carteiras Móveis (M-Pesa / e-Mola)', type: 'asset', class: 1, nature: 'debit', description: 'Saldo em carteiras de dinheiro móvel' },
-
-    // ─────────────────────────────────────────────
-    // CLASSE 2 – Terceiros (Receivables & Payables)
-    // ─────────────────────────────────────────────
-    { code: '21', name: 'Clientes', type: 'asset', class: 2, nature: 'debit', isGroup: true, description: 'Valores a receber de clientes' },
-    { code: '211', name: 'Clientes c/c', type: 'asset', class: 2, nature: 'debit', parentCode: '21', description: 'Clientes em conta corrente' },
-    { code: '212', name: 'Clientes – Títulos a Receber', type: 'asset', class: 2, nature: 'debit', parentCode: '21' },
-    { code: '218', name: 'Clientes de Cobrança Duvidosa', type: 'asset', class: 2, nature: 'debit', parentCode: '21' },
-
-    { code: '22', name: 'Fornecedores', type: 'liability', class: 2, nature: 'credit', isGroup: true, description: 'Valores a pagar a fornecedores' },
-    { code: '221', name: 'Fornecedores c/c', type: 'liability', class: 2, nature: 'credit', parentCode: '22', description: 'Fornecedores em conta corrente' },
-    { code: '228', name: 'Fornecedores – Facturas em Recepção e Conferência', type: 'liability', class: 2, nature: 'credit', parentCode: '22' },
-
-    // IVA e Estado
-    { code: '24', name: 'Estado e Outros Entes Públicos', type: 'liability', class: 2, nature: 'credit', isGroup: true, description: 'Obrigações fiscais com o Estado de Moçambique' },
-    { code: '241', name: 'Imposto sobre o Rendimento (IRPC/IRPS)', type: 'liability', class: 2, nature: 'credit', parentCode: '24' },
-    { code: '243', name: 'Imposto sobre o Valor Acrescentado (IVA – 16%)', type: 'liability', class: 2, nature: 'credit', isGroup: true, parentCode: '24', description: 'Conta-mãe para contas de IVA (taxa 16% – Lei 32/2007)' },
-    { code: '2432', name: 'IVA Dedutível', type: 'asset', class: 2, nature: 'debit', isTaxAccount: true, parentCode: '243', description: 'IVA suportado nas compras (recuperável)' },
-    { code: '2433', name: 'IVA Liquidado', type: 'liability', class: 2, nature: 'credit', isTaxAccount: true, parentCode: '243', description: 'IVA cobrado nas vendas (a entregar ao Estado)' },
-    { code: '2434', name: 'IVA a Recuperar', type: 'asset', class: 2, nature: 'debit', isTaxAccount: true, parentCode: '243', description: 'Saldo credor do IVA Dedutível > Liquidado' },
-    { code: '2435', name: 'IVA a Pagar', type: 'liability', class: 2, nature: 'credit', isTaxAccount: true, parentCode: '243', description: 'Saldo devedor após apuramento (IVA Liquidado > Dedutível)' },
-    { code: '2436', name: 'IVA – Apuramento', type: 'liability', class: 2, nature: 'credit', isTaxAccount: true, parentCode: '243', description: 'Conta utilizada no apuramento mensal de IVA' },
-
-    { code: '25', name: 'Trabalhadores – Remunerações a Pagar', type: 'liability', class: 2, nature: 'credit', description: 'Salários e ordenados por pagar ao pessoal' },
-    { code: '26', name: 'Accionistas / Sócios', type: 'equity', class: 2, nature: 'credit', description: 'Relações com os sócios da empresa' },
+    { code: '111', name: 'Caixa Geral', type: 'asset', class: 1, nature: 'debit', parentCode: '11' },
+    { code: '12', name: 'Bancos', type: 'asset', class: 1, nature: 'debit', isGroup: true },
+    { code: '121', name: 'Depósitos à ordem', type: 'asset', class: 1, nature: 'debit', parentCode: '12' },
+    { code: '122', name: 'Depósitos com pré-aviso', type: 'asset', class: 1, nature: 'debit', parentCode: '12' },
+    { code: '13', name: 'Outros instrumentos financeiros', type: 'asset', class: 1, nature: 'debit', isGroup: true },
+    { code: '131', name: 'Carteiras Móveis (M-Pesa / e-Mola)', type: 'asset', class: 1, nature: 'debit', parentCode: '13' },
 
     // ─────────────────────────────────────────────
-    // CLASSE 3 – Inventários e Activos Biológicos
+    // CLASSE 2 – INVENTÁRIOS E ACTIVOS BIOLÓGICOS
     // ─────────────────────────────────────────────
-    { code: '31', name: 'Mercadorias (Bebidas, Comida Embalada)', type: 'asset', class: 3, nature: 'debit', description: 'Stock de mercadorias para revenda' },
-    { code: '32', name: 'Matérias-Primas (Ingredientes de Cozinha)', type: 'asset', class: 3, nature: 'debit', description: 'Matérias-primas consumidas na produção de refeições' },
-    { code: '33', name: 'Produtos Acabados (Pratos Confeccionados)', type: 'asset', class: 3, nature: 'debit', description: 'Refeições prontas a servir' },
+    { code: '21', name: 'Compras', type: 'asset', class: 2, nature: 'debit', isGroup: true },
+    { code: '211', name: 'Mercadorias', type: 'asset', class: 2, nature: 'debit', parentCode: '21' },
+    { code: '212', name: 'Matérias-primas, auxiliares e materiais', type: 'asset', class: 2, nature: 'debit', parentCode: '21' },
+    { code: '22', name: 'Mercadorias', type: 'asset', class: 2, nature: 'debit', isGroup: true },
+    { code: '221', name: 'Mercadorias em trânsito', type: 'asset', class: 2, nature: 'debit', parentCode: '22' },
+    { code: '26', name: 'Matérias primas, auxiliares e materiais', type: 'asset', class: 2, nature: 'debit', isGroup: true },
+    { code: '261', name: 'Matérias primas', type: 'asset', class: 2, nature: 'debit', parentCode: '26' },
+    { code: '262', name: 'Produtos auxiliares', type: 'asset', class: 2, nature: 'debit', parentCode: '26' },
+    { code: '263', name: 'Materiais', type: 'asset', class: 2, nature: 'debit', parentCode: '26' },
 
     // ─────────────────────────────────────────────
-    // CLASSE 4 – Investimentos e Activos Fixos
+    // CLASSE 3 – INVESTIMENTOS DE CAPITAL
     // ─────────────────────────────────────────────
-    { code: '41', name: 'Activos Tangíveis – Mobiliário e Equipamentos', type: 'asset', class: 4, nature: 'debit', description: 'Mesas, cadeiras, equipamentos de cozinha, etc.' },
-    { code: '42', name: 'Activos Intangíveis (Software, Licenças)', type: 'asset', class: 4, nature: 'debit', description: 'Activos intangíveis como software e licenças' },
-    { code: '43', name: 'Amortizações Acumuladas', type: 'asset', class: 4, nature: 'credit', description: 'Conta contra-activo para depreciação acumulada' },
+    { code: '32', name: 'Activos Tangíveis', type: 'asset', class: 3, nature: 'debit', isGroup: true },
+    { code: '321', name: 'Construções', type: 'asset', class: 3, nature: 'debit', parentCode: '32' },
+    { code: '322', name: 'Equipamento básico', type: 'asset', class: 3, nature: 'debit', parentCode: '32' },
+    { code: '323', name: 'Equipamento de transporte', type: 'asset', class: 3, nature: 'debit', parentCode: '32' },
+    { code: '324', name: 'Equipamento administrativo', type: 'asset', class: 3, nature: 'debit', parentCode: '32' },
 
     // ─────────────────────────────────────────────
-    // CLASSE 5 – Capital Próprio
+    // CLASSE 4 – CONTAS A RECEBER, CONTAS A PAGAR...
     // ─────────────────────────────────────────────
-    { code: '51', name: 'Capital Social', type: 'equity', class: 5, nature: 'credit', description: 'Capital subscrito pelos sócios/accionistas' },
-    { code: '55', name: 'Reservas', type: 'equity', class: 5, nature: 'credit', description: 'Reservas legais e outras reservas' },
-    { code: '56', name: 'Resultados Transitados', type: 'equity', class: 5, nature: 'credit', description: 'Resultados de anos anteriores não distribuídos' },
-    { code: '59', name: 'Resultado Líquido do Exercício', type: 'equity', class: 5, nature: 'credit', description: 'Lucro ou prejuízo do período actual' },
+    { code: '41', name: 'Clientes', type: 'asset', class: 4, nature: 'debit', isGroup: true },
+    { code: '411', name: 'Clientes c/c', type: 'asset', class: 4, nature: 'debit', parentCode: '41' },
+    { code: '42', name: 'Fornecedores', type: 'liability', class: 4, nature: 'credit', isGroup: true },
+    { code: '421', name: 'Fornecedores c/c', type: 'liability', class: 4, nature: 'credit', parentCode: '42' },
+    { code: '44', name: 'Estado', type: 'liability', class: 4, nature: 'credit', isGroup: true },
+    { code: '443', name: 'IVA', type: 'liability', class: 4, nature: 'credit', isGroup: true, parentCode: '44' },
+    { code: '4432', name: 'IVA Dedutível', type: 'asset', class: 4, nature: 'debit', isTaxAccount: true, parentCode: '443' },
+    { code: '4433', name: 'IVA Liquidado', type: 'liability', class: 4, nature: 'credit', isTaxAccount: true, parentCode: '443' },
+    { code: '4435', name: 'IVA a Pagar', type: 'liability', class: 4, nature: 'credit', isTaxAccount: true, parentCode: '443' },
+    { code: '4436', name: 'IVA Apuramento', type: 'liability', class: 4, nature: 'credit', isTaxAccount: true, parentCode: '443' },
+    { code: '46', name: 'Outros Devedores e Credores', type: 'liability', class: 4, nature: 'credit', isGroup: true },
+    { code: '462', name: 'Pessoal', type: 'liability', class: 4, nature: 'credit', parentCode: '46', isGroup: true },
+    { code: '4621', name: 'Remunerações a pagar', type: 'liability', class: 4, nature: 'credit', parentCode: '462' },
 
     // ─────────────────────────────────────────────
-    // CLASSE 6 – Gastos e Perdas
+    // CLASSE 5 – CAPITAL PRÓPRIO
     // ─────────────────────────────────────────────
-    { code: '61', name: 'Custo das Mercadorias Vendidas (CMV)', type: 'expense', class: 6, nature: 'debit', description: 'Custo do stock consumido nas vendas (COGS)' },
-    { code: '62', name: 'Gastos com o Pessoal', type: 'expense', class: 6, nature: 'debit', isGroup: true, description: 'Todos os encargos com trabalhadores' },
-    { code: '621', name: 'Remunerações', type: 'expense', class: 6, nature: 'debit', parentCode: '62', description: 'Salários e ordenados brutos' },
-    { code: '622', name: 'Encargos sobre Remunerações (INSS)', type: 'expense', class: 6, nature: 'debit', parentCode: '62', description: 'Contribuições para o INSS (entidade empregadora 4%)' },
-
-    { code: '63', name: 'Fornecimentos e Serviços de Terceiros (FSE)', type: 'expense', class: 6, nature: 'debit', isGroup: true, description: 'Bens e serviços fornecidos por terceiros' },
-    { code: '632', name: 'Fornecimentos – Água, Energia, Combustíveis', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
-    { code: '633', name: 'Serviços Especializados (Contabilidade, IT)', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
-    { code: '634', name: 'Alugueres e Rendas', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
-    { code: '635', name: 'Comunicações (Internet, Telefone)', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
-    { code: '638', name: 'Marketing e Publicidade', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
-    { code: '639', name: 'Outros FSE', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
-
-    { code: '64', name: 'Impostos e Taxas', type: 'expense', class: 6, nature: 'debit', description: 'Impostos sobre actividade (excluindo IVA e IRPC)' },
-    { code: '68', name: 'Outros Gastos e Perdas', type: 'expense', class: 6, nature: 'debit', description: 'Outros gastos não categorizados' },
+    { code: '51', name: 'Capital', type: 'equity', class: 5, nature: 'credit', isGroup: true },
+    { code: '511', name: 'Capital Social', type: 'equity', class: 5, nature: 'credit', parentCode: '51' },
+    { code: '59', name: 'Resultados Transitados', type: 'equity', class: 5, nature: 'credit' },
 
     // ─────────────────────────────────────────────
-    // CLASSE 7 – Rendimentos e Ganhos
+    // CLASSE 6 – GASTOS E PERDAS POR NATUREZA
     // ─────────────────────────────────────────────
-    { code: '71', name: 'Vendas', type: 'revenue', class: 7, nature: 'credit', isGroup: true, description: 'Rendimentos de vendas de produtos e refeições' },
-    { code: '711', name: 'Venda de Refeições / Restaurante', type: 'revenue', class: 7, nature: 'credit', parentCode: '71', description: 'Receita de venda de pratos e menus' },
-    { code: '712', name: 'Venda de Bebidas', type: 'revenue', class: 7, nature: 'credit', parentCode: '71', description: 'Receita de venda de bebidas' },
-    { code: '713', name: 'Venda de Mercadorias e Produtos', type: 'revenue', class: 7, nature: 'credit', parentCode: '71', description: 'Receita de venda de outros produtos' },
-
-    { code: '72', name: 'Prestações de Serviços', type: 'revenue', class: 7, nature: 'credit', isGroup: true, description: 'Rendimentos de serviços prestados' },
-    { code: '721', name: 'Serviço de Delivery / Taxas de Entrega', type: 'revenue', class: 7, nature: 'credit', parentCode: '72', description: 'Taxas cobradas por serviço de entrega ao domicílio' },
-    { code: '722', name: 'Serviço de Catering / Eventos', type: 'revenue', class: 7, nature: 'credit', parentCode: '72', description: 'Receita de eventos e catering externo' },
-    { code: '723', name: 'Serviço de Room Service', type: 'revenue', class: 7, nature: 'credit', parentCode: '72', description: 'Receita de serviço aos quartos (se hoteleiro)' },
-
-    { code: '75', name: 'Subsídios, Donativos e Legados à Exploração', type: 'revenue', class: 7, nature: 'credit', description: 'Subsídios e apoios recebidos' },
-    { code: '78', name: 'Outros Rendimentos e Ganhos', type: 'revenue', class: 7, nature: 'credit', description: 'Rendimentos não classificáveis noutras contas' },
+    { code: '61', name: 'Custo dos inventários vendidos ou consumidos', type: 'expense', class: 6, nature: 'debit', isGroup: true },
+    { code: '611', name: 'Custo das mercadorias vendidas ou consumidas', type: 'expense', class: 6, nature: 'debit', parentCode: '61' },
+    { code: '62', name: 'Gastos com o pessoal', type: 'expense', class: 6, nature: 'debit', isGroup: true },
+    { code: '621', name: 'Remunerações dos órgãos sociais', type: 'expense', class: 6, nature: 'debit', parentCode: '62' },
+    { code: '622', name: 'Remunerações dos trabalhadores', type: 'expense', class: 6, nature: 'debit', parentCode: '62' },
+    { code: '63', name: 'Fornecimentos e serviços de terceiros', type: 'expense', class: 6, nature: 'debit', isGroup: true },
+    { code: '632', name: 'FSE – Água, Energia, Combustíveis', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
+    { code: '635', name: 'FSE – Comunicações', type: 'expense', class: 6, nature: 'debit', parentCode: '63' },
 
     // ─────────────────────────────────────────────
-    // CLASSE 8 – Resultados
+    // CLASSE 7 – RENDIMENTOS E GANHOS POR NATUREZA
     // ─────────────────────────────────────────────
-    { code: '81', name: 'Resultado Líquido do Período', type: 'equity', class: 8, nature: 'credit', description: 'Apuramento do resultado líquido (Cr = Lucro, Db = Prejuízo)' }
+    { code: '71', name: 'Vendas', type: 'revenue', class: 7, nature: 'credit', isGroup: true },
+    { code: '711', name: 'Venda de Refeições / Restaurante', type: 'revenue', class: 7, nature: 'credit', parentCode: '71' },
+    { code: '712', name: 'Venda de Bebidas', type: 'revenue', class: 7, nature: 'credit', parentCode: '71' },
+    { code: '72', name: 'Prestação de serviços', type: 'revenue', class: 7, nature: 'credit', isGroup: true },
+    { code: '721', name: 'Serviços de Delivery', type: 'revenue', class: 7, nature: 'credit', parentCode: '72' },
+
+    // ─────────────────────────────────────────────
+    // CLASSE 8 – RESULTADOS
+    // ─────────────────────────────────────────────
+    { code: '81', name: 'Resultado Líquido do Período', type: 'equity', class: 8, nature: 'credit' }
 ];
 
 async function seedPGCNIRF() {

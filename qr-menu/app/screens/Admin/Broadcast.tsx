@@ -1,3 +1,8 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-export default function Broadcast(){return <View><Text>Broadcast</Text></View>}
+import { useTranslation } from 'react-i18next';
+
+export default function Broadcast(){
+    const { t } = useTranslation();
+    return <View><Text>{t('broadcast')}</Text></View>;
+}

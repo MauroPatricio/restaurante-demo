@@ -146,9 +146,44 @@ export default function HallDashboard() {
             fetchHallData();
         };
 
+        const handleTableStatusUpdate = (update) => {
+            console.log('HallDashboard: Table status update', update);
+            setData(prev => {
+                const tableIndex = prev.tables.findIndex(t => t._id === update.tableId);
+                if (tableIndex === -1) return prev;
+
+                const newTables = [...prev.tables];
+                const oldStatus = newTables[tableIndex].status;
+                newTables[tableIndex] = { ...newTables[tableIndex], status: update.status };
+
+                // Incrementally update summary if status changed
+                const newSummary = { ...prev.summary };
+                if (oldStatus !== update.status) {
+                    // Decrement old status count
+                    if (oldStatus === 'free') newSummary.freeCount = Math.max(0, (newSummary.freeCount || 0) - 1);
+                    if (oldStatus === 'occupied') newSummary.occupiedCount = Math.max(0, (newSummary.occupiedCount || 0) - 1);
+
+                    // Increment new status count
+                    if (update.status === 'free') newSummary.freeCount = (newSummary.freeCount || 0) + 1;
+                    if (update.status === 'occupied') newSummary.occupiedCount = (newSummary.occupiedCount || 0) + 1;
+                }
+
+                // Update selectedTable if it's the one that was updated
+                setSelectedTable(current => {
+                    if (current && current._id === update.tableId) {
+                        return { ...current, status: update.status };
+                    }
+                    return current;
+                });
+
+                return { ...prev, tables: newTables, summary: newSummary };
+            });
+        };
+
         socket.on('waiter:call', handleNewCall);
         socket.on('waiter:call:resolved', handleCallResolved);
         socket.on('waiter:call:acknowledged', handleCallResolved);
+        socket.on('table:status-updated', handleTableStatusUpdate);
         socket.on('order:updated', handleUpdate);
         socket.on('order:new', handleUpdate);
 
@@ -156,6 +191,7 @@ export default function HallDashboard() {
             socket.off('waiter:call', handleNewCall);
             socket.off('waiter:call:resolved', handleCallResolved);
             socket.off('waiter:call:acknowledged', handleCallResolved);
+            socket.off('table:status-updated', handleTableStatusUpdate);
             socket.off('order:updated', handleUpdate);
             socket.off('order:new', handleUpdate);
         };
@@ -401,9 +437,11 @@ export default function HallDashboard() {
                                     display: 'grid',
                                     gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 160px',
                                     borderBottom: '1px solid #f8fafc',
+                                    borderLeft: `8px solid ${sInfo.color}30`, // Subtle status border
                                     alignItems: 'center',
-                                    transition: 'background 0.3s',
-                                    gap: '20px'
+                                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    gap: '20px',
+                                    background: table.status === 'occupied' ? '#fffafb' : 'transparent'
                                 }}
                                 className="hover:bg-white/50 group"
                             >
@@ -411,7 +449,7 @@ export default function HallDashboard() {
                                     <div style={{
                                         width: '64px',
                                         height: '64px',
-                                        background: '#0f172a',
+                                        background: sInfo.color,
                                         color: 'white',
                                         borderRadius: '24px',
                                         display: 'flex',
@@ -419,8 +457,8 @@ export default function HallDashboard() {
                                         justifyContent: 'center',
                                         fontWeight: '900',
                                         fontSize: '24px',
-                                        boxShadow: '0 12px 24px -8px rgba(15, 23, 42, 0.4)',
-                                        transition: 'all 0.5s ease'
+                                        boxShadow: `0 12px 24px -8px ${sInfo.color}60`,
+                                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
                                     }} className="group-hover:scale-110 group-hover:-rotate-3">
                                         {table.number < 10 ? `0${table.number}` : table.number}
                                     </div>
@@ -477,17 +515,18 @@ export default function HallDashboard() {
                                             marginLeft: 'auto',
                                             width: '48px',
                                             height: '48px',
-                                            background: '#f8fafc',
-                                            color: '#94a3b8',
+                                            background: '#0f172a',
+                                            color: 'white',
                                             borderRadius: '16px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
                                             transition: 'all 0.3s ease',
-                                            border: 'none'
+                                            border: 'none',
+                                            boxShadow: '0 8px 16px rgba(15, 23, 42, 0.2)'
                                         }}
-                                        className="hover-btn-black"
+                                        className="hover-scale"
                                     >
                                         <ChevronRight size={20} />
                                     </button>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { loadingManager, LOADING_TYPES } from '../utils/loadingManager';
 import GlobalLoader from '../components/GlobalLoader';
+import { AnimatePresence } from 'framer-motion';
 
 const LoadingContext = createContext();
 
@@ -27,15 +28,16 @@ export const LoadingProvider = ({ children }) => {
     return (
         <LoadingContext.Provider value={{ ...loadingState, showLoading, hideLoading }}>
             {children}
-            {/* Removed FULL (fullscreen) mode - always use discrete loader for better UX */}
-            {/* Fullscreen modal blocks navigation and interrupts context */}
-            {loadingState.isLoading && loadingState.type === LOADING_TYPES.BACKGROUND && (
-                <GlobalLoader
-                    mode="discrete"
-                    size="md"
-                    message={loadingState.message}
-                />
-            )}
+            <AnimatePresence>
+                {loadingState.isLoading && loadingState.type === LOADING_TYPES.BACKGROUND && (
+                    <GlobalLoader
+                        key="admin-background-loader"
+                        mode="discrete"
+                        size="md"
+                        message={loadingState.message}
+                    />
+                )}
+            </AnimatePresence>
         </LoadingContext.Provider>
     );
 };

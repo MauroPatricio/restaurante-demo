@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, Button } from 'react-native';
-import axios from 'axios';
+import { orderAPI } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 export default function OrderScreen({ route, navigation }) {
+  const { t } = useTranslation();
   const { item, tableId } = route.params;
   const [status, setStatus] = useState('pending');
 
   const placeOrder = () => {
-    axios.post('http://localhost:4000/api/orders', {
+    orderAPI.createOrder({
       table: tableId,
       items: [{ item: item._id, qty: 1 }],
       total: item.price
@@ -21,9 +23,9 @@ export default function OrderScreen({ route, navigation }) {
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 20 }}>Pedido de {item.name}</Text>
-      <Text>Status: {status}</Text>
-      <Button title="Fazer Pedido" onPress={placeOrder} />
+      <Text style={{ fontSize: 20 }}>{t('order_for', { name: item.name })}</Text>
+      <Text>{t('status')}: {t(status)}</Text>
+      <Button title={t('place_order')} onPress={placeOrder} />
     </View>
   );
 }

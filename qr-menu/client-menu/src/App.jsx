@@ -11,6 +11,7 @@ import RoomMenuPage from './pages/RoomMenuPage';
 import RoomOrderTracking from './pages/RoomOrderTracking';
 import { NotificationProvider } from './context/NotificationContext';
 import { LoadingProvider } from './context/LoadingContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import LoadingSpinner from './components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
 
@@ -32,7 +33,7 @@ function QRRedirect() {
 
             // Check if all required parameters are present
             if (!restaurantId || !tableId || !token) {
-                setError('QR Code inválido. Parâmetros faltando.');
+                setError(t('error_invalid_qr_params'));
                 setLoading(false);
                 return;
             }
@@ -52,12 +53,12 @@ function QRRedirect() {
                 if (!contentType || !contentType.includes("application/json")) {
                     const text = await response.text();
                     console.error('❌ Expected JSON but received:', text.substring(0, 200));
-                    throw new Error('Servidor retornou resposta inválida (não JSON)');
+                    throw new Error(t('error_invalid_server_response'));
                 }
 
                 if (!response.ok) {
                     const data = await response.json();
-                    setError(data.message || 'Erro ao validar QR Code');
+                    setError(data.message || t('error_validating_qr'));
                     setLoading(false);
                     return;
                 }
@@ -80,12 +81,12 @@ function QRRedirect() {
                     const finalTable = searchParams.get('t') || searchParams.get('table');
                     navigate(`/menu/${restaurantId}?t=${finalTable}&token=${token}`);
                 } else {
-                    setError('QR Code inválido');
+                    setError(t('invalid_qr'));
                     setLoading(false);
                 }
             } catch (error) {
                 console.error('Validation error:', error);
-                setError('Erro ao conectar com o servidor. Por favor, tente novamente.');
+                setError(t('error_connecting_server'));
                 setLoading(false);
             }
         };
@@ -154,11 +155,11 @@ function CodeEntry() {
                 // Not JSON - probably a 404 or 500 HTML page from proxy/server
                 const text = await response.text();
                 console.error('❌ Server returned non-JSON response:', text.substring(0, 500));
-                throw new Error('O servidor encontrou um erro e não retornou JSON. Verifique a conexão.');
+                throw new Error(t('error_invalid_server_response'));
             }
 
             if (!response.ok) {
-                throw new Error(data.message || 'Código inválido');
+                throw new Error(data.message || t('invalid_table_code'));
             }
 
             if (data.isMaintenance) {
@@ -183,7 +184,7 @@ function CodeEntry() {
             }
         } catch (err) {
             console.error('Login error:', err);
-            setError(err.message || 'Erro ao validar o código. Tente novamente.');
+            setError(err.message || t('error_validating_code'));
         } finally {
             setLoading(false);
         }
@@ -194,7 +195,7 @@ function CodeEntry() {
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-center">
                     <h1 className="text-3xl font-bold text-white mb-2">QR Menu</h1>
-                    <p className="text-blue-100">Acesse o menu da sua mesa</p>
+                    <p className="text-blue-100">{t('access_menu_desc')}</p>
                 </div>
 
                 <div className="p-8">
@@ -244,14 +245,14 @@ function CodeEntry() {
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
                                     <LoadingSpinner size={20} color="white" />
-                                    Verificando...
+                                    {t('verifying')}
                                 </span>
-                            ) : 'Acessar Menu'}
+                            ) : t('access_menu_btn')}
                         </button>
                     </form>
                 </div>
                 <div className="bg-gray-50 px-8 py-4 text-center border-t border-gray-100">
-                    <p className="text-xs text-gray-400">Ou escaneie o QR Code na sua mesa</p>
+                    <p className="text-xs text-gray-400">{t('scan_qr_hint')}</p>
                 </div>
             </div>
         </div>
@@ -262,24 +263,26 @@ function App() {
     return (
         <CartProvider>
             <ThemeProvider>
-                <NotificationProvider>
-                    <LoadingProvider>
-                        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                            <Routes>
-                                <Route path="/menu" element={<QRRedirect />} />
-                                <Route path="/menu/:restaurantId" element={<Menu />} />
-                                <Route path="/menu/:restaurantId/cart" element={<Cart />} />
-                                <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
-                                <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
-                                <Route path="/maintenance" element={<Maintenance />} />
-                                {/* Room Service Routes */}
-                                <Route path="/room/:restaurantId" element={<RoomMenuPage />} />
-                                <Route path="/room/:restaurantId/track/:orderId" element={<RoomOrderTracking />} />
-                                <Route path="/" element={<CodeEntry />} />
-                            </Routes>
-                        </div>
-                    </LoadingProvider>
-                </NotificationProvider>
+                <CurrencyProvider>
+                    <NotificationProvider>
+                        <LoadingProvider>
+                            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                                <Routes>
+                                    <Route path="/menu" element={<QRRedirect />} />
+                                    <Route path="/menu/:restaurantId" element={<Menu />} />
+                                    <Route path="/menu/:restaurantId/cart" element={<Cart />} />
+                                    <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
+                                    <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
+                                    <Route path="/maintenance" element={<Maintenance />} />
+                                    {/* Room Service Routes */}
+                                    <Route path="/room/:restaurantId" element={<RoomMenuPage />} />
+                                    <Route path="/room/:restaurantId/track/:orderId" element={<RoomOrderTracking />} />
+                                    <Route path="/" element={<CodeEntry />} />
+                                </Routes>
+                            </div>
+                        </LoadingProvider>
+                    </NotificationProvider>
+                </CurrencyProvider>
             </ThemeProvider>
         </CartProvider>
     );

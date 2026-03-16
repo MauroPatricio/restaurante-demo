@@ -8,23 +8,25 @@ import {
     Alert
 } from 'react-native';
 import { feedbackAPI } from '../services/api';
-
-const EMOTIONS = [
-    { id: 'love', emoji: '😍', label: 'Love it' },
-    { id: 'happy', emoji: '😊', label: 'Happy' },
-    { id: 'neutral', emoji: '😐', label: 'Okay' },
-    { id: 'sad', emoji: '😞', label: 'Sad' },
-    { id: 'angry', emoji: '😠', label: 'Angry' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function FeedbackScreen({ route, navigation }) {
+    const { t } = useTranslation();
+    
+    const EMOTIONS = [
+        { id: 'love', emoji: '😍', label: t('emotion_love') },
+        { id: 'happy', emoji: '😊', label: t('emotion_happy') },
+        { id: 'neutral', emoji: '😐', label: t('emotion_neutral') },
+        { id: 'sad', emoji: '😞', label: t('emotion_sad') },
+        { id: 'angry', emoji: '😠', label: t('emotion_angry') },
+    ];
     const { orderId } = route.params;
     const [selectedEmotions, setSelectedEmotions] = useState([]);
     const [rating, setRating] = useState(0);
 
     const toggleEmotion = (emotionId) => {
         if (selectedEmotions.includes(emotionId)) {
-            setSelectedEmotions(selectedEmotions.filter(e => e !== emotion Id));
+            setSelectedEmotions(selectedEmotions.filter(e => e !== emotionId));
         } else {
             setSelectedEmotions([...selectedEmotions, emotionId]);
         }
@@ -32,7 +34,7 @@ export default function FeedbackScreen({ route, navigation }) {
 
     const handleSubmit = async () => {
         if (selectedEmotions.length === 0 || rating === 0) {
-            Alert.alert('Incomplete', 'Please select emotions and rating');
+            Alert.alert(t('incomplete'), t('incomplete_feedback_msg'));
             return;
         }
 
@@ -42,10 +44,10 @@ export default function FeedbackScreen({ route, navigation }) {
                 emotions: selectedEmotions,
                 rating,
             });
-            Alert.alert('Thank you!', 'Your feedback has been submitted');
+            Alert.alert(t('thank_you'), t('feedback_submitted'));
             navigation.goBack();
         } catch (error) {
-            Alert.alert('Error', 'Failed to submit feedback');
+            Alert.alert(t('error'), t('failed_feedback'));
             console.error(error);
         }
     };
@@ -53,7 +55,7 @@ export default function FeedbackScreen({ route, navigation }) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-                <Text style={styles.title}>How was your experience?</Text>
+                <Text style={styles.title}>{t('experience_question')}</Text>
 
                 {/* Emotions */}
                 <View style={styles.emotionsContainer}>
@@ -73,7 +75,7 @@ export default function FeedbackScreen({ route, navigation }) {
                 </View>
 
                 {/* Stars Rating */}
-                <Text style={styles.ratingTitle}>Overall Rating</Text>
+                <Text style={styles.ratingTitle}>{t('overall_rating')}</Text>
                 <View style={styles.starsContainer}>
                     {[1, 2, 3, 4, 5].map((star) => (
                         <TouchableOpacity
@@ -91,7 +93,7 @@ export default function FeedbackScreen({ route, navigation }) {
                     style={styles.submitButton}
                     onPress={handleSubmit}
                 >
-                    <Text style={styles.submitButtonText}>Submit Feedback</Text>
+                    <Text style={styles.submitButtonText}>{t('submit_feedback')}</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>

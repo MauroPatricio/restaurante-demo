@@ -53,7 +53,7 @@ const RestaurantSchema = new mongoose.Schema({
     },
     currency: {
       type: String,
-      default: 'MT'
+      default: 'MZN'
     },
     language: {
       type: String,

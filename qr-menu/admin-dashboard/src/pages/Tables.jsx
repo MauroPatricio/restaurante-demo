@@ -141,10 +141,10 @@ export default function Tables() {
 
             setShowModal(false);
             fetchTables();
-            if (editingTable) alert(t('save_success') || 'Updated successfully');
+            if (editingTable) alert(t('item_saved_success'));
         } catch (error) {
             console.error('Save failed:', error);
-            alert('Failed to save table.');
+            alert(t('failed_save_table'));
         }
     };
 
@@ -154,7 +154,7 @@ export default function Tables() {
             await tableAPI.delete(id);
             fetchTables();
         } catch (error) {
-            alert('Failed to delete table');
+            alert(t('failed_delete_table'));
         }
     };
 
@@ -249,17 +249,17 @@ export default function Tables() {
             <body>
                 <div class="qr-container">
                     <img src="${selectedTable.qrCode}" alt="QR Code" class="qr-image" />
-                    <p class="table-name">${selectedTable.location || 'Mesa'} - ${selectedTable.type}</p>
-                    <h1 class="table-number">MESA ${selectedTable.number}</h1>
+                    <p class="table-name">${selectedTable.location || t('table')} - ${selectedTable.type}</p>
+                    <h1 class="table-number">${t('table').toUpperCase()} ${selectedTable.number}</h1>
                     
                     <div class="code-section">
-                        <p class="code-label">Código de Acesso Manual</p>
+                        <p class="code-label">${t('manual_access_code')}</p>
                         <p class="code-value">${selectedTable.numericCode || '------'}</p>
-                        <p class="code-hint">Use este código se a câmera não funcionar</p>
+                        <p class="code-hint">${t('manual_access_hint')}</p>
                     </div>
                     
                     <div class="footer">
-                        Desenvolvido por Nhiquela Serviços e Consultoria, LDA
+                        ${t('developed_by_full')}
                     </div>
                 </div>
             </body>
@@ -289,20 +289,20 @@ export default function Tables() {
             setShowSessionModal(true);
         } catch (error) {
             console.error('Failed to fetch session:', error);
-            alert('Failed to load table session');
+            alert(t('failed_load_session'));
         }
     };
 
     const handleFreeTable = async (tableId) => {
         try {
             await tableAPI.freeTable(tableId);
-            alert('Mesa liberada com sucesso!');
+            alert(t('free_table_success'));
             setShowSessionModal(false);
             fetchTables();
             fetchActiveOrders();
         } catch (error) {
             console.error('Failed to free table:', error);
-            alert(error.response?.data?.message || 'Failed to free table');
+            alert(error.response?.data?.message || t('free_table_error'));
         }
     };
 
@@ -407,7 +407,7 @@ export default function Tables() {
                                         <MapPin size={14} /> {table.location || '-'}
                                     </p>
                                     <p style={{ fontSize: '0.85em', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <span style={{ fontWeight: 600, color: '#666' }}>Estado: </span>
+                                        <span style={{ fontWeight: 600, color: '#666' }}>{t('status')}: </span>
                                         <span className={`badge ${table.status === 'occupied' ? 'badge-danger' :
                                             table.status === 'free' ? 'badge-success' : 'badge-warning'
                                             }`} style={{ padding: '2px 6px', fontSize: '0.75rem' }}>
@@ -421,7 +421,7 @@ export default function Tables() {
                                                 ? table.assignedWaiter.name
                                                 : (waiters.find(w => w._id === table.assignedWaiter)?.name || table.assignedWaiter)
                                         ) : (
-                                            <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>{t('no_waiter') || 'Sem Garçom'}</span>
+                                            <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>{t('no_waiter')}</span>
                                         )}
                                     </p>
                                 </div>
@@ -495,7 +495,7 @@ export default function Tables() {
                                     type="text"
                                     value={formData.location}
                                     onChange={e => setFormData({ ...formData, location: e.target.value })}
-                                    placeholder="e.g. Varanda"
+                                    placeholder={t('location')}
                                 />
                             </div>
                             {/* Type */}
@@ -532,7 +532,7 @@ export default function Tables() {
                                     value={formData.assignedWaiterId}
                                     onChange={e => setFormData({ ...formData, assignedWaiterId: e.target.value })}
                                 >
-                                    <option value="">{t('select_waiter') || 'Selecione um atendente'}</option>
+                                    <option value="">{t('select_waiter')}</option>
                                     {waiters.map(waiter => (
                                         <option key={waiter._id} value={waiter._id}>
                                             {waiter.name}
@@ -572,7 +572,7 @@ export default function Tables() {
                             </div>
 
                             <div className="modal-actions" style={{ gridColumn: 'span 2', marginTop: '10px' }}>
-                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">{t('cancel')}</button>
                                 <button type="submit" className="btn-primary">{editingTable ? t('update') : t('add_table')}</button>
                             </div>
                         </form>
@@ -585,7 +585,7 @@ export default function Tables() {
                 <div className="modal-overlay" onClick={() => setShowQRModal(false)}>
                     <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'center', maxWidth: '500px' }}>
                         <div className="modal-header">
-                            <h3>QR Code - Mesa {selectedTable.number}</h3>
+                            <h3>{t('qr_code_table', { number: selectedTable.number })}</h3>
                             <button onClick={() => setShowQRModal(false)} className="icon-btn"><X size={20} /></button>
                         </div>
                         <div style={{ padding: '30px 20px' }}>
@@ -608,7 +608,7 @@ export default function Tables() {
                                 marginBottom: '8px',
                                 fontWeight: '500'
                             }}>
-                                {selectedTable.location || 'Mesa'} - {selectedTable.type}
+                                {t(selectedTable.location) || selectedTable.location} - {selectedTable.type}
                             </p>
 
                             {/* Table Number - Prominent */}
@@ -619,7 +619,7 @@ export default function Tables() {
                                 margin: '10px 0 30px',
                                 letterSpacing: '0.05em'
                             }}>
-                                MESA {selectedTable.number}
+                                {t('table').toUpperCase()} {selectedTable.number}
                             </h2>
 
                             {/* Numeric Code Section */}
@@ -638,7 +638,7 @@ export default function Tables() {
                                     fontWeight: '600',
                                     textTransform: 'uppercase'
                                 }}>
-                                    Código de Acesso Manual
+                                    {t('manual_access_code')}
                                 </p>
                                 <p style={{
                                     fontSize: '2.2rem',
@@ -656,7 +656,7 @@ export default function Tables() {
                                     fontStyle: 'italic',
                                     margin: '8px 0 0'
                                 }}>
-                                    Use este código se a câmera não funcionar
+                                    {t('manual_access_hint')}
                                 </p>
                             </div>
 
@@ -668,14 +668,14 @@ export default function Tables() {
                                 paddingTop: '20px',
                                 borderTop: '1px solid #e2e8f0'
                             }}>
-                                Desenvolvido por Nhiquela Serviços e Consultoria, LDA
+                                {t('developed_by_full')}
                             </div>
                         </div>
 
                         <div className="modal-actions" style={{ justifyContent: 'center', padding: '0 20px 20px' }}>
                             <button onClick={printQR} className="btn-primary" style={{ minWidth: '150px' }}>
                                 <Printer size={18} />
-                                {t('print_qr') || 'Imprimir'}
+                                {t('print_qr')}
                             </button>
                         </div>
                     </div>

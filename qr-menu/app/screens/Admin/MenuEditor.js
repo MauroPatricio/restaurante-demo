@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react-native';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 export default function MenuEditor({ route }) {
+  const { t } = useTranslation();
   const { restaurantId = 'RESTAURANT_ID_FAKE' } = route.params || {};
   const [menu, setMenu] = useState([]);
   const [name, setName] = useState('');
@@ -16,7 +18,7 @@ export default function MenuEditor({ route }) {
 
   const addItem = () => {
     if (!name || !price) {
-      alert('Preencha nome e preço!');
+      alert(t('fill_name_price'));
       return;
     }
     axios.post(`http://localhost:4000/api/menu/${restaurantId}`, { name, price: parseFloat(price) })
@@ -25,35 +27,35 @@ export default function MenuEditor({ route }) {
         setPrice('');
         loadMenu();
       })
-      .catch(() => alert('Erro ao adicionar item'));
+      .catch(() => alert(t('error_add_item')));
   };
 
   const removeItem = (itemId) => {
     axios.delete(`http://localhost:4000/api/menu/${restaurantId}/${itemId}`)
       .then(loadMenu)
-      .catch(() => alert('Erro ao remover item'));
+      .catch(() => alert(t('error_remove_item')));
   };
 
   useEffect(loadMenu, []);
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 10 }}>Editor de Menu</Text>
+      <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 10 }}>{t('menu_editor')}</Text>
       
       <TextInput
-        placeholder="Nome do prato"
+        placeholder={t('dish_name')}
         value={name}
         onChangeText={setName}
         style={{ borderWidth: 1, padding: 8, marginBottom: 8 }}
       />
       <TextInput
-        placeholder="Preço"
+        placeholder={t('price')}
         value={price}
         onChangeText={setPrice}
         keyboardType="decimal-pad"
         style={{ borderWidth: 1, padding: 8, marginBottom: 8 }}
       />
-      <Button title="Adicionar prato" onPress={addItem} />
+      <Button title={t('add_dish')} onPress={addItem} />
 
       <FlatList
         data={menu}
@@ -61,9 +63,9 @@ export default function MenuEditor({ route }) {
         style={{ marginTop: 20 }}
         renderItem={({ item }) => (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 10, borderBottomWidth: 1 }}>
-            <Text>{item.name} - ${item.price}</Text>
+            <Text>{item.name} - {item.price} {t('currency')}</Text>
             <TouchableOpacity onPress={() => removeItem(item._id)}>
-              <Text style={{ color: 'red' }}>Remover</Text>
+              <Text style={{ color: 'red' }}>{t('remove')}</Text>
             </TouchableOpacity>
           </View>
         )}

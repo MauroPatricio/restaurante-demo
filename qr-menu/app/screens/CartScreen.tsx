@@ -11,7 +11,10 @@ import {
 } from 'react-native';
 import { useCart } from '../contexts/CartContext';
 
+import { useTranslation } from 'react-i18next';
+
 export default function CartScreen({ navigation }) {
+    const { t } = useTranslation();
     const {
         items,
         subtotal,
@@ -36,14 +39,14 @@ export default function CartScreen({ navigation }) {
         if (couponInput.trim()) {
             const mockDiscount = 50; // Mock 50 MT discount
             applyCoupon(couponInput.toUpperCase(), mockDiscount);
-            Alert.alert('Success', `Coupon "${couponInput}" applied! Discount: ${mockDiscount} MT`);
+            Alert.alert(t('success'), t('coupon_applied', { coupon: couponInput, discount: mockDiscount }));
             setCouponInput('');
         }
     };
 
     const handleCheckout = () => {
         if (items.length === 0) {
-            Alert.alert('Empty Cart', 'Please add items to your cart first');
+            Alert.alert(t('empty_cart'), t('cart_empty_msg'));
             return;
         }
         navigation.navigate('Checkout');
@@ -58,7 +61,7 @@ export default function CartScreen({ navigation }) {
                         {item.customizations.map(c => c.name).join(', ')}
                     </Text>
                 )}
-                <Text style={styles.itemPrice}>{item.menuItem.price} MT</Text>
+                <Text style={styles.itemPrice}>{item.menuItem.price} {t('currency') || 'MT'}</Text>
             </View>
 
             <View style={styles.quantityControls}>
@@ -80,7 +83,7 @@ export default function CartScreen({ navigation }) {
             </View>
 
             <View style={styles.itemRight}>
-                <Text style={styles.itemSubtotal}>{item.subtotal} MT</Text>
+                <Text style={styles.itemSubtotal}>{item.subtotal} {t('currency') || 'MT'}</Text>
                 <TouchableOpacity
                     onPress={() => removeItem(index)}
                     style={styles.removeButton}
@@ -96,13 +99,13 @@ export default function CartScreen({ navigation }) {
             <SafeAreaView style={styles.container}>
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyIcon}>🛒</Text>
-                    <Text style={styles.emptyTitle}>Your cart is empty</Text>
-                    <Text style={styles.emptyText}>Add items from the menu to get started</Text>
+                    <Text style={styles.emptyTitle}>{t('cart_empty')}</Text>
+                    <Text style={styles.emptyText}>{t('cart_empty_msg')}</Text>
                     <TouchableOpacity
                         style={styles.browseButton}
                         onPress={() => navigation.navigate('Home')}
                     >
-                        <Text style={styles.browseButtonText}>Browse Menu</Text>
+                        <Text style={styles.browseButtonText}>{t('browse_menu')}</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -112,14 +115,14 @@ export default function CartScreen({ navigation }) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Cart ({itemCount} items)</Text>
+                <Text style={styles.title}>{t('cart')} ({itemCount === 1 ? t('items_count_one') : t('items_count', { count: itemCount })})</Text>
                 <TouchableOpacity onPress={() => {
-                    Alert.alert('Clear Cart', 'Remove all items?', [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Clear', onPress: clearCart, style: 'destructive' }
+                    Alert.alert(t('clear_cart'), t('clear_cart_confirm'), [
+                        { text: t('cancel'), style: 'cancel' },
+                        { text: t('clear'), onPress: clearCart, style: 'destructive' }
                     ]);
                 }}>
-                    <Text style={styles.clearText}>Clear</Text>
+                    <Text style={styles.clearText}>{t('clear')}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -132,11 +135,11 @@ export default function CartScreen({ navigation }) {
 
             {/* Coupon Section */}
             <View style={styles.couponSection}>
-                <Text style={styles.sectionTitle}>Have a coupon?</Text>
+                <Text style={styles.sectionTitle}>{t('have_coupon')}</Text>
                 <View style={styles.couponInputContainer}>
                     <TextInput
                         style={styles.couponInput}
-                        placeholder="Enter coupon code"
+                        placeholder={t('name_placeholder')}
                         value={couponInput}
                         onChangeText={setCouponInput}
                         autoCapitalize="characters"
@@ -145,14 +148,14 @@ export default function CartScreen({ navigation }) {
                         style={styles.applyButton}
                         onPress={handleApplyCoupon}
                     >
-                        <Text style={styles.applyButtonText}>Apply</Text>
+                        <Text style={styles.applyButtonText}>{t('apply')}</Text>
                     </TouchableOpacity>
                 </View>
                 {couponCode && (
                     <View style={styles.appliedCoupon}>
-                        <Text style={styles.appliedCouponText}>✓ {couponCode} applied</Text>
+                        <Text style={styles.appliedCouponText}>✓ {t('coupon_applied', { coupon: couponCode, discount: discount })}</Text>
                         <TouchableOpacity onPress={removeCoupon}>
-                            <Text style={styles.removeCouponText}>Remove</Text>
+                            <Text style={styles.removeCouponText}>{t('remove')}</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -161,32 +164,32 @@ export default function CartScreen({ navigation }) {
             {/* Price Breakdown */}
             <View style={styles.summarySection}>
                 <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Subtotal</Text>
-                    <Text style={styles.summaryValue}>{subtotal.toFixed(2)} MT</Text>
+                    <Text style={styles.summaryLabel}>{t('subtotal')}</Text>
+                    <Text style={styles.summaryValue}>{subtotal.toFixed(2)} {t('currency') || 'MT'}</Text>
                 </View>
                 <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Tax (16%)</Text>
-                    <Text style={styles.summaryValue}>{tax.toFixed(2)} MT</Text>
+                    <Text style={styles.summaryLabel}>{t('tax')}</Text>
+                    <Text style={styles.summaryValue}>{tax.toFixed(2)} {t('currency') || 'MT'}</Text>
                 </View>
                 <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Service Charge (5%)</Text>
-                    <Text style={styles.summaryValue}>{serviceCharge.toFixed(2)} MT</Text>
+                    <Text style={styles.summaryLabel}>{t('service_charge')}</Text>
+                    <Text style={styles.summaryValue}>{serviceCharge.toFixed(2)} {t('currency') || 'MT'}</Text>
                 </View>
                 {deliveryFee > 0 && (
                     <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Delivery Fee</Text>
-                        <Text style={styles.summaryValue}>{deliveryFee.toFixed(2)} MT</Text>
+                        <Text style={styles.summaryLabel}>{t('delivery_fee')}</Text>
+                        <Text style={styles.summaryValue}>{deliveryFee.toFixed(2)} {t('currency') || 'MT'}</Text>
                     </View>
                 )}
                 {discount > 0 && (
                     <View style={styles.summaryRow}>
-                        <Text style={[styles.summaryLabel, styles.discountText]}>Discount</Text>
-                        <Text style={[styles.summaryValue, styles.discountText]}>-{discount.toFixed(2)} MT</Text>
+                        <Text style={[styles.summaryLabel, styles.discountText]}>{t('discount')}</Text>
+                        <Text style={[styles.summaryValue, styles.discountText]}>-{discount.toFixed(2)} {t('currency') || 'MT'}</Text>
                     </View>
                 )}
                 <View style={[styles.summaryRow, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Total</Text>
-                    <Text style={styles.totalValue}>{total.toFixed(2)} MT</Text>
+                    <Text style={styles.totalLabel}>{t('total')}</Text>
+                    <Text style={styles.totalValue}>{total.toFixed(2)} {t('currency') || 'MT'}</Text>
                 </View>
             </View>
 
@@ -194,7 +197,7 @@ export default function CartScreen({ navigation }) {
                 style={styles.checkoutButton}
                 onPress={handleCheckout}
             >
-                <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+                <Text style={styles.checkoutButtonText}>{t('proceed_checkout')}</Text>
             </TouchableOpacity>
         </SafeAreaView>
     );

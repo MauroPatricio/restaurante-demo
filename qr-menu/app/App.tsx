@@ -11,11 +11,14 @@ import CheckoutScreen from './screens/CheckoutScreen';
 import OrderStatusScreen from './screens/OrderStatusScreen';
 import FeedbackScreen from './screens/FeedbackScreen';
 import DeliveryAddressScreen from './screens/DeliveryAddressScreen';
+import './i18n';
+import { useTranslation } from 'react-i18next';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function HomeTabs() {
+  const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -33,6 +36,7 @@ function HomeTabs() {
         options={{
           tabBarIcon: ({ focused }) => <span style={{ fontSize: 24 }}>{focused ? '🍽️' : '🍴'}</span>,
           headerShown: false,
+          tabBarLabel: t('menu')
         }}
       />
       <Tab.Screen
@@ -40,6 +44,7 @@ function HomeTabs() {
         component={CartScreen}
         options={{
           tabBarIcon: ({ focused }) => <span style={{ fontSize: 24 }}>{focused ? '🛒' : '🛍️'}</span>,
+          tabBarLabel: t('cart')
         }}
       />
     </Tab.Navigator>
@@ -47,6 +52,7 @@ function HomeTabs() {
 }
 
 export default function App() {
+  const { t } = useTranslation();
   return (
     <LoadingProvider>
       <CartProvider>
@@ -60,22 +66,22 @@ export default function App() {
             <Stack.Screen
               name="Checkout"
               component={CheckoutScreen}
-              options={{ title: 'Checkout' }}
+              options={{ title: t('checkout') }}
             />
             <Stack.Screen
               name="DeliveryAddress"
               component={DeliveryAddressScreen}
-              options={{ title: 'Delivery Address' }}
+              options={{ title: t('delivery') }}
             />
             <Stack.Screen
               name="OrderStatus"
               component={OrderStatusScreen}
-              options={{ title: 'Order Status' }}
+              options={{ title: t('order_tracking') }}
             />
             <Stack.Screen
               name="Feedback"
               component={FeedbackScreen}
-              options={{ title: 'Share Feedback' }}
+              options={{ title: t('feedback_title') }}
             />
           </Stack.Navigator>
         </NavigationContainer>

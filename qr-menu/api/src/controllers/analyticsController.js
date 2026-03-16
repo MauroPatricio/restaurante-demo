@@ -147,8 +147,8 @@ export const getRestaurantStats = async (req, res) => {
 
         if (startDate && endDate) {
             query.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
             };
         } else {
             // Default to last 30 days if not specified
@@ -160,33 +160,33 @@ export const getRestaurantStats = async (req, res) => {
         // REAL-TIME KPIS (Snapshot of now)
         // 1. Active Orders: 'pending', 'confirmed', 'preparing'
         const activeOrdersCount = await Order.countDocuments({
-            restaurant: id,
-            status: { $in: ['pending', 'confirmed', 'preparing'] }
+            restaurant: new mongoose.Types.ObjectId(id),
+            status: { $in: ['pending', 'confirmed', 'preparing', 'ready', 'served'] }
         });
 
         // 2. Pending Orders: 'pending', 'confirmed'
         const pendingOrdersCount = await Order.countDocuments({
-            restaurant: id,
+            restaurant: new mongoose.Types.ObjectId(id),
             status: { $in: ['pending', 'confirmed'] }
         });
 
-        // 3. Completed Orders: 'ready', 'completed' (Matching the date filter of the report, typically today)
+        // 3. Completed Orders: 'ready', 'completed', 'served' (Matching the date filter of the report)
         const completedOrdersCount = await Order.countDocuments({
-            restaurant: id,
-            status: { $in: ['ready', 'completed'] },
+            restaurant: new mongoose.Types.ObjectId(id),
+            status: { $in: ['ready', 'completed', 'served'] },
             createdAt: query.createdAt // Apply same date filter
         });
 
         // 4. Occupied Tables: Count distinct tables in active/open orders
         const occupiedTablesResult = await Order.distinct('table', {
-            restaurant: id,
-            status: { $in: ['pending', 'confirmed', 'preparing', 'ready'] } // 'ready' means they haven't paid/left yet usually
+            restaurant: new mongoose.Types.ObjectId(id),
+            status: { $in: ['pending', 'confirmed', 'preparing', 'ready', 'served'] }
         });
         const occupiedTablesCount = occupiedTablesResult.length;
 
         // 5. Active Waiter Calls
         const activeWaiterCallsCount = await WaiterCall.countDocuments({
-            restaurant: id,
+            restaurant: new mongoose.Types.ObjectId(id),
             status: { $in: ['pending', 'acknowledged'] }
         });
 
@@ -354,8 +354,8 @@ export const getFinancialReport = async (req, res) => {
 
         if (startDate && endDate) {
             query.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
             };
         } else {
             query.createdAt = { $gte: subDays(new Date(), 30) };
@@ -446,7 +446,10 @@ export const getSalesReport = async (req, res) => {
         };
 
         if (startDate && endDate) {
-            query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+            query.createdAt = {
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
+            };
         } else {
             query.createdAt = { $gte: subDays(new Date(), 30) };
         }
@@ -537,7 +540,10 @@ export const getOperationalReport = async (req, res) => {
         };
 
         if (startDate && endDate) {
-            query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+            query.createdAt = {
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
+            };
         } else {
             query.createdAt = { $gte: subDays(new Date(), 30) };
         }
@@ -592,7 +598,7 @@ export const getOperationalReport = async (req, res) => {
             {
                 $match: {
                     ...query,
-                    status: { $in: ['ready', 'completed'] },
+                    status: { $in: ['ready', 'completed', 'served'] },
                     // Use actualReadyTime if possible, otherwise rely on updatedAt or skip
                     // For now, assuming actualReadyTime is being set as per routes update
                     actualReadyTime: { $exists: true }
@@ -624,7 +630,7 @@ export const getOperationalReport = async (req, res) => {
             {
                 $match: {
                     ...query,
-                    status: { $in: ['ready', 'completed'] },
+                    status: { $in: ['ready', 'completed', 'served'] },
                     actualReadyTime: { $exists: true }
                 }
             },

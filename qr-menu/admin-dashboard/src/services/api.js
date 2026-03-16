@@ -83,7 +83,7 @@ api.interceptors.response.use(
             config._retry = true;
             loadingManager.stop(type); // Stop previous
             await new Promise(resolve => setTimeout(resolve, 1000));
-            loadingManager.start(type); // Restart loading (with same type) for the retry effort
+            // Removed redundant start() call - it will be called by request interceptor
             return api(config);
         }
 

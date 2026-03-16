@@ -1,0 +1,89 @@
+import axios from 'axios';
+
+// Cache for exchange rates
+let exchangeRates = null;
+let lastFetched = null;
+const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+
+/**
+ * Fetch latest exchange rates from backend
+ */
+export const fetchExchangeRates = async (force = false) => {
+    const now = Date.now();
+    if (!force && exchangeRates && lastFetched && (now - lastFetched < CACHE_DURATION)) {
+        return exchangeRates;
+    }
+
+    try {
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const response = await axios.get(`${apiUrl}/currency/rates`);
+        exchangeRates = response.data.rates;
+        lastFetched = now;
+        return exchangeRates;
+    } catch (error) {
+        console.error('Failed to fetch exchange rates:', error);
+        return {
+            MZN: 1,
+            USD: 0.0156,
+            EUR: 0.0143,
+            ZAR: 0.28,
+            GBP: 0.0123
+        };
+    }
+};
+
+/**
+ * Convert value from one currency to another
+ */
+export const convertCurrency = (amount, from, to, rates) => {
+    // Normalize legacy 'MT' to 'MZN'
+    const normalize = (c) => (c === 'MT' ? 'MZN' : c);
+    const fromCode = normalize(from);
+    const toCode = normalize(to);
+
+    if (!rates || !rates[fromCode] || !rates[toCode]) return amount;
+    const amountInBase = amount / rates[fromCode];
+    return amountInBase * rates[toCode];
+};
+
+/**
+ * Format currency value according to locale
+ */
+export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') => {
+    try {
+        // Handle MZN separately if locale doesn't support it well or to keep MT symbol
+        if (currencyCode === 'MZN') {
+            return `${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+        }
+
+        return new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: currencyCode,
+            minimumFractionDigits: 2
+        }).format(amount);
+    } catch (e) {
+        const symbolMap = {
+            MZN: 'MT',
+            USD: '$',
+            EUR: '€',
+            ZAR: 'R',
+            GBP: '£'
+        };
+        const symbol = symbolMap[currencyCode] || currencyCode;
+        return `${symbol} ${amount.toFixed(2)}`;
+    }
+};
+
+/**
+ * Get currency symbol
+ */
+export const getCurrencySymbol = (currencyCode = 'MZN') => {
+    const symbolMap = {
+        MZN: 'MT',
+        USD: '$',
+        EUR: '€',
+        ZAR: 'R',
+        GBP: '£'
+    };
+    return symbolMap[currencyCode] || currencyCode;
+};

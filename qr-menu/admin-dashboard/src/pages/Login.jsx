@@ -53,11 +53,11 @@ export default function Login() {
             if (data.user) {
                 navigate('/select-restaurant', { state: { restaurants: data.user.restaurants || [] } });
             } else {
-                setError('Erro ao iniciar sessão: utilizador inválido.');
+                setError(t('login_error_invalid_user'));
             }
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.error || 'Falha no login');
+            setError(err.response?.data?.error || t('failed_login'));
         } finally {
             setLoading(false);
         }
@@ -72,7 +72,7 @@ export default function Login() {
                         <div className="icon-badge">
                             <Layout size={28} />
                         </div>
-                        <h1 className="brand-title">Gestão Digital Inteligente</h1>
+                        <h1 className="brand-title">{t('smart_digital_mgmt')}</h1>
                         <div className={`dynamic-subtitle ${fade ? 'fade-in' : 'fade-out'}`}>
                             {subtitles[subtitleIndex]}
                         </div>
@@ -116,7 +116,7 @@ export default function Login() {
                                     type="button"
                                     className="toggle-visibility-btn"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                                    aria-label={showPassword ? t('hide_password') : t('show_password')}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -143,7 +143,7 @@ export default function Login() {
                             </Link>
                         </p>
                         <p className="developer-credit">
-                            Desenvolvido por Nhiquela Servicos e Consultoria, LDA
+                            {t('developed_by')} Nhiquela Servicos e Consultoria, LDA
                         </p>
                     </div>
                 </div>
@@ -153,8 +153,8 @@ export default function Login() {
             <div className="selection-right">
                 <div className="image-overlay"></div>
                 <div className="image-content">
-                    <h2>Gerencie tudo num só lugar.</h2>
-                    <p>Controle seus pedidos, mesas e equipa com eficiência.</p>
+                    <h2>{t('manage_everything_place')}</h2>
+                    <p>{t('control_orders_tables_desc')}</p>
                 </div>
                 <img
                     src="/image/interno.avif"

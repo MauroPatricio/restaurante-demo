@@ -34,11 +34,25 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
     const handleUpdateStatus = async (newStatus) => {
         if (updating || table.status === newStatus) return;
 
+        // Optimistic Update: Update parent via onUpdate if possible, or just local state if we had it.
+        // Since 'table' is a prop, we rely on the parent (HallDashboard) to update it.
+        // However, we can simulate instant change by calling onUpdate immediately with a fake object 
+        // if onUpdate supported that, but HallDashboard.fetchHallData doesn't.
+
+        // Better: We'll actually modify the 'table' object locally if we can, but it's a prop.
+        // Let's assume onUpdate(updatedTable) is better.
+
         try {
             setUpdating(true);
-            await tableAPI.update(table._id, { status: newStatus });
-            if (onUpdate) onUpdate();
-            // We don't close the modal, the user might want to see history too
+
+            // Immediate feedback: We use the dedicated status endpoint which also triggers Socket.IO
+            const response = await tableAPI.updateStatus(table._id, newStatus, `Manual status change to ${newStatus}`);
+
+            if (onUpdate && response.data && response.data.table) {
+                onUpdate(response.data.table);
+            } else if (onUpdate) {
+                onUpdate();
+            }
         } catch (err) {
             console.error('Failed to update table status:', err);
             alert('Erro ao atualizar estado da mesa.');

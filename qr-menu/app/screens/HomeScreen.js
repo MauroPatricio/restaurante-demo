@@ -13,9 +13,11 @@ import {
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { menuAPI } from '../services/api';
 import { useCart } from '../contexts/CartContext';
+import { useTranslation } from 'react-i18next';
 import MenuCard from '../components/MenuCard';
 
 export default function HomeScreen({ navigation }) {
+  const { t } = useTranslation();
   const [menu, setMenu] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -96,7 +98,7 @@ export default function HomeScreen({ navigation }) {
       const response = await menuAPI.getCategories(restaurantId || 'FAKE_ID');
       setCategories(response.data.categories || []);
     } catch (error) {
-      setCategories(['Appetizer', 'Main Course', 'Dessert', 'Drinks']);
+      setCategories([t('filter_all'), 'Appetizer', 'Main Course', 'Dessert', 'Drinks']);
     }
   };
 
@@ -105,15 +107,15 @@ export default function HomeScreen({ navigation }) {
     try {
       const parsed = JSON.parse(data);
       setContext(parsed.restaurantId, parsed.tableId);
-      alert(`Table ${parsed.tableId} selected!`);
+      alert(t('table_selected', { tableId: parsed.tableId }));
     } catch {
-      alert('Invalid QR code');
+      alert(t('invalid_qr'));
     }
   };
 
   const handleAddToCart = (item) => {
     addItem(item, 1, []);
-    alert(`${item.name} added to cart!`);
+    alert(t('added_to_cart', { name: item.name }));
   };
 
   const filteredMenu = menu.filter(item =>
@@ -134,12 +136,12 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Menu</Text>
+        <Text style={styles.title}>{t('menu')}</Text>
         <TouchableOpacity
           style={styles.scanButton}
           onPress={() => setScanning(true)}
         >
-          <Text style={styles.scanButtonText}>📷 Scan QR</Text>
+          <Text style={styles.scanButtonText}>📷 {t('scan_qr')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -147,7 +149,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search menu..."
+          placeholder={t('search_placeholder')}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -170,7 +172,7 @@ export default function HomeScreen({ navigation }) {
             styles.categoryTabText,
             selectedCategory === 'all' && styles.categoryTabTextActive
           ]}>
-            All
+            {t('filter_all')}
           </Text>
         </TouchableOpacity>
 
@@ -197,7 +199,7 @@ export default function HomeScreen({ navigation }) {
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563eb" />
-          <Text style={styles.loadingText}>Loading menu...</Text>
+          <Text style={styles.loadingText}>{t('loading_menu')}</Text>
         </View>
       ) : (
         <FlatList
@@ -213,7 +215,7 @@ export default function HomeScreen({ navigation }) {
           contentContainerStyle={styles.menuList}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No items found</Text>
+              <Text style={styles.emptyText}>{t('no_items_found')}</Text>
             </View>
           }
         />

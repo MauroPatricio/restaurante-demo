@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import axios from 'axios';
 import io from 'socket.io-client';
+import { useTranslation } from 'react-i18next';
 
 export default function Dashboard({ route }) {
+  const { t } = useTranslation();
   const { restaurantId = 'RESTAURANT_ID_FAKE' } = route.params || {};
   const [orders, setOrders] = useState([]);
   const [totalSales, setTotalSales] = useState(0);
@@ -37,25 +38,25 @@ export default function Dashboard({ route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Dashboard do Restaurante</Text>
+      <Text style={styles.header}>{t('restaurant_dashboard')}</Text>
       
-      <Text style={styles.metric}>Vendas do dia: ${totalSales.toFixed(2)}</Text>
-      <Text style={styles.metric}>Pedidos em aberto: {orders.filter(o => o.status !== 'completed').length}</Text>
+      <Text style={styles.metric}>{t('sales_today', { total: totalSales.toFixed(2) })}</Text>
+      <Text style={styles.metric}>{t('open_orders', { count: orders.filter(o => o.status !== 'completed').length })}</Text>
 
-      <Text style={styles.sectionHeader}>Pedidos Atuais</Text>
+      <Text style={styles.sectionHeader}>{t('current_orders')}</Text>
       <FlatList
         data={orders}
         keyExtractor={item => item._id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text>Mesa: {item.table}</Text>
-            <Text>Status: {item.status}</Text>
-            <Text>Total: ${item.total}</Text>
+            <Text>{t('table')}: {item.table}</Text>
+            <Text>{t('status')}: {t(item.status)}</Text>
+            <Text>{t('total')}: {item.total} {t('currency')}</Text>
           </View>
         )}
       />
 
-      <Text style={styles.sectionHeader}>Feedback dos Clientes</Text>
+      <Text style={styles.sectionHeader}>{t('customer_feedback')}</Text>
       <FlatList
         data={feedback}
         keyExtractor={item => item._id}

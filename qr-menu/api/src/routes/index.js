@@ -36,9 +36,11 @@ import weeklyMenuRoutes from './weeklyMenuRoutes.js';
 import stockRoutes from './stockRoutes.js';
 import roomServiceRoutes from './roomServiceRoutes.js';
 import accountingRoutes from './accountingRoutes.js';
+import currencyRoutes from './currencyRoutes.js';
 
 import { processPaidOrderEntry } from '../services/accountingService.js';
 import AccountingTransaction from '../models/AccountingTransaction.js';
+import { calculateTodayAvgPrepTime } from '../services/analyticsService.js';
 
 // Table State Management
 import {
@@ -75,6 +77,7 @@ router.use('/weekly-menus', weeklyMenuRoutes);
 router.use('/stock', stockRoutes);
 router.use('/rooms', roomServiceRoutes);
 router.use('/accounting', accountingRoutes);
+router.use('/currency', currencyRoutes);
 
 // ============ TABLE STATE MANAGEMENT ROUTES ============
 router.get('/tables/:id/current-session', authenticateToken, getTableCurrentSession);
@@ -463,6 +466,7 @@ router.get('/orders/restaurant/:restaurantId', authenticateToken, checkSubscript
       .populate('items.item')
       .populate('table')
       .populate('feedback')
+      .populate('createdByWaiter', 'name')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit));
 
@@ -573,6 +577,23 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
       message: 'Order updated successfully',
       order
     });
+
+    // If order is ready, update realtime stats and broadcast
+    if (status === 'ready') {
+      try {
+        const avgPrepTime = await calculateTodayAvgPrepTime(order.restaurant);
+        const io = req.app.get('io');
+        if (io) {
+          io.to(`restaurant:${order.restaurant}`).emit('stats:updated', {
+            avgPrepTime,
+            orderId: order._id,
+            status: 'ready'
+          });
+        }
+      } catch (statsErr) {
+        console.error('Error broadcasting updated stats:', statsErr);
+      }
+    }
   } catch (error) {
     console.error('Update order error:', error);
     res.status(500).json({ error: 'Failed to update order', details: error.message });

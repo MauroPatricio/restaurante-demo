@@ -28,7 +28,7 @@ const getSocketUrl = () => {
     if (hostname.includes('gestaomodernaonline.com')) {
         return 'https://api.gestaomodernaonline.com';
     } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return ''; // Use same-origin to leverage Vite Proxy
+        return 'http://127.0.0.1:5173'; // Force IPv4 to match Vite proxy
     } else {
         return `http://${hostname}:5000`;
     }
@@ -134,7 +134,7 @@ export const SocketProvider = ({ children }) => {
 
         console.log('Creating socket connection to:', SOCKET_URL);
         const newSocket = io(SOCKET_URL, {
-            transports: ['websocket', 'polling'],
+            transports: ['polling', 'websocket'],
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
@@ -146,6 +146,10 @@ export const SocketProvider = ({ children }) => {
             console.log('Socket connected:', newSocket.id);
             setConnected(true);
             newSocket.emit('join:restaurant', { restaurantId: restaurant._id });
+        });
+
+        newSocket.on('connect_error', (err) => {
+            console.error('Socket connection error:', err.message);
         });
 
         newSocket.on('disconnect', () => setConnected(false));

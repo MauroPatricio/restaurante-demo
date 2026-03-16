@@ -202,17 +202,77 @@ export default function Payments() {
                             <button onClick={() => setShowVerifyModal(false)} className="icon-btn"><XCircle size={24} /></button>
                         </div>
 
-                        <div className="receipt-preview" style={{ margin: '20px 0', textAlign: 'center', background: '#f9f9f9', padding: '20px' }}>
-                            {selectedOrder.receiptUrl ? (
-                                <img src={selectedOrder.receiptUrl} alt="Receipt" style={{ maxWidth: '100%', maxHeight: '400px' }} />
-                            ) : (
-                                <div style={{ padding: '40px', color: '#666' }}>
-                                    <FileText size={48} style={{ marginBottom: '10px' }} />
-                                    <p>No receipt image uploaded</p>
+                        <div className="receipt-preview" style={{ margin: '20px 0', textAlign: 'center', background: '#f9f9f9', padding: '20px', borderRadius: '12px', border: '1px border #f1f5f9' }}>
+                            {/* Order Details Grid */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '16px',
+                                textAlign: 'left',
+                                marginBottom: '24px',
+                                padding: '16px',
+                                background: 'white',
+                                borderRadius: '8px',
+                                border: '1px solid #e2e8f0'
+                            }}>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Hora do Pedido</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>{format(new Date(selectedOrder.createdAt), 'PP p')}</div>
                                 </div>
-                            )}
-                            <div style={{ marginTop: '10px', fontWeight: 'bold' }}>
-                                Total: {selectedOrder.total} MT
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Mesa / Local</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+                                        {selectedOrder.orderType === 'room-service' ? `🛏️ Quarto ${selectedOrder.roomService?.roomNumber || '—'}` : `🪑 Mesa ${selectedOrder.table?.number || selectedOrder.tableNumber || '—'}`}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Atendente</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+                                        {selectedOrder.createdByWaiter?.name || (selectedOrder.source === 'qr-menu' ? 'Cliente (QR Menu)' : 'Sistema')}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Estado Atual</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '600' }}>
+                                        <span className={`status-badge ${selectedOrder.status}`} style={{ margin: 0 }}>
+                                            {t(`status_${selectedOrder.status}`) || selectedOrder.status}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Cliente</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>{selectedOrder.customerName || '—'}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Contacto</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>{selectedOrder.phone || '—'}</div>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '15px' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>Comprovativo</div>
+                                {selectedOrder.receiptUrl ? (
+                                    <img src={selectedOrder.receiptUrl} alt="Receipt" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                                ) : (
+                                    <div style={{ padding: '30px', color: '#94a3b8', background: 'white', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                                        <FileText size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                                        <p style={{ fontSize: '13px' }}>Nenhuma imagem de recibo carregada</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{
+                                marginTop: '15px',
+                                padding: '12px',
+                                background: '#1e293b',
+                                color: 'white',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <span style={{ fontWeight: '500', fontSize: '14px' }}>Total a Confirmar:</span>
+                                <span style={{ fontWeight: '800', fontSize: '18px' }}>{selectedOrder.total} MT</span>
                             </div>
                         </div>
 

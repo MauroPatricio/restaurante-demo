@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { orderAPI } from '../services/api';
 import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useSound } from '../hooks/useSound';
-import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle, Coffee } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle, Coffee, Wifi, WifiOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
@@ -19,8 +19,10 @@ const Kitchen = () => {
 
     const [orders, setOrders] = useState([]);
     const [cancelledOrders, setCancelledOrders] = useState([]);
+    const [newOrderIds, setNewOrderIds] = useState(new Set());
     const [loading, setLoading] = useState(true);
     const [audioEnabled, setAudioEnabled] = useState(false);
+    const { connected } = useSocket();
 
     const [stats, setStats] = useState({
         realtime: {
@@ -34,6 +36,33 @@ const Kitchen = () => {
     });
 
     const { play: playOrderSound } = useSound('/sounds/bell.mp3');
+
+    const columns = useMemo(() => ({
+        pending: {
+            title: t('pending') || 'Pending',
+            icon: AlertCircle,
+            color: '#f59e0b',
+            bg: '#fffbeb',
+            borderColor: '#fef3c7',
+            items: orders.filter((o) => ['pending', 'confirmed'].includes(o.status))
+        },
+        preparing: {
+            title: t('preparing') || 'Preparing',
+            icon: ChefHat,
+            color: '#3b82f6',
+            bg: '#eff6ff',
+            borderColor: '#dbeafe',
+            items: orders.filter((o) => o.status === 'preparing')
+        },
+        ready: {
+            title: t('ready') || 'Prontos',
+            icon: CheckCircle,
+            color: '#10b981',
+            bg: '#ecfdf5',
+            borderColor: '#d1fae5',
+            items: orders.filter((o) => o.status === 'ready')
+        }
+    }), [orders, t]);
 
     useEffect(() => {
         if (!restaurantId) {
@@ -50,10 +79,40 @@ const Kitchen = () => {
 
         const handleNewOrder = (data) => {
             console.log('Kitchen: New order received', data);
-            fetchData();
+
+            setOrders(prev => {
+                const exists = prev.find(o => o._id === data._id || o._id === data.orderId);
+                if (exists) return prev;
+                // Since data might be simplified payload, we might still need a full fetch OR trust the data
+                // If data is simplified, we might want to fetch just that order.
+                // For now, let's assume we might need a full fetch to be safe with model mapping
+                return [data, ...prev];
+            });
+
+            // Highlight the new order
+            const orderId = data._id || data.orderId;
+            setNewOrderIds(prev => new Set([...prev, orderId]));
+            setTimeout(() => {
+                setNewOrderIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(orderId);
+                    return next;
+                });
+            }, 10000);
+
             if (audioEnabled) {
                 playOrderSound();
             }
+
+            // Update local stats: Increment pending count
+            setStats(prev => ({
+                ...prev,
+                realtime: {
+                    ...prev.realtime,
+                    activeOrders: prev.realtime.activeOrders + 1,
+                    pendingOrders: prev.realtime.pendingOrders + 1
+                }
+            }));
         };
 
         const handleRealtimeUpdate = (data) => {
@@ -68,23 +127,65 @@ const Kitchen = () => {
                 setTimeout(() => {
                     setCancelledOrders(prev => prev.filter(o => o._id !== data._id));
                 }, 10000);
+
+                setOrders(prev => prev.filter(o => o._id !== data._id));
+                return;
             }
 
-            fetchData();
+            // Update stats incrementally if status changed to something final
+            if (['completed', 'served'].includes(data.status)) {
+                setOrders(prev => prev.filter(o => o._id !== data._id));
+                setStats(prev => ({
+                    ...prev,
+                    realtime: {
+                        ...prev.realtime,
+                        activeOrders: Math.max(0, prev.realtime.activeOrders - 1),
+                        completedOrders: prev.realtime.completedOrders + 1
+                    }
+                }));
+                return;
+            }
+
+            // Standard status update (e.g. pending -> preparing -> ready)
+            setOrders(prev => {
+                const index = prev.findIndex(o => o._id === data._id);
+                if (index === -1) {
+                    // Only add if it belongs in KDS columns
+                    if (['pending', 'confirmed', 'preparing', 'ready'].includes(data.status)) {
+                        return [data, ...prev];
+                    }
+                    return prev;
+                }
+                const newOrders = [...prev];
+                newOrders[index] = { ...newOrders[index], ...data };
+                return newOrders;
+            });
+        };
+
+        const handleStatsUpdate = (data) => {
+            console.log('Kitchen: Stats update received', data);
+            if (data.avgPrepTime !== undefined) {
+                setStats(prev => ({
+                    ...prev,
+                    operational: { ...prev.operational, avgPrepTime: data.avgPrepTime }
+                }));
+            }
         };
 
         socket.on('order:new', handleNewOrder);
         socket.on('order-updated', handleRealtimeUpdate);
-        socket.on('waiter:call', handleRealtimeUpdate);
-        socket.on('waiter:call:acknowledged', handleRealtimeUpdate);
-        socket.on('waiter:call:resolved', handleRealtimeUpdate);
+        socket.on('stats:updated', handleStatsUpdate);
+        socket.on('waiter:call', fetchData);
+        socket.on('waiter:call:acknowledged', fetchData);
+        socket.on('waiter:call:resolved', fetchData);
 
         return () => {
             socket.off('order:new', handleNewOrder);
             socket.off('order-updated', handleRealtimeUpdate);
-            socket.off('waiter:call', handleRealtimeUpdate);
-            socket.off('waiter:call:acknowledged', handleRealtimeUpdate);
-            socket.off('waiter:call:resolved', handleRealtimeUpdate);
+            socket.off('stats:updated', handleStatsUpdate);
+            socket.off('waiter:call', fetchData);
+            socket.off('waiter:call:acknowledged', fetchData);
+            socket.off('waiter:call:resolved', fetchData);
         };
     }, [socket, restaurantId, audioEnabled, playOrderSound]);
 
@@ -145,33 +246,6 @@ const Kitchen = () => {
         );
     }
 
-    const columns = {
-        pending: {
-            title: t('pending') || 'Pending',
-            icon: AlertCircle,
-            color: '#f59e0b',
-            bg: '#fffbeb',
-            borderColor: '#fef3c7',
-            filter: (o) => ['pending', 'confirmed'].includes(o.status)
-        },
-        preparing: {
-            title: t('preparing') || 'Preparing',
-            icon: ChefHat,
-            color: '#3b82f6',
-            bg: '#eff6ff',
-            borderColor: '#dbeafe',
-            filter: (o) => o.status === 'preparing'
-        },
-        ready: {
-            title: t('ready') || 'Prontos',
-            icon: CheckCircle,
-            color: '#10b981',
-            bg: '#ecfdf5',
-            borderColor: '#d1fae5',
-            filter: (o) => o.status === 'ready'
-        }
-    };
-
     const { realtime, operational } = stats;
 
     return (
@@ -199,9 +273,12 @@ const Kitchen = () => {
                         {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                         {audioEnabled ? 'Áudio Ligado' : 'Áudio Desligado'}
                     </button>
-                    <div className="premium-badge badge-success" style={{ fontSize: '14px', padding: '10px 24px' }}>
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }} />
-                        Live Updates
+                    <div className={`premium-badge ${connected ? 'badge-success' : 'badge-error'}`} style={{ fontSize: '14px', padding: '10px 24px' }}>
+                        {connected ? (
+                            <><Wifi size={16} /> 🟢 Conectado</>
+                        ) : (
+                            <><WifiOff size={16} /> 🔴 Offline</>
+                        )}
                     </div>
                 </div>
             </div>
@@ -325,7 +402,7 @@ const Kitchen = () => {
                                 {config.title}
                             </h2>
                             <span className="premium-badge glass-surface" style={{ color: config.color, padding: '6px 16px', fontSize: '14px', fontWeight: '900' }}>
-                                {orders.filter(config.filter).length}
+                                {config.items.length}
                             </span>
                         </div>
 
@@ -338,11 +415,12 @@ const Kitchen = () => {
                             flexDirection: 'column',
                             gap: '20px'
                         }}>
-                            {orders.filter(config.filter).map(order => (
-                                <div key={order._id} className="premium-card" style={{
+                            {config.items.map(order => (
+                                <div key={order._id} className={`premium-card ${newOrderIds.has(order._id) ? 'premium-pulse-soft' : ''}`} style={{
                                     padding: '24px',
                                     borderLeft: `6px solid ${config.color}`,
-                                    position: 'relative'
+                                    position: 'relative',
+                                    backgroundColor: newOrderIds.has(order._id) ? `${config.color}08` : 'white'
                                 }}>
                                     <div style={{
                                         display: 'flex',
@@ -468,7 +546,7 @@ const Kitchen = () => {
                                     </div>
                                 </div>
                             ))}
-                            {orders.filter(config.filter).length === 0 && (
+                            {config.items.length === 0 && (
                                 <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
                                     <div style={{ padding: '24px', background: 'white', borderRadius: '50%', marginBottom: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
                                         <config.icon size={48} strokeWidth={1.5} className="text-slate-200" />

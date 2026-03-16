@@ -26,7 +26,7 @@ const SubscriptionSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'MT'
+    default: 'MZN'
   },
   graceEndDate: {
     type: Date // Date when grace period ends and suspension occurs

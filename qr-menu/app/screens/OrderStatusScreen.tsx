@@ -7,16 +7,18 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { orderAPI } from '../services/api';
-
-const STATUS_STEPS = [
-    { key: 'pending', label: 'Pending', emoji: '🕐' },
-    { key: 'confirmed', label: 'Confirmed', emoji: '✓' },
-    { key: 'preparing', label: 'Preparing', emoji: '👨‍🍳' },
-    { key: 'ready', label: 'Ready', emoji: '✅' },
-    { key: 'completed', label: 'Completed', emoji: '🎉' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function OrderStatusScreen({ route }) {
+    const { t } = useTranslation();
+    
+    const STATUS_STEPS = [
+        { key: 'pending', label: t('order_status_received'), emoji: '🕐' },
+        { key: 'confirmed', label: t('order_status_confirmed'), emoji: '✓' },
+        { key: 'preparing', label: t('order_status_preparing'), emoji: '👨‍🍳' },
+        { key: 'ready', label: t('order_status_ready'), emoji: '✅' },
+        { key: 'completed', label: t('order_status_completed'), emoji: '🎉' },
+    ];
     const { orderId } = route.params;
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -49,7 +51,7 @@ export default function OrderStatusScreen({ route }) {
     if (!order) {
         return (
             <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Order not found</Text>
+                <Text style={styles.errorText}>{t('order_not_found')}</Text>
             </View>
         );
     }
@@ -59,8 +61,8 @@ export default function OrderStatusScreen({ route }) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Order #{orderId.slice(-6).toUpperCase()}</Text>
-                <Text style={styles.orderType}>{order.orderType}</Text>
+                <Text style={styles.title}>{t('order_number', { id: orderId.slice(-6).toUpperCase() })}</Text>
+                <Text style={styles.orderType}>{t(order.orderType)}</Text>
             </View>
 
             <View style={styles.statusContainer}>
@@ -95,18 +97,18 @@ export default function OrderStatusScreen({ route }) {
             </View>
 
             <View style={styles.detailsContainer}>
-                <Text style={styles.detailsTitle}>Order Details</Text>
+                <Text style={styles.detailsTitle}>{t('order_details')}</Text>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Items:</Text>
+                    <Text style={styles.detailLabel}>{t('items')}:</Text>
                     <Text style={styles.detailValue}>{order.items?.length || 0}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Total:</Text>
-                    <Text style={styles.detailValue}>{order.total} MT</Text>
+                    <Text style={styles.detailLabel}>{t('total')}:</Text>
+                    <Text style={styles.detailValue}>{order.total} {t('currency') || 'MT'}</Text>
                 </View>
                 {order.estimatedReadyTime && (
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Estimated Ready:</Text>
+                        <Text style={styles.detailLabel}>{t('estimated_ready')}:</Text>
                         <Text style={styles.detailValue}>
                             {new Date(order.estimatedReadyTime).toLocaleTimeString()}
                         </Text>

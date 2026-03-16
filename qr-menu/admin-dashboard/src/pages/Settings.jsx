@@ -225,6 +225,72 @@ export default function Settings() {
                         </div>
                     </div>
 
+                    {/* System Settings Section (Now within the form or separate) */}
+                    <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #f1f5f9' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '20px' }}>
+                            {t('system_settings') || 'System Settings'}
+                        </h3>
+
+                        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                            {/* Currency Selection */}
+                            <div className="form-group">
+                                <label>{t('default_currency') || 'Default Currency'}</label>
+                                <select
+                                    value={restaurant?.settings?.currency || 'MZN'}
+                                    onChange={async (e) => {
+                                        const newValue = e.target.value;
+                                        try {
+                                            const restId = user.restaurant._id || user.restaurant;
+                                            setRestaurant(prev => ({
+                                                ...prev,
+                                                settings: { ...prev.settings, currency: newValue }
+                                            }));
+                                            await restaurantAPI.updateSettings(restId, { settings: { currency: newValue } });
+                                        } catch (error) {
+                                            console.error('Failed to update currency', error);
+                                            alert(t('error_generic') || 'Failed to update');
+                                        }
+                                    }}
+                                    className="input-base"
+                                >
+                                    <option value="MZN">Metical (MZN)</option>
+                                    <option value="USD">Dollar (USD)</option>
+                                    <option value="EUR">Euro (EUR)</option>
+                                    <option value="ZAR">Rand (ZAR)</option>
+                                    <option value="GBP">Pound (GBP)</option>
+                                </select>
+                            </div>
+
+                            {/* System Language */}
+                            <div className="form-group">
+                                <label>{t('system_language') || 'System Language'}</label>
+                                <select
+                                    value={restaurant?.settings?.language || 'pt'}
+                                    onChange={async (e) => {
+                                        const newValue = e.target.value;
+                                        try {
+                                            const restId = user.restaurant._id || user.restaurant;
+                                            setRestaurant(prev => ({
+                                                ...prev,
+                                                settings: { ...prev.settings, language: newValue }
+                                            }));
+                                            await restaurantAPI.updateSettings(restId, { settings: { language: newValue } });
+                                        } catch (error) {
+                                            console.error('Failed to update language', error);
+                                            alert(t('error_generic') || 'Failed to update');
+                                        }
+                                    }}
+                                    className="input-base"
+                                >
+                                    <option value="pt">Português</option>
+                                    <option value="en">English</option>
+                                    <option value="es">Español</option>
+                                    <option value="fr">Français</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="form-actions" style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
                         <button type="submit" className="btn-primary" disabled={saving}>
                             <Save size={18} />
@@ -258,7 +324,7 @@ export default function Settings() {
                                             settings: { ...prev.settings, isMaintenance: newValue }
                                         }));
 
-                                        await restaurantAPI.updateSettings(restId, { isMaintenance: newValue });
+                                        await restaurantAPI.updateSettings(restId, { settings: { isMaintenance: newValue } });
 
                                         // Show subtle notification or success state if needed
                                     } catch (error) {

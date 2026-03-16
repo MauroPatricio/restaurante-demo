@@ -134,7 +134,7 @@ export default function Menu() {
 
             {/* Menu Grid */}
             {loading ? (
-                <div className="loading">Loading...</div>
+                <div className="loading">{t('loading')}</div>
             ) : (
                 <div className="menu-grid">
                     {items.map(item => (
@@ -164,7 +164,7 @@ export default function Menu() {
                                             <span className="badge" style={{ background: '#e0f2fe', fontSize: '0.75rem', fontWeight: '500' }}>
                                                 {typeof item.subcategory === 'object'
                                                     ? item.subcategory.name
-                                                    : (categories.flatMap(c => c.subcategories || []).find(s => s._id === item.subcategory)?.name || 'Subcategoria')}
+                                                    : (categories.flatMap(c => c.subcategories || []).find(s => s._id === item.subcategory)?.name || t('subcategory'))}
                                             </span>
                                         )}
                                         {item.featured && <span className="badge" style={{ background: '#ffeb3b', color: '#000' }}>{t('featured')}</span>}
@@ -179,15 +179,15 @@ export default function Menu() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             {item.stock === 0 ? (
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '700', background: '#fee2e2', color: '#dc2626', padding: '3px 8px', borderRadius: '20px' }}>
-                                                    <AlertTriangle size={12} /> ESGOTADO
+                                                    <AlertTriangle size={12} /> {t('out_of_stock')}
                                                 </span>
                                             ) : item.stockMin && item.stock <= item.stockMin ? (
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '700', background: '#fef3c7', color: '#d97706', padding: '3px 8px', borderRadius: '20px' }}>
-                                                    <AlertTriangle size={12} /> Stock Baixo: {item.stock} {item.unit || 'Un.'}
+                                                    <AlertTriangle size={12} /> {t('low_stock')} {item.stock} {item.unit || t('unit_short')}
                                                 </span>
                                             ) : (
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600', background: '#dcfce7', color: '#16a34a', padding: '3px 8px', borderRadius: '20px' }}>
-                                                    <CheckCircle size={12} /> {item.stock} {item.unit || 'Un.'}
+                                                    <CheckCircle size={12} /> {item.stock} {item.unit || t('unit_short')}
                                                 </span>
                                             )}
                                         </div>
@@ -196,7 +196,7 @@ export default function Menu() {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                                         <span style={{ fontSize: '0.8rem', color: '#888' }}>
                                             {item.portionSize && `${item.portionSize} • `}
-                                            {item.prepTime} min
+                                            {item.prepTime} {t('minutes_short')}
                                         </span>
                                         <label className="toggle-switch">
                                             <input
@@ -338,7 +338,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
             setImageFile(null); // Clear local file state as it's now on the server
         } catch (error) {
             console.error('Failed to upload image:', error);
-            alert('Falha ao carregar imagem. Por favor, tente novamente.');
+            alert(t('image_upload_failed'));
             // Revert preview on failure
             setFormData(prev => ({
                 ...prev,
@@ -361,7 +361,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (uploadingImage) {
-            alert('Aguarde o carregamento da imagem...');
+            alert(t('wait_image_upload'));
             return;
         }
         setLoading(true);
@@ -400,7 +400,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
             });
 
             // "Apresentar o item gravado" - Show success toast/alert
-            alert(`✅ Item "${response.data.menuItem.name}" gravado com sucesso!`);
+            alert(`✅ ${t('item_saved_success', { name: response.data.menuItem.name })}`);
 
             onSave();
         } catch (error) {
@@ -458,7 +458,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                     {activeTab === 'general' && (
                         <div className="form-grid">
                             <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label>Product Image</label>
+                                <label>{t('product_image')}</label>
                                 {/* Register.jsx Philosophy: Direct Image Input & Preview */}
                                 <div className="center-upload" style={{ justifyContent: 'flex-start' }}>
                                     <label htmlFor="image-upload" className="avatar-upload-label" style={{ display: 'block', width: 'fit-content' }}>
@@ -517,7 +517,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                 cursor: 'pointer'
                                             }}>
                                                 <ImageIcon size={32} />
-                                                <small style={{ marginTop: '8px' }}>Upload Photo</small>
+                                                <small style={{ marginTop: '8px' }}>{t('upload_photo')}</small>
                                             </div>
                                         )}
                                         <input
@@ -537,7 +537,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                             </div>
 
                             <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label>Name *</label>
+                                <label>{t('name_required')}</label>
                                 <input
                                     type="text"
                                     value={formData.name}
@@ -547,13 +547,13 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                             </div>
 
                             <div className="form-group">
-                                <label>Category *</label>
+                                <label>{t('category_required')}</label>
                                 <select
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
                                     required
                                 >
-                                    <option value="">Select a category</option>
+                                    <option value="">{t('select_category')}</option>
                                     {categories.map(cat => (
                                         <option key={cat._id} value={cat._id}>{cat.name}</option>
                                     ))}
@@ -567,7 +567,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                     onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
                                     disabled={!formData.category || subcategories.length === 0}
                                 >
-                                    <option value="">None</option>
+                                    <option value="">{t('none')}</option>
                                     {subcategories.map(sub => (
                                         <option key={sub._id} value={sub._id}>{sub.name}</option>
                                     ))}
@@ -590,8 +590,8 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                             <Package size={18} style={{ color: '#6366f1' }} />
                                             <div>
-                                                <p style={{ margin: 0, fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>Controlo de Stock</p>
-                                                <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Activar para gerir quantidades disponíveis</p>
+                                                <p style={{ margin: 0, fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>{t('stock_control')}</p>
+                                                <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>{t('stock_control_desc')}</p>
                                             </div>
                                         </div >
                                         <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
@@ -602,7 +602,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                 style={{ width: '18px', height: '18px', accentColor: '#6366f1', cursor: 'pointer' }}
                                             />
                                             <span style={{ fontSize: '13px', fontWeight: '700', color: formData.stockControlled ? '#6366f1' : '#94a3b8' }}>
-                                                {formData.stockControlled ? 'Activo' : 'Inactivo'}
+                                                {formData.stockControlled ? t('active') : t('inactive')}
                                             </span>
                                         </label>
                                     </div>
@@ -613,7 +613,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                             {/* Custo Unitário (Reposidioned here) */}
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    Custo Unitário (Compra)
+                                                    {t('unit_cost')}
                                                 </label>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
@@ -635,13 +635,13 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         }}
                                                     />
                                                 </div>
-                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Preço de custo para cálculo de margem</small>
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>{t('unit_cost_desc')}</small>
                                             </div>
 
                                             {/* Quantidade Disponível */}
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    Quantidade Disponível *
+                                                    {t('available_quantity_required')}
                                                 </label>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
@@ -649,7 +649,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         value={formData.stock}
                                                         onChange={(e) => {
                                                             const v = e.target.value;
-                                                            setFormData({ ...formData, stock: v === '' ? '' : Math.max(0, parseInt(v) || 0) });
+                                                            setFormData(prev => ({ ...prev, stock: v === '' ? '' : Math.max(0, parseInt(v) || 0) }));
                                                         }}
                                                         onFocus={(e) => e.target.select()}
                                                         onBlur={(e) => {
@@ -671,20 +671,20 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         }}
                                                     />
                                                 </div>
-                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Unidades actuais em stock</small>
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>{t('current_stock_desc')}</small>
                                             </div>
 
                                             {/* Stock Mínimo */}
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    Stock Mínimo
+                                                    {t('minimum_stock')}
                                                 </label>
                                                 <input
                                                     type="number"
                                                     value={formData.stockMin}
                                                     onChange={(e) => {
                                                         const v = e.target.value;
-                                                        setFormData({ ...formData, stockMin: v === '' ? '' : Math.max(0, parseInt(v) || 0) });
+                                                        setFormData(prev => ({ ...prev, stockMin: v === '' ? '' : Math.max(0, parseInt(v) || 0) }));
                                                     }}
                                                     onFocus={(e) => e.target.select()}
                                                     onBlur={(e) => {
@@ -705,13 +705,13 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         boxSizing: 'border-box'
                                                     }}
                                                 />
-                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Alerta quando stock ≤ este valor</small>
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>{t('minimum_stock_desc')}</small>
                                             </div>
 
                                             {/* Unidade de Medida */}
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    Unidade de Medida
+                                                    {t('unit_of_measure')}
                                                 </label>
                                                 <select
                                                     value={formData.unit}
@@ -728,15 +728,15 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         boxSizing: 'border-box'
                                                     }}
                                                 >
-                                                    <option value="Unidade">Unidade</option>
-                                                    <option value="Garrafa">Garrafa</option>
+                                                    <option value="Unidade">{t('unit')}</option>
+                                                    <option value="Garrafa">{t('bottle')}</option>
                                                     <option value="Kg">Kg</option>
-                                                    <option value="Litro">Litro</option>
-                                                    <option value="Caixa">Caixa</option>
-                                                    <option value="Pacote">Pacote</option>
-                                                    <option value="Porção">Porção</option>
+                                                    <option value="Litro">{t('liter')}</option>
+                                                    <option value="Caixa">{t('box')}</option>
+                                                    <option value="Pacote">{t('pack')}</option>
+                                                    <option value="Porção">{t('portion')}</option>
                                                 </select>
-                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Ex: Garrafa, Kg, Litro</small>
+                                                <small style={{ color: '#94a3b8', fontSize: '11px' }}>Ex: {t('bottle')}, Kg, {t('liter')}</small>
                                             </div>
 
                                             {/* Live status preview */}
@@ -763,10 +763,10 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                     }
                                                     <span style={{ fontSize: '13px', fontWeight: '700', color: formData.stock === 0 ? '#dc2626' : formData.stockMin && formData.stock <= formData.stockMin ? '#92400e' : '#166534' }}>
                                                         {formData.stock === 0
-                                                            ? '⚠ Produto esgotado'
+                                                            ? `⚠ ${t('out_of_stock')}`
                                                             : formData.stockMin && formData.stock <= formData.stockMin
-                                                                ? `⚠ Stock baixo – ${formData.stock} ${formData.unit} restantes`
-                                                                : `✓ Stock OK – ${formData.stock} ${formData.unit} disponível`
+                                                                ? `⚠ ${t('low_stock')} – ${formData.stock} ${formData.unit} ${t('remaining')}`
+                                                                : `✓ ${t('stock_ok')} – ${formData.stock} ${formData.unit} ${t('available_short')}`
                                                         }
                                                     </span>
                                                 </div>
@@ -786,7 +786,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         gap: '12px'
                                                     }}>
                                                         <DollarSign size={18} />
-                                                        Margem de Lucro: {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} MT por item)
+                                                        {t('profit_margin')} {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} MT {t('per_item')})
                                                     </div>
                                                 </div>
                                             )}

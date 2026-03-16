@@ -13,14 +13,24 @@ import { useSound } from '../hooks/useSound';
 import bellSound from '../sound/bell.mp3';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getMenuUrl } from '../utils/navigation';
+import { useCurrency } from '../context/CurrencyContext';
+import { convertCurrency, formatCurrency } from '../utils/currencyUtils';
+import CurrencySwitcher from '../components/CurrencySwitcher';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Cart = () => {
     const { restaurantId } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { cart, removeFromCart, updateQty, cartTotal, clearCart } = useCart();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { joinOrderRoom } = useNotification();
+    const { currency: preferredCurrency, rates } = useCurrency();
+
+    const locale = i18n.language === 'pt' ? 'pt-MZ' : i18n.language;
+
+    // Converted total for display
+    const convertedTotal = convertCurrency(cartTotal, 'MZN', preferredCurrency, rates);
 
     // Idempotency lock
     const submitLock = useRef(false);
@@ -53,19 +63,19 @@ const Cart = () => {
         if (submitLock.current) return;
 
         if (!customerName.trim()) {
-            setError('Por favor, informe seu nome');
+            setError(t('please_enter_name'));
             return;
         }
 
         if (!phone.trim()) {
-            setError('Por favor, informe seu número de telefone');
+            setError(t('please_enter_phone'));
             return;
         }
 
         const token = tokenFromUrl || tokenFromStorage || tokenFromSession;
 
         if (!tableNumber || !token) {
-            setError('Mesa ou sessão não identificada. Por favor, escaneie o QR Code novamente.');
+            setError(t('error_missing_session'));
             return;
         }
 
@@ -90,7 +100,8 @@ const Cart = () => {
                 customerName: customerName.trim(),
                 phone: phone.trim(),
                 paymentMethod,
-                notes: ''
+                notes: '',
+                currency: preferredCurrency
             };
 
             console.log('🚀 ENVIANDO PEDIDO AO SERVIDOR:', {
@@ -162,7 +173,7 @@ const Cart = () => {
                 </button>
 
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-widest mt-auto pb-4">
-                    Desenvolvido por Nhiquela Serviços e Consultoria, LDA
+                    {t('developed_by')}
                 </p>
             </div>
         );
@@ -189,11 +200,17 @@ const Cart = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors duration-200">
             {/* Header */}
-            <div className="bg-white dark:bg-gray-900 dark:border-gray-800 p-4 sticky top-0 z-10 shadow-sm border-b border-gray-100 flex items-center gap-4 transition-colors duration-200">
-                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
-                    <ArrowLeft size={24} />
-                </button>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
+            <div className="bg-white dark:bg-gray-900 dark:border-gray-800 p-4 sticky top-0 z-10 shadow-sm border-b border-gray-100 flex items-center justify-between transition-colors duration-200">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
+                        <ArrowLeft size={24} />
+                    </button>
+                    <h1 className="text-lg font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                    <LanguageSwitcher />
+                    <CurrencySwitcher />
+                </div>
             </div>
 
             <div className="p-4 space-y-4 max-w-md mx-auto">
@@ -203,7 +220,13 @@ const Cart = () => {
                         <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 transition-colors">
                             <div className="flex-1">
                                 <h3 className="font-bold text-gray-900 dark:text-white">{item.name}</h3>
-                                <p className="text-primary-600 dark:text-primary-400 font-bold mt-1">{item.price} MT</p>
+                                <p className="text-primary-600 dark:text-primary-400 font-bold mt-1">
+                                    {formatCurrency(
+                                        convertCurrency(item.price, item.currency || 'MZN', preferredCurrency, rates),
+                                        preferredCurrency,
+                                        locale
+                                    )}
+                                </p>
                                 {item.customizations?.length > 0 && (
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {item.customizations.map(c => c.name).join(', ')}
@@ -242,11 +265,11 @@ const Cart = () => {
                 <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 transition-colors">
                     <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
                         <span>{t('subtotal')}</span>
-                        <span>{cartTotal} {t('currency')}</span>
+                        <span>{formatCurrency(convertedTotal, preferredCurrency, locale)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-xl pt-3 border-t border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
                         <span>{t('total')}</span>
-                        <span>{cartTotal} {t('currency')}</span>
+                        <span>{formatCurrency(convertedTotal, preferredCurrency, locale)}</span>
                     </div>
                 </div>
 
@@ -298,7 +321,7 @@ const Cart = () => {
                                                 {method === 'visa' && <CreditCard size={24} />}
                                                 {method === 'cash' && <Wallet size={24} />}
                                             </div>
-                                            <span className="capitalize font-black text-xs tracking-widest">{method === 'visa' ? 'VISA / MASTERCARD' : method}</span>
+                                            <span className="capitalize font-black text-xs tracking-widest">{method === 'visa' ? 'VISA / MASTERCARD' : method.toUpperCase()}</span>
                                             {paymentMethod === method && (
                                                 <div style={{
                                                     position: 'absolute',
@@ -363,12 +386,12 @@ const Cart = () => {
                             ) : t('confirm_order')}
                         </span>
                         <span className="text-xl flex items-center gap-2">
-                            {cartTotal} {t('currency')}
+                            {formatCurrency(convertedTotal, preferredCurrency, locale)}
                             <ArrowRight className="inline" size={24} />
                         </span>
                     </button>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold text-center uppercase tracking-[0.2em] opacity-80">
-                        Desenvolvido por Nhiquela Serviços e Consultoria, LDA
+                        {t('developed_by')}
                     </p>
                 </div>
             </div>

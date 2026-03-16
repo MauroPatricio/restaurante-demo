@@ -69,6 +69,10 @@ const OrderSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  currency: {
+    type: String,
+    default: 'MZN'
+  },
   customerName: String,
   phone: {
     type: String,

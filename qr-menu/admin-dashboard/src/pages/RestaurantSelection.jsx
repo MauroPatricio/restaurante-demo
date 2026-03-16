@@ -74,7 +74,7 @@ const RestaurantSelection = () => {
             navigate('/dashboard');
         } catch (err) {
             console.error(err);
-            setError('Falha ao entrar no estabelecimento. Tente novamente.');
+            setError(t('failed_select_restaurant'));
         } finally {
             setLoading(false);
         }
@@ -94,7 +94,7 @@ const RestaurantSelection = () => {
             ));
         } catch (err) {
             console.error('Failed to toggle restaurant status:', err);
-            alert('Falha ao alterar status do estabelecimento');
+            alert(t('failed_toggle_status'));
         } finally {
             setTogglingId(null);
         }
@@ -115,8 +115,8 @@ const RestaurantSelection = () => {
                         <div className="icon-badge">
                             <Building2 size={28} />
                         </div>
-                        <h1>Bem-vindo de volta</h1>
-                        <p>Selecione um estabelecimento para gerir</p>
+                        <h1>{t('welcome_back')}</h1>
+                        <p>{t('select_establishment')}</p>
                     </div>
 
                     {error && (
@@ -134,7 +134,7 @@ const RestaurantSelection = () => {
                             >
                                 <div className="btn-content">
                                     <Building2 size={20} className="icon-primary" />
-                                    <span>Dashboard Global do Proprietário</span>
+                                    <span>{t('global_owner_dashboard')}</span>
                                 </div>
                                 <ArrowRight size={18} className="arrow-icon" />
                             </button>
@@ -142,7 +142,7 @@ const RestaurantSelection = () => {
 
                         {/* Separator */}
                         <div className="separator">
-                            <span>Seus estabelecimentos</span>
+                            <span>{t('your_establishments')}</span>
                         </div>
 
                         {/* Restaurants List */}
@@ -166,7 +166,7 @@ const RestaurantSelection = () => {
                                                 <div className="rest-details">
                                                     <h3>{restaurant.name}</h3>
                                                     <div className="rest-meta">
-                                                        <span className="role-badge">{restaurant.role || 'Membro'}</span>
+                                                        <span className="role-badge">{t(restaurant.role) || t('member')}</span>
                                                         <span
                                                             className="status-badge subscription-status"
                                                             style={{
@@ -191,7 +191,7 @@ const RestaurantSelection = () => {
                                                 onClick={(e) => handleToggleActive(e, restaurantId)}
                                                 disabled={isToggling}
                                                 className={`toggle-btn ${isActive ? 'active' : 'inactive'}`}
-                                                title={isActive ? 'Desativar estabelecimento' : 'Ativar estabelecimento'}
+                                                title={isActive ? t('deactivate_establishment') : t('activate_establishment')}
                                             >
                                                 <Power size={16} className={isToggling ? 'spinning' : ''} />
                                             </button>
@@ -205,7 +205,7 @@ const RestaurantSelection = () => {
                                 className="add-new-btn"
                             >
                                 <PlusCircle size={20} />
-                                <span>Adicionar Novo estabelecimento</span>
+                                <span>{t('add_new_establishment')}</span>
                             </button>
                         </div>
                     </div>
@@ -213,7 +213,7 @@ const RestaurantSelection = () => {
                     <div className="selection-footer">
                         <button onClick={handleLogout} className="logout-btn">
                             <LogOut size={16} />
-                            <span>Sair de {user?.email}</span>
+                            <span>{t('logout_of')} {user?.email}</span>
                         </button>
                     </div>
                 </div>
@@ -238,8 +238,8 @@ const RestaurantSelection = () => {
             <div className="selection-right">
                 <div className="image-overlay"></div>
                 <div className="image-content">
-                    <h2>Gerencie tudo num só lugar.</h2>
-                    <p>Controle seus pedidos, mesas e equipa com eficiência.</p>
+                    <h2>{t('manage_everything_place')}</h2>
+                    <p>{t('control_orders_tables_desc')}</p>
                 </div>
                 <img
                     src="/image/interno.avif"

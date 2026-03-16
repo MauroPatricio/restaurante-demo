@@ -1,3 +1,8 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-export default function Tables(){return <View><Text>Tables QR</Text></View>}
+import { useTranslation } from 'react-i18next';
+
+export default function Tables(){
+    const { t } = useTranslation();
+    return <View><Text>{t('tables')}</Text></View>;
+}

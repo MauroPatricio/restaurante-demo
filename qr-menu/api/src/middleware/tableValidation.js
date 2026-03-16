@@ -43,9 +43,9 @@ export const validateAndOccupyTable = async (req, res, next) => {
         // Get userId (could be from authenticated user or system)
         const userId = req.user?.userId || null;
 
-        // If table is free or not occupied, occupy it and create session
         if (table.status === 'free' || !table.currentSessionId) {
-            const session = await occupyTable(tableId, userId, restaurantId);
+            const io = req.app.get('io');
+            const session = await occupyTable(tableId, userId, restaurantId, io);
             req.tableSession = session; // Pass session to order controller
         } else if (table.status === 'occupied' && table.currentSessionId) {
             // Table already occupied, use existing session
