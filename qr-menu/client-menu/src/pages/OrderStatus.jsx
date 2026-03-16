@@ -247,31 +247,71 @@ export default function OrderStatus() {
                 {/* Stepper */}
                 {!isCancelled && (
                     <div style={{ background: 'white', borderRadius: 16, padding: 16, marginBottom: 14, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
-                        {STATUS_STEPS.filter(s => s.key !== 'completed').map((step, idx) => {
+                        {STATUS_STEPS.filter(s => !['completed', 'served'].includes(s.key)).map((step, idx) => {
                             const stepIdx = STATUS_STEPS.indexOf(step);
-                            const isActive = stepIdx <= currentIdx;
-                            const isCurrent = stepIdx === currentIdx;
+                            
+                            // A step is COMPLETED if it's strictly before the current API status,
+                            // OR if it IS the 'pending' status (since seeing this page means it was received).
+                            const isCompleted = stepIdx <= currentIdx;
+                            
+                            // A step is IN PROGRESS if it's the one immediately AFTER the current API status.
+                            const isInProgress = !isDone && stepIdx === currentIdx + 1;
+                            
+                            // Visually active (colored icon) if completed OR in progress
+                            const isVisuallyActive = isCompleted || isInProgress;
+
                             return (
-                                <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: idx < 4 ? '1px solid #f1f5f9' : 'none' }}>
+                                <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none' }}>
                                     <div style={{
-                                        width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-                                        background: isActive ? step.color : '#f1f5f9',
+                                        width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+                                        background: isVisuallyActive ? step.color : '#f8fafc',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '1.1rem', transition: 'all 0.3s',
-                                        boxShadow: isActive ? `0 4px 12px ${step.color}44` : 'none'
+                                        fontSize: '1.2rem', transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        boxShadow: isVisuallyActive ? `0 8px 16px ${step.color}33` : 'none',
+                                        border: isVisuallyActive ? 'none' : '2px solid #f1f5f9',
+                                        position: 'relative'
                                     }}>
                                         {step.icon}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: isActive ? '#1e293b' : '#94a3b8' }}>{step.label}</p>
-                                        {isCurrent && !isDone && (
-                                            <p style={{ margin: 0, fontSize: '0.75rem', color: step.color, fontWeight: 600 }}>● {t('in_progress')}…</p>
+                                        {isInProgress && (
+                                            <div style={{
+                                                position: 'absolute', inset: -2, borderRadius: '50%',
+                                                border: `2px solid ${step.color}`,
+                                                animation: 'pulse 2s infinite'
+                                            }} />
                                         )}
                                     </div>
-                                    {isActive && <span style={{ color: step.color, fontSize: '1.1rem' }}>✓</span>}
+                                    <div style={{ flex: 1 }}>
+                                        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', color: isVisuallyActive ? '#1e293b' : '#cbd5e1' }}>{step.label}</p>
+                                        {isInProgress && (
+                                            <p style={{ margin: 0, fontSize: '0.75rem', color: step.color, fontWeight: 700 }}>● {t('in_progress')}…</p>
+                                        )}
+                                        {isCompleted && stepIdx === currentIdx && !isDone && (
+                                            <p style={{ margin: 0, fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>{t('just_now')}</p>
+                                        )}
+                                    </div>
+                                    <div style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {isCompleted && (
+                                            <div style={{ color: '#10b981', animation: 'scaleUp 0.3s ease-out' }}>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })}
+                        <style>{`
+                            @keyframes pulse {
+                                0% { transform: scale(1); opacity: 1; }
+                                70% { transform: scale(1.3); opacity: 0; }
+                                100% { transform: scale(1.3); opacity: 0; }
+                            }
+                            @keyframes scaleUp {
+                                from { transform: scale(0); opacity: 0; }
+                                to { transform: scale(1); opacity: 1; }
+                            }
+                        `}</style>
                     </div>
                 )}
 
