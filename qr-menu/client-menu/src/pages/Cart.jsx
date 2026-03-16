@@ -198,7 +198,7 @@ const Cart = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12 transition-colors duration-200 flex flex-col items-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col items-center">
             {/* Header - Stretches to max-w or full width wrapper */}
             <div className="w-full bg-white dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-30 shadow-sm border-b border-gray-100 transition-colors duration-200">
                 <div className="max-w-[480px] mx-auto p-4 flex items-center justify-between">
@@ -215,7 +215,7 @@ const Cart = () => {
                 </div>
             </div>
 
-            <div className="w-full max-w-[480px] mx-auto p-4 space-y-6 flex-1">
+            <div className="w-full max-w-[480px] mx-auto p-4 space-y-6">
                 {/* Cart Items */}
                 <div className="space-y-3">
                     {cart.map((item, index) => (
@@ -371,7 +371,7 @@ const Cart = () => {
                     </form>
                 </div>
 
-                <div className="py-8">
+                <div className="py-4">
                     <p className="text-[10px] text-gray-400 dark:text-gray-600 font-bold text-center uppercase tracking-[0.3em] opacity-50">
                         {t('developed_by')}
                     </p>
