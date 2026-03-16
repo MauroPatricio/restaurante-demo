@@ -63,7 +63,7 @@ export default function WaiterCallAlerts() {
         }
 
         audioRef.current.play().catch(err => {
-            console.log('Audio play failed:', err);
+
         });
     };
 

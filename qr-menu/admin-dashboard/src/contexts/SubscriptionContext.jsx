@@ -42,22 +42,22 @@ export const SubscriptionProvider = ({ children }) => {
             if (hasSelectedRestaurant) {
                 // Optimization: If user object already has the full subscription populated, use it
                 if (user.subscription && typeof user.subscription === 'object' && user.subscription.currentPeriodEnd) {
-                    console.log('[SubscriptionContext] Using subscription data from AuthContext');
+
                     data = { subscription: user.subscription };
                 } else {
-                    console.log('[SubscriptionContext] Fetching subscription for selected restaurant ID:', restaurantId);
+
                     const response = await api.get(`/subscriptions/${restaurantId}`);
                     data = response.data;
                 }
 
                 const subscriptionData = data.subscription || data;
-                console.log('[SubscriptionContext] Fetched subscription:', subscriptionData);
+
 
                 setSubscription(subscriptionData);
 
                 // STRICT BLOCKING LOGIC
                 const status = subscriptionData.status;
-                console.log('[SubscriptionContext] Subscription status:', status);
+
 
                 const now = new Date();
                 const endDate = new Date(subscriptionData.currentPeriodEnd);
@@ -79,7 +79,7 @@ export const SubscriptionProvider = ({ children }) => {
             // FALLBACK: For multi-restaurant users who haven't selected a restaurant yet
             // (e.g., on restaurant selection page)
             else if (hasMultipleRestaurants) {
-                console.log('[SubscriptionContext] Fetching global status for multi-restaurant user');
+
                 const response = await api.get(`/subscriptions/global-status`);
                 data = response.data;
 
@@ -123,7 +123,7 @@ export const SubscriptionProvider = ({ children }) => {
 
     useEffect(() => {
         const handleUpdate = () => {
-            console.log('[SubscriptionContext] Subscription update event received');
+
             refreshSubscription();
         };
 

@@ -78,7 +78,7 @@ const Kitchen = () => {
         if (!socket || !restaurantId) return;
 
         const handleNewOrder = (data) => {
-            console.log('Kitchen: New order received', data);
+
 
             setOrders(prev => {
                 const exists = prev.find(o => o._id === data._id || o._id === data.orderId);
@@ -116,7 +116,7 @@ const Kitchen = () => {
         };
 
         const handleRealtimeUpdate = (data) => {
-            console.log('Kitchen: Realtime update', data);
+
 
             if (data.status === 'cancelled') {
                 setCancelledOrders(prev => {
@@ -163,7 +163,7 @@ const Kitchen = () => {
         };
 
         const handleStatsUpdate = (data) => {
-            console.log('Kitchen: Stats update received', data);
+
             if (data.avgPrepTime !== undefined) {
                 setStats(prev => ({
                     ...prev,

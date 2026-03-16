@@ -655,6 +655,7 @@
     "subscription_status_trial": "Período de teste",
     "subscription_status_updated": "Estado da subscrição atualizado para {{status}}",
     "subscription_subtitle": "Gerir a subscrição do seu restaurante",
+    "subscription_management_admin": "Gestão de Assinaturas (Admin)",
     "subscription_suspended_msg": "Sua assinatura foi suspensa por falta de pagamento. Renove para continuar usando o serviço.",
     "subscription_suspended_title": "⚠️ Assinatura Suspensa",
     "subscription_title": "Subscrição",

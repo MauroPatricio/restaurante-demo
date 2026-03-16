@@ -132,7 +132,7 @@ export const SocketProvider = ({ children }) => {
             return;
         }
 
-        console.log('Creating socket connection to:', SOCKET_URL);
+
         const newSocket = io(SOCKET_URL, {
             transports: ['polling', 'websocket'],
             reconnection: true,
@@ -143,7 +143,7 @@ export const SocketProvider = ({ children }) => {
         socketRef.current = newSocket;
 
         newSocket.on('connect', () => {
-            console.log('Socket connected:', newSocket.id);
+
             setConnected(true);
             newSocket.emit('join:restaurant', { restaurantId: restaurant._id });
         });
@@ -157,7 +157,7 @@ export const SocketProvider = ({ children }) => {
         // --- Event Handlers ---
 
         newSocket.on('order:new', (data) => {
-            console.log('🔔 New order received:', data);
+
 
             // 1. Update Count
             setPendingCount(prev => prev + 1);
@@ -170,13 +170,13 @@ export const SocketProvider = ({ children }) => {
 
         // Room-service orders — same notification as dine-in
         newSocket.on('room:order:new', (data) => {
-            console.log('🛏️ New room-service order received:', data);
+
             setPendingCount(prev => prev + 1);
             setIsRinging(true);
         });
 
         newSocket.on('order-updated', (data) => {
-            console.log('📝 Order updated:', data);
+
 
             // Check Status Change for Count
             // Note: data might trigger update, but we might not know 'previous' status purely from event
@@ -230,7 +230,7 @@ export const SocketProvider = ({ children }) => {
         newSocket.on('subscription:renewal_request', (data) => {
             const isAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
             if (isAdmin) {
-                console.log('🔔 New subscription renewal request:', data);
+
                 setPendingRenewals(prev => {
                     if (prev.some(r => r._id === data.requestId)) return prev;
                     return [data, ...prev];
@@ -245,7 +245,7 @@ export const SocketProvider = ({ children }) => {
 
         newSocket.on('subscription:activated', (data) => {
             if (restaurant?._id === data.restaurantId || restaurant?.id === data.restaurantId) {
-                console.log('✅ Subscription activated!');
+
                 // Broadcast to update context immediately if needed, 
                 // but just a reload or re-fetch is standard.
                 // We'll use a custom event for other contexts to listen
@@ -260,7 +260,7 @@ export const SocketProvider = ({ children }) => {
 
         newSocket.on('subscription:rejected', (data) => {
             if (restaurant?._id === data.restaurantId || restaurant?.id === data.restaurantId) {
-                console.log('❌ Subscription rejected:', data.reason);
+
                 window.dispatchEvent(new CustomEvent('subscription-updated'));
             }
 

@@ -46,9 +46,9 @@ export default function Menu() {
     };
 
     const handleDelete = async (id) => {
-        console.log(`🗑️ UI: Requesting delete for item ID: ${id}`);
+
         if (!confirm(t('confirm_delete') || 'Are you sure?')) {
-            console.log('❌ UI: Delete cancelled by user');
+
             return false;
         }
 
@@ -58,7 +58,7 @@ export default function Menu() {
 
         try {
             await menuAPI.delete(id);
-            console.log(`✅ UI: Item ${id} deleted successfully from server`);
+
             // Don't fetch menu again - rely on optimistic update
             return true;
         } catch (error) {
@@ -67,7 +67,7 @@ export default function Menu() {
             // Handle 404 - item already deleted
             if (error.response?.status === 404) {
                 // Item already deleted, keep it removed from UI
-                console.log('Item already deleted on server, cleaning up UI...');
+
                 return true;
             } else {
                 // Restore items on other errors
@@ -324,11 +324,11 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
             }));
 
             // Actual upload
-            console.log('📤 Uploading image to Cloudinary...');
+
             const response = await uploadAPI.uploadImage(file);
             const { imageUrl, imagePublicId } = response.data;
 
-            console.log('✅ Image uploaded successfully:', imageUrl);
+
 
             setFormData(prev => ({
                 ...prev,
@@ -380,24 +380,16 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
             let response;
             if (item) {
                 response = await menuAPI.update(item._id, submitData);
-                console.log('✅ Menu Item Updated:', response.data.menuItem);
+
             } else {
                 response = await menuAPI.create(submitData);
-                console.log('✅ Menu Item Created:', response.data.menuItem);
+
             }
 
             if (response.data.menuItem?.imageUrl) {
-                console.log('🔗 Saved Image URL:', response.data.menuItem.imageUrl);
+
             }
 
-            console.log('📦 Saved Object Summary:');
-            console.table({
-                ID: response.data.menuItem._id,
-                Nome: response.data.menuItem.name,
-                Preço: response.data.menuItem.price,
-                Categoria: response.data.menuItem.category?.name || response.data.menuItem.category,
-                URL_Imagem: response.data.menuItem.imageUrl ? response.data.menuItem.imageUrl.substring(0, 50) + '...' : 'N/A'
-            });
 
             // "Apresentar o item gravado" - Show success toast/alert
             alert(`✅ ${t('item_saved_success', { name: response.data.menuItem.name })}`);

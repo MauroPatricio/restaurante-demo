@@ -23,7 +23,7 @@ export const useSound = (soundPath) => {
             const audio = initAudio();
             audio.currentTime = 0; // Reset para o início
             await audio.play();
-            console.log('🔊 Som reproduzido:', soundPath);
+
         } catch (error) {
             console.warn('⚠️ Erro ao reproduzir som:', error);
             // Silenciar erro se o usuário não interagiu com a página ainda

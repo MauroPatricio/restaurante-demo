@@ -147,7 +147,7 @@ export default function HallDashboard() {
         };
 
         const handleTableStatusUpdate = (update) => {
-            console.log('HallDashboard: Table status update', update);
+
             setData(prev => {
                 const tableIndex = prev.tables.findIndex(t => t._id === update.tableId);
                 if (tableIndex === -1) return prev;

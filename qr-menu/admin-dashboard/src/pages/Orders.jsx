@@ -31,7 +31,7 @@ export default function Orders() {
         if (!socket) return;
 
         const handleNewOrder = (newOrder) => {
-            console.log('OrdersPage: New order received', newOrder);
+
 
             // Only add if it matches current filter or filter is 'all'
             if (filter === 'all' || filter === 'pending') {
@@ -60,7 +60,7 @@ export default function Orders() {
         };
 
         const handleOrderUpdate = (updatedOrder) => {
-            console.log('OrdersPage: Order updated', updatedOrder);
+
 
             setOrders(prev => {
                 const index = prev.findIndex(o => o._id === updatedOrder._id);

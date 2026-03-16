@@ -75,7 +75,7 @@ export default function WaiterDashboard() {
         if (!socket || !restaurantId) return;
 
         const handleRealtimeUpdate = (data) => {
-            console.log('Waiter: Realtime update received', data);
+
             fetchData();
         };
 

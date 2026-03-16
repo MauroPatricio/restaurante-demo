@@ -60,10 +60,10 @@ export const ConnectivityProvider = ({ children }) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            console.log('🔍 Checking API health...');
+
             const response = await api.healthCheck();
             clearTimeout(timeoutId);
-            console.log('✅ API health check successful:', response.status);
+
 
             setApiStatus('connected');
             setLastCheck(new Date());

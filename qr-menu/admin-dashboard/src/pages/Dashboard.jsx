@@ -138,7 +138,7 @@ export default function Dashboard() {
         if (!socket || !restaurantId) return;
 
         const handleRealtimeUpdate = (data) => {
-            console.log('Dashboard: Realtime update received', data);
+
             fetchDashboardData();
         };
 

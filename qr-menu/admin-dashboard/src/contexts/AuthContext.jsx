@@ -20,9 +20,6 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('token');
             const restaurantId = localStorage.getItem('restaurantId');
 
-            console.log('🔍 AuthContext - Loading user...');
-            console.log('  Token exists:', !!token);
-            console.log('  RestaurantId in storage:', restaurantId);
 
             if (token) {
                 try {
@@ -63,9 +60,6 @@ export const AuthProvider = ({ children }) => {
         // Call /auth/me to get the FULL role object with isSystem
         try {
             const meResponse = await api.get('/auth/me');
-            console.log('✅ /auth/me after selectRestaurant:', meResponse.data);
-            console.log('  Role:', meResponse.data.user?.role);
-            console.log('  isSystem:', meResponse.data.user?.role?.isSystem);
 
             // Update user state with complete role object including isSystem
             setUser(meResponse.data.user);

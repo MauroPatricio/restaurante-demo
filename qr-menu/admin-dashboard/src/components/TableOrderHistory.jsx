@@ -41,9 +41,9 @@ const TableOrderHistory = ({ tableId }) => {
     const loadOrders = async () => {
         try {
             setLoading(true);
-            console.log('🔍 Loading orders for tableId:', tableId);
+
             const { data } = await tableAPI.getOrders(tableId, { limit: 20 });
-            console.log('✅ Orders loaded:', data);
+
             setOrders(data.orders || []);
         } catch (error) {
             console.error('❌ Failed to load table orders:', error);
