@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_URL } from '../config/api';
 
 // Cache for exchange rates
 let exchangeRates = null;
@@ -15,8 +16,7 @@ export const fetchExchangeRates = async (force = false) => {
     }
 
     try {
-        const apiUrl = import.meta.env.VITE_API_URL || '/api';
-        const response = await axios.get(`${apiUrl}/currency/rates`);
+        const response = await axios.get(`${API_URL}/currency/rates`);
         exchangeRates = response.data.rates;
         lastFetched = now;
         return exchangeRates;

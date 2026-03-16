@@ -25,9 +25,9 @@ export const CurrencyProvider = ({ children }) => {
 
     // Sync with restaurant default currency - FORCE it if settings change
     useEffect(() => {
-        if (restaurantSettings?.defaultCurrency) {
-            console.log('🔄 Syncing currency with restaurant default:', restaurantSettings.defaultCurrency);
-            setCurrency(restaurantSettings.defaultCurrency);
+        if (restaurantSettings?.currency) {
+            console.log('🔄 Syncing currency with restaurant default:', restaurantSettings.currency);
+            setCurrency(restaurantSettings.currency);
         }
     }, [restaurantSettings]);
 
