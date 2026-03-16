@@ -120,7 +120,7 @@ const ReceiptModal = ({ order, onClose }) => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '10px' }}>
                             <span>{t('payment_label')}:</span>
-                            <span style={{ textTransform: 'uppercase' }}>{order.paymentMethod}</span>
+                            <span style={{ textTransform: 'uppercase' }}>{t(`method_${(order.paymentMethod || 'cash').toLowerCase()}`) || order.paymentMethod}</span>
                         </div>
                     </div>
 

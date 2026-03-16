@@ -131,9 +131,11 @@ export default function Payments() {
                             <option value="all">{t('all')}</option>
                             <option value="mpesa">M-Pesa</option>
                             <option value="emola">e-Mola</option>
-                            <option value="pos">POS</option>
-                            <option value="cash">Cash</option>
-                            <option value="transfer">Bank Transfer</option>
+                            <option value="pos">{t('method_pos')}</option>
+                            <option value="visa">{t('method_visa')}</option>
+                            <option value="mastercard">{t('method_mastercard')}</option>
+                            <option value="cash">{t('method_cash')}</option>
+                            <option value="transfer">{t('method_transfer')}</option>
                         </select>
                     </div>
                 </div>
@@ -170,12 +172,12 @@ export default function Payments() {
                                     <td className="px-6 py-4 font-black text-gray-900 dark:text-white">{order.total} MT</td>
                                     <td className="px-6 py-4">
                                         <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold text-[10px] rounded-lg uppercase tracking-wider">
-                                            {t(`method_${order.paymentMethod}`) || order.paymentMethod}
+                                            {t(`method_${(order.paymentMethod || '').toLowerCase()}`) || order.paymentMethod}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`status-badge ${order.paymentStatus || 'pending'}`}>
-                                            {t(`status_${order.paymentStatus || 'pending'}`) || order.paymentStatus}
+                                            {t(`status_${(order.paymentStatus || 'pending').toLowerCase()}`) || order.paymentStatus}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -219,7 +221,7 @@ export default function Payments() {
                                     <span className="text-xs font-bold text-gray-400 mt-0.5">{format(new Date(order.createdAt), 'dd MMM, HH:mm')}</span>
                                 </div>
                                 <span className={`status-badge ${order.paymentStatus || 'pending'}`}>
-                                    {t(`status_${order.paymentStatus || 'pending'}`) || order.paymentStatus}
+                                    {t(`status_${(order.paymentStatus || 'pending').toLowerCase()}`) || order.paymentStatus}
                                 </span>
                             </div>
 
@@ -227,7 +229,7 @@ export default function Payments() {
                                 <div>
                                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">{t('method')}</span>
                                     <span className="px-3 py-1 bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300 font-bold text-[10px] rounded-lg border border-gray-100 dark:border-gray-700 uppercase tracking-wider">
-                                        {t(`method_${order.paymentMethod}`) || order.paymentMethod}
+                                        {t(`method_${(order.paymentMethod || '').toLowerCase()}`) || order.paymentMethod}
                                     </span>
                                 </div>
                                 <div>

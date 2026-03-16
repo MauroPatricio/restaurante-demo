@@ -303,10 +303,10 @@ export default function Orders() {
                                         <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl">
                                             <div className="flex flex-col">
                                                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-tight">{t('payment_label')}</span>
-                                                <span className="text-[9px] font-bold text-gray-600 dark:text-gray-300 uppercase">{order.paymentMethod || 'Cash'}</span>
+                                                <span className="text-[9px] font-bold text-gray-600 dark:text-gray-300 uppercase">{t(`method_${(order.paymentMethod || 'cash').toLowerCase()}`) || order.paymentMethod}</span>
                                             </div>
                                             <span className={`status-badge !text-[9px] !py-0.5 !px-2 ${order.paymentStatus === 'paid' ? 'green' : 'red'}`}>
-                                                {t(`payment_status_${order.paymentStatus}`) || order.paymentStatus}
+                                                {t(`status_${(order.paymentStatus || 'pending').toLowerCase()}`) || order.paymentStatus}
                                             </span>
                                         </div>
                                     </div>
