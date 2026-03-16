@@ -198,29 +198,31 @@ const Cart = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-36 transition-colors duration-200">
-            {/* Header */}
-            <div className="bg-white dark:bg-gray-900 dark:border-gray-800 p-4 sticky top-0 z-10 shadow-sm border-b border-gray-100 flex items-center justify-between transition-colors duration-200">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
-                        <ArrowLeft size={24} />
-                    </button>
-                    <h1 className="text-lg font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
-                </div>
-                <div className="flex items-center gap-2">
-                    <LanguageSwitcher />
-                    <CurrencySwitcher />
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-44 transition-colors duration-200 flex flex-col items-center">
+            {/* Header - Stretches to max-w or full width wrapper */}
+            <div className="w-full bg-white dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-30 shadow-sm border-b border-gray-100 transition-colors duration-200">
+                <div className="max-w-[480px] mx-auto p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
+                            <ArrowLeft size={24} />
+                        </button>
+                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <LanguageSwitcher />
+                        <CurrencySwitcher />
+                    </div>
                 </div>
             </div>
 
-            <div className="p-4 space-y-4 max-w-4xl mx-auto">
+            <div className="w-full max-w-[480px] mx-auto p-4 space-y-6 flex-1">
                 {/* Cart Items */}
                 <div className="space-y-3">
                     {cart.map((item, index) => (
-                        <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 transition-colors">
+                        <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 transition-colors overflow-hidden">
                             <div className="flex-1">
-                                <h3 className="font-bold text-gray-900 dark:text-white">{item.name}</h3>
-                                <p className="text-primary-600 dark:text-primary-400 font-bold mt-1">
+                                <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight mb-1">{item.name}</h3>
+                                <p className="text-primary-600 dark:text-primary-400 font-extrabold text-sm">
                                     {formatCurrency(
                                         convertCurrency(item.price, item.currency || 'MZN', preferredCurrency, rates),
                                         preferredCurrency,
@@ -228,32 +230,32 @@ const Cart = () => {
                                     )}
                                 </p>
                                 {item.customizations?.length > 0 && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-tight">
                                         {item.customizations.map(c => c.name).join(', ')}
                                     </p>
                                 )}
                             </div>
-                            <div className="flex flex-col items-end justify-between">
+                            <div className="flex flex-col items-end justify-between gap-3">
                                 <button
                                     onClick={() => removeFromCart(index)}
-                                    className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors p-1"
+                                    className="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors"
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={16} />
                                 </button>
-                                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-lg p-1">
+                                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-1 border border-gray-100 dark:border-gray-700">
                                     <button
                                         onClick={() => updateQty(index, -1)}
-                                        className="p-1 rounded-md bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-200 shadow-sm disabled:opacity-50"
+                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm disabled:opacity-30"
                                         disabled={item.qty <= 1}
                                     >
-                                        <Minus size={14} />
+                                        <Minus size={12} strokeWidth={3} />
                                     </button>
                                     <span className="font-bold text-sm w-4 text-center text-gray-900 dark:text-white">{item.qty}</span>
                                     <button
                                         onClick={() => updateQty(index, 1)}
-                                        className="p-1 rounded-md bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-200 shadow-sm"
+                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-primary-600 text-white shadow-md shadow-primary-500/20"
                                     >
-                                        <Plus size={14} />
+                                        <Plus size={12} strokeWidth={3} />
                                     </button>
                                 </div>
                             </div>
@@ -262,140 +264,129 @@ const Cart = () => {
                 </div>
 
                 {/* Totals */}
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 transition-colors">
-                    <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 transition-colors">
+                    <div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">
                         <span>{t('subtotal')}</span>
                         <span>{formatCurrency(convertedTotal, preferredCurrency, locale)}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-xl pt-3 border-t border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
+                    <div className="flex justify-between font-black text-2xl pt-3 border-t border-dashed border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
                         <span>{t('total')}</span>
-                        <span>{formatCurrency(convertedTotal, preferredCurrency, locale)}</span>
+                        <span className="text-primary-600 dark:text-primary-400">
+                            {formatCurrency(convertedTotal, preferredCurrency, locale)}
+                        </span>
                     </div>
                 </div>
 
                 {/* Guest Details Form */}
-                <div className="space-y-3">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-sm ml-1">{t('order_details')}</h3>
-                    <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-                        <form id="checkout-form" onSubmit={handleCheckout} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('payment_method_label')}</label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {['mpesa', 'emola', 'visa', 'cash'].map((method) => (
-                                        <button
-                                            key={method}
-                                            type="button"
-                                            onClick={() => setPaymentMethod(method)}
-                                            style={{
-                                                height: '90px',
-                                                borderRadius: '20px',
-                                                border: '2px solid',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '8px',
-                                                transition: 'all 0.3s',
-                                                position: 'relative',
-                                                overflow: 'hidden',
-                                                background: paymentMethod === method ? '#f0fdf4' : 'rgba(248, 250, 252, 0.5)',
-                                                borderColor: paymentMethod === method ? '#10b981' : '#e2e8f0',
-                                                color: paymentMethod === method ? '#059669' : '#64748b',
-                                                boxShadow: paymentMethod === method ? '0 10px 15px -3px rgba(16, 185, 129, 0.1)' : 'none'
-                                            }}
-                                            className="group relative"
-                                        >
-                                            <div style={{
-                                                width: '36px',
-                                                height: '36px',
-                                                borderRadius: '12px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                background: paymentMethod === method ? '#10b981' : '#f1f5f9',
-                                                color: paymentMethod === method ? 'white' : '#94a3b8',
-                                                transition: 'all 0.3s'
-                                            }} className="group-hover:scale-110">
-                                                {method === 'mpesa' && <Smartphone size={20} />}
-                                                {method === 'emola' && <Wallet size={20} />}
-                                                {method === 'visa' && <CreditCard size={20} />}
-                                                {method === 'cash' && <Wallet size={20} />}
+                <div className="space-y-4">
+                    <h3 className="font-black text-gray-900 dark:text-white text-xs uppercase tracking-widest ml-1 opacity-60">{t('order_details')}</h3>
+                    
+                    <form id="checkout-form" onSubmit={handleCheckout} className="space-y-4">
+                        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+                            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-4">{t('payment_method_label')}</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {['mpesa', 'emola', 'visa', 'cash'].map((method) => (
+                                    <button
+                                        key={method}
+                                        type="button"
+                                        onClick={() => setPaymentMethod(method)}
+                                        className={`group relative flex flex-col items-center justify-center py-4 px-2 rounded-2xl border-2 transition-all duration-300 ${
+                                            paymentMethod === method 
+                                                ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-500 text-primary-700 dark:text-primary-400 shadow-lg shadow-primary-500/10' 
+                                                : 'bg-gray-50/50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500'
+                                        }`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all duration-300 ${
+                                            paymentMethod === method ? 'bg-primary-500 text-white scale-110' : 'bg-white dark:bg-gray-800 text-gray-400'
+                                        }`}>
+                                            {method === 'mpesa' && <Smartphone size={18} />}
+                                            {method === 'emola' && <Smartphone size={18} />}
+                                            {method === 'visa' && <CreditCard size={18} />}
+                                            {method === 'cash' && <Wallet size={18} />}
+                                        </div>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-center leading-tight">
+                                            {method === 'visa' ? 'VISA/MC' : method}
+                                        </span>
+                                        {paymentMethod === method && (
+                                            <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center text-white shadow-sm">
+                                                <ShieldCheck size={10} strokeWidth={4} />
                                             </div>
-                                            <span className="capitalize font-black text-xs tracking-widest">{method === 'visa' ? 'VISA / MASTERCARD' : method.toUpperCase()}</span>
-                                            {paymentMethod === method && (
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: '12px',
-                                                    right: '12px',
-                                                    width: '18px',
-                                                    height: '18px',
-                                                    borderRadius: '50%',
-                                                    background: '#10b981',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: 'white'
-                                                }}>
-                                                    <ShieldCheck size={12} strokeWidth={4} />
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
+                                        )}
+                                    </button>
+                                ))}
                             </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('your_name_label')}</label>
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2">{t('your_name_label')}</label>
                                 <input
                                     type="text"
                                     required
-                                    className="w-full p-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-300 text-sm font-medium"
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
                                     placeholder={t('name_placeholder')}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('phone_label')}</label>
+                                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2">{t('phone_label')}</label>
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full p-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 text-base"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-300 text-sm font-medium"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('phone_placeholder')}
+                                    inputMode="tel"
                                 />
                             </div>
-                            {error && <p className="text-red-500 text-sm font-medium bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-100 dark:border-red-800">{error}</p>}
-                        </form>
-                    </div>
+                            {error && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-500 text-xs font-bold bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30 flex items-center gap-2"
+                                >
+                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                                    {error}
+                                </motion.div>
+                            )}
+                        </div>
+                    </form>
                 </div>
 
-                {/* Bottom Bar with Footer Text */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 border-t border-gray-100 dark:border-gray-800 p-4 pb-6 z-20 backdrop-blur-lg transition-colors shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-                    <button
-                        form="checkout-form"
-                        disabled={loading}
-                        className="w-full max-w-md mx-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-4 rounded-xl font-bold flex items-center justify-between hover:bg-black dark:hover:bg-gray-200 transition-all active:scale-[0.98] shadow-2xl shadow-black/10 dark:shadow-white/5 disabled:opacity-70 disabled:cursor-wait mb-4 h-[60px]"
-                    >
-                        <span className="text-base font-black uppercase tracking-tight">
-                            {loading ? (
-                                <div className="flex items-center gap-3">
-                                    <LoadingSpinner size={20} color="white" />
-                                    <span>{t('scanning')}</span>
-                                </div>
-                            ) : t('confirm_order')}
-                        </span>
-                        <span className="text-lg font-black flex items-center gap-2">
-                            {formatCurrency(convertedTotal, preferredCurrency, locale)}
-                            <ArrowRight className="inline" size={20} />
-                        </span>
-                    </button>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold text-center uppercase tracking-[0.2em] opacity-80">
+                <div className="py-8">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-600 font-bold text-center uppercase tracking-[0.3em] opacity-50">
                         {t('developed_by')}
                     </p>
                 </div>
             </div>
+
+            {/* Bottom Sticky Action Bar */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pb-8 transition-colors duration-200">
+                <div className="max-w-[480px] mx-auto">
+                    <button
+                        form="checkout-form"
+                        disabled={loading}
+                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-4 rounded-2xl font-black flex items-center justify-between hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/20 dark:shadow-white/10 disabled:opacity-70 disabled:cursor-not-allowed h-[68px] overflow-hidden group"
+                    >
+                        <div className="flex flex-col items-start transition-transform duration-300 group-hover:-translate-y-1">
+                            <span className="text-[10px] uppercase tracking-widest opacity-60 mb-0.5">{loading ? t('scanning') : t('confirm_order')}</span>
+                            <span className="text-sm font-black flex items-center gap-2">
+                                {loading ? <LoadingSpinner size={16} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={18} className="text-primary-500" />}
+                                {t('checkout').toUpperCase()}
+                            </span>
+                        </div>
+                        <div className="bg-white/10 dark:bg-black/5 px-4 py-2 rounded-xl border border-white/10 dark:border-black/5">
+                            <span className="text-lg font-black tracking-tight">
+                                {formatCurrency(convertedTotal, preferredCurrency, locale)}
+                            </span>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
+
     );
 };
 
