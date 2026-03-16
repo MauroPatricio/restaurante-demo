@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { useNotification } from '../context/NotificationContext';
 import { Trash2, ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, CreditCard, Wallet, Smartphone, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
