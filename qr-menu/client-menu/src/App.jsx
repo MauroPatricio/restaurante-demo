@@ -261,9 +261,9 @@ function CodeEntry() {
 
 function App() {
     return (
-        <CartProvider>
-            <ThemeProvider>
-                <CurrencyProvider>
+        <ThemeProvider>
+            <CurrencyProvider>
+                <CartProvider>
                     <NotificationProvider>
                         <LoadingProvider>
                             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -282,9 +282,9 @@ function App() {
                             </div>
                         </LoadingProvider>
                     </NotificationProvider>
-                </CurrencyProvider>
-            </ThemeProvider>
-        </CartProvider>
+                </CartProvider>
+            </CurrencyProvider>
+        </ThemeProvider>
     );
 }
 
