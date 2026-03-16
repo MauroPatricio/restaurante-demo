@@ -111,6 +111,18 @@ export default function Menu() {
         setShowModal(true);
     };
 
+    const getCurrencySymbol = (code) => {
+        const standard = {
+            'MZN': 'MT',
+            'USD': '$',
+            'EUR': '€',
+            'ZAR': 'R',
+            'GBP': '£',
+            'BRL': 'R$'
+        };
+        return standard[code] || code;
+    };
+
     return (
         <div className="menu-page">
             <div className="page-header">
