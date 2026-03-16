@@ -198,10 +198,10 @@ const Cart = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col items-center">
-            {/* Header - Stretches to max-w or full width wrapper */}
+        <div className="bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col items-center w-full">
+            {/* Header - Stretches to full width */}
             <div className="w-full bg-white dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-30 shadow-sm border-b border-gray-100 transition-colors duration-200">
-                <div className="max-w-[480px] mx-auto p-4 flex items-center justify-between">
+                <div className="w-full p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
                             <ArrowLeft size={24} />
@@ -215,7 +215,7 @@ const Cart = () => {
                 </div>
             </div>
 
-            <div className="w-full max-w-[480px] mx-auto p-4 space-y-6">
+            <div className="w-full p-4 space-y-6">
                 {/* Cart Items */}
                 <div className="space-y-3">
                     {cart.map((item, index) => (
