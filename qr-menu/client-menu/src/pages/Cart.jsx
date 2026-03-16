@@ -208,10 +208,6 @@ const Cart = () => {
                         </button>
                         <h1 className="text-base font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <LanguageSwitcher />
-                        <CurrencySwitcher />
-                    </div>
                 </div>
             </div>
 
@@ -303,8 +299,8 @@ const Cart = () => {
                     </div>
 
                     {/* Customer Info - Combined and Slimmer */}
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-2">
-                        <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
+                        <div className="space-y-3">
                             <div>
                                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('your_name_label')}</label>
                                 <input
