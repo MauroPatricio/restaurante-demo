@@ -608,57 +608,61 @@ body {
 
 .status-badge {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: capitalize;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.status-badge.pending,
-.status-badge.yellow {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.status-badge.confirmed,
-.status-badge.blue {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-badge.preparing,
-.status-badge.purple {
-  background: #e9d5ff;
-  color: #6b21a8;
-}
-
-.status-badge.ready,
-.status-badge.orange {
-  background: #fed7aa;
-  color: #9a3412;
-}
-
-.status-badge.completed,
+.status-badge.free,
 .status-badge.green {
-  background: #d1fae5;
-  color: #065f46;
+  background: #10b981;
+  color: white;
+  border: 1px solid #059669;
 }
 
-.status-badge.cancelled,
+.status-badge.occupied,
 .status-badge.red {
-  background: #fee2e2;
-  color: #991b1b;
+  background: #ef4444;
+  color: white;
+  border: 1px solid #dc2626;
 }
 
-.status-badge.processing {
-  background: #dbeafe;
-  color: #1e40af;
+.status-badge.ready {
+  background: #f59e0b;
+  color: white;
+  border: 1px solid #d97706;
+  animation: pulse-badge 2s infinite;
 }
 
+.status-badge.reserved,
+.status-badge.purple {
+  background: #8b5cf6;
+  color: white;
+  border: 1px solid #7c3aed;
+}
+
+.status-badge.cleaning,
+.status-badge.blue {
+  background: #3b82f6;
+  color: white;
+  border: 1px solid #2563eb;
+}
+
+.status-badge.closed,
 .status-badge.gray {
-  background: var(--gray-200);
-  color: var(--gray-700);
+  background: #64748b;
+  color: white;
+  border: 1px solid #475569;
+}
+
+@keyframes pulse-badge {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
 }
 
 /* Filters */

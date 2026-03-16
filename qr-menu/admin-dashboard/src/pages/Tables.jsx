@@ -182,10 +182,29 @@ export default function Tables() {
                     setShowModal(true); // Re-open
                 }
             } else {
-                // Creation waits for ID, but we close modal immediately
+                // Optimistic Creation
+                const tempId = `temp-${Date.now()}`;
+                const optimisticTable = {
+                    _id: tempId,
+                    ...payload,
+                    qrCode: '', // Placeholder
+                    numericCode: '------',
+                    isOptimistic: true
+                };
+                
+                const previousTables = [...tables];
+                setTables(prev => [...prev, optimisticTable].sort((a, b) => a.number - b.number));
                 setShowModal(false);
-                await tableAPI.create(payload);
-                fetchTables();
+
+                try {
+                    await tableAPI.create(payload);
+                    fetchTables(true); // Silent sync for IDs and QRs
+                } catch (error) {
+                    setTables(previousTables); // Rollback
+                    console.error('Save failed:', error);
+                    alert(t('failed_save_table'));
+                    setShowModal(true);
+                }
             }
         } catch (error) {
             console.error('Save failed:', error);
@@ -505,7 +524,7 @@ export default function Tables() {
                             </div>
 
                             <div style={{ fontSize: '0.7em', color: '#ccc', marginTop: '8px', textAlign: 'right' }}>
-                                ID: {table._id.slice(-6)}
+                                ID: {table.isOptimistic ? 'Calculando...' : table._id.slice(-6)}
                             </div>
                         </div>
                     );
