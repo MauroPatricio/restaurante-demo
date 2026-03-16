@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { orderAPI } from '../services/api';
 import { format } from 'date-fns';
-import { Eye, RefreshCw, Printer } from 'lucide-react';
+import { Eye, RefreshCw, Printer, X, Activity } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonList } from '../components/Skeleton';
