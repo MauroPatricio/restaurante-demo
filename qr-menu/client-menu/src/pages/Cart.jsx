@@ -94,7 +94,7 @@ const Cart = () => {
                 phone: phone.trim(),
                 paymentMethod,
                 notes: '',
-                currency: preferredCurrency
+                currency: 'MZN'
             };
 
             console.log('🚀 ENVIANDO PEDIDO AO SERVIDOR:', {
