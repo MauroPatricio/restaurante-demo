@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
-import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle, X } from 'lucide-react';
 import api from '../services/api';
 import { clsx } from 'clsx';
