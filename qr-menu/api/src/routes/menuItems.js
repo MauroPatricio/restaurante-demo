@@ -140,6 +140,7 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), upload
             category,
             subcategory: subcategory || null,
             price,
+            currency: req.body.currency || 'MZN',
             imageUrl: finalImageUrl,
             imagePublicId: finalImagePublicId,
             sku,
@@ -162,6 +163,20 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), upload
         });
 
         await menuItem.save();
+
+        // Handle Custom Currency registration in Restaurant
+        if (req.body.isCustomCurrency && req.body.currency && req.body.customCurrencySymbol) {
+            const Restaurant = (await import('../models/Restaurant.js')).default;
+            await Restaurant.findByIdAndUpdate(restaurantId, {
+                $addToSet: {
+                    'settings.customCurrencies': {
+                        name: req.body.customCurrencyName || req.body.currency,
+                        code: req.body.currency.toUpperCase(),
+                        symbol: req.body.customCurrencySymbol
+                    }
+                }
+            });
+        }
 
         // Populate category and subcategory
         await menuItem.populate('category subcategory');
@@ -372,10 +387,25 @@ router.patch('/:id', authenticateToken, authorizeRoles(['owner', 'manager']), up
         if (variablePrice !== undefined) menuItem.variablePrice = variablePrice;
         if (customizationOptions !== undefined) menuItem.customizationOptions = customizationOptions;
         if (nutritionalInfo !== undefined) menuItem.nutritionalInfo = nutritionalInfo;
+        if (req.body.currency) menuItem.currency = req.body.currency;
 
         menuItem.lastUpdatedBy = req.user._id;
 
         await menuItem.save();
+
+        // Handle Custom Currency registration in Restaurant
+        if (req.body.isCustomCurrency && req.body.currency && req.body.customCurrencySymbol) {
+            const Restaurant = (await import('../models/Restaurant.js')).default;
+            await Restaurant.findByIdAndUpdate(restaurantId, {
+                $addToSet: {
+                    'settings.customCurrencies': {
+                        name: req.body.customCurrencyName || req.body.currency,
+                        code: req.body.currency.toUpperCase(),
+                        symbol: req.body.customCurrencySymbol
+                    }
+                }
+            });
+        }
         await menuItem.populate('category subcategory');
 
         console.log('--------------------------------------------------');

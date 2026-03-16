@@ -49,10 +49,16 @@ export const convertCurrency = (amount, from, to, rates) => {
 /**
  * Format currency value according to locale
  */
-export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') => {
+export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ', customCurrencies = []) => {
     try {
-        // Handle MZN separately if locale doesn't support it well or to keep MT symbol
-        if (currencyCode === 'MZN') {
+        // Find custom currency if it exists
+        const custom = customCurrencies.find(c => c.code === currencyCode);
+        if (custom) {
+            return `${custom.symbol} ${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        // Handle MZN separately to keep MT symbol
+        if (currencyCode === 'MZN' || currencyCode === 'MT') {
             return `${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
         }
 
@@ -64,10 +70,13 @@ export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') =
     } catch (e) {
         const symbolMap = {
             MZN: 'MT',
+            MT: 'MT',
             USD: '$',
             EUR: '€',
             ZAR: 'R',
-            GBP: '£'
+            GBP: '£',
+            BRL: 'R$',
+            MXN: 'Mex$'
         };
         const symbol = symbolMap[currencyCode] || currencyCode;
         return `${symbol} ${amount.toFixed(2)}`;
@@ -77,13 +86,19 @@ export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') =
 /**
  * Get currency symbol
  */
-export const getCurrencySymbol = (currencyCode = 'MZN') => {
+export const getCurrencySymbol = (currencyCode = 'MZN', customCurrencies = []) => {
+    const custom = customCurrencies.find(c => c.code === currencyCode);
+    if (custom) return custom.symbol;
+
     const symbolMap = {
         MZN: 'MT',
+        MT: 'MT',
         USD: '$',
         EUR: '€',
         ZAR: 'R',
-        GBP: '£'
+        GBP: '£',
+        BRL: 'R$',
+        MXN: 'Mex$'
     };
     return symbolMap[currencyCode] || currencyCode;
 };

@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchExchangeRates } from '../utils/currencyUtils';
+import { fetchExchangeRates, formatCurrency } from '../utils/currencyUtils';
 
 const CurrencyContext = createContext();
 
 export const CurrencyProvider = ({ children }) => {
     const [currency, setCurrency] = useState(localStorage.getItem('preferred_currency') || 'MZN');
-    const [rates, setRates] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [restaurantSettings, setRestaurantSettings] = useState(null);
 
     useEffect(() => {
         const loadRates = async () => {
@@ -27,8 +26,26 @@ export const CurrencyProvider = ({ children }) => {
         localStorage.setItem('preferred_currency', newCurrency);
     };
 
+    const formatPrice = (amount, code) => {
+        const currentCurrency = code || currency;
+        return formatCurrency(
+            amount, 
+            currentCurrency, 
+            undefined, 
+            restaurantSettings?.customCurrencies || []
+        );
+    };
+
     return (
-        <CurrencyContext.Provider value={{ currency, rates, loading, changeCurrency }}>
+        <CurrencyContext.Provider value={{ 
+            currency, 
+            rates, 
+            loading, 
+            changeCurrency, 
+            formatPrice,
+            setRestaurantSettings,
+            restaurantSettings 
+        }}>
             {children}
         </CurrencyContext.Provider>
     );

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useCurrency } from './CurrencyContext';
+import { convertCurrency } from '../utils/currencyUtils';
 
 const CartContext = createContext(null);
 
@@ -11,6 +13,7 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
+    const { currency: preferredCurrency, rates } = useCurrency();
     const [cart, setCart] = useState(() => {
         try {
             const localData = localStorage.getItem('client-cart');
@@ -74,8 +77,9 @@ export const CartProvider = ({ children }) => {
     };
 
     const cartTotal = cart.reduce((total, item) => {
-        const itemTotal = (item.price + (item.customizations?.reduce((acc, c) => acc + (c.priceModifier || 0), 0) || 0)) * item.qty;
-        return total + itemTotal;
+        const itemUnitPrice = item.price + (item.customizations?.reduce((acc, c) => acc + (c.priceModifier || 0), 0) || 0);
+        const convertedPrice = convertCurrency(itemUnitPrice, item.currency || 'MZN', preferredCurrency, rates);
+        return total + (convertedPrice * item.qty);
     }, 0);
 
     const cartCount = cart.reduce((acc, item) => acc + item.qty, 0);

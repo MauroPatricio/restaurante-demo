@@ -54,7 +54,16 @@ class CurrencyService {
     }
 
     async getSupportedCurrencies() {
-        return ['MZN', 'USD', 'EUR', 'ZAR', 'GBP'];
+        try {
+            const rates = await this.getRates();
+            return Object.keys(rates).sort();
+        } catch (error) {
+            // Comprehensive fallback list of common currencies
+            return [
+                'MZN', 'USD', 'EUR', 'ZAR', 'GBP', 'BRL', 'MXN', 'CAD', 'AUD', 'JPY', 
+                'CNY', 'INR', 'AED', 'AOA', 'CVE', 'STN', 'CHF', 'DKK', 'NOK', 'SEK'
+            ].sort();
+        }
     }
 }
 

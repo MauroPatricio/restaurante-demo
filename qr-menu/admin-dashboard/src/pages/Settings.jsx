@@ -4,6 +4,7 @@ import { restaurantAPI } from '../services/api';
 import { Save, Upload, Building, Phone, Mail, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
+import axios from 'axios';
 
 export default function Settings() {
     const { user } = useAuth();
@@ -12,6 +13,8 @@ export default function Settings() {
     const [saving, setSaving] = useState(false);
     const [restaurant, setRestaurant] = useState(null);
     const [preview, setPreview] = useState(null);
+    const [supportedCurrencies, setSupportedCurrencies] = useState([]);
+    const [loadingCurrencies, setLoadingCurrencies] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -25,6 +28,7 @@ export default function Settings() {
     useEffect(() => {
         if (user?.restaurant) {
             fetchRestaurant();
+            fetchSupportedCurrencies();
         }
     }, [user]);
 
@@ -253,12 +257,12 @@ export default function Settings() {
                                     }}
                                     className="input-base"
                                 >
-                                    <option value="MZN">Metical (MZN)</option>
-                                    <option value="USD">Dollar (USD)</option>
-                                    <option value="EUR">Euro (EUR)</option>
-                                    <option value="ZAR">Rand (ZAR)</option>
-                                    <option value="GBP">Pound (GBP)</option>
+                                    <option value="">{t('select_currency') || 'Select...'}</option>
+                                    {supportedCurrencies.map(code => (
+                                        <option key={code} value={code}>{code}</option>
+                                    ))}
                                 </select>
+                                {loadingCurrencies && <span style={{ fontSize: '11px', color: '#64748b' }}>{t('loading_currencies') || 'Loading list...'}</span>}
                             </div>
 
                             {/* System Language */}

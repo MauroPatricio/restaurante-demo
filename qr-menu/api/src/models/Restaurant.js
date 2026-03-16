@@ -107,7 +107,12 @@ const RestaurantSchema = new mongoose.Schema({
     isMaintenance: {
       type: Boolean,
       default: false
-    }
+    },
+    customCurrencies: [{
+      name: String,
+      code: { type: String, uppercase: true },
+      symbol: String
+    }]
   },
   subscription: {
     type: mongoose.Schema.Types.ObjectId,

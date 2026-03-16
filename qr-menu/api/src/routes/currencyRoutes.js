@@ -25,4 +25,13 @@ router.get('/convert', async (req, res) => {
     }
 });
 
+router.get('/supported', async (req, res) => {
+    try {
+        const currencies = await currencyService.getSupportedCurrencies();
+        res.json({ currencies });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch supported currencies' });
+    }
+});
+
 export default router;

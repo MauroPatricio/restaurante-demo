@@ -21,6 +21,7 @@ const Menu = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { t, i18n } = useTranslation();
+    const { currency: preferredCurrency, formatPrice, setRestaurantSettings } = useCurrency();
 
     // Logic: Get table from URL OR LocalStorage
     // Support both 't' (short) and 'table' (long)
@@ -170,6 +171,7 @@ const Menu = () => {
                 setRestaurant(restaurantData);
                 setMenuItems(itemsData);
                 setCategories(categoriesData);
+                setRestaurantSettings(restaurantData.settings);
                 checkRestaurant(restaurantId);
 
                 // Update Cache
@@ -495,7 +497,7 @@ const Menu = () => {
                                 <div className="flex items-center justify-between mt-2">
                                     <div className="flex items-center gap-1">
                                         <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">
-                                            <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1.05rem' }}>{item.price} {item.currency === 'MZN' ? 'MT' : (item.currency || 'MT')}</span>
+                                            <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1.05rem' }}>{formatPrice(item.price, item.currency)}</span>
                                         </span>
                                     </div>
 
