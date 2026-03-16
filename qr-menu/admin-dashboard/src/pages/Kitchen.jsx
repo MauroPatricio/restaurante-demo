@@ -252,32 +252,31 @@ const Kitchen = () => {
         <div style={{ padding: '40px', maxWidth: '100vw', minHeight: 'calc(100vh - 64px)' }}>
 
             {/* Header */}
-            <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12">
                 <div>
-                    <h1 className="text-premium-header" style={{ fontSize: '48px', margin: 0 }}>
+                    <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white leading-tight">
                         {t('kitchen_display') || 'Kitchen Display'}
                     </h1>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }} />
-                        <p className="text-premium-muted" style={{ margin: 0 }}>
+                    <div className="flex items-center gap-3 mt-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)] animate-pulse" />
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
                             {t('live_kitchen_desc') || 'Real-time order management'} • {new Date().toLocaleDateString()}
                         </p>
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div className="flex flex-wrap items-center gap-4">
                     <button
                         onClick={() => setAudioEnabled(!audioEnabled)}
-                        className={`premium-badge ${audioEnabled ? 'badge-success' : 'badge-error'}`}
-                        style={{ padding: '10px 24px', cursor: 'pointer', border: 'none' }}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border-2 ${audioEnabled ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-500'}`}
                     >
                         {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                         {audioEnabled ? 'Áudio Ligado' : 'Áudio Desligado'}
                     </button>
-                    <div className={`premium-badge ${connected ? 'badge-success' : 'badge-error'}`} style={{ fontSize: '14px', padding: '10px 24px' }}>
+                    <div className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest border-2 ${connected ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-500'}`}>
                         {connected ? (
-                            <><Wifi size={16} /> 🟢 Conectado</>
+                            <><Wifi size={18} /> {t('connected') || 'Conectado'}</>
                         ) : (
-                            <><WifiOff size={16} /> 🔴 Offline</>
+                            <><WifiOff size={18} /> {t('offline') || 'Offline'}</>
                         )}
                     </div>
                 </div>
@@ -301,7 +300,7 @@ const Kitchen = () => {
             )}
 
             {/* KPI Cards */}
-            <div className="premium-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '48px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
 
                 <div className="premium-card">
                     <div className="text-premium-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
@@ -367,7 +366,7 @@ const Kitchen = () => {
             </div>
 
             {/* Orders Columns */}
-            <div style={{ display: 'flex', gap: '32px', alignItems: 'stretch' }}>
+            <div className="flex flex-col lg:flex-row gap-8 items-stretch">
                 {Object.entries(columns).map(([status, config]) => (
                     <div key={status} className="premium-card" style={{
                         flex: 1,
