@@ -330,7 +330,7 @@ const Menu = () => {
     );
 
     return (
-        <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pb-32 max-w-md mx-auto shadow-2xl overflow-hidden relative font-sans transition-colors duration-200">
+        <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pb-32 max-w-5xl mx-auto shadow-2xl overflow-hidden relative font-sans transition-colors duration-200">
 
             {/* Enhanced Hero Section with Table Info */}
             <div className="relative h-56 bg-gray-900">

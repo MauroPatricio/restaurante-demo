@@ -167,7 +167,7 @@ export default function OrderStatus() {
     const tableNum = order.table?.number || order.tableNumber;
 
     return (
-        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 460, margin: '0 auto' }}>
+        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 1024, margin: '0 auto' }}>
             {/* Bell audio */}
             <audio ref={audioRef} preload="auto">
                 <source src="/sound/bell.mp3" type="audio/mpeg" />

@@ -9,7 +9,7 @@ const Maintenance = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-            <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full relative overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-xl p-8 max-w-2xl w-full relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500"></div>
 
                 <div className="mb-8 relative">

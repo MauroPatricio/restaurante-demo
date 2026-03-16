@@ -213,7 +213,7 @@ const Cart = () => {
                 </div>
             </div>
 
-            <div className="p-4 space-y-4 max-w-md mx-auto">
+            <div className="p-4 space-y-4 max-w-4xl mx-auto">
                 {/* Cart Items */}
                 <div className="space-y-3">
                     {cart.map((item, index) => (

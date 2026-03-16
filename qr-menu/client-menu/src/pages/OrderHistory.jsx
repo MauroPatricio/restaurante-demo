@@ -83,7 +83,7 @@ const OrderHistory = () => {
                 </div>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 max-w-4xl mx-auto">
                 {!customerPhone ? (
                     <div className="text-center py-10 text-gray-500">
                         <ShoppingBag size={48} className="mx-auto mb-4 opacity-30" />

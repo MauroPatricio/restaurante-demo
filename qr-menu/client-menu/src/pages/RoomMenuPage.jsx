@@ -57,7 +57,7 @@ function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navig
     }, [orders]);
 
     return (
-        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 1024, margin: '0 auto' }}>
             {/* Header */}
             <div style={{ background: 'linear-gradient(135deg,#1e1b4b,#312e81)', padding: 20 }}>
                 <button onClick={onBack} style={S.backBtn}>← Voltar ao menu</button>
@@ -320,7 +320,7 @@ export default function RoomMenuPage() {
 
     /* ── MENU ── */
     if (phase === 'menu') return (
-        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", paddingBottom: totalQty > 0 ? 90 : 40 }}>
+        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", paddingBottom: totalQty > 0 ? 90 : 40, maxWidth: 1024, margin: '0 auto' }}>
             {/* Header */}
             <div style={{ background: 'linear-gradient(135deg,#1e1b4b,#312e81)', padding: '16px 16px 20px', position: 'sticky', top: 0, zIndex: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -434,7 +434,7 @@ export default function RoomMenuPage() {
 
     /* ── CART ── */
     if (phase === 'cart') return (
-        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 1024, margin: '0 auto' }}>
             <div style={{ background: 'linear-gradient(135deg,#1e1b4b,#312e81)', padding: 20 }}>
                 <button onClick={() => setPhase('menu')} style={S.backBtn}>← Voltar ao menu</button>
                 <h1 style={{ color: 'white', margin: '10px 0 0', fontSize: '1.2rem', fontWeight: 700 }}>🛒 Carrinho</h1>

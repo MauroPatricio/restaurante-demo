@@ -132,7 +132,7 @@ export default function RoomOrderTracking() {
             : 'linear-gradient(135deg,#1e1b4b,#312e81)';
 
     return (
-        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 460, margin: '0 auto' }}>
+        <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 1024, margin: '0 auto' }}>
             {/* Status toast overlay */}
             {statusToast && (
                 <div style={{
