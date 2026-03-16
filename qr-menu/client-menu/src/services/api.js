@@ -14,8 +14,10 @@ const api = axios.create({
 // Request Interceptor
 api.interceptors.request.use(
     (config) => {
-        // Trigger loading overlay
-        loadingManager.start();
+        // Trigger loading overlay unless it's a quiet request
+        if (!config.quiet) {
+            loadingManager.start();
+        }
 
         // Add auth token if available (from URL or storage)
         // Standardize token retrieval
@@ -48,13 +50,16 @@ api.interceptors.response.use(
     async (error) => {
         const { config, response } = error;
 
+        // Ensure we stop loading on error before anything else
+        loadingManager.stop();
+
         // Timeout handling or Network Error
         if (error.code === 'ECONNABORTED' || error.message.includes('timeout') || !response) {
             // Basic retry logic for GET requests only
             if (config && config.method === 'get' && !config._retry) {
                 config._retry = true;
-                // Stop current loading instance before retrying
-                loadingManager.stop();
+                // Stopped above, so we don't need to stop again
+                // Stop current loading instance before retrying (Redundant but safe)
                 // Exponential backoff or simple delay? Let's trying once more after 1s
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -63,7 +68,6 @@ api.interceptors.response.use(
             }
         }
 
-        loadingManager.stop();
         return Promise.reject(error);
     }
 );

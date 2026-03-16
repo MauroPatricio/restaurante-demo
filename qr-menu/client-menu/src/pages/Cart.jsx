@@ -12,6 +12,7 @@ import ReactionButtons from '../components/ReactionButtons';
 import { useSound } from '../hooks/useSound';
 import bellSound from '../sound/bell.mp3';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { loadingManager } from '../utils/loadingManager';
 import { getMenuUrl } from '../utils/navigation';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
@@ -124,6 +125,9 @@ const Cart = () => {
 
                 // Clear cart before redirecting
                 clearCart();
+
+                // Safety: force stop any active global loaders before navigating
+                loadingManager.reset();
 
                 // Redirect to Order Status page with state to show confirmation message
                 // Use replace: true to prevent back button loop

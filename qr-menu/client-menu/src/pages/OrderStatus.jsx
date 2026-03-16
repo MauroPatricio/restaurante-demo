@@ -12,6 +12,15 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 const DONE_STATUSES = ['served', 'completed', 'cancelled'];
 const POLL_MS = 12000;
 
+const STATUS_STEPS = [
+    { key: 'pending', label: 'order_status_received', icon: '📋', color: '#f59e0b', desc: 'order_status_received_desc' },
+    { key: 'confirmed', label: 'order_status_confirmed', icon: '✅', color: '#3b82f6', desc: 'order_status_confirmed_desc' },
+    { key: 'preparing', label: 'order_status_preparing', icon: '👨‍🍳', color: '#8b5cf6', desc: 'order_status_preparing_desc' },
+    { key: 'ready', label: 'order_status_ready', icon: '🍽️', color: '#10b981', desc: 'order_status_ready_desc' },
+    { key: 'served', label: 'order_status_served', icon: '🎉', color: '#10b981', desc: 'order_status_served_desc' },
+    { key: 'completed', label: 'order_status_completed', icon: '✔️', color: '#64748b', desc: 'order_status_completed_desc' },
+];
+
 
 export default function OrderStatus() {
     const { restaurantId, orderId } = useParams();
@@ -22,14 +31,6 @@ export default function OrderStatus() {
 
     const locale = i18n.language === 'pt' ? 'pt-MZ' : i18n.language;
 
-    const STATUS_STEPS = [
-        { key: 'pending', label: t('order_status_received'), icon: '📋', color: '#f59e0b', desc: t('order_status_received_desc') },
-        { key: 'confirmed', label: t('order_status_confirmed'), icon: '✅', color: '#3b82f6', desc: t('order_status_confirmed_desc') },
-        { key: 'preparing', label: t('order_status_preparing'), icon: '👨‍🍳', color: '#8b5cf6', desc: t('order_status_preparing_desc') },
-        { key: 'ready', label: t('order_status_ready'), icon: '🍽️', color: '#10b981', desc: t('order_status_ready_desc') },
-        { key: 'served', label: t('order_status_served'), icon: '🎉', color: '#10b981', desc: t('order_status_served_desc') },
-        { key: 'completed', label: t('order_status_completed'), icon: '✔️', color: '#64748b', desc: t('order_status_completed_desc') },
-    ];
 
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -61,7 +62,7 @@ export default function OrderStatus() {
                 try { navigator.vibrate?.([200, 50, 200]); } catch { }
                 const step = STATUS_STEPS.find(s => s.key === newStatus);
                 if (step) {
-                    setStatusToast({ label: step.label, color: step.color, icon: step.icon });
+                    setStatusToast({ label: t(step.label), color: step.color, icon: step.icon });
                     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
                     toastTimerRef.current = setTimeout(() => setStatusToast(null), 4000);
                 }
@@ -75,9 +76,9 @@ export default function OrderStatus() {
     }, [STATUS_STEPS]);
 
     /* ── Fetch order (polling) ── */
-    const fetchOrder = useCallback(async () => {
+    const fetchOrder = useCallback(async (isPolling = false) => {
         try {
-            const res = await api.get(`/orders/${orderId}`);
+            const res = await api.get(`/orders/${orderId}`, { quiet: isPolling });
             const newOrder = res.data.order || res.data;
             handleStatusChange(newOrder);
         } catch (e) {
@@ -98,12 +99,12 @@ export default function OrderStatus() {
         return () => socket.disconnect();
     }, [orderId, handleStatusChange]);
 
-    useEffect(() => { fetchOrder(); }, [fetchOrder]);
+    useEffect(() => { fetchOrder(false); }, [fetchOrder]);
 
     /* ── Polling ── */
     useEffect(() => {
         if (!order || DONE_STATUSES.includes(order.status)) return;
-        const id = setInterval(fetchOrder, POLL_MS);
+        const id = setInterval(() => fetchOrder(true), POLL_MS);
         return () => clearInterval(id);
     }, [order, fetchOrder]);
 

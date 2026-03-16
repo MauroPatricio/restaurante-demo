@@ -33,9 +33,11 @@ class LoadingManager {
     }
 
     stop() {
-        this.activeRequests--;
-        if (this.activeRequests <= 0) {
-            this.activeRequests = 0;
+        if (this.activeRequests > 0) {
+            this.activeRequests--;
+        }
+        
+        if (this.activeRequests === 0) {
             this.isLoading = false;
             this.message = null;
             this.notify();
