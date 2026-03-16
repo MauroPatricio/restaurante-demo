@@ -172,7 +172,9 @@ const Menu = () => {
                 setRestaurant(restaurantData);
                 setMenuItems(itemsData);
                 setCategories(categoriesData);
-                setRestaurantSettings(restaurantData.settings);
+                if (restaurantData.settings) {
+                    setRestaurantSettings(restaurantData.settings);
+                }
                 checkRestaurant(restaurantId);
 
                 // Update Cache

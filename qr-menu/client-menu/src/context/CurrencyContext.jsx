@@ -23,6 +23,13 @@ export const CurrencyProvider = ({ children }) => {
         loadRates();
     }, []);
 
+    // Sync with restaurant default currency if no user preference
+    useEffect(() => {
+        if (restaurantSettings?.defaultCurrency && !localStorage.getItem('preferred_currency')) {
+            setCurrency(restaurantSettings.defaultCurrency);
+        }
+    }, [restaurantSettings]);
+
     const changeCurrency = (newCurrency) => {
         setCurrency(newCurrency);
         localStorage.setItem('preferred_currency', newCurrency);
