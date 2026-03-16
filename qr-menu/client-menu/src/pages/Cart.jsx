@@ -198,15 +198,15 @@ const Cart = () => {
     }
 
     return (
-        <div className="bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col items-center w-full">
-            {/* Header - Stretches to full width */}
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col items-center w-full">
+            {/* Header - Matches Menu width pattern */}
             <div className="w-full bg-white dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-30 shadow-sm border-b border-gray-100 transition-colors duration-200">
-                <div className="w-full p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
-                            <ArrowLeft size={24} />
+                <div className="max-w-5xl mx-auto p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
+                            <ArrowLeft size={20} />
                         </button>
-                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
+                        <h1 className="text-base font-bold text-gray-900 dark:text-white">{t('cart')}</h1>
                     </div>
                     <div className="flex items-center gap-2">
                         <LanguageSwitcher />
@@ -215,169 +215,152 @@ const Cart = () => {
                 </div>
             </div>
 
-            <div className="w-full p-4 space-y-6">
-                {/* Cart Items */}
-                <div className="space-y-3">
+            <div className="w-full max-w-5xl mx-auto p-3 space-y-3 flex-1 flex flex-col">
+                {/* Cart Items - More compact */}
+                <div className="space-y-2">
                     {cart.map((item, index) => (
-                        <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 transition-colors overflow-hidden">
+                        <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-3 transition-colors overflow-hidden">
                             <div className="flex-1">
-                                <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight mb-1">{item.name}</h3>
-                                <p className="text-primary-600 dark:text-primary-400 font-extrabold text-sm">
+                                <h3 className="font-bold text-gray-900 dark:text-white text-sm leading-tight">{item.name}</h3>
+                                <p className="text-primary-600 dark:text-primary-400 font-extrabold text-[12px] mt-0.5">
                                     {formatCurrency(
                                         convertCurrency(item.price, item.currency || 'MZN', preferredCurrency, rates),
                                         preferredCurrency,
                                         locale
                                     )}
                                 </p>
-                                {item.customizations?.length > 0 && (
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-tight">
-                                        {item.customizations.map(c => c.name).join(', ')}
-                                    </p>
-                                )}
                             </div>
-                            <div className="flex flex-col items-end justify-between gap-3">
-                                <button
-                                    onClick={() => removeFromCart(index)}
-                                    className="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-1 border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-0.5 border border-gray-100 dark:border-gray-700">
                                     <button
                                         onClick={() => updateQty(index, -1)}
-                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm disabled:opacity-30"
+                                        className="w-6 h-6 flex items-center justify-center rounded-md bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm disabled:opacity-30"
                                         disabled={item.qty <= 1}
                                     >
-                                        <Minus size={12} strokeWidth={3} />
+                                        <Minus size={10} strokeWidth={3} />
                                     </button>
-                                    <span className="font-bold text-sm w-4 text-center text-gray-900 dark:text-white">{item.qty}</span>
+                                    <span className="font-bold text-[12px] w-3 text-center text-gray-900 dark:text-white">{item.qty}</span>
                                     <button
                                         onClick={() => updateQty(index, 1)}
-                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-primary-600 text-white shadow-md shadow-primary-500/20"
+                                        className="w-6 h-6 flex items-center justify-center rounded-md bg-primary-600 text-white"
                                     >
-                                        <Plus size={12} strokeWidth={3} />
+                                        <Plus size={10} strokeWidth={3} />
                                     </button>
                                 </div>
+                                <button
+                                    onClick={() => removeFromCart(index)}
+                                    className="text-gray-300 hover:text-red-500 dark:text-gray-600 transition-colors p-1"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Totals */}
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 transition-colors">
-                    <div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                        <span>{t('subtotal')}</span>
-                        <span>{formatCurrency(convertedTotal, preferredCurrency, locale)}</span>
-                    </div>
-                    <div className="flex justify-between font-black text-2xl pt-3 border-t border-dashed border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
-                        <span>{t('total')}</span>
-                        <span className="text-primary-600 dark:text-primary-400">
-                            {formatCurrency(convertedTotal, preferredCurrency, locale)}
-                        </span>
-                    </div>
+                {/* Totals - Smaller */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('total')}</span>
+                    <span className="text-lg font-black text-primary-600 dark:text-primary-400">
+                        {formatCurrency(convertedTotal, preferredCurrency, locale)}
+                    </span>
                 </div>
 
-                {/* Form Section */}
-                <div className="space-y-4">
-                    <form id="checkout-form" onSubmit={handleCheckout} className="space-y-4">
-                        {/* Payment Method - Now part of flow */}
-                        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-4">{t('payment_method_label')}</label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {['mpesa', 'emola', 'visa', 'cash'].map((method) => (
-                                    <button
-                                        key={method}
-                                        type="button"
-                                        onClick={() => setPaymentMethod(method)}
-                                        className={`group relative flex flex-col items-center justify-center py-4 px-2 rounded-2xl border-2 transition-all duration-300 ${
-                                            paymentMethod === method 
-                                                ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-500 text-primary-700 dark:text-primary-400 shadow-lg shadow-primary-500/10' 
-                                                : 'bg-gray-50/50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500'
-                                        }`}
-                                    >
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all duration-300 ${
-                                            paymentMethod === method ? 'bg-primary-500 text-white scale-110' : 'bg-white dark:bg-gray-800 text-gray-400'
-                                        }`}>
-                                            {method === 'mpesa' && <Smartphone size={18} />}
-                                            {method === 'emola' && <Smartphone size={18} />}
-                                            {method === 'visa' && <CreditCard size={18} />}
-                                            {method === 'cash' && <Wallet size={18} />}
+                {/* Form Section - Compacted */}
+                <form id="checkout-form" onSubmit={handleCheckout} className="space-y-3 flex flex-col flex-1">
+                    {/* Payment Method - Compact Grid */}
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">{t('payment_method_label')}</label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {['mpesa', 'emola', 'visa', 'cash'].map((method) => (
+                                <button
+                                    key={method}
+                                    type="button"
+                                    onClick={() => setPaymentMethod(method)}
+                                    className={`relative flex flex-col items-center justify-center py-2 rounded-xl border-2 transition-all ${
+                                        paymentMethod === method 
+                                            ? 'bg-primary-50 dark:bg-primary-900/10 border-primary-500 text-primary-700 dark:text-primary-400' 
+                                            : 'bg-gray-50/30 dark:bg-gray-900/20 border-gray-100 dark:border-gray-700 text-gray-400'
+                                    }`}
+                                >
+                                    <div className="mb-0.5">
+                                        {method === 'mpesa' && <Smartphone size={14} />}
+                                        {method === 'emola' && <Smartphone size={14} />}
+                                        {method === 'visa' && <CreditCard size={14} />}
+                                        {method === 'cash' && <Wallet size={14} />}
+                                    </div>
+                                    <span className="text-[8px] font-black uppercase tracking-tight">
+                                        {method === 'visa' ? 'VISA' : method}
+                                    </span>
+                                    {paymentMethod === method && (
+                                        <div className="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center text-white">
+                                            <ShieldCheck size={8} strokeWidth={4} />
                                         </div>
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-center leading-tight">
-                                            {method === 'visa' ? 'VISA/MC' : method}
-                                        </span>
-                                        {paymentMethod === method && (
-                                            <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center text-white shadow-sm">
-                                                <ShieldCheck size={10} strokeWidth={4} />
-                                            </div>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
+                                    )}
+                                </button>
+                            ))}
                         </div>
+                    </div>
 
-                        {/* Customer Details */}
-                        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors space-y-4">
+                    {/* Customer Info - Combined and Slimmer */}
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-2">
+                        <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2">{t('your_name_label')}</label>
+                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('your_name_label')}</label>
                                 <input
                                     type="text"
                                     required
-                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-300 text-sm font-medium"
+                                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg outline-none text-gray-900 dark:text-white placeholder:text-gray-300 text-xs font-semibold"
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
                                     placeholder={t('name_placeholder')}
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-2">{t('phone_label')}</label>
+                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('phone_label')}</label>
                                 <input
                                     type="tel"
                                     required
-                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-300 text-sm font-medium"
+                                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg outline-none text-gray-900 dark:text-white placeholder:text-gray-300 text-xs font-semibold"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('phone_placeholder')}
                                     inputMode="tel"
                                 />
                             </div>
-
-                            {error && (
-                                <motion.div 
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-red-500 text-xs font-bold bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30 flex items-center gap-2"
-                                >
-                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                                    {error}
-                                </motion.div>
-                            )}
-
-                            {/* Confirm Button - Now internal to form flow */}
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full mt-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 rounded-[10px] h-[48px] font-black flex items-center justify-between hover:scale-[1.01] active:scale-[0.99] transition-all shadow-xl shadow-black/10 dark:shadow-white/5 disabled:opacity-70 disabled:cursor-not-allowed group overflow-hidden"
-                            >
-                                <div className="flex items-center gap-3">
-                                    {loading ? <LoadingSpinner size={16} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={18} className="text-primary-500" />}
-                                    <span className="text-xs uppercase tracking-widest">{loading ? t('scanning') : t('confirm_order')}</span>
-                                </div>
-                                <span className="text-base font-black">
-                                    {formatCurrency(convertedTotal, preferredCurrency, locale)}
-                                </span>
-                            </button>
                         </div>
-                    </form>
-                </div>
 
-                <div className="py-4">
-                    <p className="text-[10px] text-gray-400 dark:text-gray-600 font-bold text-center uppercase tracking-[0.3em] opacity-50">
+                        {error && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-500 text-[10px] font-bold py-1 flex items-center gap-1">
+                                <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse"></div>
+                                {error}
+                            </motion.div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-[10px] h-[48px] font-black flex items-center justify-between px-5 hover:scale-[1.01] active:scale-[0.99] transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed group overflow-hidden mt-1"
+                        >
+                            <div className="flex items-center gap-2">
+                                {loading ? <LoadingSpinner size={14} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={16} className="text-primary-500 transition-transform group-hover:translate-x-1" />}
+                                <span className="text-[10px] uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
+                            </div>
+                            <span className="text-base font-black">
+                                {formatCurrency(convertedTotal, preferredCurrency, locale)}
+                            </span>
+                        </button>
+                    </div>
+                </form>
+
+                <div className="py-2 mt-auto">
+                    <p className="text-[9px] text-gray-400 dark:text-gray-600 font-bold text-center uppercase tracking-[0.2em] opacity-40">
                         {t('developed_by')}
                     </p>
                 </div>
             </div>
         </div>
+
 
 
     );
