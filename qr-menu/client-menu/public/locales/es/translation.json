@@ -107,5 +107,12 @@
     "waiter": "Camarero",
     "waiter_coming": "El camarero está en camino a su mesa.",
     "waiter_on_way": "¡El camarero está en camino!",
-    "your_name_label": "Su Nombre"
+    "your_name_label": "Su Nombre",
+    "call_waiter": "Llamar Camarero",
+    "calling": "Llamando...",
+    "waiter_called_title": "¡Camarero Llamado!",
+    "waiter_confirmation_msg": "Se ha notificado a un camarero y vendrá a su mesa pronto.",
+    "waiter_call_error": "Error al llamar al camarero. Por favor, inténtelo de nuevo.",
+    "waiter_active_call": "Ya hay una solicitud activa para esta mesa.",
+    "waiter_call_cooldown": "Por favor, espere {{seconds}} segundos antes de volver a llamar."
 }

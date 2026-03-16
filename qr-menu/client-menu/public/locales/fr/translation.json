@@ -14,7 +14,7 @@
     "currency": "MT",
     "customer": "Client",
     "developed_by": "Développé par Nhiquela Servicos e Consultoria, LDA",
-    "disconnected": "Déconnecté",
+    "disconnected": "Déconecté",
     "error": "Erreur",
     "error_checkout_generic": "Quelque chose s'est mal passé. Veuillez réessayer.",
     "error_connecting_server": "Erreur de connexion au serveur. Veuillez réessayer.",
@@ -107,5 +107,12 @@
     "waiter": "Serveur",
     "waiter_coming": "Le serveur est en route vers votre table.",
     "waiter_on_way": "Le serveur est en route !",
-    "your_name_label": "Votre Nom"
+    "your_name_label": "Votre Nom",
+    "call_waiter": "Appeler le Serveur",
+    "calling": "Appel en cours...",
+    "waiter_called_title": "Serveur Appelé !",
+    "waiter_confirmation_msg": "Un serveur a été prévenu et viendra à votre table prochainement.",
+    "waiter_call_error": "Erreur lors de l'appel du serveur. Veuillez réessayer.",
+    "waiter_active_call": "Il y a déjà une demande active pour cette table.",
+    "waiter_call_cooldown": "Veuillez attendre {{seconds}} secondes avant d'appeler à nouveau."
 }

@@ -53,10 +53,12 @@ api.interceptors.response.use(
             // Basic retry logic for GET requests only
             if (config && config.method === 'get' && !config._retry) {
                 config._retry = true;
+                // Stop current loading instance before retrying
+                loadingManager.stop();
                 // Exponential backoff or simple delay? Let's trying once more after 1s
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Manually restart loading since the previous one stopped on error (Wait, no, it will be called by request interceptor)
+                // Manually restart loading since the previous one stopped on error
                 return api(config);
             }
         }
