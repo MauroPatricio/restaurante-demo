@@ -487,6 +487,7 @@
     "preparing_dashboard": "Chargement des Données d'Inventaire...",
     "price_additional": "Additionnel",
     "price_main": "Principal",
+    "price_required": "Prix *",
     "print": "Imprimer",
     "print_invoice_btn": "Imprimer la Facture",
     "print_qr": "Imprimer QR",

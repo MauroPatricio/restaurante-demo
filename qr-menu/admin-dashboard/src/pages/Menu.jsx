@@ -250,8 +250,20 @@ export default function Menu() {
                         setShowModal(false);
                         setEditItem(null);
                     }}
-                    onSave={() => {
-                        fetchMenu();
+                    onSave={(savedItem) => {
+                        setItems(prev => {
+                            const exists = prev.find(i => i._id === savedItem._id);
+                            if (exists) {
+                                return prev.map(i => i._id === savedItem._id ? savedItem : i);
+                            } else {
+                                // For new items, verify if it belongs to current filter
+                                const itemCategoryId = savedItem.category?._id || savedItem.category;
+                                if (filter === 'all' || itemCategoryId === filter) {
+                                    return [savedItem, ...prev];
+                                }
+                                return prev;
+                            }
+                        });
                         setShowModal(false);
                         setEditItem(null);
                     }}
@@ -287,7 +299,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
         stock: item?.stock ?? 0,
         stockMin: item?.stockMin ?? 0,
         unit: item?.unit || 'Unidade',
-        currency: item?.currency || 'MZN',
+        currency: item?.currency || localStorage.getItem('preferredCurrency') || 'MZN',
         seasonal: item?.seasonal || '',
         tags: item?.tags?.join(', ') || ''
     });
@@ -397,7 +409,10 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
             // "Apresentar o item gravado" - Show success toast/alert
             alert(`✅ ${t('item_saved_success', { name: response.data.menuItem.name })}`);
 
-            onSave();
+            // Persist currency preference
+            localStorage.setItem('preferredCurrency', formData.currency);
+            
+            onSave(response.data.menuItem);
         } catch (error) {
             console.error('Save error:', error);
             alert(error.response?.data?.message || 'Failed to save menu item');

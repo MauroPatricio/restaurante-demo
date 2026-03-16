@@ -487,6 +487,7 @@
     "preparing_dashboard": "Loading Inventory Data...",
     "price_additional": "Additional",
     "price_main": "Main",
+    "price_required": "Price *",
     "print": "Print",
     "print_invoice_btn": "Print Invoice",
     "print_qr": "Print QR",
