@@ -253,7 +253,7 @@ const Cart = () => {
                 <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors">
                     <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('total')}</span>
                     <span className="text-2xl font-black text-primary-600 dark:text-primary-400">
-                        {formatPrice(cartTotal)}
+                        {formatPrice(cartTotal, cartCurrency)}
                     </span>
                 </div>
 
@@ -338,7 +338,7 @@ const Cart = () => {
                                 <span className="text-sm uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
                             </div>
                             <span className="text-xl font-black">
-                                {formatPrice(cartTotal)}
+                                {formatPrice(cartTotal, cartCurrency)}
                             </span>
                         </button>
                     </div>

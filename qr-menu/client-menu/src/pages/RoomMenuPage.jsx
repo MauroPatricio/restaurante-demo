@@ -4,7 +4,6 @@ import { useCurrency } from '../context/CurrencyContext';
 import { API_URL } from '../config/api';
 
 /* ─── Helpers ─────────────────────────────────────────── */
-const fmt = (n) => Number(n || 0).toFixed(2);
 const HISTORY_KEY = (restaurantId, roomId) => `rs_orders_${restaurantId}_${roomId}`;
 
 function saveOrderToHistory(restaurantId, roomId, order) {
@@ -203,6 +202,7 @@ export default function RoomMenuPage() {
     });
     const getQty = (id) => cart.find(c => c.item._id === id)?.qty || 0;
     const totalQty = cart.reduce((s, c) => s + c.qty, 0);
+    const cartCurrency = cart.length > 0 ? (cart[0].item.currency || restaurant?.settings?.currency || 'MZN') : (restaurant?.settings?.currency || 'MZN');
     const totalPrice = cart.reduce((s, c) => s + c.qty * (c.item.price || 0), 0);
 
     /* ── Submit order ── */
@@ -428,7 +428,7 @@ export default function RoomMenuPage() {
                     <button onClick={() => setPhase('cart')} style={{ width: '100%', padding: '15px 20px', background: 'linear-gradient(135deg,#312e81,#7c3aed)', color: 'white', border: 'none', borderRadius: 16, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
                         <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 8, padding: '2px 10px' }}>{totalQty}</span>
                         <span>Ver Carrinho</span>
-                        <span>{formatPrice(totalPrice)}</span>
+                        <span>{formatPrice(totalPrice, cartCurrency)}</span>
                     </button>
                 </div>
             )}
@@ -509,7 +509,7 @@ export default function RoomMenuPage() {
 
                 <div style={{ background: 'linear-gradient(135deg,#312e81,#1e1b4b)', borderRadius: 14, padding: 16, marginTop: 12, color: 'white' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem' }}>
-                        <span>Total</span><span>{formatPrice(totalPrice)}</span>
+                        <span>Total</span><span>{formatPrice(totalPrice, cartCurrency)}</span>
                     </div>
                     <p style={{ opacity: 0.55, fontSize: '0.78rem', margin: '6px 0 0' }}>
                         {paymentMethod === 'room_account' ? '🛏️ Faturação ao quarto · Pague no check-out' :
