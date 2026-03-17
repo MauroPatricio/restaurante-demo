@@ -77,14 +77,22 @@ export const CartProvider = ({ children }) => {
     };
 
     // Determine cart currency based on items or preferred settings
-    const cartCurrency = cart.length > 0 ? (cart[0].currency || preferredCurrency || 'MZN') : (preferredCurrency || 'MZN');
+    // Search entire cart for any item with a specified currency to be more robust
+    const firstItemWithCurrency = cart.find(i => i.currency || i.currencyCode || (i.item && (i.item.currency || i.item.currencyCode)));
+    
+    const cartCurrency = firstItemWithCurrency 
+        ? (firstItemWithCurrency.currency || firstItemWithCurrency.currencyCode || (firstItemWithCurrency.item && (firstItemWithCurrency.item.currency || firstItemWithCurrency.item.currencyCode)))
+        : (preferredCurrency || 'MZN');
 
     const cartTotal = cart.reduce((total, item) => {
         const itemUnitPrice = item.price + (item.customizations?.reduce((acc, c) => acc + (c.priceModifier || 0), 0) || 0);
         // Use cartCurrency as the target instead of preferredCurrency to avoid unwanted conversion if item is e.g. USD
-        const convertedPrice = convertCurrency(itemUnitPrice, item.currency || cartCurrency, cartCurrency, rates);
+        const itemCurrency = item.currency || item.currencyCode || cartCurrency;
+        const convertedPrice = convertCurrency(itemUnitPrice, itemCurrency, cartCurrency, rates);
         return total + (convertedPrice * item.qty);
     }, 0);
+
+    const cartCount = cart.reduce((acc, item) => acc + item.qty, 0);
 
     const checkRestaurant = (currentId) => {
         if (restaurantId && restaurantId !== currentId && cart.length > 0) {
