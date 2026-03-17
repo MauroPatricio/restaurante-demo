@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../context/CurrencyContext';
 import { API_URL } from '../config/api';
 
 const STATUS_STEPS = [
-    { key: 'pending', label: 'Pedido Recebido', icon: '📋', color: '#f59e0b', desc: 'O seu pedido foi recebido pela cozinha.' },
-    { key: 'confirmed', label: 'Confirmado', icon: '✅', color: '#3b82f6', desc: 'A cozinha confirmou o seu pedido.' },
-    { key: 'preparing', label: 'Em Preparação', icon: '👨‍🍳', color: '#8b5cf6', desc: 'O seu pedido está a ser preparado.' },
-    { key: 'ready', label: 'A Caminho do Quarto', icon: '🚀', color: '#10b981', desc: 'O seu pedido está a caminho! Já vem.' },
-    { key: 'served', label: 'Entregue!', icon: '🎉', color: '#10b981', desc: 'Bom apetite! 🍽️' },
+    { key: 'pending', label: 'order_status_pending', icon: '📋', color: '#f59e0b', desc: 'order_status_pending_desc' },
+    { key: 'received', label: 'order_status_pending', icon: '📋', color: '#f59e0b', desc: 'order_status_pending_desc' },
+    { key: 'confirmed', label: 'order_status_confirmed', icon: '✅', color: '#3b82f6', desc: 'order_status_confirmed_desc' },
+    { key: 'preparing', label: 'order_status_preparing', icon: '👨‍🍳', color: '#8b5cf6', desc: 'order_status_preparing_desc' },
+    { key: 'ready', label: 'order_status_ready', icon: '🚀', color: '#10b981', desc: 'order_status_ready_desc' },
+    { key: 'served', label: 'order_status_served', icon: '🎉', color: '#10b981', desc: 'order_status_served_desc' },
 ];
 
 const DONE_STATUSES = ['served', 'completed', 'cancelled'];
@@ -19,6 +21,7 @@ export default function RoomOrderTracking() {
     const [searchParams] = useSearchParams();
     const roomId = searchParams.get('room');
     const token = searchParams.get('token');
+    const { t } = useTranslation();
     const { formatPrice } = useCurrency();
 
     const [order, setOrder] = useState(null);
@@ -87,16 +90,16 @@ export default function RoomOrderTracking() {
     const totalItems = order?.items?.reduce((s, i) => s + (i.qty || 1), 0) || 0;
     const getElapsed = (d) => {
         const m = Math.floor((Date.now() - new Date(d)) / 60000);
-        if (m < 1) return 'agora mesmo';
-        if (m < 60) return `há ${m} min`;
-        return `há ${Math.floor(m / 60)}h${m % 60 > 0 ? ` ${m % 60}m` : ''}`;
+        if (m < 1) return t('just_now');
+        if (m < 60) return t('minutes_ago', { count: m });
+        return t('hours_ago', { count: Math.floor(m / 60), minutes: m % 60 });
     };
 
     /* ── Loading ── */
     if (loading) return (
         <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', gap: 16 }}>
             <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTop: '4px solid #312e81', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
-            <p style={{ color: '#64748b', fontFamily: 'sans-serif' }}>A carregar pedido…</p>
+            <p style={{ color: '#64748b', fontFamily: 'sans-serif' }}>{t('loading_data')}</p>
             <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
     );
@@ -105,8 +108,8 @@ export default function RoomOrderTracking() {
     if (error || !order) return (
         <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'sans-serif' }}>
             <div style={{ fontSize: '3rem', marginBottom: 12 }}>⚠️</div>
-            <h2 style={{ color: '#be123c' }}>Não encontrado</h2>
-            <p style={{ color: '#64748b' }}>{error || 'Pedido não encontrado.'}</p>
+            <h2 style={{ color: '#be123c' }}>{t('not_found')}</h2>
+            <p style={{ color: '#64748b' }}>{error || t('order_not_found')}</p>
         </div>
     );
 
@@ -117,10 +120,10 @@ export default function RoomOrderTracking() {
             style={{ position: 'fixed', inset: 0, background: 'linear-gradient(135deg,#064e3b,#065f46)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, cursor: 'pointer', padding: 32, textAlign: 'center', fontFamily: 'sans-serif', animation: 'pulse 1s ease-in-out infinite' }}
         >
             <div style={{ fontSize: '5rem', marginBottom: 20, animation: 'bounce 0.5s ease infinite alternate' }}>🚀</div>
-            <h1 style={{ color: 'white', fontSize: '2rem', margin: '0 0 12px', fontWeight: 800 }}>O seu pedido está a caminho!</h1>
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.1rem', marginBottom: 40 }}>Quarto {order?.roomService?.roomNumber} · Já vem aí!</p>
+            <h1 style={{ color: 'white', fontSize: '2rem', margin: '0 0 12px', fontWeight: 800 }}>{t('order_ready_title')}</h1>
+            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.1rem', marginBottom: 40 }}>{t('table')} {order?.roomService?.roomNumber} · {t('waiter_on_way')}</p>
             <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: '12px 28px', color: 'white', fontWeight: 600 }}>
-                Toque para fechar
+                {t('tap_to_close')}
             </div>
             <style>{`@keyframes bounce{from{transform:translateY(-10px)}to{transform:translateY(10px)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.85}}`}</style>
         </div>
@@ -162,10 +165,10 @@ export default function RoomOrderTracking() {
             <div style={{ background: headerBg, padding: '24px 20px', textAlign: 'center' }}>
                 <div style={{ fontSize: '3rem', marginBottom: 8 }}>{isCancelled ? '❌' : currentStep?.icon || '📋'}</div>
                 <h1 style={{ color: 'white', margin: '0 0 4px', fontSize: '1.25rem', fontWeight: 700 }}>
-                    🛏️ Quarto {order.roomService?.roomNumber || '—'}
+                    🛏️ {t('table')} {order.roomService?.roomNumber || '—'}
                 </h1>
                 <p style={{ color: 'rgba(255,255,255,0.65)', margin: 0, fontSize: '0.82rem' }}>
-                    {order.customerName} · {totalItems} item{totalItems !== 1 ? 's' : ''} · {getElapsed(order.createdAt)}
+                    {order.customerName} · {totalItems} {t('item_label')}{totalItems !== 1 ? 's' : ''} · {getElapsed(order.createdAt)}
                 </p>
             </div>
 
@@ -174,8 +177,8 @@ export default function RoomOrderTracking() {
                 <div style={{ background: currentStep.color + '15', borderBottom: `2px solid ${currentStep.color}30`, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: '1.4rem' }}>{currentStep.icon}</span>
                     <div>
-                        <p style={{ margin: 0, fontWeight: 700, color: currentStep.color, fontSize: '0.95rem' }}>{currentStep.label}</p>
-                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>{currentStep.desc}</p>
+                        <p style={{ margin: 0, fontWeight: 700, color: currentStep.color, fontSize: '0.95rem' }}>{t(currentStep.label)}</p>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>{t(currentStep.desc)}</p>
                     </div>
                 </div>
             )}
@@ -198,9 +201,9 @@ export default function RoomOrderTracking() {
                                 </div>
                                 {/* Text */}
                                 <div style={{ paddingTop: 7, marginBottom: 22 }}>
-                                    <p style={{ margin: 0, fontWeight: active ? 700 : 500, fontSize: '0.9rem', color: done ? '#1e293b' : '#94a3b8', transition: 'all .3s' }}>{step.label}</p>
+                                    <p style={{ margin: 0, fontWeight: active ? 700 : 500, fontSize: '0.9rem', color: done ? '#1e293b' : '#94a3b8', transition: 'all .3s' }}>{t(step.label)}</p>
                                     {active && !isDelivered && (
-                                        <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: step.color, fontWeight: 600 }}>● Em progresso…</p>
+                                        <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: step.color, fontWeight: 600 }}>● {t('processing')}</p>
                                     )}
                                 </div>
                             </div>
@@ -212,18 +215,18 @@ export default function RoomOrderTracking() {
             {/* Cancelled */}
             {isCancelled && (
                 <div style={{ margin: 16, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '16px', textAlign: 'center' }}>
-                    <p style={{ color: '#991b1b', fontWeight: 700, margin: '0 0 4px' }}>Pedido Cancelado</p>
-                    <p style={{ color: '#64748b', margin: 0, fontSize: '0.82rem' }}>Por favor contacte a receção.</p>
+                    <p style={{ color: '#991b1b', fontWeight: 700, margin: '0 0 4px' }}>{t('order_status_cancelled')}</p>
+                    <p style={{ color: '#64748b', margin: 0, fontSize: '0.82rem' }}>{t('order_cancelled_msg')}</p>
                 </div>
             )}
 
             {/* Order Summary */}
             <div style={{ margin: 16, background: 'white', borderRadius: 14, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                <h3 style={{ margin: '0 0 12px', fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>🧾 Resumo</h3>
+                <h3 style={{ margin: '0 0 12px', fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>🧾 {t('summary')}</h3>
                 {order.items?.map((it, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.87rem', marginBottom: 7, color: '#475569' }}>
-                        <span>{it.qty}× {it.item?.name || 'Item'}</span>
-                        <span style={{ fontWeight: 600 }}>{formatPrice(it.subtotal || (it.itemPrice || 0) * it.qty, order.currency)}</span>
+                        <span>{it.qty || it.quantity}× {it.item?.name || it.name || t('item_label')}</span>
+                        <span style={{ fontWeight: 600 }}>{formatPrice(it.subtotal || (it.itemPrice || 0) * (it.qty || 1), it.currency || order.currency)}</span>
                     </div>
                 ))}
                 {order.notes && (
@@ -232,7 +235,7 @@ export default function RoomOrderTracking() {
                     </div>
                 )}
                 <div style={{ borderTop: '1px solid #f1f5f9', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1e293b', fontSize: '1rem' }}>
-                    <span>Total</span><span>{formatPrice(order.total || 0, order.currency)}</span>
+                    <span>{t('total')}</span><span>{formatPrice(order.total || 0, order.currency)}</span>
                 </div>
                 <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '5px 0 0' }}>💳 Faturação ao quarto</p>
             </div>
@@ -242,7 +245,7 @@ export default function RoomOrderTracking() {
                 <div style={{ margin: '4px 16px 24px' }}>
                     <a href={`/room/${restaurantId}?room=${roomId}&token=${encodeURIComponent(token)}`}
                         style={{ display: 'block', textAlign: 'center', padding: 12, background: '#f1f5f9', color: '#475569', borderRadius: 12, fontWeight: 600, textDecoration: 'none', fontSize: '0.88rem' }}>
-                        ← Fazer mais um pedido
+                        ← {t('make_first_order')}
                     </a>
                 </div>
             )}
@@ -250,7 +253,7 @@ export default function RoomOrderTracking() {
             {/* Polling indicator */}
             {!isDelivered && !isCancelled && (
                 <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#94a3b8', padding: '0 0 24px' }}>
-                    🔄 A atualizar a cada {POLL_MS / 1000} segundos
+                    🔄 {t('updating_automatically')}
                 </p>
             )}
         </div>

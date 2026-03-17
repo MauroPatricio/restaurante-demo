@@ -15,6 +15,7 @@ const POLL_MS = 12000;
 
 const STATUS_STEPS = [
     { key: 'pending', label: 'order_status_pending', icon: '📋', color: '#f59e0b', desc: 'order_status_pending_desc' },
+    { key: 'received', label: 'order_status_pending', icon: '📋', color: '#f59e0b', desc: 'order_status_pending_desc' },
     { key: 'confirmed', label: 'order_status_confirmed', icon: '✅', color: '#3b82f6', desc: 'order_status_confirmed_desc' },
     { key: 'preparing', label: 'order_status_preparing', icon: '👨‍🍳', color: '#8b5cf6', desc: 'order_status_preparing_desc' },
     { key: 'ready', label: 'order_status_ready', icon: '🍽️', color: '#10b981', desc: 'order_status_ready_desc' },
@@ -333,7 +334,7 @@ export default function OrderStatus() {
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < order.items.length - 1 ? '1px solid #f1f5f9' : 'none', fontSize: '0.88rem' }}>
                             <span style={{ color: '#1e293b' }}>{it.qty || it.quantity || 1}× {it.item?.name || it.name}</span>
                             <span style={{ fontWeight: 700, color: '#312e81' }}>
-                                {formatPrice(it.subtotal || (it.itemPrice || 0) * (it.qty || 1), order.currency)}
+                                {formatPrice(it.subtotal || (it.itemPrice || 0) * (it.qty || 1), it.currency || order.currency)}
                             </span>
                         </div>
                     ))}
