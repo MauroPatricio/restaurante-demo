@@ -29,6 +29,7 @@
     "feedback_placeholder": "Deixe um comentário (opcional)...",
     "feedback_sent": "Feedback enviado! Obrigado.",
     "feedback_thanks": "Obrigado pelo seu feedback!",
+    "this_project": "Este Projecto",
     "filter_all": "Todos",
     "hours_ago": "há {{count}}h {{minutes}}m",
     "how_was_experience": "Como foi a sua experiência?",
@@ -120,5 +121,8 @@
     "waiter_confirmation_msg": "Um garçom foi notificado e virá à sua mesa em breve.",
     "waiter_call_error": "Erro ao chamar garçom. Por favor, tente novamente.",
     "waiter_active_call": "Já existe um pedido ativo para esta mesa.",
-    "waiter_call_cooldown": "Por favor, aguarde {{seconds}} segundos antes de chamar novamente."
+    "waiter_call_cooldown": "Por favor, aguarde {{seconds}} segundos antes de chamar novamente.",
+    "room": "Quarto",
+    "kitchen_open": "Cozinha Aberta",
+    "kitchen_closed": "Cozinha Fechada"
 }

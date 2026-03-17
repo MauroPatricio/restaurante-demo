@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../context/CurrencyContext';
 import { API_URL } from '../config/api';
 
@@ -33,6 +34,47 @@ const STATUS_LABEL = {
     completed: { label: 'Concluído', color: '#64748b', icon: '✔️' },
     cancelled: { label: 'Cancelado', color: '#ef4444', icon: '❌' },
 };
+
+/* ─── Language Switcher ─────────────────────────────────── */
+function LanguageSwitcher() {
+    const { i18n } = useTranslation();
+    const currentLang = i18n.language || 'pt';
+
+    const langs = [
+        { code: 'pt', label: 'PT', flag: '🇵🇹' },
+        { code: 'en', label: 'EN', flag: '🇺🇸' },
+        { code: 'es', label: 'ES', flag: '🇪🇸' },
+        { code: 'fr', label: 'FR', flag: '🇫🇷' },
+    ];
+
+    const changeLanguage = (code) => {
+        i18n.changeLanguage(code);
+    };
+
+    return (
+        <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: 12 }}>
+            {langs.map(l => (
+                <button
+                    key={l.code}
+                    onClick={() => changeLanguage(l.code)}
+                    style={{
+                        background: currentLang.startsWith(l.code) ? 'white' : 'transparent',
+                        color: currentLang.startsWith(l.code) ? '#1e1b4b' : 'white',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '4px 8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    {l.label}
+                </button>
+            ))}
+        </div>
+    );
+}
 
 /* ─── Order History Screen ──────────────────────────────── */
 function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navigate }) {
@@ -141,6 +183,7 @@ export default function RoomMenuPage() {
     const [history, setHistory] = useState([]);
     const [waiterCalling, setWaiterCalling] = useState(false);
     const [waiterCalled, setWaiterCalled] = useState(false);
+    const { t } = useTranslation();
     const searchRef = useRef(null);
 
     /* ── Step 1: Validate QR ── */
@@ -328,24 +371,36 @@ export default function RoomMenuPage() {
             <div style={{ background: 'linear-gradient(135deg,#1e1b4b,#312e81)', padding: '16px 16px 20px', position: 'sticky', top: 0, zIndex: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
-                        <p style={{ color: 'rgba(255,255,255,0.55)', margin: '0 0 2px', fontSize: '0.72rem' }}>🏨 {restaurant?.name}</p>
-                        <h1 style={{ color: 'white', margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>🛏️ Quarto {room?.number}{room?.label ? ` · ${room.label}` : ''}</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.72rem' }}>🏨 {restaurant?.name}</p>
+                            {restaurant?.settings?.isKitchenOpen !== false ? (
+                                <span style={{ fontSize: '0.6rem', fontWeight: 800, background: '#10b981', color: 'white', padding: '1px 6px', borderRadius: 6, textTransform: 'uppercase' }}>
+                                    ● {t('kitchen_open') || 'Aberta'}
+                                </span>
+                            ) : (
+                                <span style={{ fontSize: '0.6rem', fontWeight: 800, background: '#ef4444', color: 'white', padding: '1px 6px', borderRadius: 6, textTransform: 'uppercase' }}>
+                                    ○ {t('kitchen_closed') || 'Fechada'}
+                                </span>
+                            )}
+                        </div>
+                        <h1 style={{ color: 'white', margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>🛏️ {t('room')} {room?.number}{room?.label ? ` · ${room.label}` : ''}</h1>
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'flex-start' }}>
+                        <LanguageSwitcher />
                         {/* Waiter call button */}
                         <button
                             onClick={callWaiter}
                             disabled={waiterCalling}
                             style={{ background: waiterCalled ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.15)', border: waiterCalled ? '1px solid rgba(16,185,129,0.5)' : 'none', borderRadius: 12, padding: '8px 12px', color: 'white', cursor: waiterCalling ? 'wait' : 'pointer', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
                         >
-                            {waiterCalling ? '⏳' : waiterCalled ? '✅ Chamado!' : '🔔 Garçom'}
+                            {waiterCalling ? '⏳' : waiterCalled ? '✅' : '🔔'}
                         </button>
                         {/* History button */}
                         <button
                             onClick={() => setPhase('history')}
                             style={{ position: 'relative', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 12, padding: '8px 12px', color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6 }}
                         >
-                            📦 Pedidos
+                            📦
                             {history.length > 0 && (
                                 <span style={{ background: '#f59e0b', color: 'white', borderRadius: '50%', width: 18, height: 18, fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: -6, right: -6 }}>
                                     {history.length}

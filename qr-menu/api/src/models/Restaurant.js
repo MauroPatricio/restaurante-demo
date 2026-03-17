@@ -108,6 +108,10 @@ const RestaurantSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
+    isKitchenOpen: {
+      type: Boolean,
+      default: true
+    },
     customCurrencies: [{
       name: String,
       code: { type: String, uppercase: true },

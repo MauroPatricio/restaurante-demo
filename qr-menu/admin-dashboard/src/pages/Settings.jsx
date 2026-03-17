@@ -300,11 +300,46 @@ export default function Settings() {
                             <Save size={18} />
                             {saving ? t('saving') : t('save_changes')}
                         </button>
-                    </div>
+                    </div >
                 </form>
-
                 {/* Maintenance Mode Section */}
                 <div style={{ marginTop: '40px', paddingTop: '30px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                        <div>
+                            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}>
+                                {t('kitchen_status') || 'Estado da Cozinha'}
+                            </h3>
+                            <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '500px' }}>
+                                {t('kitchen_status_desc') || 'Indique se a cozinha está aberta para receber novos pedidos.'}
+                            </p>
+                        </div>
+                        <label className="switch">
+                            <input
+                                type="checkbox"
+                                checked={restaurant?.settings?.isKitchenOpen !== false} // Default to true if undefined
+                                onChange={async (e) => {
+                                    const newValue = e.target.checked;
+                                    try {
+                                        const restId = user.restaurant._id || user.restaurant;
+                                        setRestaurant(prev => ({
+                                            ...prev,
+                                            settings: { ...prev.settings, isKitchenOpen: newValue }
+                                        }));
+                                        await restaurantAPI.updateSettings(restId, { settings: { isKitchenOpen: newValue } });
+                                    } catch (error) {
+                                        console.error('Failed to update kitchen status', error);
+                                        setRestaurant(prev => ({
+                                            ...prev,
+                                            settings: { ...prev.settings, isKitchenOpen: !newValue }
+                                        }));
+                                        alert(t('error_generic') || 'Falha ao atualizar');
+                                    }
+                                }}
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>
+
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                             <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}>
@@ -322,18 +357,13 @@ export default function Settings() {
                                     const newValue = e.target.checked;
                                     try {
                                         const restId = user.restaurant._id || user.restaurant;
-                                        // Optimistic update
                                         setRestaurant(prev => ({
                                             ...prev,
                                             settings: { ...prev.settings, isMaintenance: newValue }
                                         }));
-
                                         await restaurantAPI.updateSettings(restId, { settings: { isMaintenance: newValue } });
-
-                                        // Show subtle notification or success state if needed
                                     } catch (error) {
                                         console.error('Failed to update maintenance mode', error);
-                                        // Revert on error
                                         setRestaurant(prev => ({
                                             ...prev,
                                             settings: { ...prev.settings, isMaintenance: !newValue }
@@ -346,7 +376,7 @@ export default function Settings() {
                         </label>
                     </div>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }

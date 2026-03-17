@@ -120,5 +120,8 @@
     "waiter_confirmation_msg": "A waiter has been notified and will come to your table shortly.",
     "waiter_call_error": "Error calling waiter. Please try again.",
     "waiter_active_call": "There is already an active request for this table.",
-    "waiter_call_cooldown": "Please wait {{seconds}} seconds before calling again."
+    "waiter_call_cooldown": "Please wait {{seconds}} seconds before calling again.",
+    "room": "Room",
+    "kitchen_open": "Kitchen Open",
+    "kitchen_closed": "Kitchen Closed"
 }

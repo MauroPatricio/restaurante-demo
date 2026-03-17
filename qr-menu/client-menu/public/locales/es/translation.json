@@ -96,7 +96,7 @@
     "search_placeholder": "Buscar artículos...",
     "send_feedback_btn": "Enviar Evaluación",
     "subtotal": "Subtotal",
-    "summary": "Resumen",
+    "summary": "Resumo",
     "table": "Mesa",
     "table_code_label": "Código de la Mesa",
     "table_status": "Estado",
@@ -120,5 +120,8 @@
     "waiter_confirmation_msg": "Se ha notificado a un camarero y vendrá a su mesa pronto.",
     "waiter_call_error": "Error al llamar al camarero. Por favor, inténtelo de nuevo.",
     "waiter_active_call": "Ya hay una solicitud activa para esta mesa.",
-    "waiter_call_cooldown": "Por favor, espere {{seconds}} segundos antes de volver a llamar."
+    "waiter_call_cooldown": "Por favor, espere {{seconds}} segundos antes de volver a llamar.",
+    "room": "Habitación",
+    "kitchen_open": "Cocina Abierta",
+    "kitchen_closed": "Cocina Cerrada"
 }
