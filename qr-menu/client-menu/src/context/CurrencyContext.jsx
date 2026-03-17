@@ -5,7 +5,7 @@ const CurrencyContext = createContext();
 
 export const CurrencyProvider = ({ children }) => {
     const [currency, setCurrency] = useState(localStorage.getItem('preferred_currency') || 'MZN');
-    const [restaurantSettings, setRestaurantSettings] = useState(null);
+    const [restaurant, setRestaurant] = useState(null);
     const [rates, setRates] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -25,11 +25,11 @@ export const CurrencyProvider = ({ children }) => {
 
     // Sync with restaurant default currency - FORCE it if settings change
     useEffect(() => {
-        if (restaurantSettings?.currency) {
-            console.log('🔄 Syncing currency with restaurant default:', restaurantSettings.currency);
-            setCurrency(restaurantSettings.currency);
+        if (restaurant?.settings?.currency) {
+            console.log('🔄 Syncing currency with restaurant default:', restaurant.settings.currency);
+            setCurrency(restaurant.settings.currency);
         }
-    }, [restaurantSettings]);
+    }, [restaurant]);
 
     const changeCurrency = (newCurrency) => {
         setCurrency(newCurrency);
@@ -42,7 +42,7 @@ export const CurrencyProvider = ({ children }) => {
             amount, 
             currentCurrency, 
             undefined, 
-            restaurantSettings?.customCurrencies || []
+            restaurant?.settings?.customCurrencies || []
         );
     };
 
@@ -53,8 +53,8 @@ export const CurrencyProvider = ({ children }) => {
             loading, 
             changeCurrency, 
             formatPrice,
-            setRestaurantSettings,
-            restaurantSettings 
+            setRestaurant,
+            restaurant 
         }}>
             {children}
         </CurrencyContext.Provider>

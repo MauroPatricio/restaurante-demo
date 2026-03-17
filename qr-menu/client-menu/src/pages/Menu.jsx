@@ -22,7 +22,7 @@ const Menu = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { t, i18n } = useTranslation();
-    const { currency: preferredCurrency, formatPrice, setRestaurantSettings } = useCurrency();
+    const { currency: preferredCurrency, formatPrice, restaurant, setRestaurant } = useCurrency();
 
     // Logic: Get table from URL OR LocalStorage
     // Support both 't' (short) and 'table' (long)
@@ -44,7 +44,6 @@ const Menu = () => {
 
     const { cart, addToCart, updateQty, cartCount, checkRestaurant } = useCart();
 
-    const [restaurant, setRestaurant] = useState(null);
     const [categories, setCategories] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -153,13 +152,11 @@ const Menu = () => {
             try {
                 setLoading(true);
                 const timestamp = Date.now(); // Cache buster
-                const [restRes, menuRes, catRes] = await Promise.all([
-                    api.get(`/restaurants/${restaurantId}`),
+                const [menuRes, catRes] = await Promise.all([
                     api.get(`/menu/${restaurantId}?available=true&_t=${timestamp}`),
                     api.get(`/menu/${restaurantId}/categories`)
                 ]);
 
-                const restaurantData = restRes.data.restaurant;
                 const itemsData = menuRes.data.items;
                 const categoriesDataRaw = catRes.data.categories || [];
                 // Remove potential duplicates or 'All' strings from backend before adding our own
@@ -169,18 +166,14 @@ const Menu = () => {
                 });
                 const categoriesData = ['All', ...uniqueCategories];
 
-                setRestaurant(restaurantData);
                 setMenuItems(itemsData);
                 setCategories(categoriesData);
-                if (restaurantData.settings) {
-                    setRestaurantSettings(restaurantData.settings);
-                }
                 checkRestaurant(restaurantId);
 
                 // Update Cache
                 localStorage.setItem(CACHE_KEY, JSON.stringify({
                     timestamp: Date.now(),
-                    restaurant: restaurantData,
+                    restaurant: restaurant,
                     items: itemsData,
                     categories: categoriesData
                 }));
@@ -704,7 +697,7 @@ const Menu = () => {
                                                                 )}
                                                             </div>
                                                             <span className="text-gray-900 dark:text-white font-bold text-xs tabular-nums">
-                                                                {item.itemPrice?.toFixed(2)}
+                                                                {formatPrice(item.itemPrice, order.currency)}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -723,9 +716,8 @@ const Menu = () => {
                                                     </button>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-lg font-black text-gray-900 dark:text-white">
-                                                            {order.total?.toFixed(2)}
+                                                            {formatPrice(order.total, order.currency)}
                                                         </span>
-                                                        <span className="text-xs font-bold text-gray-400">MT</span>
                                                     </div>
                                                 </div>
                                             </motion.div>

@@ -78,14 +78,14 @@ export const CartProvider = ({ children }) => {
 
     const cartTotal = cart.reduce((total, item) => {
         const itemUnitPrice = item.price + (item.customizations?.reduce((acc, c) => acc + (c.priceModifier || 0), 0) || 0);
-        const convertedPrice = convertCurrency(itemUnitPrice, item.currency || 'MZN', preferredCurrency || 'MZN', rates);
+        const convertedPrice = convertCurrency(itemUnitPrice, item.currency || preferredCurrency || 'MZN', preferredCurrency || 'MZN', rates);
         return total + (convertedPrice * item.qty);
     }, 0);
 
     const cartCount = cart.reduce((acc, item) => acc + item.qty, 0);
     
-    // Determine cart currency based on items (assuming first item's currency for simplicity, or MZN)
-    const cartCurrency = cart.length > 0 ? (cart[0].currency || 'MZN') : 'MZN';
+    // Determine cart currency based on items or preferred settings
+    const cartCurrency = cart.length > 0 ? (cart[0].currency || preferredCurrency || 'MZN') : (preferredCurrency || 'MZN');
 
     const checkRestaurant = (currentId) => {
         if (restaurantId && restaurantId !== currentId && cart.length > 0) {

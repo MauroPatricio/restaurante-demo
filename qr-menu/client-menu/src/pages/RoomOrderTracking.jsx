@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useCurrency } from '../context/CurrencyContext';
 import { API_URL } from '../config/api';
 
 const STATUS_STEPS = [
@@ -18,6 +19,7 @@ export default function RoomOrderTracking() {
     const [searchParams] = useSearchParams();
     const roomId = searchParams.get('room');
     const token = searchParams.get('token');
+    const { formatPrice } = useCurrency();
 
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -221,7 +223,7 @@ export default function RoomOrderTracking() {
                 {order.items?.map((it, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.87rem', marginBottom: 7, color: '#475569' }}>
                         <span>{it.qty}× {it.item?.name || 'Item'}</span>
-                        <span style={{ fontWeight: 600 }}>{Number(it.subtotal || (it.itemPrice || 0) * it.qty).toFixed(2)} MT</span>
+                        <span style={{ fontWeight: 600 }}>{formatPrice(it.subtotal || (it.itemPrice || 0) * it.qty, order.currency)}</span>
                     </div>
                 ))}
                 {order.notes && (
@@ -230,7 +232,7 @@ export default function RoomOrderTracking() {
                     </div>
                 )}
                 <div style={{ borderTop: '1px solid #f1f5f9', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1e293b', fontSize: '1rem' }}>
-                    <span>Total</span><span>{Number(order.total || 0).toFixed(2)} MT</span>
+                    <span>Total</span><span>{formatPrice(order.total || 0, order.currency)}</span>
                 </div>
                 <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '5px 0 0' }}>💳 Faturação ao quarto</p>
             </div>

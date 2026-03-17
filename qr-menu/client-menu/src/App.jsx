@@ -259,6 +259,8 @@ function CodeEntry() {
     );
 }
 
+import RestaurantLoader from './components/RestaurantLoader';
+
 function App() {
     return (
         <ThemeProvider>
@@ -269,14 +271,14 @@ function App() {
                             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                                 <Routes>
                                     <Route path="/menu" element={<QRRedirect />} />
-                                    <Route path="/menu/:restaurantId" element={<Menu />} />
-                                    <Route path="/menu/:restaurantId/cart" element={<Cart />} />
-                                    <Route path="/menu/:restaurantId/status/:orderId" element={<OrderStatus />} />
-                                    <Route path="/menu/:restaurantId/history" element={<OrderHistory />} />
+                                    <Route path="/menu/:restaurantId" element={<RestaurantLoader><Menu /></RestaurantLoader>} />
+                                    <Route path="/menu/:restaurantId/cart" element={<RestaurantLoader><Cart /></RestaurantLoader>} />
+                                    <Route path="/menu/:restaurantId/status/:orderId" element={<RestaurantLoader><OrderStatus /></RestaurantLoader>} />
+                                    <Route path="/menu/:restaurantId/history" element={<RestaurantLoader><OrderHistory /></RestaurantLoader>} />
                                     <Route path="/maintenance" element={<Maintenance />} />
                                     {/* Room Service Routes */}
-                                    <Route path="/room/:restaurantId" element={<RoomMenuPage />} />
-                                    <Route path="/room/:restaurantId/track/:orderId" element={<RoomOrderTracking />} />
+                                    <Route path="/room/:restaurantId" element={<RestaurantLoader><RoomMenuPage /></RestaurantLoader>} />
+                                    <Route path="/room/:restaurantId/track/:orderId" element={<RestaurantLoader><RoomOrderTracking /></RestaurantLoader>} />
                                     <Route path="/" element={<CodeEntry />} />
                                 </Routes>
                             </div>

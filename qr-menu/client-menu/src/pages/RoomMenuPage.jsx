@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useCurrency } from '../context/CurrencyContext';
 import { API_URL } from '../config/api';
 
 /* ─── Helpers ─────────────────────────────────────────── */
@@ -36,6 +37,7 @@ const STATUS_LABEL = {
 
 /* ─── Order History Screen ──────────────────────────────── */
 function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navigate }) {
+    const { formatPrice } = useCurrency();
     const [liveOrders, setLiveOrders] = useState(orders);
 
     useEffect(() => {
@@ -85,7 +87,7 @@ function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navig
                                         {meta.icon} {order.itemsSummary}
                                     </p>
                                     <p style={{ margin: '3px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
-                                        {new Date(order.placedAt).toLocaleTimeString('pt', { hour: '2-digit', minute: '2-digit' })} · {fmt(order.total)} MT
+                                        {new Date(order.placedAt).toLocaleTimeString('pt', { hour: '2-digit', minute: '2-digit' })} · {formatPrice(order.total, order.currency)}
                                     </p>
                                 </div>
                                 <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700, background: meta.color + '15', color: meta.color, whiteSpace: 'nowrap' }}>
@@ -118,6 +120,7 @@ export default function RoomMenuPage() {
     const { restaurantId } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { formatPrice } = useCurrency();
 
     const roomId = searchParams.get('room');
     const token = searchParams.get('token');
@@ -402,7 +405,7 @@ export default function RoomMenuPage() {
                                     {item.description && <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: '#64748b', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflow: 'hidden' }}>{item.description}</p>}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-                                    <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1rem' }}>{fmt(item.price)} <span style={{ fontWeight: 500, fontSize: '0.72rem', color: '#94a3b8' }}>MT</span></span>
+                                    <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1rem' }}>{formatPrice(item.price, item.currency)}</span>
                                     {qty === 0 ? (
                                         <button onClick={() => addItem(item)} style={S.btnAdd}>+</button>
                                     ) : (
@@ -425,7 +428,7 @@ export default function RoomMenuPage() {
                     <button onClick={() => setPhase('cart')} style={{ width: '100%', padding: '15px 20px', background: 'linear-gradient(135deg,#312e81,#7c3aed)', color: 'white', border: 'none', borderRadius: 16, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
                         <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 8, padding: '2px 10px' }}>{totalQty}</span>
                         <span>Ver Carrinho</span>
-                        <span>{fmt(totalPrice)} MT</span>
+                        <span>{formatPrice(totalPrice)}</span>
                     </button>
                 </div>
             )}
@@ -446,14 +449,14 @@ export default function RoomMenuPage() {
                     <div key={c.item._id} style={{ background: 'white', borderRadius: 14, padding: 14, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                         <div style={{ flex: 1 }}>
                             <p style={{ margin: 0, fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>{c.item.name}</p>
-                            <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>{fmt(c.item.price)} MT cada</p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>{formatPrice(c.item.price, c.item.currency)} cada</p>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <button onClick={() => removeItem(c.item._id)} style={S.btnMinus}>−</button>
                             <span style={{ fontWeight: 700, minWidth: 20, textAlign: 'center', color: '#312e81' }}>{c.qty}</span>
                             <button onClick={() => addItem(c.item)} style={S.btnAdd}>+</button>
                         </div>
-                        <span style={{ fontWeight: 700, color: '#312e81', minWidth: 70, textAlign: 'right', fontSize: '0.9rem' }}>{fmt(c.qty * c.item.price)} MT</span>
+                        <span style={{ fontWeight: 700, color: '#312e81', minWidth: 70, textAlign: 'right', fontSize: '0.9rem' }}>{formatPrice(c.qty * c.item.price, c.item.currency)}</span>
                     </div>
                 ))}
 
@@ -506,7 +509,7 @@ export default function RoomMenuPage() {
 
                 <div style={{ background: 'linear-gradient(135deg,#312e81,#1e1b4b)', borderRadius: 14, padding: 16, marginTop: 12, color: 'white' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem' }}>
-                        <span>Total</span><span>{fmt(totalPrice)} MT</span>
+                        <span>Total</span><span>{formatPrice(totalPrice)}</span>
                     </div>
                     <p style={{ opacity: 0.55, fontSize: '0.78rem', margin: '6px 0 0' }}>
                         {paymentMethod === 'room_account' ? '🛏️ Faturação ao quarto · Pague no check-out' :
