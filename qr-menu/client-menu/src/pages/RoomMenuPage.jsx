@@ -25,14 +25,14 @@ function loadHistory(restaurantId, roomId) {
     } catch { return []; }
 }
 
-const STATUS_LABEL = {
-    pending: { label: 'Recebido', color: '#f59e0b', icon: '📋' },
-    confirmed: { label: 'Confirmado', color: '#3b82f6', icon: '✅' },
-    preparing: { label: 'Em Preparação', color: '#8b5cf6', icon: '👨‍🍳' },
-    ready: { label: 'A Caminho', color: '#10b981', icon: '🚀' },
-    served: { label: 'Entregue', color: '#10b981', icon: '🎉' },
-    completed: { label: 'Concluído', color: '#64748b', icon: '✔️' },
-    cancelled: { label: 'Cancelado', color: '#ef4444', icon: '❌' },
+const STATUS_KEYS = {
+    pending: { key: 'status_pending', color: '#f59e0b', icon: '📋' },
+    confirmed: { key: 'status_confirmed', color: '#3b82f6', icon: '✅' },
+    preparing: { key: 'status_preparing', color: '#8b5cf6', icon: '👨‍🍳' },
+    ready: { key: 'status_ready', color: '#10b981', icon: '🚀' },
+    served: { key: 'status_served', color: '#10b981', icon: '🎉' },
+    completed: { key: 'status_completed', color: '#64748b', icon: '✔️' },
+    cancelled: { key: 'status_cancelled', color: '#ef4444', icon: '❌' },
 };
 
 /* ─── Language Switcher ─────────────────────────────────── */
@@ -79,6 +79,7 @@ function LanguageSwitcher() {
 /* ─── Order History Screen ──────────────────────────────── */
 function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navigate }) {
     const { formatPrice } = useCurrency();
+    const { t, i18n } = useTranslation();
     const [liveOrders, setLiveOrders] = useState(orders);
 
     useEffect(() => {
@@ -103,22 +104,22 @@ function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navig
         <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 1024, margin: '0 auto' }}>
             {/* Header */}
             <div style={{ background: 'linear-gradient(135deg,#1e1b4b,#312e81)', padding: 20 }}>
-                <button onClick={onBack} style={S.backBtn}>← Voltar ao menu</button>
-                <h1 style={{ color: 'white', margin: '10px 0 0', fontSize: '1.2rem', fontWeight: 700 }}>📦 Meus Pedidos</h1>
-                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '4px 0 0', fontSize: '0.8rem' }}>Quarto {roomId ? '…' : ''}</p>
+                <button onClick={onBack} style={S.backBtn}>← {t('back_to_menu')}</button>
+                <h1 style={{ color: 'white', margin: '10px 0 0', fontSize: '1.2rem', fontWeight: 700 }}>📦 {t('my_orders')}</h1>
+                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '4px 0 0', fontSize: '0.8rem' }}>{t('room')} {roomId ? '…' : ''}</p>
             </div>
 
             <div style={{ padding: 16 }}>
                 {liveOrders.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
                         <div style={{ fontSize: '3rem', marginBottom: 12 }}>📭</div>
-                        <p style={{ fontWeight: 600 }}>Ainda não fez nenhum pedido</p>
+                        <p style={{ fontWeight: 600 }}>{t('no_orders_yet')}</p>
                         <button onClick={onBack} style={{ ...S.btnAdd, marginTop: 12, padding: '10px 24px', borderRadius: 12, fontSize: '0.9rem' }}>
-                            Ver Menu
+                            {t('view_menu')}
                         </button>
                     </div>
                 ) : liveOrders.map((order) => {
-                    const meta = STATUS_LABEL[order.status] || STATUS_LABEL.pending;
+                    const meta = STATUS_KEYS[order.status] || STATUS_KEYS.pending;
                     const isDone = ['served', 'completed', 'cancelled'].includes(order.status);
                     return (
                         <div key={order.id} style={{ background: 'white', borderRadius: 16, padding: 16, marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: `2px solid ${meta.color}22` }}>
@@ -128,11 +129,11 @@ function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navig
                                         {meta.icon} {order.itemsSummary}
                                     </p>
                                     <p style={{ margin: '3px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
-                                        {new Date(order.placedAt).toLocaleTimeString('pt', { hour: '2-digit', minute: '2-digit' })} · {formatPrice(order.total, order.currency)}
+                                        {new Date(order.placedAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })} · {formatPrice(order.total, order.currency)}
                                     </p>
                                 </div>
                                 <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700, background: meta.color + '15', color: meta.color, whiteSpace: 'nowrap' }}>
-                                    {meta.label}
+                                    {meta.icon} {t(meta.key)}
                                 </span>
                             </div>
                             {!isDone && (
@@ -140,12 +141,12 @@ function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navig
                                     onClick={() => navigate(`/room/${restaurantId}/track/${order.id}?room=${roomId}&token=${encodeURIComponent(token)}`)}
                                     style={{ width: '100%', padding: '9px', background: 'linear-gradient(135deg,#312e81,#7c3aed)', color: 'white', border: 'none', borderRadius: 10, fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
                                 >
-                                    📡 Seguir pedido em tempo real
+                                    📡 {t('track_order_realtime')}
                                 </button>
                             )}
                             {isDone && (
                                 <p style={{ textAlign: 'center', fontSize: '0.78rem', color: '#94a3b8', margin: 0 }}>
-                                    {order.status === 'cancelled' ? '⚠️ Pedido cancelado — contacte a receção' : '✅ Pedido concluído'}
+                                    {order.status === 'cancelled' ? `⚠️ ${t('order_cancelled_contact')}` : `✅ ${t('order_completed')}`}
                                 </p>
                             )}
                         </div>
@@ -189,7 +190,7 @@ export default function RoomMenuPage() {
     /* ── Step 1: Validate QR ── */
     useEffect(() => {
         if (!restaurantId || !roomId || !token) {
-            setErrorMsg('QR Code inválido ou incompleto.');
+            setErrorMsg(t('qr_code_invalid'));
             setPhase('error');
             return;
         }
@@ -200,16 +201,16 @@ export default function RoomMenuPage() {
                     `${API_URL}/public/room/validate?r=${restaurantId}&room=${roomId}&token=${encodeURIComponent(token)}`
                 );
                 const data = await res.json();
-                if (!res.ok || !data.valid) { setErrorMsg(data.message || 'QR Code inválido.'); setPhase('error'); return; }
+                if (!res.ok || !data.valid) { setErrorMsg(data.message || t('qr_code_invalid')); setPhase('error'); return; }
                 setRestaurant(data.restaurant);
                 setRoom(data.room);
                 setPhase('loading-menu');
             } catch {
-                setErrorMsg('Sem ligação ao servidor. Tente novamente.');
+                setErrorMsg(t('no_connection'));
                 setPhase('error');
             }
         })();
-    }, [restaurantId, roomId, token]);
+    }, [restaurantId, roomId, token, t]);
 
     /* ── Step 2: Load Menu ── */
     useEffect(() => {
@@ -220,12 +221,12 @@ export default function RoomMenuPage() {
                     `${API_URL}/public/room/menu/${restaurantId}?room=${roomId}&token=${encodeURIComponent(token)}`
                 );
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Erro ao carregar menu');
+                if (!res.ok) throw new Error(data.error || t('error_loading_menu'));
                 setMenuItems(data.items || []);
                 setCategories(data.categories || []);
                 setPhase('menu');
             } catch (e) {
-                setErrorMsg(e.message || 'Erro ao carregar o menu.');
+                setErrorMsg(e.message || t('error_loading_menu'));
                 setPhase('error');
             }
         })();
@@ -258,19 +259,20 @@ export default function RoomMenuPage() {
                 body: JSON.stringify({
                     restaurantId, roomId, token,
                     items: cart.map(c => ({ item: c.item._id, qty: c.qty })),
-                    customerName: customerName.trim() || `Quarto ${room?.number}`,
+                    customerName: customerName.trim() || `${t('room')} ${room?.number}`,
                     notes,
                     paymentMethod
                 })
             });
             const data = await res.json();
-            if (!res.ok) { setErrorMsg(data.error || data.message || 'Erro ao enviar pedido'); setPhase('error'); return; }
+            if (!res.ok) { setErrorMsg(data.error || data.message || t('error_submitting_order')); setPhase('error'); return; }
 
             // ── Save to history ──
             const newEntry = {
                 id: data.order._id,
                 status: data.order.status || 'pending',
                 total: data.order.total,
+                currency: data.order.currency || cartCurrency,
                 itemsSummary: cart.map(c => `${c.qty}× ${c.item.name}`).join(', '),
                 placedAt: new Date().toISOString(),
             };
@@ -279,7 +281,7 @@ export default function RoomMenuPage() {
             setOrderId(data.order._id);
             setPhase('success');
         } catch {
-            alert('Sem ligação. Tente novamente.');
+            alert(t('no_connection'));
         } finally {
             setSubmitting(false);
         }
@@ -298,7 +300,7 @@ export default function RoomMenuPage() {
             setWaiterCalled(true);
             setTimeout(() => setWaiterCalled(false), 30000); // reset after 30s
         } catch {
-            alert('Não foi possível chamar o garçom. Tente novamente.');
+            alert(t('waiter_call_error'));
         } finally {
             setWaiterCalling(false);
         }
@@ -318,7 +320,7 @@ export default function RoomMenuPage() {
         <div style={S.center}>
             <div style={S.spinner} />
             <p style={{ color: 'rgba(255,255,255,0.7)', fontFamily: 'sans-serif', marginTop: 16 }}>
-                {phase === 'validating' ? 'A verificar QR Code…' : 'A carregar menu…'}
+                {phase === 'validating' ? t('verifying_qr') : t('loading_menu')}
             </p>
             <style>{spinCSS}</style>
         </div>
@@ -327,29 +329,29 @@ export default function RoomMenuPage() {
     if (phase === 'error') return (
         <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fff1f2', padding: 24, textAlign: 'center', fontFamily: 'sans-serif' }}>
             <div style={{ fontSize: '3rem', marginBottom: 12 }}>⚠️</div>
-            <h2 style={{ color: '#be123c', margin: '0 0 8px' }}>Erro</h2>
+            <h2 style={{ color: '#be123c', margin: '0 0 8px' }}>{t('error')}</h2>
             <p style={{ color: '#64748b', marginBottom: 24, maxWidth: 320 }}>{errorMsg}</p>
-            <button onClick={() => window.location.reload()} style={S.btnPrimary}>Tentar novamente</button>
+            <button onClick={() => window.location.reload()} style={S.btnPrimary}>{t('try_again')}</button>
         </div>
     );
 
     if (phase === 'success') return (
         <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#064e3b,#065f46)', padding: 24, textAlign: 'center', fontFamily: 'sans-serif' }}>
             <div style={{ fontSize: '4rem', marginBottom: 12 }}>✅</div>
-            <h2 style={{ color: 'white', margin: '0 0 8px', fontSize: '1.4rem' }}>Pedido Enviado!</h2>
-            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 28 }}>O seu pedido está a ser preparado para o Quarto {room?.number}.</p>
+            <h2 style={{ color: 'white', margin: '0 0 8px', fontSize: '1.4rem' }}>{t('order_sent')}</h2>
+            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 28 }}>{t('order_being_prepared', { room: room?.number })}</p>
             <button
                 onClick={() => navigate(`/room/${restaurantId}/track/${orderId}?room=${roomId}&token=${encodeURIComponent(token)}`)}
                 style={{ ...S.btnWhite, marginBottom: 10, display: 'block', width: '100%', maxWidth: 320 }}
-            >📡 Seguir o pedido em tempo real</button>
+            >📡 {t('track_order_realtime')}</button>
             <button
                 onClick={() => { setPhase('history'); }}
                 style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 14, padding: '12px 24px', fontWeight: 600, cursor: 'pointer', maxWidth: 320, width: '100%', marginBottom: 10 }}
-            >📦 Ver todos os meus pedidos</button>
+            >📦 {t('view_all_orders')}</button>
             <button
                 onClick={() => { setCart([]); setNotes(''); setCustomerName(''); setPhase('menu'); }}
                 style={{ background: 'transparent', color: 'rgba(255,255,255,0.6)', border: 'none', borderRadius: 12, padding: '10px 24px', fontWeight: 500, cursor: 'pointer', maxWidth: 320, width: '100%', fontSize: '0.9rem' }}
-            >+ Fazer mais um pedido</button>
+            >+ {t('make_another_order')}</button>
         </div>
     );
 
@@ -416,7 +418,7 @@ export default function RoomMenuPage() {
                         ref={searchRef}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Pesquisar…"
+                        placeholder={t('search_placeholder')}
                         style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 12, border: 'none', fontSize: '0.93rem', background: 'rgba(255,255,255,0.15)', color: 'white', outline: 'none', boxSizing: 'border-box' }}
                     />
                 </div>
@@ -424,7 +426,7 @@ export default function RoomMenuPage() {
 
             {/* Categories */}
             <div style={{ background: 'white', borderBottom: '1px solid #f1f5f9', padding: '10px 16px', overflowX: 'auto', display: 'flex', gap: 8, scrollbarWidth: 'none' }}>
-                {[{ _id: '__all__', name: '🍴 Tudo' }, ...categories].map(cat => (
+                {[{ _id: '__all__', name: `🍴 ${t('all_items')}` }, ...categories].map(cat => (
                     <button key={cat._id} onClick={() => setActiveCategory(cat._id)} style={{
                         padding: '6px 16px', borderRadius: 99, border: 'none', cursor: 'pointer',
                         fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap', transition: 'all .15s',
@@ -441,7 +443,7 @@ export default function RoomMenuPage() {
                 {filtered.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8' }}>
                         <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🔍</div>
-                        <p style={{ fontWeight: 600 }}>Nenhum item encontrado</p>
+                        <p style={{ fontWeight: 600 }}>{t('no_items_found')}</p>
                     </div>
                 )}
                 {filtered.map(item => {
@@ -482,7 +484,7 @@ export default function RoomMenuPage() {
                 <div style={{ position: 'fixed', bottom: 16, left: 16, right: 16, zIndex: 50 }}>
                     <button onClick={() => setPhase('cart')} style={{ width: '100%', padding: '15px 20px', background: 'linear-gradient(135deg,#312e81,#7c3aed)', color: 'white', border: 'none', borderRadius: 16, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
                         <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 8, padding: '2px 10px' }}>{totalQty}</span>
-                        <span>Ver Carrinho</span>
+                        <span>{t('view_cart')}</span>
                         <span>{formatPrice(totalPrice, cartCurrency)}</span>
                     </button>
                 </div>
@@ -494,9 +496,9 @@ export default function RoomMenuPage() {
     if (phase === 'cart') return (
         <div style={{ minHeight: '100svh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", maxWidth: 1024, margin: '0 auto' }}>
             <div style={{ background: 'linear-gradient(135deg,#1e1b4b,#312e81)', padding: 20 }}>
-                <button onClick={() => setPhase('menu')} style={S.backBtn}>← Voltar ao menu</button>
-                <h1 style={{ color: 'white', margin: '10px 0 0', fontSize: '1.2rem', fontWeight: 700 }}>🛒 Carrinho</h1>
-                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '4px 0 0', fontSize: '0.82rem' }}>Quarto {room?.number}</p>
+                <button onClick={() => setPhase('menu')} style={S.backBtn}>← {t('back_to_menu')}</button>
+                <h1 style={{ color: 'white', margin: '10px 0 0', fontSize: '1.2rem', fontWeight: 700 }}>🛒 {t('cart')}</h1>
+                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '4px 0 0', fontSize: '0.82rem' }}>{t('room')} {room?.number}</p>
             </div>
 
             <div style={{ padding: 16 }}>
@@ -504,7 +506,7 @@ export default function RoomMenuPage() {
                     <div key={c.item._id} style={{ background: 'white', borderRadius: 14, padding: 14, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                         <div style={{ flex: 1 }}>
                             <p style={{ margin: 0, fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>{c.item.name}</p>
-                            <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>{formatPrice(c.item.price, c.item.currency)} cada</p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>{formatPrice(c.item.price, c.item.currency)} {t('each')}</p>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <button onClick={() => removeItem(c.item._id)} style={S.btnMinus}>−</button>
@@ -517,14 +519,14 @@ export default function RoomMenuPage() {
 
                 {/* Payment Method Picker */}
                 <div style={{ background: 'white', borderRadius: 14, padding: 16, marginTop: 10 }}>
-                    <label style={{ ...S.label, marginTop: 0 }}>💳 Forma de Pagamento</label>
+                    <label style={{ ...S.label, marginTop: 0 }}>💳 {t('payment_method')}</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
                         {[
-                            { id: 'room_account', icon: '🛏️', label: 'Quarto' },
-                            { id: 'cash', icon: '💵', label: 'Dinheiro' },
+                            { id: 'room_account', icon: '🛏️', label: t('pay_room') },
+                            { id: 'cash', icon: '💵', label: t('pay_cash') },
                             { id: 'mpesa', icon: '📱', label: 'M-Pesa' },
                             { id: 'emola', icon: '📲', label: 'e-Mola' },
-                            { id: 'visa', icon: '💳', label: 'Cartão' },
+                            { id: 'visa', icon: '💳', label: t('pay_card') },
                         ].map(m => (
                             <button
                                 key={m.id}
@@ -549,29 +551,29 @@ export default function RoomMenuPage() {
                             >
                                 <span style={{ fontSize: '1.3rem' }}>{m.icon}</span>
                                 {m.label}
-                                {paymentMethod === m.id && <span style={{ fontSize: '0.65rem', color: '#10b981' }}>✓ Selecionado</span>}
+                                {paymentMethod === m.id && <span style={{ fontSize: '0.65rem', color: '#10b981' }}>✓ {t('selected')}</span>}
                             </button>
                         ))}
                     </div>
                 </div>
 
                 <div style={{ background: 'white', borderRadius: 14, padding: 16, marginTop: 8 }}>
-                    <label style={S.label}>O seu nome (opcional)</label>
-                    <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={`Quarto ${room?.number}`} style={S.input} />
-                    <label style={S.label}>Notas / Alergias</label>
-                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="ex: sem glúten, sem cebola..." rows={3} style={{ ...S.input, resize: 'none' }} />
+                    <label style={S.label}>{t('your_name_optional')}</label>
+                    <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={`${t('room')} ${room?.number}`} style={S.input} />
+                    <label style={S.label}>{t('notes_allergies')}</label>
+                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('notes_placeholder')} rows={3} style={{ ...S.input, resize: 'none' }} />
                 </div>
 
                 <div style={{ background: 'linear-gradient(135deg,#312e81,#1e1b4b)', borderRadius: 14, padding: 16, marginTop: 12, color: 'white' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem' }}>
-                        <span>Total</span><span>{formatPrice(totalPrice, cartCurrency)}</span>
+                        <span>{t('total')}</span><span>{formatPrice(totalPrice, cartCurrency)}</span>
                     </div>
                     <p style={{ opacity: 0.55, fontSize: '0.78rem', margin: '6px 0 0' }}>
-                        {paymentMethod === 'room_account' ? '🛏️ Faturação ao quarto · Pague no check-out' :
-                            paymentMethod === 'cash' ? '💵 Pagamento em dinheiro na entrega' :
-                                paymentMethod === 'mpesa' ? '📱 Pagamento via M-Pesa na entrega' :
-                                    paymentMethod === 'emola' ? '📲 Pagamento via e-Mola na entrega' :
-                                        '💳 Pagamento com cartão na entrega'}
+                        {paymentMethod === 'room_account' ? `🛏️ ${t('pay_desc_room')}` :
+                            paymentMethod === 'cash' ? `💵 ${t('pay_desc_cash')}` :
+                                paymentMethod === 'mpesa' ? `📱 ${t('pay_desc_mpesa')}` :
+                                    paymentMethod === 'emola' ? `📲 ${t('pay_desc_emola')}` :
+                                        `💳 ${t('pay_desc_card')}`}
                     </p>
                 </div>
 
@@ -580,7 +582,7 @@ export default function RoomMenuPage() {
                     disabled={submitting || cart.length === 0}
                     style={{ width: '100%', marginTop: 14, marginBottom: 24, padding: 16, background: submitting ? '#94a3b8' : 'linear-gradient(135deg,#10b981,#059669)', color: 'white', border: 'none', borderRadius: 16, fontWeight: 700, fontSize: '1.05rem', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
                 >
-                    {submitting ? '⏳ A enviar...' : '🛎️ Confirmar Pedido'}
+                    {submitting ? `⏳ ${t('submitting')}` : `🛎️ ${t('confirm_order')}`}
                 </button>
             </div>
         </div>
