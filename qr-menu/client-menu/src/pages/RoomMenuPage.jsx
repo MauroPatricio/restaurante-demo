@@ -261,7 +261,8 @@ export default function RoomMenuPage() {
                     items: cart.map(c => ({ item: c.item._id, qty: c.qty })),
                     customerName: customerName.trim() || `${t('room')} ${room?.number}`,
                     notes,
-                    paymentMethod
+                    paymentMethod,
+                    currency: cartCurrency
                 })
             });
             const data = await res.json();

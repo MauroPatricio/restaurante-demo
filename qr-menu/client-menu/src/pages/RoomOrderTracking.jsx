@@ -237,7 +237,13 @@ export default function RoomOrderTracking() {
                 <div style={{ borderTop: '1px solid #f1f5f9', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1e293b', fontSize: '1rem' }}>
                     <span>{t('total')}</span><span>{formatPrice(order.total || 0, order.currency)}</span>
                 </div>
-                <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '5px 0 0' }}>💳 Faturação ao quarto</p>
+                <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '5px 0 0' }}>
+                    {order.paymentMethod === 'room_account' ? `🛏️ ${t('pay_desc_room')}` :
+                        order.paymentMethod === 'cash' ? `💵 ${t('pay_desc_cash')}` :
+                            order.paymentMethod === 'mpesa' ? `📱 ${t('pay_desc_mpesa')}` :
+                                order.paymentMethod === 'emola' ? `📲 ${t('pay_desc_emola')}` :
+                                    `💳 ${t('pay_desc_card')}`}
+                </p>
             </div>
 
             {/* Back link */}

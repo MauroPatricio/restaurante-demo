@@ -12,7 +12,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Clients() {
     const { user } = useAuth();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [data, setData] = useState({ summary: {}, customers: [] });
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +45,7 @@ export default function Clients() {
     );
 
     const handleAnonymize = async (phone) => {
-        if (!window.confirm('Tem certeza que deseja remover este cliente? Os dados pessoais serão apagados permanentemente, mas o histórico de vendas será mantido para contabilidade.')) {
+        if (!window.confirm(t('clients_confirm_delete'))) {
             return;
         }
 
@@ -55,14 +55,14 @@ export default function Clients() {
             fetchClients();
         } catch (error) {
             console.error('Failed to anonymize client:', error);
-            alert('Falha ao remover cliente');
+            alert(t('clients_delete_error'));
         }
     };
 
     const exportCSV = () => {
-        const headers = ["Nome", "Telefone", "Total Gasto", "Pedidos", "Favorito", "Mesas", "Ultima Visita"];
+        const headers = [t('clients_col_client'), t('clients_col_lifetime'), t('clients_col_orders'), t('clients_col_favorite'), t('clients_col_tables'), t('clients_col_last_visit')];
         const rows = filteredClients.map(c => [
-            c.name || 'Cliente',
+            c.name || t('client'),
             c.phone,
             c.totalSpent,
             c.orderCount,
@@ -105,10 +105,10 @@ export default function Clients() {
             <div className="page-header" style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
                     <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
-                        Dashboard de Clientes
+                        {t('clients_title')}
                     </h2>
                     <p style={{ color: '#64748b', marginTop: '4px' }}>
-                        Analise o comportamento e fidelidade dos seus clientes
+                        {t('clients_subtitle')}
                     </p>
                 </div>
                 <button
@@ -121,7 +121,7 @@ export default function Clients() {
                     }}
                 >
                     <Download size={18} />
-                    Exportar Base
+                    {t('clients_export')}
                 </button>
             </div>
 
@@ -133,11 +133,11 @@ export default function Clients() {
                             <Users size={24} />
                         </div>
                         <span style={{ fontSize: '12px', fontWeight: '700', color: '#10b981', display: 'flex', alignItems: 'center' }}>
-                            <ArrowUpRight size={14} /> Ativos
+                            <ArrowUpRight size={14} /> {t('clients_active')}
                         </span>
                     </div>
                     <div>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>Total de Clientes</p>
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>{t('clients_total')}</p>
                         <h3 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: '4px 0 0 0' }}>{summary.totalCustomers || 0}</h3>
                     </div>
                 </div>
@@ -148,11 +148,11 @@ export default function Clients() {
                             <UserCheck size={24} />
                         </div>
                         <span style={{ fontSize: '12px', fontWeight: '700', color: '#22c55e', background: '#dcfce7', padding: '2px 8px', borderRadius: '20px' }}>
-                            {summary.loyaltyRate}% Taxa
+                            {summary.loyaltyRate}% {t('clients_loyalty_rate')}
                         </span>
                     </div>
                     <div>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>Clientes Recorrentes</p>
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>{t('clients_recurring')}</p>
                         <h3 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: '4px 0 0 0' }}>{summary.recurringCustomers || 0}</h3>
                     </div>
                 </div>
@@ -162,7 +162,7 @@ export default function Clients() {
                         <Star size={24} />
                     </div>
                     <div>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>Preferência Média</p>
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>{t('clients_avg_preference')}</p>
                         <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: '4px 0 0 0' }}>
                             {filteredClients[0]?.favoriteItem || '---'}
                         </h3>
@@ -177,7 +177,7 @@ export default function Clients() {
                         <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={20} />
                         <input
                             type="text"
-                            placeholder="Buscar por nome ou contato..."
+                            placeholder={t('clients_search_placeholder')}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             style={{
@@ -193,13 +193,13 @@ export default function Clients() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
                             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>CLIENTE</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>VALOR VIDA</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>PEDIDOS</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>FAVORITO</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>MESAS</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>ÚLTIMA VISITA</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px', textAlign: 'right' }}>AÇÕES</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_client').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_lifetime').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_orders').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_favorite').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_tables').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_last_visit').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px', textAlign: 'right' }}>{t('clients_col_actions').toUpperCase()}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -217,7 +217,7 @@ export default function Clients() {
                                                 {(client.name || 'C').charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: '700', color: '#1e293b' }}>{client.name || 'Cliente'}</div>
+                                                <div style={{ fontWeight: '700', color: '#1e293b' }}>{client.name || t('client')}</div>
                                                 <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                     <Phone size={12} /> {client.phone}
                                                 </div>
@@ -228,7 +228,7 @@ export default function Clients() {
                                         <div style={{ fontWeight: '700', color: '#10b981' }}>
                                             {client.totalSpent.toLocaleString()} MT
                                         </div>
-                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>Média: {Math.round(client.totalSpent / client.orderCount).toLocaleString()} MT</div>
+                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{t('clients_avg')}: {Math.round(client.totalSpent / client.orderCount).toLocaleString()} MT</div>
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
                                         <span style={{
@@ -236,7 +236,7 @@ export default function Clients() {
                                             color: client.isRecurring ? '#3b82f6' : '#64748b',
                                             padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700'
                                         }}>
-                                            {client.orderCount} visitas
+                                            {client.orderCount} {t('clients_visits')}
                                         </span>
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
@@ -259,7 +259,7 @@ export default function Clients() {
                                                 {format(new Date(client.lastVisit), 'dd MMM yyyy', { locale: pt })}
                                             </div>
                                             <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                                                Desde {format(new Date(client.firstVisit), 'MMM yyyy', { locale: pt })}
+                                                {t('clients_since')} {format(new Date(client.firstVisit), 'MMM yyyy', { locale: pt })}
                                             </div>
                                         </div>
                                     </td>
@@ -272,7 +272,7 @@ export default function Clients() {
                                                     borderRadius: '8px', border: 'none', cursor: 'pointer',
                                                     transition: 'all 0.2s'
                                                 }}
-                                                title="Remover / Anonimizar"
+                                                title={t('clients_anonymize')}
                                             >
                                                 <Trash2 size={18} />
                                             </button>

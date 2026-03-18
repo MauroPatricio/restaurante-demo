@@ -10,6 +10,7 @@ import {
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 // Modern styles matching Kitchen.jsx
 const cardStyle = {
@@ -43,6 +44,7 @@ const iconBoxStyle = (color, bg) => ({
 
 export default function StockDashboard() {
     const { user } = useAuth();
+    const { t, i18n } = useTranslation();
     const [data, setData] = useState({ summary: {}, items: [] });
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
@@ -138,7 +140,7 @@ export default function StockDashboard() {
             fetchStockData();
         } catch (error) {
             console.error('Failed to update stock:', error);
-            alert('Erro ao atualizar stock. Verifique os logs.');
+            alert(t('stock_update_error'));
         }
     };
 
@@ -146,7 +148,7 @@ export default function StockDashboard() {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '100vh', background: '#f8fafc' }}>
                 <LoadingSpinner size={48} />
-                <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Carregando dados de inventário...</span>
+                <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('stock_loading')}</span>
             </div>
         );
     }
@@ -171,10 +173,10 @@ export default function StockDashboard() {
             <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
                     <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                        Stock & Custos
+                        {t('stock_title')}
                     </h1>
                     <p style={{ color: '#64748b', marginTop: '8px', fontSize: '16px' }}>
-                        Gestão de inventário e rentabilidade
+                        {t('stock_subtitle')}
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -197,7 +199,7 @@ export default function StockDashboard() {
                         }}
                     >
                         <RefreshCw size={16} />
-                        Actualizar
+                        {t('refresh')}
                     </button>
                 </div>
             </div>
@@ -220,7 +222,7 @@ export default function StockDashboard() {
                         gap: '8px'
                     }}
                 >
-                    <Package size={18} /> Visão Geral
+                    <Package size={18} /> {t('stock_overview_tab')}
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
@@ -238,7 +240,7 @@ export default function StockDashboard() {
                         gap: '8px'
                     }}
                 >
-                    <History size={18} /> Histórico de Movimentações
+                    <History size={18} /> {t('stock_history_tab')}
                 </button>
             </div>
 
@@ -249,7 +251,7 @@ export default function StockDashboard() {
                         <div style={statCardStyle}>
                             <div>
                                 <p style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-                                    Itens em Inventário
+                                    {t('stock_items_kpi')}
                                 </p>
                                 <h3 style={{ fontSize: '36px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
                                     {data.summary.totalItems}
@@ -263,7 +265,7 @@ export default function StockDashboard() {
                         <div style={statCardStyle}>
                             <div>
                                 <p style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-                                    Valor Total em Stock
+                                    {t('stock_total_value_kpi')}
                                 </p>
                                 <h3 style={{ fontSize: '36px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
                                     {data.summary.totalValue?.toLocaleString()} <span style={{ fontSize: '20px', color: '#64748b' }}>MT</span>
@@ -277,7 +279,7 @@ export default function StockDashboard() {
                         <div style={statCardStyle}>
                             <div>
                                 <p style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-                                    Alertas de Stock Baixo
+                                    {t('stock_low_stock_kpi')}
                                 </p>
                                 <h3 style={{
                                     fontSize: '36px',
@@ -302,24 +304,24 @@ export default function StockDashboard() {
                             <div style={cardStyle}>
                                 <div style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                                        Níveis de Inventário e Margens
+                                        {t('stock_table_title')}
                                     </h3>
-                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>* Margem bruta baseada no custo e preço de venda</span>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>* {t('stock_margin_note')}</span>
                                 </div>
                                 <div style={{ overflowX: 'auto' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Produto</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Estado</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Stock</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Unidade</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Min.</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Preço Venda</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Custo/Unit</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Margem (%)</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Valor Stock</th>
-                                                <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Acções</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_product')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_status')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_stock')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_unit')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_min')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_price')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_cost')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_margin')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_value')}</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -332,7 +334,7 @@ export default function StockDashboard() {
                                                             )}
                                                             <div>
                                                                 <div style={{ fontSize: '14px' }}>{item.name}</div>
-                                                                <div style={{ fontSize: '11px', color: '#94a3b8' }}>{item.category?.name || 'Sem categoria'}</div>
+                                                                <div style={{ fontSize: '11px', color: '#94a3b8' }}>{item.category?.name || t('no_category')}</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -346,7 +348,7 @@ export default function StockDashboard() {
                                                             color: item.stockControlled ? '#4338ca' : '#94a3b8',
                                                             textTransform: 'uppercase'
                                                         }}>
-                                                            {item.stockControlled ? 'Controlado' : 'Sem Controlo'}
+                                                            {item.stockControlled ? t('stock_controlled') : t('stock_uncontrolled')}
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: '16px' }}>
@@ -356,11 +358,11 @@ export default function StockDashboard() {
                                                                     <button
                                                                         onClick={() => setAdjustType('add')}
                                                                         style={{ padding: '4px 8px', border: 'none', background: adjustType === 'add' ? '#3b82f6' : 'white', color: adjustType === 'add' ? 'white' : '#64748b', fontSize: '11px', fontWeight: 'bold' }}
-                                                                    >ENTRADA</button>
+                                                                    >{t('stock_entry')}</button>
                                                                     <button
                                                                         onClick={() => setAdjustType('set')}
                                                                         style={{ padding: '4px 8px', border: 'none', background: adjustType === 'set' ? '#3b82f6' : 'white', color: adjustType === 'set' ? 'white' : '#64748b', fontSize: '11px', fontWeight: 'bold' }}
-                                                                    >DEFINIR</button>
+                                                                    >{t('stock_set')}</button>
                                                                 </div>
                                                                 <input
                                                                     type="number"
@@ -468,7 +470,7 @@ export default function StockDashboard() {
                                 {/* Top Value Items Chart */}
                                 <div style={cardStyle}>
                                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                                        Valor de Inventário por Produto (Top 10)
+                                        {t('stock_chart_title')}
                                     </h3>
                                     <div style={{ height: '400px' }}>
                                         <ResponsiveContainer width="100%" height="100%">
@@ -482,14 +484,14 @@ export default function StockDashboard() {
                                                         borderRadius: '12px',
                                                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                                     }}
-                                                    formatter={(value) => [`${value.toLocaleString()} MT`, 'Valor Total']}
+                                                    formatter={(value) => [`${value.toLocaleString()} MT`, t('stock_total_value_label')]}
                                                 />
                                                 <Bar dataKey="value" fill="#6366f1" radius={[0, 8, 8, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                     <p style={{ fontSize: '12px', textAlign: 'center', color: '#94a3b8', marginTop: '16px' }}>
-                                        Calculado por: Qtd Stock × Custo Unitário
+                                        {t('stock_chart_note')}
                                     </p>
                                 </div>
                             </div>
@@ -500,7 +502,7 @@ export default function StockDashboard() {
                 <div style={cardStyle}>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                            Registo de Movimentações
+                            {t('stock_movements_title')}
                         </h3>
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <select
@@ -515,11 +517,11 @@ export default function StockDashboard() {
                                     outline: 'none'
                                 }}
                             >
-                                <option value="">Todos os Tipos</option>
-                                <option value="sale">Venda</option>
-                                <option value="restock">Reposição (Compra)</option>
-                                <option value="waste">Quebra (Desperdício)</option>
-                                <option value="adjustment">Ajuste Manual</option>
+                                <option value="">{t('stock_all_types')}</option>
+                                <option value="sale">{t('stock_type_sale')}</option>
+                                <option value="restock">{t('stock_type_restock')}</option>
+                                <option value="waste">{t('stock_type_waste')}</option>
+                                <option value="adjustment">{t('stock_type_adjustment')}</option>
                             </select>
                         </div>
                     </div>
@@ -531,39 +533,39 @@ export default function StockDashboard() {
                     ) : movements.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8' }}>
                             <History size={48} style={{ opacity: 0.5, marginBottom: '16px' }} />
-                            <p>Nenhuma movimentação encontrada para o período/filtro selecionado.</p>
+                            <p>{t('stock_no_movements')}</p>
                         </div>
                     ) : (
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Data</th>
-                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Produto</th>
-                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Tipo</th>
-                                        <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Qtd. Anterior</th>
-                                        <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Variação</th>
-                                        <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Qtd. Actual</th>
-                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Responsável / Ref</th>
+                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_date')}</th>
+                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_product')}</th>
+                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_type')}</th>
+                                        <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_prev')}</th>
+                                        <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_change')}</th>
+                                        <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_current')}</th>
+                                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{t('stock_col_ref')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {movements.map((mov) => {
                                         let typeColor, typeBg, typeLabel;
                                         switch (mov.type) {
-                                            case 'sale': typeColor = '#3b82f6'; typeBg = '#eff6ff'; typeLabel = 'Venda'; break;
-                                            case 'restock': typeColor = '#10b981'; typeBg = '#ecfdf5'; typeLabel = 'Reposição'; break;
-                                            case 'waste': typeColor = '#ef4444'; typeBg = '#fef2f2'; typeLabel = 'Quebra'; break;
-                                            default: typeColor = '#f59e0b'; typeBg = '#fffbeb'; typeLabel = 'Ajuste'; break;
+                                            case 'sale': typeColor = '#3b82f6'; typeBg = '#eff6ff'; typeLabel = t('stock_type_sale'); break;
+                                            case 'restock': typeColor = '#10b981'; typeBg = '#ecfdf5'; typeLabel = t('stock_type_restock'); break;
+                                            case 'waste': typeColor = '#ef4444'; typeBg = '#fef2f2'; typeLabel = t('stock_type_waste'); break;
+                                            default: typeColor = '#f59e0b'; typeBg = '#fffbeb'; typeLabel = t('stock_type_adjustment'); break;
                                         }
 
                                         return (
                                             <tr key={mov._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                                 <td style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>
-                                                    {new Date(mov.createdAt).toLocaleString('pt-MZ')}
+                                                    {new Date(mov.createdAt).toLocaleString(i18n.language)}
                                                 </td>
                                                 <td style={{ padding: '16px', fontWeight: '600', color: '#1e293b' }}>
-                                                    {mov.menuItem?.name || 'Produto Excluído'}
+                                                    {mov.menuItem?.name || t('stock_deleted_product')}
                                                 </td>
                                                 <td style={{ padding: '16px' }}>
                                                     <span style={{ padding: '4px 8px', borderRadius: '6px', background: typeBg, color: typeColor, fontSize: '12px', fontWeight: '600' }}>
@@ -596,17 +598,17 @@ export default function StockDashboard() {
                                         disabled={historyFilters.page === 1}
                                         style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', cursor: historyFilters.page === 1 ? 'not-allowed' : 'pointer', color: historyFilters.page === 1 ? '#cbd5e1' : '#475569' }}
                                     >
-                                        Anterior
+                                        {t('previous')}
                                     </button>
                                     <span style={{ padding: '8px 16px', fontSize: '14px', color: '#64748b' }}>
-                                        Página {historyFilters.page} de {totalPages}
+                                        {t('page_of', { page: historyFilters.page, total: totalPages })}
                                     </span>
                                     <button
                                         onClick={() => setHistoryFilters(p => ({ ...p, page: Math.min(totalPages, p.page + 1) }))}
                                         disabled={historyFilters.page === totalPages}
                                         style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', cursor: historyFilters.page === totalPages ? 'not-allowed' : 'pointer', color: historyFilters.page === totalPages ? '#cbd5e1' : '#475569' }}
                                     >
-                                        Seguinte
+                                        {t('next')}
                                     </button>
                                 </div>
                             )}
