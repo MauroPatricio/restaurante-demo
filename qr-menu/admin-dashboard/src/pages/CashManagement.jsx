@@ -103,7 +103,7 @@ export default function CashManagement() {
                         </div>
                         <div>
                             <span style={{ fontSize: '10px', fontWeight: '900', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('active_session_label')}</span>
-                            <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', margin: '4px 0' }}>{t('operator_label')}: {user.name}</h3>
+                            <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', margin: '4px 0' }}>{t('operator_label')}: {user?.name}</h3>
                             <p style={{ color: '#94a3b8', fontWeight: '600', fontSize: '13px' }}>{t('started_at_label')} {new Date(activeSession.startTime).toLocaleTimeString()}</p>
                         </div>
                     </div>

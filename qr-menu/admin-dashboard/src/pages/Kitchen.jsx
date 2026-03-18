@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { orderAPI } from '../services/api';
+import { orderAPI, restaurantAPI } from '../services/api';
 import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useSound } from '../hooks/useSound';
-import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle, Coffee, Wifi, WifiOff } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle, Coffee, Wifi, WifiOff, Power } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
@@ -22,7 +22,10 @@ const Kitchen = () => {
     const [newOrderIds, setNewOrderIds] = useState(new Set());
     const [loading, setLoading] = useState(true);
     const [audioEnabled, setAudioEnabled] = useState(false);
+    const [isKitchenOpen, setIsKitchenOpen] = useState(true);
+    const [togglingKitchen, setTogglingKitchen] = useState(false);
     const { connected } = useSocket();
+    const refreshTimerRef = useRef(null);
 
     const [stats, setStats] = useState({
         realtime: {
@@ -70,6 +73,11 @@ const Kitchen = () => {
             return;
         }
         fetchData();
+        // Fetch kitchen open status from restaurant settings
+        restaurantAPI.get(restaurantId).then(res => {
+            const settings = res.data?.restaurant?.settings;
+            setIsKitchenOpen(settings?.isKitchenOpen !== false);
+        }).catch(() => {});
         const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
     }, [restaurantId]);
@@ -117,23 +125,16 @@ const Kitchen = () => {
 
         const handleRealtimeUpdate = (data) => {
 
-
             if (data.status === 'cancelled') {
                 setCancelledOrders(prev => {
                     if (prev.find(o => o._id === data._id)) return prev;
                     return [...prev, { ...data, cancelledAt: Date.now() }];
                 });
-
                 setTimeout(() => {
                     setCancelledOrders(prev => prev.filter(o => o._id !== data._id));
                 }, 10000);
-
                 setOrders(prev => prev.filter(o => o._id !== data._id));
-                return;
-            }
-
-            // Update stats incrementally if status changed to something final
-            if (['completed', 'served'].includes(data.status)) {
+            } else if (['completed', 'served'].includes(data.status)) {
                 setOrders(prev => prev.filter(o => o._id !== data._id));
                 setStats(prev => ({
                     ...prev,
@@ -143,23 +144,25 @@ const Kitchen = () => {
                         completedOrders: prev.realtime.completedOrders + 1
                     }
                 }));
-                return;
+            } else {
+                // Instant local update for visual responsiveness
+                setOrders(prev => {
+                    const index = prev.findIndex(o => o._id === data._id);
+                    if (index === -1) {
+                        if (['pending', 'confirmed', 'preparing', 'ready'].includes(data.status)) {
+                            return [data, ...prev];
+                        }
+                        return prev;
+                    }
+                    const newOrders = [...prev];
+                    newOrders[index] = { ...newOrders[index], ...data };
+                    return newOrders;
+                });
             }
 
-            // Standard status update (e.g. pending -> preparing -> ready)
-            setOrders(prev => {
-                const index = prev.findIndex(o => o._id === data._id);
-                if (index === -1) {
-                    // Only add if it belongs in KDS columns
-                    if (['pending', 'confirmed', 'preparing', 'ready'].includes(data.status)) {
-                        return [data, ...prev];
-                    }
-                    return prev;
-                }
-                const newOrders = [...prev];
-                newOrders[index] = { ...newOrders[index], ...data };
-                return newOrders;
-            });
+            // Debounced full refresh to get complete data from server
+            if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+            refreshTimerRef.current = setTimeout(() => fetchData(), 800);
         };
 
         const handleStatsUpdate = (data) => {
@@ -223,6 +226,20 @@ const Kitchen = () => {
         }
     };
 
+    const handleToggleKitchen = async () => {
+        if (!restaurantId || togglingKitchen) return;
+        setTogglingKitchen(true);
+        const newStatus = !isKitchenOpen;
+        try {
+            await restaurantAPI.update(restaurantId, { 'settings.isKitchenOpen': newStatus });
+            setIsKitchenOpen(newStatus);
+        } catch (error) {
+            console.error('Failed to toggle kitchen status:', error);
+        } finally {
+            setTogglingKitchen(false);
+        }
+    };
+
     // Skeleton loading - maintains layout and visual context
     if (loading) return (
         <div style={{ padding: '40px', maxWidth: '100vw' }}>
@@ -265,6 +282,20 @@ const Kitchen = () => {
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
+                    {/* Kitchen Status Toggle */}
+                    <button
+                        onClick={handleToggleKitchen}
+                        disabled={togglingKitchen}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border-2 ${
+                            isKitchenOpen
+                                ? 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100'
+                                : 'bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100'
+                        }`}
+                        title={isKitchenOpen ? t('kitchen_close_label', 'Fechar Cozinha') : t('kitchen_open_label', 'Abrir Cozinha')}
+                    >
+                        <Power size={18} />
+                        {togglingKitchen ? '...' : (isKitchenOpen ? t('kitchen_open_status', 'Cozinha Aberta') : t('kitchen_closed_status', 'Inactivo / Manutenção'))}
+                    </button>
                     <button
                         onClick={() => setAudioEnabled(!audioEnabled)}
                         className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border-2 ${audioEnabled ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-500'}`}
