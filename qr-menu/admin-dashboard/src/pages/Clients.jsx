@@ -40,8 +40,8 @@ export default function Clients() {
     const summary = data.summary || {};
 
     const filteredClients = clients.filter(client =>
-        client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone?.includes(searchTerm)
+        (client.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+        (client.phone || '').includes(searchTerm)
     );
 
     const handleAnonymize = async (phone) => {

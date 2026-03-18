@@ -473,7 +473,7 @@ export default function StockDashboard() {
                                         {t('stock_chart_title')}
                                     </h3>
                                     <div style={{ height: '400px' }}>
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                             <BarChart data={chartData} layout="vertical" margin={{ left: 40 }}>
                                                 <XAxis type="number" hide />
                                                 <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 11, fill: '#64748b' }} />

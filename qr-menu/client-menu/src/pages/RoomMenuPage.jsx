@@ -311,7 +311,8 @@ export default function RoomMenuPage() {
     const filtered = menuItems.filter(it => {
         const catId = typeof it.category === 'object' ? it.category?._id : it.category;
         const matchCat = activeCategory === '__all__' || catId === activeCategory;
-        const matchSearch = !searchQuery || it.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const searchLower = (searchQuery || '').toLowerCase();
+        const matchSearch = !searchQuery || (it.name || '').toLowerCase().includes(searchLower);
         return matchCat && matchSearch;
     });
 

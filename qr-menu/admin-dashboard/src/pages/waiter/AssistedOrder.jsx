@@ -151,8 +151,9 @@ const AssistedOrder = () => {
                 (typeof item.category === 'object' ? item.category?._id === activeCategory : item.category === activeCategory) ||
                 (typeof item.category === 'object' ? item.category?.name === activeCategory : false);
 
-            const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+            const searchLower = (searchQuery || '').toLowerCase();
+            const matchesSearch = (item.name || '').toLowerCase().includes(searchLower) ||
+                (item.description || '').toLowerCase().includes(searchLower);
 
             return matchesCat && matchesSearch;
         });

@@ -210,8 +210,9 @@ const Menu = () => {
         const activeCatId = typeof activeCategory === 'object' ? activeCategory._id : activeCategory;
 
         const matchesCategory = activeCatId === 'All' || itemCategoryId === activeCatId;
-        const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        const searchLower = (searchQuery || '').toLowerCase();
+        const matchesSearch = (item.name || '').toLowerCase().includes(searchLower) ||
+            (item.description || '').toLowerCase().includes(searchLower);
         return matchesCategory && matchesSearch;
     });
 

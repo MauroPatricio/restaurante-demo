@@ -265,7 +265,7 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div style={{ height: '350px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <AreaChart data={peakHoursData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
@@ -292,7 +292,7 @@ export default function Dashboard() {
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{t('flow_distribution')}</p>
                     </div>
                     <div style={{ height: '350px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <PieChart>
                                 <Pie
                                     data={shiftsData}

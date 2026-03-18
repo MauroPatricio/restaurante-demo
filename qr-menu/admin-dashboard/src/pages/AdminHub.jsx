@@ -740,10 +740,11 @@ export default function AdminHub() {
                                                 background: '#f1f5f9'
                                             }} className="custom-scrollbar">
                                                 {supportedCurrencies
-                                                    .filter(curr => 
-                                                        curr.code.toLowerCase().includes(currencySearchTerm.toLowerCase()) || 
-                                                        curr.name.toLowerCase().includes(currencySearchTerm.toLowerCase())
-                                                    )
+                                                    .filter(curr => {
+                                                        const term = (currencySearchTerm || '').toLowerCase();
+                                                        return (curr.code || '').toLowerCase().includes(term) || 
+                                                               (curr.name || '').toLowerCase().includes(term);
+                                                    })
                                                     .map(curr => (
                                                         <button
                                                             key={curr.code}
@@ -835,18 +836,18 @@ export default function AdminHub() {
                                         </div>
                                         <div style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
                                             <span>{t('total_collaborators', { count: users.filter(u =>
-                                                u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                                u.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                                u.role?.name?.toLowerCase().includes(userSearchTerm.toLowerCase())
+                                                (u.name || '').toLowerCase().includes((userSearchTerm || '').toLowerCase()) ||
+                                                (u.email || '').toLowerCase().includes((userSearchTerm || '').toLowerCase()) ||
+                                                (u.role?.name || '').toLowerCase().includes((userSearchTerm || '').toLowerCase())
                                             ).length })}</span>
                                         </div>
                                     </div>
 
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '24px' }}>
                                         {users.filter(u =>
-                                            u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                            u.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                            u.role?.name?.toLowerCase().includes(userSearchTerm.toLowerCase())
+                                            (u.name || '').toLowerCase().includes((userSearchTerm || '').toLowerCase()) ||
+                                            (u.email || '').toLowerCase().includes((userSearchTerm || '').toLowerCase()) ||
+                                            (u.role?.name || '').toLowerCase().includes((userSearchTerm || '').toLowerCase())
                                         ).map(u => (
                                             <div key={u._id} style={{
                                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '32px',
