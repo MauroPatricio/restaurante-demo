@@ -931,5 +931,11 @@
     "stock_update_error": "Error al actualizar stock. Verifique los registros.",
     "previous": "Anterior",
     "next": "Siguiente",
-    "page_of": "Página {{page}} de {{total}}"
+    "page_of": "Página {{page}} de {{total}}",
+    "currencies_tab_subtitle": "CONFIGURACIÓN PROFESIONAL DE MONEDAS",
+    "base_currency_title": "MONEDA BASE",
+    "base_currency_description": "Seleccione la moneda que se utilizará en todo el sistema (artículos, facturas, informes).",
+    "search_currency_input": "Buscar moneda...",
+    "global_currency_selector_card": "Selector Global de la Moneda",
+    "active_configuration_label": "CONFIGURACIÓN ACTIVA"
 }

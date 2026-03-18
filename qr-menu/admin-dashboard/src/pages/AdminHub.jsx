@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getCurrencyDetails, ALL_CURRENCIES } from '../utils/currenciesList';
 
 export default function AdminHub() {
     const { user } = useAuth();
@@ -136,7 +137,18 @@ export default function AdminHub() {
     const fetchSupportedCurrencies = async () => {
         try {
             const res = await currencyAPI.getSupported();
-            setSupportedCurrencies(res.data.currencies || []);
+            const codes = res.data.currencies || [];
+            // Map string codes to rich objects containing name and symbol
+            const richCurrencies = codes.map(code => getCurrencyDetails(code));
+            // Add any missing essential currencies from our comprehensive list if they aren't returned by the API
+            ALL_CURRENCIES.forEach(c => {
+                 if (!richCurrencies.find(rc => rc.code === c.code)) {
+                     richCurrencies.push(c);
+                 }
+            });
+            // Sort by code
+            richCurrencies.sort((a, b) => a.code.localeCompare(b.code));
+            setSupportedCurrencies(richCurrencies);
         } catch (error) {
             console.error('Failed to fetch supported currencies:', error);
         }
@@ -697,20 +709,42 @@ export default function AdminHub() {
 
                             {activeTab === 'currencies' && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                                        <div>
+                                            <h3 style={{ fontSize: '32px', fontWeight: '900', color: '#1e293b', marginBottom: '4px' }}>{t('currencies_title', 'Currencies')}</h3>
+                                            <p style={{ fontSize: '10px', fontWeight: '800', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('currencies_tab_subtitle')}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleSave('currencies')}
+                                            disabled={saving}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '8px',
+                                                padding: '12px 24px', background: '#0f172a', color: 'white',
+                                                borderRadius: '16px', fontWeight: 'bold', fontSize: '14px',
+                                                border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
+                                                opacity: saving ? 0.7 : 1, transition: 'all 0.3s'
+                                            }}
+                                            className="hover:bg-slate-800 active:scale-95"
+                                        >
+                                            {saving ? <LoadingSpinner size={18} color="white" /> : <Save size={18} />}
+                                            {t('save_changes')}
+                                        </button>
+                                    </div>
+
                                     <div style={{ display: 'flex', gap: '48px', alignItems: 'start', flexWrap: 'wrap' }}>
                                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '32px', minWidth: '350px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                                 <label style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginLeft: '16px' }}>
-                                                    {t('base_currency')}
+                                                    {t('base_currency_title')}
                                                 </label>
                                                 <p style={{ fontSize: '13px', color: '#64748b', marginLeft: '16px', marginBottom: '8px' }}>
-                                                    {t('base_currency_desc')}
+                                                    {t('base_currency_description')}
                                                 </p>
                                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }} className="group">
                                                     <Search style={{ position: 'absolute', left: '24px', color: '#cbd5e1' }} size={20} />
                                                     <input
                                                         type="text"
-                                                        placeholder={t('search_currency_placeholder')}
+                                                        placeholder={t('search_currency_input')}
                                                         value={currencySearchTerm}
                                                         onChange={e => setCurrencySearchTerm(e.target.value)}
                                                         style={{
@@ -730,14 +764,8 @@ export default function AdminHub() {
                                             </div>
 
                                             <div style={{ 
-                                                display: 'grid', 
-                                                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
-                                                gap: '16px',
-                                                maxHeight: '440px',
-                                                overflowY: 'auto',
-                                                padding: '12px',
-                                                borderRadius: '32px',
-                                                background: '#f1f5f9'
+                                                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px',
+                                                maxHeight: '500px', overflowY: 'auto', padding: '12px', borderRadius: '32px', background: '#f8fafc'
                                             }} className="custom-scrollbar">
                                                 {supportedCurrencies
                                                     .filter(curr => {
@@ -753,26 +781,21 @@ export default function AdminHub() {
                                                                 general: { ...formData.general, currency: curr.code } 
                                                             })}
                                                             style={{
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                padding: '20px',
-                                                                borderRadius: '24px',
-                                                                background: formData.general.currency === curr.code ? 'white' : 'transparent',
+                                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                                                padding: '24px', borderRadius: '24px', transition: 'all 0.3s ease', cursor: 'pointer',
+                                                                background: formData.general.currency === curr.code ? '#eef2ff' : 'white',
                                                                 border: formData.general.currency === curr.code ? '2px solid #6366f1' : '2px solid transparent',
-                                                                boxShadow: formData.general.currency === curr.code ? '0 10px 20px rgba(99, 102, 241, 0.1)' : 'none',
-                                                                transition: 'all 0.3s ease',
-                                                                cursor: 'pointer'
+                                                                boxShadow: formData.general.currency === curr.code ? '0 10px 20px rgba(99, 102, 241, 0.1)' : '0 4px 6px rgba(0,0,0,0.02)'
                                                             }}
+                                                            className="hover:shadow-md"
                                                         >
-                                                            <span style={{ fontSize: '24px', fontWeight: '900', color: formData.general.currency === curr.code ? '#4f46e5' : '#94a3b8' }}>
+                                                            <span style={{ fontSize: '28px', fontWeight: '900', color: formData.general.currency === curr.code ? '#6366f1' : '#94a3b8' }}>
                                                                 {curr.symbol}
                                                             </span>
-                                                            <span style={{ fontSize: '14px', fontWeight: '800', color: formData.general.currency === curr.code ? '#1e293b' : '#64748b', marginTop: '4px' }}>
+                                                            <span style={{ fontSize: '15px', fontWeight: '800', color: formData.general.currency === curr.code ? '#1e293b' : '#64748b', marginTop: '8px' }}>
                                                                 {curr.code}
                                                             </span>
-                                                            <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', textAlign: 'center' }}>
+                                                            <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', textAlign: 'center', fontWeight: '600' }}>
                                                                 {curr.name}
                                                             </span>
                                                         </button>
@@ -781,37 +804,35 @@ export default function AdminHub() {
                                             </div>
                                         </div>
 
-                                        <div style={{ 
-                                            width: '320px', 
-                                            background: 'white', 
-                                            borderRadius: '40px', 
-                                            padding: '40px',
-                                            border: '1px solid #f1f5f9',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '32px',
-                                            boxShadow: '0 20px 40px rgba(0,0,0,0.03)'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                                <div style={{ padding: '12px', background: '#f5f3ff', color: '#7c3aed', borderRadius: '16px' }}>
-                                                    <Coins size={24} />
+                                        <div style={{ width: '380px', flexShrink: 0 }}>
+                                            <div style={{ 
+                                                background: 'white', borderRadius: '40px', padding: '48px',
+                                                border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '32px',
+                                                boxShadow: '0 20px 40px rgba(0,0,0,0.03)'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                    <div style={{ padding: '16px', background: '#f5f3ff', color: '#7c3aed', borderRadius: '20px' }}>
+                                                        <Coins size={32} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', margin: 0 }}>{t('global_currency_selector_card')}</h4>
+                                                        <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>
+                                                            {t('active_configuration_label')}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h4 style={{ fontSize: '16px', fontWeight: '900', color: '#1e293b', margin: 0 }}>{t('global_currency_selector')}</h4>
-                                                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Configuração Ativa</p>
-                                                </div>
-                                            </div>
 
-                                            <div style={{ background: '#f8fafc', borderRadius: '32px', padding: '48px 24px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                                                <span style={{ fontSize: '64px', fontWeight: '900', color: '#6366f1', lineHeight: 1 }}>
-                                                    {supportedCurrencies.find(c => c.code === formData.general.currency)?.symbol || '$'}
-                                                </span>
-                                                <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', marginTop: '16px', marginBottom: '4px', letterSpacing: '-0.02em' }}>
-                                                    {formData.general.currency}
-                                                </h3>
-                                                <p style={{ fontSize: '13px', color: '#94a3b8', fontWeight: '700' }}>
-                                                    {supportedCurrencies.find(c => c.code === formData.general.currency)?.name || 'Currency'}
-                                                </p>
+                                                <div style={{ background: '#f8fafc', borderRadius: '32px', padding: '64px 32px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
+                                                    <span style={{ fontSize: '80px', fontWeight: '900', color: '#6366f1', lineHeight: 1 }}>
+                                                        {supportedCurrencies.find(c => c.code === formData.general.currency)?.symbol || '$'}
+                                                    </span>
+                                                    <h3 style={{ fontSize: '32px', fontWeight: '900', color: '#0f172a', marginTop: '24px', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+                                                        {formData.general.currency}
+                                                    </h3>
+                                                    <p style={{ fontSize: '14px', color: '#94a3b8', fontWeight: '700' }}>
+                                                        {supportedCurrencies.find(c => c.code === formData.general.currency)?.name || 'Currency'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

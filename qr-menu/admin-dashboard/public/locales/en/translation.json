@@ -1002,5 +1002,11 @@
     "no_financial_data": "No financial data available.",
     "sales_by_category": "Sales by Category",
     "top_products_sold": "Top Products Sold",
-    "operational_metrics": "Operational Metrics"
+    "operational_metrics": "Operational Metrics",
+    "currencies_tab_subtitle": "PROFESSIONAL CONFIG OF CURRENCIES",
+    "base_currency_title": "BASE CURRENCY",
+    "base_currency_description": "Select the currency that will be used across the system (items, invoices, reports).",
+    "search_currency_input": "Search currency...",
+    "global_currency_selector_card": "Global Currency Selector",
+    "active_configuration_label": "ACTIVE CONFIGURATION"
 }

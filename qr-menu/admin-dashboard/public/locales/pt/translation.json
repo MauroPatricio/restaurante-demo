@@ -1010,5 +1010,11 @@
     "top_products_sold": "Produtos Mais Vendidos",
     "operational_metrics": "Métricas Operacionais",
     "order_status_almost_ready": "Quase Pronto",
-    "mark_almost_ready_btn": "Quase Pronto"
+    "mark_almost_ready_btn": "Quase Pronto",
+    "currencies_tab_subtitle": "CONFIGURAÇÃO PROFISSIONAL DE MOEDAS",
+    "base_currency_title": "MOEDA BASE",
+    "base_currency_description": "Selecione a moeda que será usada em todo o sistema (itens, faturas, relatórios).",
+    "search_currency_input": "Pesquisar moeda...",
+    "global_currency_selector_card": "Seletor Global de Moedas",
+    "active_configuration_label": "CONFIGURAÇÃO ATIVA"
 }
