@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
 import { waiterAnalyticsAPI } from '../services/api';
 import { Users, TrendingUp, Clock, Award, RefreshCw } from 'lucide-react';
 import './WaiterAnalytics.css';
@@ -13,8 +14,8 @@ const WaiterAnalytics = () => {
     const [selectedWaiter, setSelectedWaiter] = useState(null);
     const [details, setDetails] = useState(null);
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const restaurant = user.restaurant;
+    const { user } = useAuth();
+    const restaurant = user?.restaurant;
 
     useEffect(() => {
         if (restaurant?._id || restaurant) {

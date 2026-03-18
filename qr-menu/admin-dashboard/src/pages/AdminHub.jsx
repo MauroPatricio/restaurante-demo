@@ -12,6 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getCurrencyDetails, ALL_CURRENCIES } from '../utils/currenciesList';
+import CurrencySelector from '../components/CurrencySelector';
 
 export default function AdminHub() {
     const { user } = useAuth();
@@ -708,134 +709,19 @@ export default function AdminHub() {
                             )}
 
                             {activeTab === 'currencies' && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                                        <div>
-                                            <h3 style={{ fontSize: '32px', fontWeight: '900', color: '#1e293b', marginBottom: '4px' }}>{t('currencies_title', 'Currencies')}</h3>
-                                            <p style={{ fontSize: '10px', fontWeight: '800', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('currencies_tab_subtitle')}</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleSave('currencies')}
-                                            disabled={saving}
-                                            style={{
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                padding: '12px 24px', background: '#0f172a', color: 'white',
-                                                borderRadius: '16px', fontWeight: 'bold', fontSize: '14px',
-                                                border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
-                                                opacity: saving ? 0.7 : 1, transition: 'all 0.3s'
-                                            }}
-                                            className="hover:bg-slate-800 active:scale-95"
-                                        >
-                                            {saving ? <LoadingSpinner size={18} color="white" /> : <Save size={18} />}
-                                            {t('save_changes')}
-                                        </button>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '48px', alignItems: 'start', flexWrap: 'wrap' }}>
-                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '32px', minWidth: '350px' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                                <label style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginLeft: '16px' }}>
-                                                    {t('base_currency_title')}
-                                                </label>
-                                                <p style={{ fontSize: '13px', color: '#64748b', marginLeft: '16px', marginBottom: '8px' }}>
-                                                    {t('base_currency_description')}
-                                                </p>
-                                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }} className="group">
-                                                    <Search style={{ position: 'absolute', left: '24px', color: '#cbd5e1' }} size={20} />
-                                                    <input
-                                                        type="text"
-                                                        placeholder={t('search_currency_input')}
-                                                        value={currencySearchTerm}
-                                                        onChange={e => setCurrencySearchTerm(e.target.value)}
-                                                        style={{
-                                                            width: '100%',
-                                                            padding: '20px 24px 20px 64px',
-                                                            background: '#f8fafc',
-                                                            border: '2px solid transparent',
-                                                            borderRadius: '24px',
-                                                            fontWeight: '700',
-                                                            color: '#1e293b',
-                                                            fontSize: '14px',
-                                                            transition: 'all 0.3s',
-                                                            outline: 'none'
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div style={{ 
-                                                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px',
-                                                maxHeight: '500px', overflowY: 'auto', padding: '12px', borderRadius: '32px', background: '#f8fafc'
-                                            }} className="custom-scrollbar">
-                                                {supportedCurrencies
-                                                    .filter(curr => {
-                                                        const term = (currencySearchTerm || '').toLowerCase();
-                                                        return (curr.code || '').toLowerCase().includes(term) || 
-                                                               (curr.name || '').toLowerCase().includes(term);
-                                                    })
-                                                    .map(curr => (
-                                                        <button
-                                                            key={curr.code}
-                                                            onClick={() => setFormData({ 
-                                                                ...formData, 
-                                                                general: { ...formData.general, currency: curr.code } 
-                                                            })}
-                                                            style={{
-                                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                                padding: '24px', borderRadius: '24px', transition: 'all 0.3s ease', cursor: 'pointer',
-                                                                background: formData.general.currency === curr.code ? '#eef2ff' : 'white',
-                                                                border: formData.general.currency === curr.code ? '2px solid #6366f1' : '2px solid transparent',
-                                                                boxShadow: formData.general.currency === curr.code ? '0 10px 20px rgba(99, 102, 241, 0.1)' : '0 4px 6px rgba(0,0,0,0.02)'
-                                                            }}
-                                                            className="hover:shadow-md"
-                                                        >
-                                                            <span style={{ fontSize: '28px', fontWeight: '900', color: formData.general.currency === curr.code ? '#6366f1' : '#94a3b8' }}>
-                                                                {curr.symbol}
-                                                            </span>
-                                                            <span style={{ fontSize: '15px', fontWeight: '800', color: formData.general.currency === curr.code ? '#1e293b' : '#64748b', marginTop: '8px' }}>
-                                                                {curr.code}
-                                                            </span>
-                                                            <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', textAlign: 'center', fontWeight: '600' }}>
-                                                                {curr.name}
-                                                            </span>
-                                                        </button>
-                                                    ))
-                                                }
-                                            </div>
-                                        </div>
-
-                                        <div style={{ width: '380px', flexShrink: 0 }}>
-                                            <div style={{ 
-                                                background: 'white', borderRadius: '40px', padding: '48px',
-                                                border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '32px',
-                                                boxShadow: '0 20px 40px rgba(0,0,0,0.03)'
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                                    <div style={{ padding: '16px', background: '#f5f3ff', color: '#7c3aed', borderRadius: '20px' }}>
-                                                        <Coins size={32} />
-                                                    </div>
-                                                    <div>
-                                                        <h4 style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', margin: 0 }}>{t('global_currency_selector_card')}</h4>
-                                                        <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>
-                                                            {t('active_configuration_label')}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div style={{ background: '#f8fafc', borderRadius: '32px', padding: '64px 32px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                                                    <span style={{ fontSize: '80px', fontWeight: '900', color: '#6366f1', lineHeight: 1 }}>
-                                                        {supportedCurrencies.find(c => c.code === formData.general.currency)?.symbol || '$'}
-                                                    </span>
-                                                    <h3 style={{ fontSize: '32px', fontWeight: '900', color: '#0f172a', marginTop: '24px', marginBottom: '8px', letterSpacing: '-0.02em' }}>
-                                                        {formData.general.currency}
-                                                    </h3>
-                                                    <p style={{ fontSize: '14px', color: '#94a3b8', fontWeight: '700' }}>
-                                                        {supportedCurrencies.find(c => c.code === formData.general.currency)?.name || 'Currency'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ padding: '40px 0' }}>
+                                    <CurrencySelector 
+                                        currentCurrency={formData.general.currency} 
+                                        restaurantId={restaurantId}
+                                        onSaved={(newCurrency) => {
+                                            setFormData({ 
+                                                ...formData, 
+                                                general: { ...formData.general, currency: newCurrency } 
+                                            });
+                                            // Refresh local settings to propagate changes
+                                            fetchRestaurant();
+                                        }}
+                                    />
                                 </div>
                             )}
 
