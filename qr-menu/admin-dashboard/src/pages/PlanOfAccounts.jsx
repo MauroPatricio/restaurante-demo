@@ -4,12 +4,14 @@ import { accountingAPI } from '../services/api';
 import {
     Search, Filter, FolderTree, FileText,
     ChevronDown, ChevronRight, Plus, Download,
-    Briefcase, LayoutGrid, Info
+    Briefcase, LayoutGrid, Info, Trash2
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useToast } from '../hooks/useToast';
 
 export default function PlanOfAccounts() {
     const { t } = useTranslation();
+    const { toast } = useToast();
     const [accounts, setAccounts] = useState([]);
     const [trialBalance, setTrialBalance] = useState([]);
     const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'trial'
@@ -46,6 +48,19 @@ export default function PlanOfAccounts() {
             console.error('Failed to fetch trial balance:', error);
         } finally {
             setLoading(false);
+        }
+    };
+    
+    const handleDeleteAccount = async (id, code, name) => {
+        if (!window.confirm(`${t('confirm_delete_account')}\n\n${code} - ${name}`)) return;
+
+        try {
+            await accountingAPI.deleteAccount(id);
+            toast.success(t('delete_account_success'));
+            fetchAccounts();
+        } catch (error) {
+            console.error('Failed to delete account:', error);
+            toast.error(error.response?.data?.message || t('delete_account_error'));
         }
     };
 
@@ -137,7 +152,7 @@ export default function PlanOfAccounts() {
                     padding: '24px 32px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9',
                     display: 'grid',
                     gridTemplateColumns: viewMode === 'chart'
-                        ? '150px 1fr 150px 180px'
+                        ? '150px 1fr 150px 180px 80px'
                         : '120px 1fr 120px 120px 120px 120px',
                     gap: '24px'
                 }}>
@@ -148,6 +163,7 @@ export default function PlanOfAccounts() {
                         <>
                             <span style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>{t('account_type')}</span>
                             <span style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', textAlign: 'right' }}>{t('current_balance')}</span>
+                            <span style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', textAlign: 'right' }}>{t('actions')}</span>
                         </>
                     ) : (
                         <>
@@ -171,7 +187,7 @@ export default function PlanOfAccounts() {
                                 style={{
                                     display: 'grid',
                                     gridTemplateColumns: viewMode === 'chart'
-                                        ? '150px 1fr 150px 180px'
+                                        ? '150px 1fr 150px 180px 80px'
                                         : '120px 1fr 120px 120px 120px 120px',
                                     gap: '24px',
                                     padding: '16px 32px', borderBottom: '1px solid #f8fafc',
@@ -209,6 +225,23 @@ export default function PlanOfAccounts() {
                                         </div>
                                         <div style={{ textAlign: 'right', fontSize: '14px', fontWeight: '900', color: acc.balance < 0 ? '#ef4444' : '#0f172a' }}>
                                             {acc.balance?.toLocaleString()} MT
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            {!hasChildren && (
+                                                <button
+                                                    onClick={() => handleDeleteAccount(acc._id, acc.code, acc.name)}
+                                                    style={{
+                                                        background: 'none', border: 'none', cursor: 'pointer',
+                                                        color: '#94a3b8', padding: '8px', borderRadius: '8px',
+                                                        transition: 'all 0.2s',
+                                                    }}
+                                                    onMouseOver={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2'; }}
+                                                    onMouseOut={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'none'; }}
+                                                    title={t('delete')}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     </>
                                 ) : (

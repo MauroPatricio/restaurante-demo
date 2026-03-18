@@ -346,6 +346,7 @@ export const accountingAPI = {
     getAccounts: () => api.get('/accounting/accounts'),
     createAccount: (data) => api.post('/accounting/accounts', data),
     updateAccount: (id, data) => api.patch(`/accounting/accounts/${id}`, data),
+    deleteAccount: (id) => api.delete(`/accounting/accounts/${id}`),
     getInvoices: (params) => api.get('/accounting/invoices', { params }),
     voidInvoice: (id, reason) => api.post(`/accounting/invoices/${id}/void`, { reason }),
     getLedger: (params) => api.get('/accounting/ledger', { params }),
