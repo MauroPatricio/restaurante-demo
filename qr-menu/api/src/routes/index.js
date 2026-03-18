@@ -162,6 +162,17 @@ router.patch('/restaurants/:id', authenticateToken, authorizeRoles('owner', 'adm
     // Invalidate restaurant cache
     cache.delete(`restaurant:${req.params.id}`);
 
+    // Emit real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`restaurant:${restaurant._id}`).emit('restaurant:updated', restaurant);
+      // Also emit public event
+      io.emit('restaurant:updated:public', {
+          restaurantId: restaurant._id,
+          settings: restaurant.settings
+      });
+    }
+
     res.json({
       message: 'Restaurant updated successfully',
       restaurant
@@ -415,10 +426,24 @@ router.get('/menu/:restaurantId', async (req, res) => {
       .lean()
       .sort({ category: 1, name: 1 });
 
-    // Cache for 10 minutes (menu items don't change frequently)
-    cache.set(cacheKey, items, 600);
+    // Calculate dynamic prep time factor once
+    const defaultPrepTime = 15;
+    const dynamicPrep = await calculateTodayAvgPrepTime(req.params.restaurantId);
+    // Actually calculateTodayAvgPrepTime returns a single number. 
+    // Let's use it to adjust the min/max range.
+    
+    const itemsWithDynamicPrep = items.map(item => ({
+      ...item,
+      estimatedPrepTime: {
+        min: (item.prepTime || defaultPrepTime),
+        max: (item.prepTime || defaultPrepTime) + 5
+      }
+    }));
 
-    res.json({ items });
+    // Cache for 10 minutes (menu items don't change frequently)
+    cache.set(cacheKey, itemsWithDynamicPrep, 600);
+
+    res.json({ items: itemsWithDynamicPrep });
   } catch (error) {
     console.error('Get menu error:', error);
     res.status(500).json({ error: 'Failed to fetch menu' });
@@ -579,6 +604,15 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
       io.to(`order-${order._id}`).emit('order-updated', order);
       // Also emit to restaurant room (e.g., for Kitchen Display System)
       io.to(`restaurant:${order.restaurant}`).emit('order-updated', order);
+      
+      // Notify almost-ready status
+      if (status === 'almost_ready') {
+          io.to(`order-${order._id}`).emit('notification', {
+              title: 'Pedido Quase Pronto!',
+              message: 'O seu pedido está na fase final de preparação.',
+              type: 'info'
+          });
+      }
     }
 
     // Lançamento Contabilístico Automático (Venda & CMV)
@@ -607,8 +641,8 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
       order
     });
 
-    // If order is ready, update realtime stats and broadcast
-    if (status === 'ready') {
+    // If order is ready or almost ready, update realtime stats and broadcast
+    if (status === 'ready' || status === 'almost_ready') {
       try {
         const avgPrepTime = await calculateTodayAvgPrepTime(order.restaurant);
         const io = req.app.get('io');
@@ -616,7 +650,7 @@ router.patch('/orders/:id', authenticateToken, async (req, res) => {
           io.to(`restaurant:${order.restaurant}`).emit('stats:updated', {
             avgPrepTime,
             orderId: order._id,
-            status: 'ready'
+            status: status
           });
         }
       } catch (statsErr) {

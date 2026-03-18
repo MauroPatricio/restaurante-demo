@@ -5,6 +5,7 @@ import Order from '../models/Order.js';
 import HotelRoom from '../models/HotelRoom.js';
 import { validateTableToken } from '../utils/qrSecurity.js';
 import { occupyTable } from '../controllers/tableStateController.js';
+import { calculateDynamicPrepTime } from '../services/prepTimeService.js';
 
 import cacheService from '../services/cacheService.js';
 
@@ -214,6 +215,12 @@ router.get('/menu/:restaurantId', async (req, res) => {
             tableId
         };
 
+        // Add dynamic prep time to items if they exist
+        if (restaurant.menuItems && Array.isArray(restaurant.menuItems)) {
+             // For now this route seems to only return the restaurant object with an array of menuItems IDs?
+             // Actually, line 204 says select('name logo menuItems')
+        }
+
         // Cache for 10 minutes (600 seconds)
         cacheService.set(cacheKey, { restaurant }, 600);
 
@@ -359,8 +366,25 @@ router.get('/room/menu/:restaurantId', async (req, res) => {
 
         if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
 
-        const payload = { restaurant, items, categories };
-        cacheService.set(cacheKey, payload, 600);
+        // Calculate common prep time dynamic range for the restaurant
+        const defaultPrepTime = 15;
+        const dynamicPrep = await calculateDynamicPrepTime(defaultPrepTime, restaurantId);
+        const extraMinutes = dynamicPrep.minTime - defaultPrepTime;
+
+        const itemsWithDynamicPrep = items.map(item => ({
+            ...item,
+            estimatedPrepTime: {
+                min: (item.prepTime || defaultPrepTime) + extraMinutes,
+                max: (item.prepTime || defaultPrepTime) + extraMinutes + 5
+            }
+        }));
+
+        const payload = { 
+            restaurant, 
+            items: itemsWithDynamicPrep, 
+            categories 
+        };
+        cacheService.set(cacheKey, payload, 300); // 5 min cache
         res.json(payload);
     } catch (error) {
         console.error('Room menu fetch error:', error);

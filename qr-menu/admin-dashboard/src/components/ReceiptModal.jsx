@@ -31,8 +31,9 @@ const ReceiptModal = ({ order, onClose }) => {
     const handleWhatsApp = async () => {
         try {
             await analyticsAPI.generateReceipt(order._id, { type: 'whatsapp' });
-
-            const text = `${t('receipt_title', { context: 'whatsapp' }) || 'Recibo Pedido'} #${order.orderNumber || order._id.toString().slice(-6)}\n${t('total')}: ${new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(order.total)}`;
+            
+            const currencyCode = order.currency || user?.restaurant?.settings?.currency || 'MZN';
+            const text = `${t('receipt_title', { context: 'whatsapp' }) || 'Recibo Pedido'} #${order.orderNumber || order._id.toString().slice(-6)}\n${t('total')}: ${new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode }).format(order.total)}`;
             const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         } catch (e) { console.error('Log error', e); }
@@ -98,7 +99,7 @@ const ReceiptModal = ({ order, onClose }) => {
                                     <td style={{ padding: '5px 0', verticalAlign: 'top' }}>{item.qty}x</td>
                                     <td style={{ padding: '5px 0' }}>{item.item?.name || 'Item'}</td>
                                     <td style={{ padding: '5px 0', textAlign: 'right' }}>
-                                        {new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(item.subtotal || 0)}
+                                        {new Intl.NumberFormat(undefined, { style: 'currency', currency: order.currency || user?.restaurant?.settings?.currency || 'MZN' }).format(item.subtotal || 0)}
                                     </td>
                                 </tr>
                             ))}
@@ -108,15 +109,15 @@ const ReceiptModal = ({ order, onClose }) => {
                     <div style={{ borderTop: '1px dashed #000', paddingTop: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                             <span>SUBTOTAL:</span>
-                            <span>{new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(subtotal)}</span>
+                            <span>{new Intl.NumberFormat(undefined, { style: 'currency', currency: order.currency || user?.restaurant?.settings?.currency || 'MZN' }).format(subtotal)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                             <span>IVA (16%):</span>
-                            <span>{new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(tax)}</span>
+                            <span>{new Intl.NumberFormat(undefined, { style: 'currency', currency: order.currency || user?.restaurant?.settings?.currency || 'MZN' }).format(tax)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', marginTop: '5px' }}>
                             <span>TOTAL:</span>
-                            <span>{new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(total)}</span>
+                            <span>{new Intl.NumberFormat(undefined, { style: 'currency', currency: order.currency || user?.restaurant?.settings?.currency || 'MZN' }).format(total)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '10px' }}>
                             <span>{t('payment_label')}:</span>

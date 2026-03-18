@@ -364,6 +364,13 @@ export const accountingAPI = {
     getIVAReport: (params) => api.get('/accounting/iva-report', { params })
 };
 
+// Currency API
+export const currencyAPI = {
+    getRates: () => api.get('/currency/rates'),
+    getSupported: () => api.get('/currency/supported'),
+    convert: (params) => api.get('/currency/convert', { params })
+};
+
 export default api;
 
 

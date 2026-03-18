@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     AreaChart, Area
@@ -34,9 +36,21 @@ const iconBoxStyle = (color, bg) => ({
     justifyContent: 'center'
 });
 
-export default function FinancialTab({ data, loading }) {
-    if (loading) return <div className="p-4 text-center">Loading financial data...</div>;
-    if (!data) return <div className="p-4 text-center">No financial data available.</div>;
+export default function FinancialTab({ data, loading, currency }) {
+    const { t } = useTranslation();
+    const currencySymbol = getCurrencySymbol(currency || 'MZN');
+
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_financial_data') || 'Loading financial data...'}</p>
+        </div>
+    );
+    
+    if (!data) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('no_financial_data') || 'No financial data available.'}</p>
+        </div>
+    );
 
     const {
         summary = {
@@ -51,29 +65,29 @@ export default function FinancialTab({ data, loading }) {
 
     const cards = [
         {
-            title: 'Total Revenue',
-            value: `${summary.totalRevenue?.toLocaleString()} MT`,
+            title: t('total_revenue') || 'Total Revenue',
+            value: `${summary.totalRevenue?.toLocaleString()} ${currencySymbol}`,
             icon: DollarSign,
             color: '#10b981',
             bg: '#ecfdf5'
         },
         {
-            title: 'Gross Margin',
-            value: `${summary.grossMargin?.toLocaleString()} MT`,
+            title: t('gross_margin') || 'Gross Margin',
+            value: `${summary.grossMargin?.toLocaleString()} ${currencySymbol}`,
             sub: `${summary.marginPercentage?.toFixed(1)}%`,
             icon: TrendingUp,
             color: '#8b5cf6',
             bg: '#f5f3ff'
         },
         {
-            title: 'Avg Ticket',
-            value: `${summary.avgTicket?.toFixed(2)} MT`,
+            title: t('avg_ticket') || 'Avg Ticket',
+            value: `${summary.avgTicket?.toFixed(2)} ${currencySymbol}`,
             icon: CreditCard,
             color: '#3b82f6',
             bg: '#eff6ff'
         },
         {
-            title: 'Total Orders',
+            title: t('total_orders') || 'Total Orders',
             value: summary.totalOrders,
             icon: ShoppingBag,
             color: '#f59e0b',
@@ -113,7 +127,7 @@ export default function FinancialTab({ data, loading }) {
             {/* Revenue Trend Chart */}
             <div style={cardStyle}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                    Revenue Trend
+                    {t('revenue_trend') || 'Revenue Trend'}
                 </h3>
                 {trend.length > 0 ? (
                     <div style={{ width: '100%', height: 350 }}>
@@ -130,6 +144,7 @@ export default function FinancialTab({ data, loading }) {
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                    formatter={(value) => [`${value.toLocaleString()} ${currencySymbol}`, t('total_revenue') || 'Revenue']}
                                 />
                                 <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                             </AreaChart>
@@ -137,7 +152,7 @@ export default function FinancialTab({ data, loading }) {
                     </div>
                 ) : (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '350px', color: '#cbd5e1' }}>
-                        <p>No trend data available</p>
+                        <p>{t('no_trend_data') || 'No trend data available'}</p>
                     </div>
                 )}
             </div>

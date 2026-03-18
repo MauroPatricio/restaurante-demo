@@ -18,6 +18,7 @@ const STATUS_STEPS = [
     { key: 'received', label: 'order_status_pending', icon: '📋', color: '#f59e0b', desc: 'order_status_pending_desc' },
     { key: 'confirmed', label: 'order_status_confirmed', icon: '✅', color: '#3b82f6', desc: 'order_status_confirmed_desc' },
     { key: 'preparing', label: 'order_status_preparing', icon: '👨‍🍳', color: '#8b5cf6', desc: 'order_status_preparing_desc' },
+    { key: 'almost_ready', label: 'order_status_almost_ready', icon: '🥘', color: '#f59e0b', desc: 'order_status_almost_ready_desc' },
     { key: 'ready', label: 'order_status_ready', icon: '🍽️', color: '#10b981', desc: 'order_status_ready_desc' },
     { key: 'served', label: 'order_status_served', icon: '🎉', color: '#10b981', desc: 'order_status_served_desc' },
     { key: 'completed', label: 'order_status_completed', icon: '✔️', color: '#64748b', desc: 'order_status_completed_desc' },
@@ -241,6 +242,22 @@ export default function OrderStatus() {
                         {elapsed(order.createdAt)}
                         {!isDone && <span style={{ marginLeft: 8, color: '#10b981', fontWeight: 600 }}>🔄 {t('updating_automatically')}</span>}
                     </p>
+
+                    {!isDone && order.estimatedReadyTime && (
+                        <div style={{
+                            marginTop: 14, padding: '10px 16px', background: '#f0f9ff',
+                            borderRadius: 12, border: '1px solid #bae6fd',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                        }}>
+                            <span style={{ fontSize: '1.1rem' }}>⏱️</span>
+                            <div style={{ textAlign: 'left' }}>
+                                <p style={{ margin: 0, fontSize: '0.75rem', color: '#0369a1', fontWeight: 600 }}>{t('estimated_ready_at')}</p>
+                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#0c4a6e', fontWeight: 800 }}>
+                                    {new Date(order.estimatedReadyTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Stepper */}

@@ -5,6 +5,7 @@ import { Search, Filter, CheckCircle, XCircle, FileText, Download, Eye } from 'l
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 
 export default function Payments() {
     const { user } = useAuth();
@@ -61,7 +62,7 @@ export default function Payments() {
         const rows = filteredOrders.map(o => [
             o._id,
             format(new Date(o.createdAt), 'yyyy-MM-dd HH:mm'),
-            o.customerName || 'Walk-in',
+            o.customerName || t('walk_in'),
             o.total,
             o.paymentMethod,
             o.paymentStatus
@@ -166,10 +167,10 @@ export default function Payments() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{order.customerName || 'Walk-in'}</span>
+                                            <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{order.customerName || t('walk_in')}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 font-black text-gray-900 dark:text-white">{order.total} {order.currency === 'MZN' ? 'MT' : (order.currency || 'MT')}</td>
+                                    <td className="px-6 py-4 font-black text-gray-900 dark:text-white">{order.total?.toLocaleString()} {getCurrencySymbol(order.currency || user?.restaurant?.settings?.currency || 'MZN')}</td>
                                     <td className="px-6 py-4">
                                         <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold text-[10px] rounded-lg uppercase tracking-wider">
                                             {t(`method_${(order.paymentMethod || '').toLowerCase()}`) || order.paymentMethod}
@@ -217,7 +218,7 @@ export default function Payments() {
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-black text-gray-400 tracking-[0.2em] mb-1 uppercase">TXN-#{order._id.slice(-6).toUpperCase()}</span>
-                                    <h3 className="text-base font-black text-gray-900 dark:text-white uppercase leading-tight">{order.customerName || 'Walk-in'}</h3>
+                                    <h3 className="text-base font-black text-gray-900 dark:text-white uppercase leading-tight">{order.customerName || t('walk_in')}</h3>
                                     <span className="text-xs font-bold text-gray-400 mt-0.5">{format(new Date(order.createdAt), 'dd MMM, HH:mm')}</span>
                                 </div>
                                 <span className={`status-badge ${order.paymentStatus || 'pending'}`}>
@@ -234,7 +235,7 @@ export default function Payments() {
                                 </div>
                                 <div>
                                     <span className="block text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">{t('total')}</span>
-                                    <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none">{order.total} MT</span>
+                                    <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none">{order.total?.toLocaleString()} {getCurrencySymbol(order.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                 </div>
                             </div>
 
@@ -326,12 +327,12 @@ export default function Payments() {
                                                         )}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{item.item?.name || 'Item'}</span>
-                                                        <span className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-wider">{item.qty}x {item.itemPrice || item.item?.price} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
+                                                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{item.item?.name || t('item')}</span>
+                                                        <span className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-wider">{item.qty}x {item.itemPrice || item.item?.price} {getCurrencySymbol(selectedOrder.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-sm font-black text-gray-900 dark:text-white">{item.subtotal} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
+                                                    <span className="text-sm font-black text-gray-900 dark:text-white">{item.subtotal?.toLocaleString()} {getCurrencySymbol(selectedOrder.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -341,18 +342,18 @@ export default function Payments() {
                                     <div className="p-4 bg-gray-100/50 dark:bg-gray-800/50 space-y-1.5 border-t border-gray-200 dark:border-gray-700">
                                         <div className="flex justify-between text-[11px] font-bold">
                                             <span className="text-gray-400 uppercase tracking-widest">{t('subtotal')}</span>
-                                            <span className="text-gray-600 dark:text-gray-300">{selectedOrder.subtotal} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
+                                            <span className="text-gray-600 dark:text-gray-300">{selectedOrder.subtotal?.toLocaleString()} {getCurrencySymbol(selectedOrder.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                         </div>
                                         {selectedOrder.tax > 0 && (
                                             <div className="flex justify-between text-[11px] font-bold">
                                                 <span className="text-gray-400 uppercase tracking-widest">{t('tax')}</span>
-                                                <span className="text-gray-600 dark:text-gray-300">{selectedOrder.tax} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
+                                                <span className="text-gray-600 dark:text-gray-300">{selectedOrder.tax?.toLocaleString()} {getCurrencySymbol(selectedOrder.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                             </div>
                                         )}
                                         {selectedOrder.discount > 0 && (
                                             <div className="flex justify-between text-[11px] font-bold text-rose-500">
                                                 <span className="uppercase tracking-widest">{t('discount')}</span>
-                                                <span>-{selectedOrder.discount} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
+                                                <span>-{selectedOrder.discount?.toLocaleString()} {getCurrencySymbol(selectedOrder.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                             </div>
                                         )}
                                     </div>
@@ -360,8 +361,8 @@ export default function Payments() {
                             </div>
 
                             <div className="p-5 bg-emerald-600 dark:bg-emerald-500 rounded-[24px] text-white flex justify-between items-center shadow-lg shadow-emerald-500/20">
-                                <span className="font-bold text-xs uppercase tracking-widest opacity-80">Total a Confirmar</span>
-                                <span className="text-2xl font-black">{selectedOrder.total} {selectedOrder.currency === 'MZN' ? 'MT' : (selectedOrder.currency || 'MT')}</span>
+                                <span className="font-bold text-xs uppercase tracking-widest opacity-80">{t('total_to_confirm') || 'Total a Confirmar'}</span>
+                                <span className="text-2xl font-black">{selectedOrder.total?.toLocaleString()} {getCurrencySymbol(selectedOrder.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                             </div>
                         </div>
 

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 import { Package, AlertCircle, DollarSign, TrendingDown } from 'lucide-react';
 
 // Modern Card Styles (matching SalesTab)
@@ -30,9 +32,21 @@ const iconBoxStyle = (color, bg) => ({
     justifyContent: 'center'
 });
 
-export default function InventoryTab({ data, loading }) {
-    if (loading) return <div className="p-4 text-center">Loading inventory data...</div>;
-    if (!data) return <div className="p-4 text-center">No inventory data available.</div>;
+export default function InventoryTab({ data, loading, currency }) {
+    const { t } = useTranslation();
+    const currencySymbol = getCurrencySymbol(currency || 'MZN');
+
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_data') || 'Loading inventory data...'}</p>
+        </div>
+    );
+    
+    if (!data) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('failed_load_data') || 'No inventory data available.'}</p>
+        </div>
+    );
 
     const {
         summary = { totalValue: 0, lowStockCount: 0, totalItems: 0 },
@@ -53,10 +67,10 @@ export default function InventoryTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Total Inventory Value
+                            {t('stock_total_value_kpi') || 'Total Inventory Value'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {summary.totalValue?.toLocaleString()} MT
+                            {summary.totalValue?.toLocaleString()} {currencySymbol}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
@@ -73,14 +87,14 @@ export default function InventoryTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Low Stock Items
+                            {t('stock_low_stock_kpi') || 'Low Stock Items'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: summary.lowStockCount > 0 ? '#ef4444' : '#1e293b', margin: '8px 0 0 0' }}>
                             {summary.lowStockCount}
                         </h3>
                         {summary.lowStockCount > 0 && (
                             <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', fontWeight: '600' }}>
-                                Requires attention
+                                {t('requires_attention') || 'Requires attention'}
                             </p>
                         )}
                     </div>
@@ -98,7 +112,7 @@ export default function InventoryTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Total Items Tracked
+                            {t('stock_items_kpi') || 'Total Items Tracked'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {summary.totalItems}
@@ -118,13 +132,13 @@ export default function InventoryTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Stock Health
+                            {t('stock_health') || 'Stock Health'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {summary.totalItems > 0 ? ((1 - summary.lowStockCount / summary.totalItems) * 100).toFixed(0) : 100}%
                         </h3>
                         <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>
-                            {summary.totalItems - summary.lowStockCount} items OK
+                            {summary.totalItems - summary.lowStockCount} {t('items_ok') || 'items OK'}
                         </p>
                     </div>
                     <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
@@ -136,17 +150,17 @@ export default function InventoryTab({ data, loading }) {
             {/* Inventory Table */}
             <div style={cardStyle}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>
-                    Stock Levels
+                    {t('inventory_levels') || 'Stock Levels'}
                 </h3>
                 <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', fontSize: '14px', textAlign: 'left' }}>
                         <thead style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                             <tr>
-                                <th style={{ padding: '12px 24px' }}>Item Name</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Cost Price</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Stock Qty</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Total Value</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'center' }}>Status</th>
+                                <th style={{ padding: '12px 24px' }}>{t('item_name') || 'Item Name'}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('cost_price') || 'Cost Price'}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('stock_qty') || 'Stock Qty'}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('total_value') || 'Total Value'}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'center' }}>{t('status') || 'Status'}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -159,13 +173,13 @@ export default function InventoryTab({ data, loading }) {
                                         {item.name}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', color: '#64748b' }}>
-                                        {(item.costPrice || 0).toLocaleString()} MT
+                                        {(item.costPrice || 0).toLocaleString()} {currencySymbol}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: '600' }}>
                                         {item.stock || 0}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', color: '#64748b' }}>
-                                        {(item.totalValue || 0).toLocaleString()} MT
+                                        {(item.totalValue || 0).toLocaleString()} {currencySymbol}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                                         {item.status === 'Low' ? (
@@ -179,7 +193,7 @@ export default function InventoryTab({ data, loading }) {
                                                 background: '#fef2f2',
                                                 color: '#ef4444'
                                             }}>
-                                                Low Stock
+                                                {t('stock_badge_low') || 'Low Stock'}
                                             </span>
                                         ) : (
                                             <span style={{
@@ -192,7 +206,7 @@ export default function InventoryTab({ data, loading }) {
                                                 background: '#ecfdf5',
                                                 color: '#10b981'
                                             }}>
-                                                OK
+                                                {t('ok') || 'OK'}
                                             </span>
                                         )}
                                     </td>
@@ -201,7 +215,7 @@ export default function InventoryTab({ data, loading }) {
                             {items.length === 0 && (
                                 <tr>
                                     <td colSpan="5" style={{ padding: '32px 24px', textAlign: 'center', color: '#94a3b8' }}>
-                                        No items found. Ensure Items have stock tracking enabled.
+                                        {t('no_items') || 'No items found. Ensure Items have stock tracking enabled.'}
                                     </td>
                                 </tr>
                             )}

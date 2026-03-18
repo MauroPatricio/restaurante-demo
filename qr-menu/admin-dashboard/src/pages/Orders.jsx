@@ -9,6 +9,7 @@ import { SkeletonList } from '../components/Skeleton';
 import { useSocket } from '../contexts/SocketContext';
 import { useSound } from '../hooks/useSound';
 import ReceiptModal from '../components/ReceiptModal';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 
 export default function Orders() {
     const { t } = useTranslation();
@@ -123,6 +124,7 @@ export default function Orders() {
         pending: 'yellow',
         confirmed: 'blue',
         preparing: 'purple',
+        almost_ready: 'indigo',
         ready: 'orange',
         served: 'green',
         completed: 'green',
@@ -146,7 +148,7 @@ export default function Orders() {
 
             {/* Filters - Scrollable on Mobile */}
             <div className="flex overflow-x-auto pb-4 mb-6 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide gap-2 no-wrap">
-                {['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed'].map(status => (
+                {['all', 'pending', 'confirmed', 'preparing', 'almost_ready', 'ready', 'completed'].map(status => (
                     <button
                         key={status}
                         onClick={() => setFilter(status)}
@@ -198,7 +200,7 @@ export default function Orders() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{order.customerName || 'Guest'}</span>
+                                                <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{order.customerName || t('guest')}</span>
                                                 <span className="text-[10px] text-gray-400 font-bold">{order.phone}</span>
                                             </div>
                                         </td>
@@ -208,7 +210,7 @@ export default function Orders() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-black text-gray-900 dark:text-white">{order.total} {order.currency === 'MZN' ? 'MT' : (order.currency || 'MT')}</span>
+                                            <span className="text-sm font-black text-gray-900 dark:text-white">{order.total?.toLocaleString()} {getCurrencySymbol(order.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`status-badge ${statusColors[order.status]}`}>
@@ -223,7 +225,7 @@ export default function Orders() {
                                                 
                                                 {/* Action logics */}
                                                 {order.status === 'pending' && (
-                                                    <>
+                                                    <div className="flex gap-2">
                                                         <button 
                                                             onClick={() => updateOrderStatus(order._id, 'confirmed')}
                                                             className="px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-lg hover:bg-primary-700 shadow-sm"
@@ -236,11 +238,11 @@ export default function Orders() {
                                                         >
                                                             <X size={14} />
                                                         </button>
-                                                    </>
+                                                    </div>
                                                 )}
 
                                                 {order.status === 'confirmed' && (
-                                                    <>
+                                                    <div className="flex gap-2">
                                                         <button 
                                                             onClick={() => updateOrderStatus(order._id, 'preparing')}
                                                             className="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700"
@@ -253,12 +255,30 @@ export default function Orders() {
                                                         >
                                                             <X size={14} />
                                                         </button>
-                                                    </>
+                                                    </div>
                                                 )}
 
                                                 {order.status === 'preparing' && (
+                                                    <div className="flex gap-2">
+                                                        <button 
+                                                            onClick={() => updateOrderStatus(order._id, 'almost_ready')}
+                                                            className="px-3 py-1 bg-indigo-500 text-white text-xs font-bold rounded-lg hover:bg-indigo-600"
+                                                        >
+                                                            {t('mark_almost_ready_btn') || 'Quase Pronto'}
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => updateOrderStatus(order._id, 'ready')}
+                                                            className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-lg hover:bg-orange-600"
+                                                        >
+                                                            {t('mark_ready_btn')}
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {order.status === 'almost_ready' && (
                                                     <button onClick={() => updateOrderStatus(order._id, 'ready')} className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-lg hover:bg-orange-600">{t('mark_ready_btn')}</button>
                                                 )}
+
                                                 {order.status === 'ready' && (
                                                     <button onClick={() => updateOrderStatus(order._id, 'completed')} className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600">{t('complete_btn')}</button>
                                                 )}
@@ -273,14 +293,14 @@ export default function Orders() {
                     {/* Card View (Mobile & Tablet) */}
                     <div className="lg:hidden space-y-4">
                         {orders.map(order => (
-                            <div 
+                            <div
                                 key={order._id}
                                 className={`bg-white dark:bg-gray-800 p-4 rounded-[24px] shadow-sm border-2 transition-all ${newOrderIds.has(order._id) ? 'border-orange-400 ring-4 ring-orange-500/10' : 'border-gray-100 dark:border-gray-700'}`}
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-black text-gray-400 tracking-[0.2em] mb-1 uppercase">INV-#{order._id.slice(-6).toUpperCase()}</span>
-                                        <h3 className="text-base font-black text-gray-900 dark:text-white uppercase leading-tight">{order.customerName || 'Guest'}</h3>
+                                        <h3 className="text-base font-black text-gray-900 dark:text-white uppercase leading-tight">{order.customerName || t('guest')}</h3>
                                         <span className="text-xs font-bold text-gray-400 mt-0.5">{order.phone}</span>
                                     </div>
                                     <span className={`status-badge ${statusColors[order.status]}`}>
@@ -312,12 +332,12 @@ export default function Orders() {
                                     </div>
                                     <div className="col-span-2">
                                         <span className="block text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{t('total')}</span>
-                                        <span className="text-xl font-black text-primary-600 dark:text-primary-400 leading-none">{order.total} MT</span>
+                                        <span className="text-xl font-black text-primary-600 dark:text-primary-400 leading-none">{order.total?.toLocaleString()} {getCurrencySymbol(order.currency || user?.restaurant?.settings?.currency || 'MZN')}</span>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-wrap gap-2">
-                                    <button 
+                                    <button
                                         onClick={() => setSelectedOrderForReceipt(order)}
                                         className="h-10 px-4 flex-1 bg-gray-100 dark:bg-gray-700 rounded-xl text-gray-500 font-bold flex items-center justify-center gap-2 transition-colors"
                                     >
@@ -327,13 +347,13 @@ export default function Orders() {
 
                                     {order.status === 'pending' && (
                                         <>
-                                            <button 
+                                            <button
                                                 onClick={() => updateOrderStatus(order._id, 'confirmed')}
                                                 className="h-10 px-6 flex-[2] bg-primary-600 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-primary-500/20"
                                             >
                                                 {t('confirm_btn')}
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => updateOrderStatus(order._id, 'cancelled')}
                                                 className="h-10 w-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center"
                                             >
@@ -343,7 +363,7 @@ export default function Orders() {
                                     )}
 
                                     {order.status === 'confirmed' && (
-                                        <button 
+                                        <button
                                             onClick={() => updateOrderStatus(order._id, 'preparing')}
                                             className="h-10 px-6 flex-[2] bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em]"
                                         >
@@ -351,8 +371,25 @@ export default function Orders() {
                                         </button>
                                     )}
 
-                                    {order.status === 'preparing' && (
-                                        <button 
+                                     {order.status === 'preparing' && (
+                                        <div className="flex flex-1 gap-2">
+                                            <button
+                                                onClick={() => updateOrderStatus(order._id, 'almost_ready')}
+                                                className="h-10 px-4 flex-1 bg-indigo-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.1em]"
+                                            >
+                                                {t('mark_almost_ready_btn') || 'Quase Pronto'}
+                                            </button>
+                                            <button
+                                                onClick={() => updateOrderStatus(order._id, 'ready')}
+                                                className="h-10 px-4 flex-1 bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.1em]"
+                                            >
+                                                {t('mark_ready_btn')}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {order.status === 'almost_ready' && (
+                                        <button
                                             onClick={() => updateOrderStatus(order._id, 'ready')}
                                             className="h-10 px-6 flex-[2] bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em]"
                                         >

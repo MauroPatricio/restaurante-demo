@@ -113,7 +113,7 @@ export default function AccountingDashboard() {
     const [stats, setStats] = useState(null);
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
     const [rates, setRates] = useState(null);
-    const [displayCurrency, setDisplayCurrency] = useState('MZN');
+    const [displayCurrency, setDisplayCurrency] = useState(user?.restaurant?.settings?.currency || 'MZN');
 
     useEffect(() => {
         const init = async () => {

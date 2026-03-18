@@ -342,10 +342,21 @@ const Menu = () => {
                     >
                         {restaurant?.name}
                         {restaurant && (
-                            <span
-                                className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)] ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}
-                                title={isOnline ? t('connected') : t('disconnected')}
-                            />
+                            <div className="flex items-center gap-3 ml-2">
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/20 backdrop-blur-md border border-white/10">
+                                    <span
+                                        className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}
+                                        title={isOnline ? t('connected') : t('disconnected')}
+                                    />
+                                    <span className="text-[9px] font-bold text-white/50 uppercase tracking-tighter">Live</span>
+                                </div>
+                                
+                                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${restaurant.settings?.isKitchenOpen !== false ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                                    <span className="text-[9px] font-black uppercase tracking-widest">
+                                        {restaurant.settings?.isKitchenOpen !== false ? t('kitchen_open') : t('kitchen_closed')}
+                                    </span>
+                                </div>
+                            </div>
                         )}
                     </motion.h1>
 

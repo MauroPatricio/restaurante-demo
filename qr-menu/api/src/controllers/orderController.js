@@ -10,7 +10,8 @@ import { validateTableToken } from '../utils/qrSecurity.js';
 import { occupyTable } from './tableStateController.js';
 import { sendOrderNotification } from '../services/firebaseService.js';
 import mongoose from 'mongoose';
-import cache from '../services/cacheService.js'; // Ensure this path is correct based on project structure
+import cache from '../services/cacheService.js'; 
+import { calculateDynamicPrepTime } from '../services/prepTimeService.js';
 
 /**
  * Core internal function to process order creation.
@@ -215,13 +216,14 @@ export const processOrderCreation = async ({
     }
 
     // 9. Create Order
-    // Estimate ready time
+    // Estimate ready time dynamically
     const maxEta = Math.max(...populatedItems.map(pItem => {
         const menuItem = menuItemMap.get(pItem.item.toString());
         return menuItem?.eta || 15;
-    }))
-        ;
-    const estimatedReadyTime = new Date(Date.now() + maxEta * 60 * 1000);
+    }));
+    
+    const { minTime } = await calculateDynamicPrepTime(maxEta, restaurantId);
+    const estimatedReadyTime = new Date(Date.now() + minTime * 60 * 1000);
 
     const newOrder = await Order.create({
         restaurant: restaurantId,

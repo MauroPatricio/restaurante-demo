@@ -117,7 +117,7 @@ export default function OperationalTab({ data, loading }) {
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {busiestDay ? busiestDay.day : 'N/A'}
                         </h3>
-                        {busiestDay && <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>{busiestDay.orders} orders</p>}
+                        {busiestDay && <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>{busiestDay.orders} {t('orders')?.toLowerCase() || 'pedidos'}</p>}
                     </div>
                     <div style={iconBoxStyle('#f59e0b', '#fffbeb')}>
                         <Calendar size={24} strokeWidth={2.5} />
@@ -160,13 +160,13 @@ export default function OperationalTab({ data, loading }) {
                                     <XAxis dataKey="_id" />
                                     <YAxis />
                                     <Tooltip />
-                                    <Bar dataKey="orders" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Orders" />
+                                    <Bar dataKey="orders" fill="#8b5cf6" radius={[4, 4, 0, 0]} name={t('orders') || 'Pedidos'} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '350px', color: '#cbd5e1' }}>
-                            <p>No shift data available</p>
+                            <p>{t('no_orders_found') || 'No shift data available'}</p>
                         </div>
                     )}
                 </div>
@@ -183,13 +183,13 @@ export default function OperationalTab({ data, loading }) {
                                     <XAxis dataKey="day" />
                                     <YAxis />
                                     <Tooltip />
-                                    <Bar dataKey="orders" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Orders" />
+                                    <Bar dataKey="orders" fill="#f59e0b" radius={[4, 4, 0, 0]} name={t('orders') || 'Pedidos'} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '350px', color: '#cbd5e1' }}>
-                            <p>No day data available</p>
+                            <p>{t('no_orders_found') || 'No day data available'}</p>
                         </div>
                     )}
                 </div>
@@ -225,7 +225,7 @@ export default function OperationalTab({ data, loading }) {
                     </div>
                 ) : (
                     <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>
-                        Sem dados suficientes para análise de tempo de preparo.
+                        {t('no_orders_found') || 'Sem dados suficientes para análise de tempo de preparo.'}
                     </div>
                 )}
             </div>

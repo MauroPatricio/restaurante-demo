@@ -84,8 +84,8 @@ export default function BatchPosting() {
             {/* Header */}
             <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
-                    <h2 style={{ fontSize: '32px', fontWeight: '900', color: '#0f172a', margin: 0 }}>Lançamentos em Lote</h2>
-                    <p style={{ color: '#94a3b8', fontWeight: '700' }}>Processar Pedidos Pagos para o Diário Geral</p>
+                    <h2 style={{ fontSize: '32px', fontWeight: '900', color: '#0f172a', margin: 0 }}>{t('batch_postings')}</h2>
+                    <p style={{ color: '#94a3b8', fontWeight: '700' }}>{t('batch_postings_desc')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <button
@@ -114,7 +114,7 @@ export default function BatchPosting() {
                         }}
                     >
                         {processing ? <LoadingSpinner size="sm" color="white" /> : <ArrowRight size={18} />}
-                        Lançar Selecionados ({selectedOrders.size})
+                        {t('post_selected')} ({selectedOrders.size})
                     </button>
                 </div>
             </div>
@@ -124,8 +124,8 @@ export default function BatchPosting() {
             ) : pendingOrders.length === 0 ? (
                 <div style={{ padding: '64px', textAlign: 'center', background: '#f8fafc', borderRadius: '32px', border: '2px dashed #e2e8f0' }}>
                     <CheckCircle2 size={48} style={{ color: '#10b981', marginBottom: '16px', marginInline: 'auto' }} />
-                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Tudo em Dia!</h3>
-                    <p style={{ color: '#64748b', fontWeight: '600', marginTop: '8px' }}>Não há pedidos pagos pendentes de lançamento contábil.</p>
+                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 }}>{t('all_caught_up')}</h3>
+                    <p style={{ color: '#64748b', fontWeight: '600', marginTop: '8px' }}>{t('no_pending_orders_desc')}</p>
                 </div>
             ) : (
                 <div style={{ background: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
@@ -139,12 +139,12 @@ export default function BatchPosting() {
                                 {selectedOrders.size === pendingOrders.length && pendingOrders.length > 0 ? <CheckSquare size={24} /> : <Square size={24} />}
                             </button>
                             <span style={{ fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>
-                                Selecionar Todos ({pendingOrders.length} Pendentes)
+                                {t('select_all')} ({pendingOrders.length} {t('pending')})
                             </span>
                         </div>
                         {selectedOrders.size > 0 && (
                             <div style={{ fontSize: '16px', fontWeight: '900', color: '#10b981' }}>
-                                Total a Lançar: {totalSelectedAmount.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} {currency}
+                                {t('total_to_post')}: {totalSelectedAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {user?.restaurant?.settings?.currency || currency}
                             </div>
                         )}
                     </div>
@@ -153,10 +153,10 @@ export default function BatchPosting() {
                         <thead>
                             <tr style={{ background: '#f1f5f9' }}>
                                 <th style={{ padding: '16px 24px', width: '40px' }}></th>
-                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>Pedido</th>
-                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>Data / Hora</th>
-                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>Método</th>
-                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', textAlign: 'right' }}>Valor Total</th>
+                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>{t('order')}</th>
+                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>{t('date')} / {t('time')}</th>
+                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>{t('method')}</th>
+                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', textAlign: 'right' }}>{t('total_value')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -203,7 +203,7 @@ export default function BatchPosting() {
                                             </span>
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '16px', fontWeight: '900', color: '#10b981', textAlign: 'right' }}>
-                                            {order.total.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} {currency}
+                                            {order.total.toLocaleString(undefined, { minimumFractionDigits: 2 })} {user?.restaurant?.settings?.currency || currency}
                                         </td>
                                     </tr>
                                 );

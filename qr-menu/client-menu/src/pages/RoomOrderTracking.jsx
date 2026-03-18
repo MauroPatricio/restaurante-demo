@@ -9,6 +9,7 @@ const STATUS_STEPS = [
     { key: 'received', label: 'order_status_pending', icon: '📋', color: '#f59e0b', desc: 'order_status_pending_desc' },
     { key: 'confirmed', label: 'order_status_confirmed', icon: '✅', color: '#3b82f6', desc: 'order_status_confirmed_desc' },
     { key: 'preparing', label: 'order_status_preparing', icon: '👨‍🍳', color: '#8b5cf6', desc: 'order_status_preparing_desc' },
+    { key: 'almost_ready', label: 'order_status_almost_ready', icon: '⌛', color: '#6366f1', desc: 'order_status_almost_ready_desc' },
     { key: 'ready', label: 'order_status_ready', icon: '🚀', color: '#10b981', desc: 'order_status_ready_desc' },
     { key: 'served', label: 'order_status_served', icon: '🎉', color: '#10b981', desc: 'order_status_served_desc' },
 ];
@@ -179,6 +180,14 @@ export default function RoomOrderTracking() {
                     <div>
                         <p style={{ margin: 0, fontWeight: 700, color: currentStep.color, fontSize: '0.95rem' }}>{t(currentStep.label)}</p>
                         <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>{t(currentStep.desc)}</p>
+                        {order.estimatedReadyTime && !['ready', 'served', 'completed', 'cancelled'].includes(order.status) && (
+                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#312e81', fontWeight: 800 }}>
+                                ⏱️ {t('estimated_prep_time') || 'Tempo estimado'}: {new Date(order.estimatedReadyTime).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
+                                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', marginLeft: 8 }}>
+                                    ({Math.max(0, Math.ceil((new Date(order.estimatedReadyTime) - Date.now()) / 60000))} min)
+                                </span>
+                            </p>
+                        )}
                     </div>
                 </div>
             )}

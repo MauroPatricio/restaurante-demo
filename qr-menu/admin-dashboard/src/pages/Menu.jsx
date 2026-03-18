@@ -4,6 +4,7 @@ import { menuAPI, categoryAPI, subcategoryAPI, uploadAPI } from '../services/api
 import { Plus, Edit, Trash2, X, Image as ImageIcon, Package, AlertTriangle, CheckCircle, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ImageUpload from '../components/ImageUpload';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 
 export default function Menu() {
     const { user } = useAuth();
@@ -111,17 +112,6 @@ export default function Menu() {
         setShowModal(true);
     };
 
-    const getCurrencySymbol = (code) => {
-        const standard = {
-            'MZN': 'MT',
-            'USD': '$',
-            'EUR': '€',
-            'ZAR': 'R',
-            'GBP': '£',
-            'BRL': 'R$'
-        };
-        return standard[code] || code;
-    };
 
     return (
         <div className="menu-page">
@@ -178,7 +168,7 @@ export default function Menu() {
                                 <div className="menu-card-header">
                                     <h3>{item.name}</h3>
                                     <span className="menu-card-price">
-                                        {item.price} {getCurrencySymbol(item.currency)}
+                                        {item.price} {getCurrencySymbol(item.currency || user?.restaurant?.settings?.currency || 'MZN')}
                                     </span>
                                 </div>
                                 <p className="menu-card-description">{item.description}</p>
@@ -325,7 +315,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
         stock: item?.stock ?? 0,
         stockMin: item?.stockMin ?? 0,
         unit: item?.unit || 'Unidade',
-        currency: item?.currency || localStorage.getItem('preferredCurrency') || 'MZN',
+        currency: item?.currency || user?.restaurant?.settings?.currency || localStorage.getItem('preferredCurrency') || 'MZN',
         seasonal: item?.seasonal || '',
         tags: item?.tags?.join(', ') || '',
         isCustomCurrency: false,
@@ -830,7 +820,7 @@ function MenuItemModal({ item, onClose, onSave, onDelete, t, restaurantId, categ
                                                         gap: '12px'
                                                     }}>
                                                         <DollarSign size={18} />
-                                                        {t('profit_margin')} {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} {formData.currency === 'MZN' ? 'MT' : (formData.currency || 'MT')} {t('per_item')})
+                                                        {t('profit_margin')} {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} {getCurrencySymbol(formData.currency)} {t('per_item')})
                                                     </div>
                                                 </div>
                                             )}

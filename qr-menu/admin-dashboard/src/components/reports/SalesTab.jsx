@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -36,9 +38,21 @@ const iconBoxStyle = (color, bg) => ({
     justifyContent: 'center'
 });
 
-export default function SalesTab({ data, loading }) {
-    if (loading) return <div className="p-4 text-center">Loading sales data...</div>;
-    if (!data) return <div className="p-4 text-center">No sales data available.</div>;
+export default function SalesTab({ data, loading, currency }) {
+    const { t } = useTranslation();
+    const currencySymbol = getCurrencySymbol(currency || 'MZN');
+
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_data') || 'Loading sales data...'}</p>
+        </div>
+    );
+
+    if (!data) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('failed_load_data') || 'No sales data available.'}</p>
+        </div>
+    );
 
     const { byCategory = [], topItems = [] } = data;
 
@@ -61,10 +75,10 @@ export default function SalesTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Total Revenue
+                            {t('total_revenue') || 'Total Revenue'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {totalRevenue.toLocaleString()} MT
+                            {totalRevenue.toLocaleString()} {currencySymbol}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
@@ -81,7 +95,7 @@ export default function SalesTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Categories
+                            {t('categories') || 'Categories'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {byCategory.length}
@@ -101,7 +115,7 @@ export default function SalesTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Items Sold
+                            {t('items_sold') || 'Items Sold'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {totalItems}
@@ -121,10 +135,10 @@ export default function SalesTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Avg Item Price
+                            {t('avg_ticket') || 'Avg Ticket'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {avgItemPrice.toFixed(0)} MT
+                            {avgItemPrice.toFixed(0)} {currencySymbol}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
@@ -139,7 +153,7 @@ export default function SalesTab({ data, loading }) {
                 {/* Sales by Category */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        Sales by Category
+                        {t('sales_by_category') || 'Sales by Category'}
                     </h3>
                     {byCategory.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
@@ -159,13 +173,13 @@ export default function SalesTab({ data, loading }) {
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value) => `${value.toLocaleString()} MT`} />
+                                    <Tooltip formatter={(value) => `${value.toLocaleString()} ${currencySymbol}`} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '350px', color: '#cbd5e1' }}>
-                            <p>No category data available</p>
+                            <p>{t('no_category_data') || 'No category data available'}</p>
                         </div>
                     )}
                 </div>
@@ -173,7 +187,7 @@ export default function SalesTab({ data, loading }) {
                 {/* Top 10 Items */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        Top 10 Products
+                        {t('top_products_sold') || 'Top 10 Products'}
                     </h3>
                     {topItems.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
@@ -193,8 +207,8 @@ export default function SalesTab({ data, loading }) {
                                     />
                                     <Tooltip
                                         formatter={(value, name) => [
-                                            name === 'revenue' ? `${value.toLocaleString()} MT` : value,
-                                            name === 'revenue' ? 'Revenue' : 'Units Sold'
+                                            name === 'revenue' ? `${value.toLocaleString()} ${currencySymbol}` : value,
+                                            name === 'revenue' ? t('total_revenue') || 'Revenue' : t('items_sold') || 'Units Sold'
                                         ]}
                                     />
                                     <Bar dataKey="revenue" name="Revenue" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
@@ -203,7 +217,7 @@ export default function SalesTab({ data, loading }) {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '350px', color: '#cbd5e1' }}>
-                            <p>No product data available</p>
+                            <p>{t('no_product_data') || 'No product data available'}</p>
                         </div>
                     )}
                 </div>
@@ -212,16 +226,16 @@ export default function SalesTab({ data, loading }) {
             {/* Detailed Table */}
             <div style={cardStyle}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>
-                    Performance Detail
+                    {t('performance_detail') || 'Performance Detail'}
                 </h3>
                 <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', fontSize: '14px', textAlign: 'left' }}>
                         <thead style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                             <tr>
-                                <th style={{ padding: '12px 24px' }}>Product Name</th>
-                                <th style={{ padding: '12px 24px' }}>Category</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Units Sold</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Revenue</th>
+                                <th style={{ padding: '12px 24px' }}>{t('product_name') || 'Product Name'}</th>
+                                <th style={{ padding: '12px 24px' }}>{t('category') || 'Category'}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('items_sold') || 'Units Sold'}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('total_revenue') || 'Revenue'}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -240,14 +254,14 @@ export default function SalesTab({ data, loading }) {
                                         {item.count}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: '600', color: '#10b981' }}>
-                                        {item.revenue.toLocaleString()} MT
+                                        {item.revenue.toLocaleString()} {currencySymbol}
                                     </td>
                                 </tr>
                             ))}
                             {topItems.length === 0 && (
                                 <tr>
                                     <td colSpan="4" style={{ padding: '32px 24px', textAlign: 'center', color: '#94a3b8' }}>
-                                        No items found
+                                        {t('no_items') || 'No items found'}
                                     </td>
                                 </tr>
                             )}
