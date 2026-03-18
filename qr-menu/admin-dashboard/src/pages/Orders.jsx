@@ -218,7 +218,7 @@ export default function Orders() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-100 xl:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex justify-end gap-2 transition-opacity">
                                                 <button onClick={() => setSelectedOrderForReceipt(order)} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 hover:text-primary-600 transition-colors">
                                                     <Printer size={16} />
                                                 </button>

@@ -103,7 +103,7 @@ const OwnerDashboard = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [rates, setRates] = useState(null);
-    const [displayCurrency, setDisplayCurrency] = useState('MZN');
+    // No longer using client-side currency toggle to enforce restaurant base currency
 
     useEffect(() => {
         const init = async () => {
@@ -226,18 +226,6 @@ const OwnerDashboard = () => {
                         <option value="es">ES</option>
                         <option value="fr">FR</option>
                     </select>
-
-                    <select
-                        onChange={(e) => setDisplayCurrency(e.target.value)}
-                        value={displayCurrency}
-                        style={{ padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', fontWeight: '600' }}
-                    >
-                        <option value="MZN">MZN</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="ZAR">ZAR</option>
-                        <option value="GBP">GBP</option>
-                    </select>
                 </div>
             </div>
 
@@ -248,8 +236,8 @@ const OwnerDashboard = () => {
                         <p style={{ color: '#64748b', fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('total_revenue_cap')}</p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {formatCurrency(
-                                convertCurrency(stats?.totalRevenue || 0, 'MZN', displayCurrency, rates),
-                                displayCurrency,
+                                convertCurrency(stats?.totalRevenue || 0, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates),
+                                user?.restaurant?.settings?.currency || 'MZN',
                                 i18n.language === 'pt' ? 'pt-MZ' : i18n.language
                             )}
                         </h3>
@@ -353,11 +341,11 @@ const OwnerDashboard = () => {
                         <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>{t('revenue_by_restaurant')}</h3>
                     </div>
                     <div style={{ height: '350px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <BarChart
                                 data={stats?.revenueByRestaurant?.map(r => ({
                                     ...r,
-                                    convertedRevenue: convertCurrency(r.revenue, 'MZN', displayCurrency, rates)
+                                    convertedRevenue: convertCurrency(r.revenue, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates)
                                 }))}
                                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                             >
@@ -366,7 +354,7 @@ const OwnerDashboard = () => {
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                                 <Tooltip
                                     cursor={{ fill: '#f1f5f9' }}
-                                    formatter={(value) => [formatCurrency(value, displayCurrency), t('revenue')]}
+                                    formatter={(value) => [formatCurrency(value, user?.restaurant?.settings?.currency || 'MZN'), t('revenue')]}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                                 />
                                 <Bar dataKey="convertedRevenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={50} />
@@ -378,7 +366,7 @@ const OwnerDashboard = () => {
                 <div style={{ ...sectionStyle, flex: 1, minWidth: '300px', marginBottom: 0 }}>
                     <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('order_distribution')}</h3>
                     <div style={{ height: '350px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <PieChart>
                                 <Pie
                                     data={stats?.revenueByRestaurant}
@@ -450,8 +438,8 @@ const OwnerDashboard = () => {
                                     </td>
                                     <td style={{ color: '#64748b' }}>
                                         {formatCurrency(
-                                            convertCurrency(rest.orders > 0 ? (rest.revenue / rest.orders) : 0, 'MZN', displayCurrency, rates),
-                                            displayCurrency,
+                                            convertCurrency(rest.orders > 0 ? (rest.revenue / rest.orders) : 0, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates),
+                                            user?.restaurant?.settings?.currency || 'MZN',
                                             i18n.language === 'pt' ? 'pt-MZ' : i18n.language
                                         )}
                                     </td>
