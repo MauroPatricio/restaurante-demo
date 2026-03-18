@@ -159,6 +159,21 @@ router.patch('/restaurants/:id', authenticateToken, authorizeRoles('owner', 'adm
       return res.status(404).json({ error: 'Restaurant not found' });
     }
 
+    // Propagate currency change to all menu items if it was updated
+    if (updates['settings.currency'] || (updates.settings && updates.settings.currency)) {
+      const newCurrency = updates['settings.currency'] || updates.settings.currency;
+      try {
+        const MenuItem = (await import('../models/MenuItem.js')).default;
+        await MenuItem.updateMany(
+          { restaurant: req.params.id },
+          { $set: { currency: newCurrency } }
+        );
+        console.log(`[Currency] Propagated new currency ${newCurrency} to all menu items for ${restaurant.name}`);
+      } catch (propErr) {
+        console.error('[Currency] Error propagating currency to items:', propErr);
+      }
+    }
+
     // Invalidate restaurant cache
     cache.delete(`restaurant:${req.params.id}`);
 

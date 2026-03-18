@@ -57,9 +57,10 @@ export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ', c
             return `${custom.symbol} ${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
 
-        // Handle MZN separately to keep MT symbol
+        // Handle MZN separately to provide standard MT symbol only if no custom one exists
         if (currencyCode === 'MZN' || currencyCode === 'MT') {
-            return `${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+            const symbol = getCurrencySymbol('MZN', customCurrencies);
+            return `${amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${symbol}`;
         }
 
         return new Intl.NumberFormat(locale, {
@@ -91,8 +92,8 @@ export const getCurrencySymbol = (currencyCode = 'MZN', customCurrencies = []) =
     if (custom) return custom.symbol;
 
     const symbolMap = {
-        MZN: 'MT',
-        MT: 'MT',
+        MZN: 'MZN', // Default to ISO for more "standard" feel, or user can override via customCurrencies
+        MT: 'MZN',
         USD: '$',
         EUR: '€',
         ZAR: 'R',

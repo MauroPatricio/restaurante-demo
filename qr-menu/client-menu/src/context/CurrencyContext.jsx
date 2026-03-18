@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchExchangeRates, formatCurrency } from '../utils/currencyUtils';
+import { fetchExchangeRates, formatCurrency, convertCurrency } from '../utils/currencyUtils';
 
 const CurrencyContext = createContext();
 
@@ -36,11 +36,18 @@ export const CurrencyProvider = ({ children }) => {
         localStorage.setItem('preferred_currency', newCurrency);
     };
 
-    const formatPrice = (amount, code) => {
-        const currentCurrency = code || currency;
+    const formatPrice = (amount, fromCode) => {
+        const targetCurrency = currency;
+        
+        // If fromCode is specified and different from our target, try to convert
+        let finalAmount = amount;
+        if (fromCode && fromCode !== targetCurrency && rates) {
+            finalAmount = convertCurrency(amount, fromCode, targetCurrency, rates);
+        }
+
         return formatCurrency(
-            amount, 
-            currentCurrency, 
+            finalAmount, 
+            targetCurrency, 
             undefined, 
             restaurant?.settings?.customCurrencies || []
         );

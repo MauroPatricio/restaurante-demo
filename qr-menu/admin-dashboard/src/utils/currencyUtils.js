@@ -57,7 +57,8 @@ export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') =
     } catch (e) {
         // Fallback formatting
         const symbolMap = {
-            MZN: 'MT',
+            MZN: 'MZN', // Default to ISO code for consistency
+            MT: 'MZN',
             USD: '$',
             EUR: '€',
             ZAR: 'R',
@@ -73,7 +74,8 @@ export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') =
  */
 export const getCurrencySymbol = (currencyCode = 'MZN') => {
     const symbolMap = {
-        MZN: 'MT',
+        MZN: 'MZN',
+        MT: 'MZN',
         USD: '$',
         EUR: '€',
         ZAR: 'R',
