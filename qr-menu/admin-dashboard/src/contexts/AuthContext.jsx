@@ -80,9 +80,39 @@ export const AuthProvider = ({ children }) => {
         return data;
     };
 
+    const refreshProfile = async () => {
+        try {
+            const { data } = await api.get('/auth/me');
+            setUser(data.user);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            return data.user;
+        } catch (error) {
+            console.error('❌ Failed to refresh profile:', error);
+        }
+    };
+
+    const updateRestaurantSettings = (newSettings) => {
+        setUser(prev => {
+            if (!prev) return prev;
+            const updatedUser = {
+                ...prev,
+                restaurant: {
+                    ...prev.restaurant,
+                    settings: {
+                        ...(prev.restaurant?.settings || {}),
+                        ...newSettings
+                    }
+                }
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            return updatedUser;
+        });
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('restaurantId');
+        localStorage.removeItem('user');
         setUser(null);
         window.location.href = '/login';
     };
@@ -93,6 +123,8 @@ export const AuthProvider = ({ children }) => {
         login,
         selectRestaurant,
         logout,
+        refreshProfile,
+        updateRestaurantSettings,
         isAuthenticated: !!user
     };
 

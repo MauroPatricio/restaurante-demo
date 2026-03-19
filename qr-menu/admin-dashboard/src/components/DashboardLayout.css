@@ -346,6 +346,7 @@
     .main-content {
         margin-left: var(--sidebar-width);
         width: calc(100% - var(--sidebar-width));
+        max-width: none; /* Ensure no max-width is inherited */
     }
 
     .dashboard-layout.sidebar-collapsed .main-content {

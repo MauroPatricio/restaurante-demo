@@ -15,7 +15,7 @@ import { getCurrencyDetails, ALL_CURRENCIES } from '../utils/currenciesList';
 import CurrencySelector from '../components/CurrencySelector';
 
 export default function AdminHub() {
-    const { user } = useAuth();
+    const { user, updateRestaurantSettings, refreshProfile } = useAuth();
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(true);
@@ -224,10 +224,33 @@ export default function AdminHub() {
             }
 
             await restaurantAPI.update(restId, payload);
-            alert(t('settings_updated_success') || 'Configurações atualizadas com sucesso!');
-            if (logoFile && section === 'general') {
-                window.location.reload(); // Refresh to update logo globally
+            
+            // Update global state immediately for visual reactivity
+            if (section === 'general' || section === 'currencies') {
+                updateRestaurantSettings({
+                    name: formData.general.name,
+                    email: formData.general.email,
+                    phone: formData.general.phone,
+                    currency: formData.general.currency,
+                    language: formData.general.language,
+                });
+            } else if (section === 'visual') {
+                updateRestaurantSettings({
+                    theme: {
+                        primaryColor: formData.visual.primaryColor,
+                        darkMode: formData.visual.darkMode,
+                        qrMenuTheme: formData.visual.qrMenuTheme
+                    }
+                });
             }
+
+            // If logo changed, refreshing the profile is the cleanest way 
+            // to update all logo instances across the app without a full reload
+            if (logoFile && section === 'general') {
+                await refreshProfile();
+            }
+
+            alert(t('settings_updated_success') || 'Configurações atualizadas com sucesso!');
         } catch (error) {
             console.error('Failed to save settings:', error);
             alert(t('settings_update_error') || 'Falha ao salvar configurações.');
@@ -289,8 +312,8 @@ export default function AdminHub() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] p-8 font-sans selection:bg-primary selection:text-white">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-[#f8fafc] p-8 font-sans selection:bg-primary selection:text-white overflow-x-hidden">
+            <div className="max-w-full mx-auto">
                 {/* Header */}
                 <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -718,6 +741,10 @@ export default function AdminHub() {
                                                 ...formData, 
                                                 general: { ...formData.general, currency: newCurrency } 
                                             });
+                                            
+                                            // Update AuthContext state immediately
+                                            updateRestaurantSettings({ currency: newCurrency });
+                                            
                                             // Refresh local settings to propagate changes
                                             fetchRestaurant();
                                         }}

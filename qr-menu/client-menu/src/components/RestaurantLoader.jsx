@@ -1,28 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
+import { useNotification } from '../context/NotificationContext';
 import axios from 'axios';
 import { API_URL } from '../config/api';
 import LoadingSpinner from './LoadingSpinner';
 
-/**
- * RestaurantLoader
- * A wrapper component that fetches restaurant settings globally
- * and populates the CurrencyContext.
- */
 const RestaurantLoader = ({ children }) => {
     const { restaurantId } = useParams();
     const { setRestaurant, restaurant } = useCurrency();
+    const { lastMenuUpdate } = useNotification?.() || {};
     const [loading, setLoading] = useState(!restaurant);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchSettings = async () => {
+        const fetchSettings = async (force = false) => {
             if (!restaurantId) return;
             
             try {
-                // If we already have settings for this restaurant, don't fetch again
-                if (restaurant && (restaurant._id === restaurantId || restaurant.id === restaurantId)) {
+                // If we already have settings for this restaurant, don't fetch again unless forced
+                if (!force && restaurant && (restaurant._id === restaurantId || restaurant.id === restaurantId)) {
                     setLoading(false);
                     return;
                 }
@@ -33,14 +30,17 @@ const RestaurantLoader = ({ children }) => {
                 }
             } catch (err) {
                 console.error('Failed to fetch restaurant settings:', err);
-                setError('Failed to load restaurant configuration');
+                // Only show full-screen error if we don't already have some valid data
+                if (!restaurant) setError('Failed to load restaurant configuration');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchSettings();
-    }, [restaurantId, setRestaurant]);
+        // If lastMenuUpdate changes, we force a re-fetch
+        const forceFetch = lastMenuUpdate > 0 && restaurant;
+        fetchSettings(forceFetch);
+    }, [restaurantId, setRestaurant, lastMenuUpdate]);
 
     if (loading) {
         return (

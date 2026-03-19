@@ -173,7 +173,7 @@ export default function WaiterDashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 lg:p-8">
-            <div className="max-w-7xl mx-auto space-y-8">
+            <div className="max-w-full mx-auto space-y-8">
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
