@@ -168,7 +168,7 @@ export default function Menu() {
                                 <div className="menu-card-header">
                                     <h3>{item.name}</h3>
                                     <span className="menu-card-price">
-                                        {item.price} {getCurrencySymbol(item.currency || user?.restaurant?.settings?.currency || 'MZN')}
+                                        {item.price} {getCurrencySymbol(user?.restaurant?.settings?.currency || item.currency || 'MZN')}
                                     </span>
                                 </div>
                                 <p className="menu-card-description">{item.description}</p>
@@ -316,17 +316,15 @@ function MenuItemModal({ item, user, onClose, onSave, onDelete, t, restaurantId,
         stock: item?.stock ?? 0,
         stockMin: item?.stockMin ?? 0,
         unit: item?.unit || 'Unidade',
-        currency: item?.currency || user?.restaurant?.settings?.currency || localStorage.getItem('preferredCurrency') || 'MZN',
+        currency: user?.restaurant?.settings?.currency || item?.currency || 'MZN',
         seasonal: item?.seasonal || '',
-        tags: item?.tags?.join(', ') || '',
-        isCustomCurrency: false,
-        customCurrencyName: '',
-        customCurrencySymbol: ''
+        tags: item?.tags?.join(', ') || ''
     });
 
-    const [showCustomCurrencyFields, setShowCustomCurrencyFields] = useState(false);
     const [loading, setLoading] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [showCustomCurrencyFields, setShowCustomCurrencyFields] = useState(false);
+
 
     const allergenOptions = ['Gluten', 'Lactose', 'Peanuts', 'Seafood', 'Soy', 'Eggs'];
 
@@ -412,9 +410,7 @@ function MenuItemModal({ item, user, onClose, onSave, onDelete, t, restaurantId,
                 tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean),
                 // Ensure subcategory is null if empty string to avoid Mongoose errors
                 subcategory: formData.subcategory || null,
-                isCustomCurrency: showCustomCurrencyFields,
-                customCurrencyName: formData.customCurrencyName,
-                customCurrencySymbol: formData.customCurrencySymbol
+                currency: user?.restaurant?.settings?.currency || formData.currency || 'MZN'
             };
 
             let response;
@@ -433,9 +429,6 @@ function MenuItemModal({ item, user, onClose, onSave, onDelete, t, restaurantId,
 
             // "Apresentar o item gravado" - Show success toast/alert
             alert(`✅ ${t('item_saved_success', { name: response.data.menuItem.name })}`);
-
-            // Persist currency preference
-            localStorage.setItem('preferredCurrency', formData.currency);
             
             onSave(response.data.menuItem);
         } catch (error) {
@@ -724,7 +717,7 @@ function MenuItemModal({ item, user, onClose, onSave, onDelete, t, restaurantId,
                                                     onFocus={(e) => e.target.select()}
                                                     onBlur={(e) => {
                                                         if (e.target.value === '') setFormData(prev => ({ ...prev, stockMin: 0 }));
-                                                    }}
+                                                        }}
                                                     min="0"
                                                     step="1"
                                                     placeholder="Ex: 10"
@@ -821,7 +814,7 @@ function MenuItemModal({ item, user, onClose, onSave, onDelete, t, restaurantId,
                                                         gap: '12px'
                                                     }}>
                                                         <DollarSign size={18} />
-                                                        {t('profit_margin')} {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} {getCurrencySymbol(formData.currency)} {t('per_item')})
+                                                        {t('profit_margin')} {(((formData.price - formData.costPrice) / formData.price) * 100).toFixed(1)}% ({(formData.price - formData.costPrice).toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || formData.currency || 'MZN')} {t('per_item')})
                                                     </div>
                                                 </div>
                                             )}
@@ -841,70 +834,20 @@ function MenuItemModal({ item, user, onClose, onSave, onDelete, t, restaurantId,
                                         min="0"
                                         style={{ flex: 1 }}
                                     />
-                                    <select
-                                        value={showCustomCurrencyFields ? 'OTHER' : formData.currency}
-                                        onChange={(e) => {
-                                            if (e.target.value === 'OTHER') {
-                                                setShowCustomCurrencyFields(true);
-                                                setFormData({ ...formData, isCustomCurrency: true });
-                                            } else {
-                                                setShowCustomCurrencyFields(false);
-                                                setFormData({ ...formData, currency: e.target.value, isCustomCurrency: false });
-                                            }
-                                        }}
-                                        style={{ width: '120px', fontWeight: 'bold' }}
-                                    >
-                                        <optgroup label="Popular">
-                                            <option value="MZN">MT (MZN)</option>
-                                            <option value="USD">USD ($)</option>
-                                            <option value="EUR">EUR (€)</option>
-                                            <option value="ZAR">ZAR (R)</option>
-                                            <option value="GBP">GBP (£)</option>
-                                            <option value="BRL">BRL (R$)</option>
-                                        </optgroup>
-                                        <optgroup label="Others">
-                                            {supportedCurrencies.filter(c => !['MZN', 'USD', 'EUR', 'ZAR', 'GBP', 'BRL'].includes(c)).map(code => (
-                                                <option key={code} value={code}>{code}</option>
-                                            ))}
-                                        </optgroup>
-                                        <option value="OTHER">Other / More currencies...</option>
-                                    </select>
-                                </div>
-
-                                {showCustomCurrencyFields && (
-                                    <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                                        <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label style={{ fontSize: '12px' }}>Currency Name</label>
-                                            <input
-                                                type="text"
-                                                value={formData.customCurrencyName}
-                                                onChange={(e) => setFormData({ ...formData, customCurrencyName: e.target.value })}
-                                                placeholder="e.g. Canadian Dollar"
-                                                style={{ fontSize: '13px' }}
-                                            />
-                                        </div>
-                                        <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label style={{ fontSize: '12px' }}>Code (ISO)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.currency}
-                                                onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase() })}
-                                                placeholder="e.g. CAD"
-                                                style={{ fontSize: '13px' }}
-                                            />
-                                        </div>
-                                        <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label style={{ fontSize: '12px' }}>Symbol</label>
-                                            <input
-                                                type="text"
-                                                value={formData.customCurrencySymbol}
-                                                onChange={(e) => setFormData({ ...formData, customCurrencySymbol: e.target.value })}
-                                                placeholder="e.g. $"
-                                                style={{ fontSize: '13px' }}
-                                            />
-                                        </div>
+                                    <div style={{ 
+                                        padding: '10px 14px', 
+                                        background: '#f1f5f9', 
+                                        borderRadius: '10px', 
+                                        fontSize: '14px', 
+                                        fontWeight: '800', 
+                                        color: '#475569',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        border: '1px solid #e2e8f0'
+                                    }}>
+                                        {getCurrencySymbol(user?.restaurant?.settings?.currency || formData.currency || 'MZN')}
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             <div className="form-group">
