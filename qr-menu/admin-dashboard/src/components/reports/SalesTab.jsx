@@ -157,7 +157,7 @@ export default function SalesTab({ data, loading, currency }) {
                     </h3>
                     {byCategory.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <PieChart>
                                     <Pie
                                         data={byCategory}
@@ -191,7 +191,7 @@ export default function SalesTab({ data, loading, currency }) {
                     </h3>
                     {topItems.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart
                                     data={topItems}
                                     layout="vertical"

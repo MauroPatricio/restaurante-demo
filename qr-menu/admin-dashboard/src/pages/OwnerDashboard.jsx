@@ -426,8 +426,8 @@ const OwnerDashboard = () => {
                                     </td>
                                     <td style={{ fontWeight: '600', color: '#1e293b' }}>
                                         {formatCurrency(
-                                            convertCurrency(rest.revenue, 'MZN', displayCurrency, rates),
-                                            displayCurrency,
+                                            convertCurrency(rest.revenue, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates),
+                                            user?.restaurant?.settings?.currency || 'MZN',
                                             i18n.language === 'pt' ? 'pt-MZ' : i18n.language
                                         )}
                                     </td>

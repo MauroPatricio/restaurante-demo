@@ -154,7 +154,7 @@ export default function OperationalTab({ data, loading }) {
                     </h3>
                     {shifts.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart data={shifts}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                     <XAxis dataKey="_id" />
@@ -177,7 +177,7 @@ export default function OperationalTab({ data, loading }) {
                     </h3>
                     {dayData.length > 0 ? (
                         <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart data={dayData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                     <XAxis dataKey="day" />
