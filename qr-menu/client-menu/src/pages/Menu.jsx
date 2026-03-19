@@ -323,8 +323,20 @@ const Menu = () => {
         </div>
     );
 
+    const isKitchenOpen = restaurant?.settings?.isKitchenOpen !== false;
+
     return (
         <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pb-32 max-w-5xl mx-auto shadow-2xl overflow-hidden relative font-sans transition-colors duration-200">
+            
+            {/* Kitchen Closed Banner Overlay */}
+            {!isKitchenOpen && (
+                <div className="sticky top-0 z-[60] bg-rose-600 text-white px-4 py-2.5 flex items-center justify-center gap-3 shadow-lg animate-pulse">
+                    <AlertTriangle size={20} className="flex-shrink-0" />
+                    <span className="text-xs font-black uppercase tracking-widest text-center">
+                        {t('kitchen_closed_warning') || 'Cozinha temporariamente indisponível para pedidos'}
+                    </span>
+                </div>
+            )}
 
             {/* Enhanced Hero Section with Table Info */}
             <div className="relative h-56 bg-gray-900">
@@ -538,11 +550,16 @@ const Menu = () => {
 
                                         return (
                                             <motion.button
-                                                whileTap={{ scale: 0.9 }}
-                                                onClick={() => addToCart(item)}
-                                                className="h-9 w-9 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center hover:bg-primary-600 hover:text-white dark:hover:bg-primary-500 dark:hover:text-white transition-colors shadow-sm"
+                                                whileTap={isKitchenOpen ? { scale: 0.9 } : {}}
+                                                onClick={() => isKitchenOpen && addToCart(item)}
+                                                className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm ${
+                                                    isKitchenOpen 
+                                                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-600 hover:text-white dark:hover:bg-primary-500 dark:hover:text-white' 
+                                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-200 dark:border-gray-700'
+                                                }`}
+                                                title={!isKitchenOpen ? t('kitchen_closed') : ''}
                                             >
-                                                <Plus size={18} strokeWidth={2.5} />
+                                                {isKitchenOpen ? <Plus size={18} strokeWidth={2.5} /> : <X size={16} />}
                                             </motion.button>
                                         );
                                     })()}

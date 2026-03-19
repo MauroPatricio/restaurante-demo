@@ -128,6 +128,7 @@
     "room": "Quarto",
     "kitchen_open": "Cozinha Aberta",
     "kitchen_closed": "Cozinha Fechada",
+    "kitchen_closed_warning": "Cozinha temporariamente indisponível para pedidos",
     "view_menu": "Ver Menu",
     "track_order_realtime": "Seguir pedido em tempo real",
     "order_cancelled_contact": "Pedido cancelado — contacte a receção",

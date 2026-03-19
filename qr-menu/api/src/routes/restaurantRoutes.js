@@ -177,6 +177,15 @@ router.patch('/:id/settings', authenticateToken, async (req, res) => {
         }
 
         await restaurant.save();
+
+        // Emit socket event for real-time synchronization
+        if (req.io) {
+            req.io.emit('restaurant-settings-updated', {
+                restaurantId: id,
+                settings: restaurant.settings
+            });
+        }
+
         res.json({ message: 'Settings updated', settings: restaurant.settings });
 
     } catch (error) {

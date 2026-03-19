@@ -78,6 +78,13 @@ export const NotificationProvider = ({ children }) => {
             setLastTableUpdate(Date.now());
         });
 
+        // Restaurant Settings Updates (Kitchen sync, Currency sync, etc)
+        newSocket.on('restaurant-settings-updated', (data) => {
+            console.log('Restaurant settings updated:', data);
+            setLastMenuUpdate(Date.now());
+            // Only notify if there's a specific message or logic needed
+        });
+
         return () => {
             newSocket.disconnect();
         };

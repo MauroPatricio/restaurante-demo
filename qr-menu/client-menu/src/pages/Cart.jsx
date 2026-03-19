@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useNotification } from '../context/NotificationContext';
-import { Trash2, ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, CreditCard, Wallet, Smartphone, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Trash2, ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, CreditCard, Wallet, Smartphone, ShieldCheck, ChevronRight, X, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
@@ -23,7 +23,8 @@ const Cart = () => {
     const navigate = useNavigate();
     const { cart, removeFromCart, updateQty, cartTotal, clearCart, cartCurrency } = useCart();
     const { t, i18n } = useTranslation();
-    const { formatPrice, currency: preferredCurrency } = useCurrency();
+    const { formatPrice, currency: preferredCurrency, restaurant } = useCurrency();
+    const isKitchenOpen = restaurant?.settings?.isKitchenOpen !== false;
     const { joinOrderRoom } = useNotification();
 
     const locale = i18n.language === 'pt' ? 'pt-MZ' : i18n.language;
@@ -330,12 +331,22 @@ const Cart = () => {
 
                         <button
                             type="submit"
-                            disabled={loading}
-                            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl h-[64px] font-black flex items-center justify-between px-6 hover:scale-[1.01] active:scale-[0.99] transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed group overflow-hidden mt-2"
+                            disabled={loading || !isKitchenOpen}
+                            className={`w-full rounded-xl h-[64px] font-black flex items-center justify-between px-6 transition-all shadow-lg group overflow-hidden mt-2 ${
+                                !isKitchenOpen 
+                                    ? 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed shadow-none' 
+                                    : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70'
+                            }`}
                         >
                             <div className="flex items-center gap-3">
-                                {loading ? <LoadingSpinner size={20} color={i18n.language === 'pt' ? 'white' : 'black'} /> : <ArrowRight size={20} className="text-primary-500 transition-transform group-hover:translate-x-1" />}
-                                <span className="text-sm uppercase tracking-[0.2em]">{loading ? t('scanning') : t('confirm_order')}</span>
+                                {loading ? <LoadingSpinner size={20} color={i18n.language === 'pt' ? 'white' : 'black'} /> : (
+                                    isKitchenOpen 
+                                        ? <ArrowRight size={20} className="text-primary-500 transition-transform group-hover:translate-x-1" />
+                                        : <X size={20} className="text-rose-500" />
+                                )}
+                                <span className="text-sm uppercase tracking-[0.2em]">
+                                    {!isKitchenOpen ? t('kitchen_closed') : (loading ? t('scanning') : t('confirm_order'))}
+                                </span>
                             </div>
                             <span className="text-xl font-black">
                                 {formatPrice(cartTotal, cartCurrency)}

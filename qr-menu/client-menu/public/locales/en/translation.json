@@ -124,6 +124,7 @@
     "room": "Room",
     "kitchen_open": "Kitchen Open",
     "kitchen_closed": "Kitchen Closed",
+    "kitchen_closed_warning": "Kitchen temporarily unavailable for orders",
     "view_menu": "View Menu",
     "track_order_realtime": "Track order in real time",
     "order_cancelled_contact": "Order cancelled — please contact reception",

@@ -250,6 +250,7 @@ export default function RoomMenuPage() {
         ? (cart[0].item.currency || restaurant?.settings?.currency || 'MZN') 
         : (restaurant?.settings?.currency || 'MZN');
     const totalPrice = cart.reduce((s, c) => s + c.qty * (c.item.price || 0), 0);
+    const isKitchenOpen = restaurant?.settings?.isKitchenOpen !== false;
 
     /* ── Submit order ── */
     const submitOrder = async () => {
@@ -468,7 +469,18 @@ export default function RoomMenuPage() {
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
                                     <span style={{ fontWeight: 800, color: '#312e81', fontSize: '1rem' }}>{formatPrice(item.price, item.currency)}</span>
                                     {qty === 0 ? (
-                                        <button onClick={() => addItem(item)} style={S.btnAdd}>+</button>
+                                        <button 
+                                            onClick={() => isKitchenOpen && addItem(item)} 
+                                            disabled={!isKitchenOpen}
+                                            style={{
+                                                ...S.btnAdd,
+                                                opacity: isKitchenOpen ? 1 : 0.4,
+                                                cursor: isKitchenOpen ? 'pointer' : 'not-allowed',
+                                                background: isKitchenOpen ? S.btnAdd.background : '#64748b'
+                                            }}
+                                        >
+                                            {isKitchenOpen ? '+' : '×'}
+                                        </button>
                                     ) : (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                             <button onClick={() => removeItem(item._id)} style={S.btnMinus}>−</button>
@@ -583,10 +595,23 @@ export default function RoomMenuPage() {
 
                 <button
                     onClick={submitOrder}
-                    disabled={submitting || cart.length === 0}
-                    style={{ width: '100%', marginTop: 14, marginBottom: 24, padding: 16, background: submitting ? '#94a3b8' : 'linear-gradient(135deg,#10b981,#059669)', color: 'white', border: 'none', borderRadius: 16, fontWeight: 700, fontSize: '1.05rem', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
+                    disabled={submitting || cart.length === 0 || !isKitchenOpen}
+                    style={{ 
+                        width: '100%', 
+                        marginTop: 14, 
+                        marginBottom: 24, 
+                        padding: 16, 
+                        background: (submitting || !isKitchenOpen) ? '#94a3b8' : 'linear-gradient(135deg,#10b981,#059669)', 
+                        color: 'white', 
+                        border: 'none', 
+                        borderRadius: 16, 
+                        fontWeight: 700, 
+                        fontSize: '1.05rem', 
+                        cursor: (submitting || !isKitchenOpen) ? 'not-allowed' : 'pointer', 
+                        boxShadow: (submitting || !isKitchenOpen) ? 'none' : '0 8px 24px rgba(16,185,129,0.3)' 
+                    }}
                 >
-                    {submitting ? `⏳ ${t('submitting')}` : `🛎️ ${t('confirm_order')}`}
+                    {!isKitchenOpen ? `🚫 ${t('kitchen_closed')}` : (submitting ? `⏳ ${t('submitting')}` : `🛎️ ${t('confirm_order')}`)}
                 </button>
             </div>
         </div>
