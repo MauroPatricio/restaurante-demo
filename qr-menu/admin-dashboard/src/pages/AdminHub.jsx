@@ -23,6 +23,8 @@ export default function AdminHub() {
     const [restaurant, setRestaurant] = useState(null);
     const [preview, setPreview] = useState(null);
     const [logoFile, setLogoFile] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [refreshMessage, setRefreshMessage] = useState('');
 
     // User Management State
     const [users, setUsers] = useState([]);
@@ -223,6 +225,11 @@ export default function AdminHub() {
                 }
             }
 
+            if (section === 'currencies' || (section === 'general' && formData.general.currency !== restaurant?.settings?.currency)) {
+                setIsRefreshing(true);
+                setRefreshMessage('Aplicando nova moeda e sincronizando sistema...');
+            }
+
             await restaurantAPI.update(restId, payload);
             
             // Update global state immediately for visual reactivity
@@ -242,6 +249,15 @@ export default function AdminHub() {
                         qrMenuTheme: formData.visual.qrMenuTheme
                     }
                 });
+            }
+
+            // If it's a currency change, we do the managed reload
+            if (section === 'currencies' || (section === 'general' && formData.general.currency !== restaurant?.settings?.currency)) {
+                setRefreshMessage('Moeda atualizada com sucesso! Recarregando sistema para consistência total...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                return;
             }
 
             // If logo changed, refreshing the profile is the cleanest way 
@@ -745,8 +761,13 @@ export default function AdminHub() {
                                             // Update AuthContext state immediately
                                             updateRestaurantSettings({ currency: newCurrency });
                                             
-                                            // Refresh local settings to propagate changes
-                                            fetchRestaurant();
+                                            // Trigger Robust Managed Refresh
+                                            setIsRefreshing(true);
+                                            setRefreshMessage('Moeda atualizada com sucesso! Recarregando sistema para consistência total...');
+                                            
+                                            setTimeout(() => {
+                                                window.location.reload();
+                                            }, 1500);
                                         }}
                                     />
                                 </div>
@@ -1390,6 +1411,32 @@ export default function AdminHub() {
                     background: #cbd5e1;
                 }
             `}</style>
+            {/* Managed Refresh Overlay */}
+            {isRefreshing && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(15, 23, 42, 0.95)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    animation: 'fadeIn 0.5s ease'
+                }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', textAlign: 'center', padding: '0 40px' }}>
+                        <div style={{ position: 'relative' }}>
+                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', border: '4px solid rgba(99, 102, 241, 0.2)', borderTopColor: '#6366f1' }} className="animate-spin" />
+                            <Coins style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#6366f1' }} size={32} />
+                        </div>
+                        <h2 style={{ color: 'white', fontSize: '24px', fontWeight: '800', margin: 0 }}>{refreshMessage}</h2>
+                        <p style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '400px' }}>
+                            Estamos redefinindo todos os parâmetros monetários para garantir que cada detalhe do seu restaurante esteja perfeito.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

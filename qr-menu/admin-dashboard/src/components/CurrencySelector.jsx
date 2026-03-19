@@ -32,7 +32,6 @@ export default function CurrencySelector({ currentCurrency, onSaved, restaurantI
             await restaurantAPI.update(restaurantId, {
                 'settings.currency': currency.code
             });
-            alert('Moeda atualizada com sucesso'); // Or toast.success if you have it
             if (onSaved) onSaved(currency.code);
         } catch (error) {
             console.error('Failed to update currency:', error);
