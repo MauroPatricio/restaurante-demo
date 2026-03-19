@@ -865,5 +865,3 @@ export default function RoomMenuPage() {
 
     return null;
 }
-
-export default RoomMenuPage;
