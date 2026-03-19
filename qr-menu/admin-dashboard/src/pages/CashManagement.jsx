@@ -9,6 +9,7 @@ import {
     Activity, ArrowUpCircle, ArrowDownCircle
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 
 export default function CashManagement() {
     const { user } = useAuth();
@@ -62,8 +63,8 @@ export default function CashManagement() {
     };
 
     if (loading) return <div className="p-12"><LoadingSpinner /></div>;
-
-    const currency = user?.restaurant?.settings?.currency || 'MT';
+ 
+    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
 
     return (
         <div style={{ padding: '32px' }}>

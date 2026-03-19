@@ -246,7 +246,9 @@ export default function RoomMenuPage() {
     });
     const getQty = (id) => cart.find(c => c.item._id === id)?.qty || 0;
     const totalQty = cart.reduce((s, c) => s + c.qty, 0);
-    const cartCurrency = cart.length > 0 ? (cart[0].item.currency || restaurant?.settings?.currency || 'MZN') : (restaurant?.settings?.currency || 'MZN');
+    const cartCurrency = cart.length > 0 
+        ? (cart[0].item.currency || restaurant?.settings?.currency || 'MZN') 
+        : (restaurant?.settings?.currency || 'MZN');
     const totalPrice = cart.reduce((s, c) => s + c.qty * (c.item.price || 0), 0);
 
     /* ── Submit order ── */

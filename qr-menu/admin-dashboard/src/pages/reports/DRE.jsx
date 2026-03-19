@@ -46,7 +46,7 @@ export default function DRE() {
         }
     };
 
-    const currency = user?.restaurant?.settings?.currency || 'MT';
+    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
     const formatCurrency = (val) => val.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currency;
 
     const handleExportPDF = () => {

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { subscriptionAPI } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 import {
     CreditCard,
     Calendar,
@@ -159,7 +160,10 @@ export default function Subscription() {
         return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
     };
 
-    const formatCurrency = (amount) => `${amount?.toLocaleString() || '0'} MT`;
+    const formatCurrency = (amount) => {
+        const symbol = getCurrencySymbol(subscription?.currency || user?.restaurant?.settings?.currency || 'MZN');
+        return `${amount?.toLocaleString() || '0'} ${symbol}`;
+    };
 
     return (
         <div style={styles.pageContainer}>
@@ -216,7 +220,7 @@ export default function Subscription() {
                         </div>
                         <div style={styles.detailRow}>
                             <span style={styles.detailLabel}>{t('subscription_currency')}</span>
-                            <span style={styles.detailValue}>{subscription?.currency || 'MT'}</span>
+                            <span style={styles.detailValue}>{subscription?.currency || user?.restaurant?.settings?.currency || 'MZN'}</span>
                         </div>
                         <div style={styles.detailRow}>
                             <span style={styles.detailLabel}>{t('subscription_period_start')}</span>

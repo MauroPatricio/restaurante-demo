@@ -5,10 +5,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { FileText, Calculator, Download, Calendar, ArrowRight, TrendingUp, TrendingDown, Percent } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { exportToPDF, exportToExcel } from '../../utils/ExportUtils';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 
 const ApuramentoIVA = () => {
     const { t } = useTranslation();
-    const { currentRestaurant } = useAuth();
+    const { currentRestaurant, user } = useAuth();
+    const currencyCode = user?.restaurant?.settings?.currency || 'MZN';
+    const currencySymbol = getCurrencySymbol(currencyCode);
 
     // Default to current month
     const currentDate = new Date();
@@ -41,10 +44,7 @@ const ApuramentoIVA = () => {
     }, [currentRestaurant?._id, dateRange.startDate, dateRange.endDate]);
 
     const formatCurrency = (val) => {
-        return new Intl.NumberFormat('pt-MZ', {
-            style: 'currency',
-            currency: 'MZN'
-        }).format(val || 0);
+        return `${(val || 0).toLocaleString()} ${currencySymbol}`;
     };
 
     const handleExportPDF = () => {

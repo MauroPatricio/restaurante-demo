@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { waiterAnalyticsAPI } from '../services/api';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 import { Users, TrendingUp, Clock, Award, RefreshCw } from 'lucide-react';
 import './WaiterAnalytics.css';
 
@@ -155,7 +156,7 @@ const WaiterAnalytics = () => {
                                     </div>
                                 </td>
                                 <td>{waiter.metrics.totalOrders}</td>
-                                <td>{waiter.metrics.totalRevenue.toLocaleString('pt-MZ')} MT</td>
+                                <td>{waiter.metrics.totalRevenue.toLocaleString('pt-MZ')} {getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}</td>
                                 <td>{waiter.metrics.callsResolved}</td>
                                 <td>{waiter.metrics.avgServiceTime} min</td>
                                 <td>
@@ -204,7 +205,7 @@ const WaiterAnalytics = () => {
                                         <div key={shift._id} className="shift-card">
                                             <h4>{shift._id}</h4>
                                             <p>{shift.orders} pedidos</p>
-                                            <p>{shift.revenue.toLocaleString('pt-MZ')} MT</p>
+                                            <p>{shift.revenue.toLocaleString('pt-MZ')} {getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}</p>
                                         </div>
                                     ))}
                                 </div>

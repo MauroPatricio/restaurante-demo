@@ -56,7 +56,7 @@ export default function AdminHub() {
             address: '',
             language: 'pt',
             timezone: 'Africa/Maputo',
-            currency: 'MT',
+            currency: 'MZN',
             isKitchenOpen: true
         },
         visual: {

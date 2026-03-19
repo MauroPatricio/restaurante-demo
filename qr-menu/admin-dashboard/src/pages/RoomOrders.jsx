@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { roomServiceAPI } from '../services/api';
 import api from '../services/api';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 import {
     BedDouble, Clock, CheckCircle2, ChefHat,
     Footprints, RefreshCw, AlertCircle, ShoppingBag
@@ -62,7 +63,7 @@ function OrderCard({ order, onStatusChange, t }) {
                 {order.items?.map((it, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
                         <span>{it.qty}× {it.item?.name || it.name || t('item')}</span>
-                        <span style={{ color: 'var(--text-secondary)' }}>{(it.subtotal || it.itemPrice * it.qty || 0).toFixed(2)} {order.currency || 'MT'}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{(it.subtotal || it.itemPrice * it.qty || 0).toFixed(2)} {order.currency || getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}</span>
                     </div>
                 ))}
                 {order.notes && (
@@ -72,7 +73,7 @@ function OrderCard({ order, onStatusChange, t }) {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                    {t('total')}: {order.total?.toFixed(2)} {order.currency || 'MT'}
+                    {t('total')}: {order.total?.toFixed(2)} {order.currency || getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}
                 </span>
                 {nextMeta && (
                     <button

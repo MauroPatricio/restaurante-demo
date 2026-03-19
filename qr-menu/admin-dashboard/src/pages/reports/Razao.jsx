@@ -60,7 +60,7 @@ export default function Razao() {
         }
     };
 
-    const currency = user?.restaurant?.settings?.currency || 'MT';
+    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN'); // Modified currency declaration
 
     const handleExportPDF = () => {
         if (!razaoData) return;

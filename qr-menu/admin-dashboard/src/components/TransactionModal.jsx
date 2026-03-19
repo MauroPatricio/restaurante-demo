@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Plus, Trash2, Save, AlertCircle, FileText, ShoppingBag, Users, FileSignature } from 'lucide-react';
 import { accountingAPI, usersAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 
 const SOURCE_TYPES = {
     MANUAL: 'manual',
@@ -19,6 +21,8 @@ const TEMPLATES = [
 
 const TransactionModal = ({ isOpen, onClose, onSuccess }) => {
     const { t } = useTranslation();
+    const { user } = useAuth();
+    const currencySymbol = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
     const [accounts, setAccounts] = useState([]);
     const [pendingOrders, setPendingOrders] = useState([]);
     const [employees, setEmployees] = useState([]);
@@ -356,7 +360,7 @@ const TransactionModal = ({ isOpen, onClose, onSuccess }) => {
                                 <option value="">-- Selecione o Pedido Pago --</option>
                                 {pendingOrders.map(order => (
                                     <option key={order._id} value={order._id}>
-                                        Pedido #{order.orderNumber || order._id.toString().slice(-6)} - {new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(order.total)} ({order.paymentMethod})
+                                        Pedido #{order.orderNumber || order._id.toString().slice(-6)} - {order.total.toLocaleString()} {currencySymbol} ({order.paymentMethod})
                                     </option>
                                 ))}
                             </select>

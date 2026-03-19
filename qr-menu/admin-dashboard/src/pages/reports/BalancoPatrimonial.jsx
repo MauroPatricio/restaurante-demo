@@ -78,7 +78,7 @@ export default function BalancoPatrimonial() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
-    const currency = user?.restaurant?.settings?.currency || 'MT';
+    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
 
     const load = async () => {
         setLoading(true);

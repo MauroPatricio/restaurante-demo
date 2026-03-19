@@ -6,6 +6,7 @@ import {
     ArrowLeft, RefreshCw, Printer, CheckCircle, AlertCircle,
     BarChart3, Calendar, Download
 } from 'lucide-react';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 
 const fmt = (val) =>
     Number(val || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -59,7 +60,7 @@ function getDateRange(period) {
 export default function Balancete() {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const currency = user?.restaurant?.settings?.currency || 'MT';
+    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
 
     const [period, setPeriod] = useState('month');
     const [startDate, setStartDate] = useState('');

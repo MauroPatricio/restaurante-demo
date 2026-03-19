@@ -113,7 +113,7 @@ export default function AccountingDashboard() {
     const [stats, setStats] = useState(null);
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
     const [rates, setRates] = useState(null);
-    const [displayCurrency, setDisplayCurrency] = useState(user?.restaurant?.settings?.currency || 'MZN');
+    const displayCurrency = user?.restaurant?.settings?.currency || 'MZN';
 
     useEffect(() => {
         const init = async () => {
@@ -179,17 +179,6 @@ export default function AccountingDashboard() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
-                    <select
-                        onChange={(e) => setDisplayCurrency(e.target.value)}
-                        value={displayCurrency}
-                        style={{ padding: '14px 20px', borderRadius: '20px', background: 'white', border: '1px solid #f1f5f9', fontWeight: '800', fontSize: '13px', outline: 'none' }}
-                    >
-                        <option value="MZN">MZN</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="ZAR">ZAR</option>
-                        <option value="GBP">GBP</option>
-                    </select>
                     <button style={{
                         padding: '14px 24px', borderRadius: '20px', background: 'white', border: '1px solid #f1f5f9',
                         color: '#1e293b', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px',

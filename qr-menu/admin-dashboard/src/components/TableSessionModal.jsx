@@ -1,16 +1,17 @@
 import { X, Clock, DollarSign, ShoppingBag, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuth } from '../contexts/AuthContext';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 import '../styles/TableSessionModal.css';
 
 export default function TableSessionModal({ table, session, orders, stats, onClose, onFreeTable, canFree }) {
+    const { user } = useAuth();
     if (!table) return null;
 
     const formatCurrency = (value) => {
-        return new Intl.NumberFormat('pt-MZ', {
-            style: 'currency',
-            currency: 'MZN'
-        }).format(value);
+        const symbol = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
+        return `${(value || 0).toLocaleString()} ${symbol}`;
     };
 
     const formatDuration = (minutes) => {
