@@ -101,6 +101,7 @@ const COLUMNS = [
 ];
 
 export default function RoomOrders() {
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const { socket } = useSocket();
     const { convertAndFormat } = useCurrency();
@@ -201,7 +202,7 @@ export default function RoomOrders() {
                     {COLUMNS.map(col => {
                         const colOrders = orders.filter(o => col.statuses.includes(o.status));
                         return (
-                            <div key={col.label} style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '16px' }}>
+                            <div key={col.label_key} style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '16px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                                     <span style={{ fontWeight: '700', color: col.color, fontSize: '0.9rem' }}>{col.icon} {t(col.label_key)}</span>
                                     {colOrders.length > 0 && (

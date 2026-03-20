@@ -3,16 +3,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { analyticsAPI } from '../services/api';
 import {
     Search, Download, Users, Phone, Calendar,
-    DollarSign, UserCheck, Star, ArrowUpRight, Trash2
+    UserCheck, Star, ArrowUpRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function Clients() {
     const { user } = useAuth();
     const { t, i18n } = useTranslation();
+    const { convertAndFormat } = useCurrency();
     const [data, setData] = useState({ summary: {}, customers: [] });
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -44,20 +46,6 @@ export default function Clients() {
         (client.phone || '').includes(searchTerm)
     );
 
-    const handleAnonymize = async (phone) => {
-        if (!window.confirm(t('clients_confirm_delete'))) {
-            return;
-        }
-
-        try {
-            const restaurantId = user.restaurant._id || user.restaurant;
-            await analyticsAPI.deleteCustomer(restaurantId, phone);
-            fetchClients();
-        } catch (error) {
-            console.error('Failed to anonymize client:', error);
-            alert(t('clients_delete_error'));
-        }
-    };
 
     const exportCSV = () => {
         const headers = [t('clients_col_client'), t('clients_col_lifetime'), t('clients_col_orders'), t('clients_col_favorite'), t('clients_col_tables'), t('clients_col_last_visit')];
@@ -198,8 +186,7 @@ export default function Clients() {
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_orders').toUpperCase()}</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_favorite').toUpperCase()}</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_tables').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_last_visit').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px', textAlign: 'right' }}>{t('clients_col_actions').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px', textAlign: 'right' }}>{t('clients_col_last_visit').toUpperCase()}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -226,9 +213,9 @@ export default function Clients() {
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
                                         <div style={{ fontWeight: '700', color: '#10b981' }}>
-                                            {client.totalSpent.toLocaleString()} MT
+                                            {convertAndFormat(client.totalSpent)}
                                         </div>
-                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{t('clients_avg')}: {Math.round(client.totalSpent / client.orderCount).toLocaleString()} MT</div>
+                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{t('clients_avg')}: {convertAndFormat(client.totalSpent / client.orderCount)}</div>
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
                                         <span style={{
@@ -253,7 +240,7 @@ export default function Clients() {
                                                 .join(', ') || '---'}
                                         </div>
                                     </td>
-                                    <td style={{ padding: '20px 24px' }}>
+                                    <td style={{ padding: '20px 24px', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                             <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>
                                                 {format(new Date(client.lastVisit), 'dd MMM yyyy', { locale: pt })}
@@ -262,21 +249,6 @@ export default function Clients() {
                                                 {t('clients_since')} {format(new Date(client.firstVisit), 'MMM yyyy', { locale: pt })}
                                             </div>
                                         </div>
-                                    </td>
-                                    <td style={{ padding: '20px 24px', textAlign: 'right' }}>
-                                        {!client.phone.startsWith('anon_') && (
-                                            <button
-                                                onClick={() => handleAnonymize(client.phone)}
-                                                style={{
-                                                    padding: '8px', color: '#ef4444', background: '#fef2f2',
-                                                    borderRadius: '8px', border: 'none', cursor: 'pointer',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                title={t('clients_anonymize')}
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        )}
                                     </td>
                                 </tr>
                             ))}
