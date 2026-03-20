@@ -9,12 +9,13 @@ import { SkeletonList } from '../components/Skeleton';
 import { useSocket } from '../contexts/SocketContext';
 import { useSound } from '../hooks/useSound';
 import ReceiptModal from '../components/ReceiptModal';
-import { getCurrencySymbol } from '../utils/currencyUtils';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function Orders() {
     const { t } = useTranslation();
     const { user } = useAuth();
     const { socket } = useSocket();
+    const { convertAndFormat } = useCurrency();
     const [orders, setOrders] = useState([]);
     const [filter, setFilter] = useState('all');
     const [loading, setLoading] = useState(true);
@@ -210,7 +211,7 @@ export default function Orders() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-black text-gray-900 dark:text-white">{order.total?.toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}</span>
+                                            <span className="text-sm font-black text-gray-900 dark:text-white">{convertAndFormat(order.total, order.currency)}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`status-badge ${statusColors[order.status]}`}>
@@ -332,7 +333,7 @@ export default function Orders() {
                                     </div>
                                     <div className="col-span-2">
                                         <span className="block text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{t('total')}</span>
-                                        <span className="text-xl font-black text-primary-600 dark:text-primary-400 leading-none">{order.total?.toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}</span>
+                                        <span className="text-xl font-black text-primary-600 dark:text-primary-400 leading-none">{convertAndFormat(order.total, order.currency)}</span>
                                     </div>
                                 </div>
 

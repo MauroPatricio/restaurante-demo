@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { getCurrencySymbol } from '../../utils/currencyUtils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     AreaChart, Area
@@ -36,9 +36,9 @@ const iconBoxStyle = (color, bg) => ({
     justifyContent: 'center'
 });
 
-export default function FinancialTab({ data, loading, currency }) {
+export default function FinancialTab({ data, loading }) {
     const { t } = useTranslation();
-    const currencySymbol = getCurrencySymbol(currency || 'MZN');
+    const { convert, format, convertAndFormat } = useCurrency();
 
     if (loading) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
@@ -66,14 +66,14 @@ export default function FinancialTab({ data, loading, currency }) {
     const cards = [
         {
             title: t('total_revenue') || 'Total Revenue',
-            value: `${summary.totalRevenue?.toLocaleString()} ${currencySymbol}`,
+            value: convertAndFormat(summary.totalRevenue || 0, 'MZN'),
             icon: DollarSign,
             color: '#10b981',
             bg: '#ecfdf5'
         },
         {
             title: t('gross_margin') || 'Gross Margin',
-            value: `${summary.grossMargin?.toLocaleString()} ${currencySymbol}`,
+            value: convertAndFormat(summary.grossMargin || 0, 'MZN'),
             sub: `${summary.marginPercentage?.toFixed(1)}%`,
             icon: TrendingUp,
             color: '#8b5cf6',
@@ -81,7 +81,7 @@ export default function FinancialTab({ data, loading, currency }) {
         },
         {
             title: t('avg_ticket') || 'Avg Ticket',
-            value: `${summary.avgTicket?.toFixed(2)} ${currencySymbol}`,
+            value: convertAndFormat(summary.avgTicket || 0, 'MZN'),
             icon: CreditCard,
             color: '#3b82f6',
             bg: '#eff6ff'
@@ -144,7 +144,7 @@ export default function FinancialTab({ data, loading, currency }) {
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                    formatter={(value) => [`${value.toLocaleString()} ${currencySymbol}`, t('total_revenue') || 'Revenue']}
+                                    formatter={(value) => [convertAndFormat(value, 'MZN'), t('total_revenue') || 'Revenue']}
                                 />
                                 <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                             </AreaChart>

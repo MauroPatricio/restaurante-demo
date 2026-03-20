@@ -281,10 +281,10 @@ export default function Reports() {
                     </div>
                 ) : (
                     <>
-                        {activeTab === 'financial' && <FinancialTab data={reportData} loading={loading} currency={user?.restaurant?.settings?.currency || 'MZN'} />}
-                        {activeTab === 'sales' && <SalesTab data={reportData} loading={loading} currency={user?.restaurant?.settings?.currency || 'MZN'} />}
+                        {activeTab === 'financial' && <FinancialTab data={reportData} loading={loading} />}
+                        {activeTab === 'sales' && <SalesTab data={reportData} loading={loading} />}
                         {activeTab === 'operational' && <OperationalTab data={reportData} loading={loading} />}
-                        {activeTab === 'inventory' && <InventoryTab data={reportData} loading={loading} currency={user?.restaurant?.settings?.currency || 'MZN'} />}
+                        {activeTab === 'inventory' && <InventoryTab data={reportData} loading={loading} />}
                     </>
                 )}
             </div>

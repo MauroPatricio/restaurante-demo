@@ -7,12 +7,13 @@ import {
     Hash, AlertTriangle, CheckCircle, Info, FileText
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getCurrencySymbol } from '../utils/currencyUtils';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function FiscalInvoices() {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const { convertAndFormat } = useCurrency();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -129,7 +130,7 @@ export default function FiscalInvoices() {
                                         {inv.customerNUIT && <div style={{ fontSize: '11px', color: '#94a3b8' }}>NUIT: {inv.customerNUIT}</div>}
                                     </td>
                                     <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '900', color: '#0f172a' }}>
-                                        {inv.total?.toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}
+                                        {convertAndFormat(inv.total || 0, inv.currency || 'MZN')}
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
                                         <span style={{
@@ -231,12 +232,12 @@ export default function FiscalInvoices() {
                             {selectedInvoice.items?.map((item, idx) => (
                                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f8fafc' }}>
                                     <span style={{ fontSize: '13px' }}>{item.quantity}x {item.name}</span>
-                                    <span style={{ fontSize: '13px', fontWeight: '700' }}>{item.price * item.quantity} {getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}</span>
+                                    <span style={{ fontSize: '13px', fontWeight: '700' }}>{convertAndFormat(item.price * item.quantity, item.currency || selectedInvoice.currency || 'MZN')}</span>
                                 </div>
                             ))}
                             <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '2px solid #f8fafc', display: 'flex', justifyContent: 'space-between' }}>
                                 <span style={{ fontWeight: '900' }}>{t('TOTAL')}</span>
-                                <span style={{ fontWeight: '900', color: '#6366f1' }}>{selectedInvoice.total} {getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}</span>
+                                <span style={{ fontWeight: '900', color: '#6366f1' }}>{convertAndFormat(selectedInvoice.total || 0, selectedInvoice.currency || 'MZN')}</span>
                             </div>
                         </div>
 

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { getCurrencySymbol } from '../../utils/currencyUtils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { Package, AlertCircle, DollarSign, TrendingDown } from 'lucide-react';
 
 // Modern Card Styles (matching SalesTab)
@@ -32,9 +32,9 @@ const iconBoxStyle = (color, bg) => ({
     justifyContent: 'center'
 });
 
-export default function InventoryTab({ data, loading, currency }) {
+export default function InventoryTab({ data, loading }) {
     const { t } = useTranslation();
-    const currencySymbol = getCurrencySymbol(currency || 'MZN');
+    const { convertAndFormat } = useCurrency();
 
     if (loading) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
@@ -70,7 +70,7 @@ export default function InventoryTab({ data, loading, currency }) {
                             {t('stock_total_value_kpi') || 'Total Inventory Value'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {summary.totalValue?.toLocaleString()} {currencySymbol}
+                            {convertAndFormat(summary.totalValue || 0, 'MZN')}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
@@ -173,13 +173,13 @@ export default function InventoryTab({ data, loading, currency }) {
                                         {item.name}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', color: '#64748b' }}>
-                                        {(item.costPrice || 0).toLocaleString()} {currencySymbol}
+                                        {convertAndFormat(item.costPrice || 0, 'MZN')}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: '600' }}>
                                         {item.stock || 0}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', color: '#64748b' }}>
-                                        {(item.totalValue || 0).toLocaleString()} {currencySymbol}
+                                        {convertAndFormat(item.totalValue || 0, 'MZN')}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                                         {item.status === 'Low' ? (

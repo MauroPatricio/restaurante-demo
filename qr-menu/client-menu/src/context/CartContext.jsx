@@ -76,13 +76,9 @@ export const CartProvider = ({ children }) => {
         setCart([]);
     };
 
-    // Determine cart currency based on items or preferred settings
-    // Search entire cart for any item with a specified currency to be more robust
-    const firstItemWithCurrency = cart.find(i => i.currency || i.currencyCode || (i.item && (i.item.currency || i.item.currencyCode)));
-    
-    const cartCurrency = firstItemWithCurrency 
-        ? (firstItemWithCurrency.currency || firstItemWithCurrency.currencyCode || (firstItemWithCurrency.item && (firstItemWithCurrency.item.currency || firstItemWithCurrency.item.currencyCode)))
-        : (preferredCurrency || 'MZN');
+    // The cart should always use the system's preferred currency (synced with Admin selection)
+    // as the base for the checkout and payment process.
+    const cartCurrency = preferredCurrency || 'MZN';
 
     const cartTotal = cart.reduce((total, item) => {
         const itemUnitPrice = item.price + (item.customizations?.reduce((acc, c) => acc + (c.priceModifier || 0), 0) || 0);

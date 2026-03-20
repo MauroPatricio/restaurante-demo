@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
 import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
-import { fetchExchangeRates, convertCurrency, formatCurrency } from '../utils/currencyUtils';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -98,31 +98,16 @@ const restaurantBadgeStyle = {
 
 const OwnerDashboard = () => {
     const { user, selectRestaurant } = useAuth();
+    const { convert, format, convertAndFormat } = useCurrency();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [rates, setRates] = useState(null);
     // No longer using client-side currency toggle to enforce restaurant base currency
 
     useEffect(() => {
-        const init = async () => {
-            await Promise.all([
-                fetchStats(),
-                fetchRates()
-            ]);
-        };
-        init();
+        fetchStats();
     }, []);
-
-    const fetchRates = async () => {
-        try {
-            const r = await fetchExchangeRates();
-            setRates(r);
-        } catch (error) {
-            console.error('Failed to fetch rates:', error);
-        }
-    };
 
     const fetchStats = async () => {
         try {
@@ -235,11 +220,7 @@ const OwnerDashboard = () => {
                     <div>
                         <p style={{ color: '#64748b', fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('total_revenue_cap')}</p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {formatCurrency(
-                                convertCurrency(stats?.totalRevenue || 0, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates),
-                                user?.restaurant?.settings?.currency || 'MZN',
-                                i18n.language === 'pt' ? 'pt-MZ' : i18n.language
-                            )}
+                            {convertAndFormat(stats?.totalRevenue || 0, 'MZN')}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#4f46e5', '#eef2ff')}>
@@ -345,7 +326,7 @@ const OwnerDashboard = () => {
                             <BarChart
                                 data={stats?.revenueByRestaurant?.map(r => ({
                                     ...r,
-                                    convertedRevenue: convertCurrency(r.revenue, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates)
+                                    convertedRevenue: convert(r.revenue, 'MZN')
                                 }))}
                                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                             >
@@ -354,7 +335,7 @@ const OwnerDashboard = () => {
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                                 <Tooltip
                                     cursor={{ fill: '#f1f5f9' }}
-                                    formatter={(value) => [formatCurrency(value, user?.restaurant?.settings?.currency || 'MZN'), t('revenue')]}
+                                    formatter={(value) => [format(value), t('revenue')]}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                                 />
                                 <Bar dataKey="convertedRevenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={50} />
@@ -425,11 +406,7 @@ const OwnerDashboard = () => {
                                         </div>
                                     </td>
                                     <td style={{ fontWeight: '600', color: '#1e293b' }}>
-                                        {formatCurrency(
-                                            convertCurrency(rest.revenue, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates),
-                                            user?.restaurant?.settings?.currency || 'MZN',
-                                            i18n.language === 'pt' ? 'pt-MZ' : i18n.language
-                                        )}
+                                        {convertAndFormat(rest.revenue, 'MZN')}
                                     </td>
                                     <td>
                                         <span className="badge" style={{ background: '#f1f5f9', color: '#475569', fontSize: '14px' }}>
@@ -437,11 +414,7 @@ const OwnerDashboard = () => {
                                         </span>
                                     </td>
                                     <td style={{ color: '#64748b' }}>
-                                        {formatCurrency(
-                                            convertCurrency(rest.orders > 0 ? (rest.revenue / rest.orders) : 0, 'MZN', user?.restaurant?.settings?.currency || 'MZN', rates),
-                                            user?.restaurant?.settings?.currency || 'MZN',
-                                            i18n.language === 'pt' ? 'pt-MZ' : i18n.language
-                                        )}
+                                        {convertAndFormat(rest.orders > 0 ? (rest.revenue / rest.orders) : 0, 'MZN')}
                                     </td>
                                     <td>
                                         <span style={{

@@ -9,11 +9,12 @@ import {
     Activity, ArrowUpCircle, ArrowDownCircle
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getCurrencySymbol } from '../utils/currencyUtils';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function CashManagement() {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const { convertAndFormat, getSymbol } = useCurrency();
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showOpenModal, setShowOpenModal] = useState(false);
@@ -63,8 +64,6 @@ export default function CashManagement() {
     };
 
     if (loading) return <div className="p-12"><LoadingSpinner /></div>;
- 
-    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
 
     return (
         <div style={{ padding: '32px' }}>
@@ -111,22 +110,22 @@ export default function CashManagement() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '48px' }}>
                         <div>
                             <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}>{t('initial_fund_label')}</p>
-                            <p style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b' }}>{activeSession.openingBalance?.toLocaleString()} {currency}</p>
+                            <p style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b' }}>{convertAndFormat(activeSession.openingBalance, 'MZN')}</p>
                         </div>
                         <div>
                             <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}>{t('recorded_sales_label')}</p>
                             <p style={{ fontSize: '20px', fontWeight: '900', color: '#6366f1' }}>
-                                {activeSession.transactions?.reduce((sum, tx) => sum + (tx.type === 'sale' ? tx.amount : 0), 0).toLocaleString()} {currency}
+                                {convertAndFormat(activeSession.transactions?.reduce((sum, tx) => sum + (tx.type === 'sale' ? tx.amount : 0), 0), 'MZN')}
                             </p>
                         </div>
                         <div>
                             <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}>{t('expected_balance_label')}</p>
                             <p style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>
-                                {(activeSession.openingBalance + activeSession.transactions?.reduce((sum, tx) => {
+                                {convertAndFormat(activeSession.openingBalance + activeSession.transactions?.reduce((sum, tx) => {
                                     if (tx.type === 'sale' || tx.type === 'entry') return sum + tx.amount;
                                     if (tx.type === 'exit' || tx.type === 'refund') return sum - tx.amount;
                                     return sum;
-                                }, 0)).toLocaleString()} {currency}
+                                }, 0), 'MZN')}
                             </p>
                         </div>
                     </div>
@@ -166,15 +165,15 @@ export default function CashManagement() {
                                         <span style={{ fontSize: '14px', fontWeight: '700' }}>{s.operator?.name}</span>
                                     </div>
                                 </td>
-                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.closingBalance?.toLocaleString() || '-'}</td>
-                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.actualBalance?.toLocaleString() || '-'}</td>
+                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.closingBalance ? convertAndFormat(s.closingBalance, 'MZN') : '-'}</td>
+                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.actualBalance ? convertAndFormat(s.actualBalance, 'MZN') : '-'}</td>
                                 <td style={{ padding: '20px 24px' }}>
                                     {s.status === 'closed' && (
                                         <span style={{
                                             fontSize: '14px', fontWeight: '900',
                                             color: s.difference > 0 ? '#10b981' : s.difference < 0 ? '#ef4444' : '#64748b'
                                         }}>
-                                            {s.difference > 0 ? '+' : ''}{s.difference?.toLocaleString()}
+                                            {s.difference > 0 ? '+' : ''}{convertAndFormat(s.difference, 'MZN')}
                                         </span>
                                     )}
                                 </td>
@@ -205,7 +204,7 @@ export default function CashManagement() {
                             <p style={{ color: '#64748b', fontWeight: '600' }}>{t('confirm_initial_fund_desc')}</p>
                         </div>
                         <div style={{ marginBottom: '32px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '12px' }}>{t('starting_value_label')} ({currency})</label>
+                            <label style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '12px' }}>{t('starting_value_label')} ({getSymbol()})</label>
                             <input
                                 type="number"
                                 value={openingBalance}
@@ -234,7 +233,7 @@ export default function CashManagement() {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '32px' }}>
                             <div>
-                                <label style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>{t('counted_value_label')} ({currency})</label>
+                                <label style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>{t('counted_value_label')} ({getSymbol()})</label>
                                 <input
                                     type="number"
                                     value={actualBalance}

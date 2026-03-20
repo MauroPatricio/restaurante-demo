@@ -6,10 +6,8 @@ import {
     ArrowLeft, RefreshCw, Printer, CheckCircle, AlertCircle,
     BarChart3, Calendar, Download
 } from 'lucide-react';
-import { getCurrencySymbol } from '../../utils/currencyUtils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
-const fmt = (val) =>
-    Number(val || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const NATURE_LABEL = { debit: 'D', credit: 'C' };
 const TYPE_COLORS = {
@@ -60,7 +58,7 @@ function getDateRange(period) {
 export default function Balancete() {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
+    const { convertAndFormat, preferredCurrency: currency } = useCurrency();
 
     const [period, setPeriod] = useState('month');
     const [startDate, setStartDate] = useState('');
@@ -190,8 +188,8 @@ export default function Balancete() {
                     }
                     <span style={{ fontWeight: '700', fontSize: '13px', color: balanced ? '#15803d' : '#b91c1c' }}>
                         {balanced
-                            ? `Balancete equilibrado – Total Débitos = Total Créditos = ${fmt(grandDebit)} ${currency}`
-                            : `Atenção: Débitos (${fmt(grandDebit)}) ≠ Créditos (${fmt(grandCredit)}) ${currency}`
+                            ? `Balancete equilibrado – Total Débitos = Total Créditos = ${convertAndFormat(grandDebit, 'MZN')}`
+                            : `Atenção: Débitos (${convertAndFormat(grandDebit, 'MZN')}) ≠ Créditos (${convertAndFormat(grandCredit, 'MZN')})`
                         }
                     </span>
                 </div>
@@ -252,13 +250,13 @@ export default function Balancete() {
                                         </span>
                                     </td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: '13px', fontWeight: '700', color: '#6366f1' }}>
-                                        {row.periodDebit > 0 ? fmt(row.periodDebit) : '–'}
+                                        {row.periodDebit > 0 ? convertAndFormat(row.periodDebit, 'MZN') : '–'}
                                     </td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: '13px', fontWeight: '700', color: '#ef4444' }}>
-                                        {row.periodCredit > 0 ? fmt(row.periodCredit) : '–'}
+                                        {row.periodCredit > 0 ? convertAndFormat(row.periodCredit, 'MZN') : '–'}
                                     </td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: '13px', fontWeight: '800', color: saldo >= 0 ? '#10b981' : '#ef4444' }}>
-                                        {saldo >= 0 ? '+' : ''}{fmt(saldo)}
+                                        {saldo >= 0 ? '+' : ''}{convertAndFormat(saldo, 'MZN')}
                                     </td>
                                 </tr>
                             );
@@ -271,13 +269,13 @@ export default function Balancete() {
                                     TOTAIS DO PERÍODO
                                 </td>
                                 <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: '15px', fontWeight: '900', color: '#818cf8' }}>
-                                    {fmt(grandDebit)} {currency}
+                                    {convertAndFormat(grandDebit, 'MZN')}
                                 </td>
                                 <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: '15px', fontWeight: '900', color: '#f87171' }}>
-                                    {fmt(grandCredit)} {currency}
+                                    {convertAndFormat(grandCredit, 'MZN')}
                                 </td>
                                 <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: '15px', fontWeight: '900', color: balanced ? '#34d399' : '#fbbf24' }}>
-                                    {fmt(grandDebit - grandCredit)} {currency}
+                                    {convertAndFormat(grandDebit - grandCredit, 'MZN')}
                                 </td>
                             </tr>
                         </tfoot>

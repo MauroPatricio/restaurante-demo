@@ -50,7 +50,7 @@ export default function RoomOrderTracking() {
                     // Show status toast
                     const step = STATUS_STEPS.find(s => s.key === newStatus);
                     if (step) {
-                        setStatusToast({ label: step.label, color: step.color, icon: step.icon });
+                        setStatusToast({ label: t(step.label), color: step.color, icon: step.icon });
                         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
                         toastTimerRef.current = setTimeout(() => setStatusToast(null), 4000);
                     }

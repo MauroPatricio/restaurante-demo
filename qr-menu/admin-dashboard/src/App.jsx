@@ -40,6 +40,7 @@ import BatchPosting from './pages/accounting/BatchPosting';
 import BalancoPatrimonial from './pages/reports/BalancoPatrimonial';
 import Balancete from './pages/reports/Balancete';
 import { SocketProvider } from './contexts/SocketContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import './App.css';
 
 import UserManagement from './pages/UserManagement';
@@ -82,17 +83,19 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
-      <SubscriptionProvider>
-        <ConnectivityProvider>
-          <SocketProvider>
-            <LoadingProvider>
-              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <AppContent />
-              </BrowserRouter>
-            </LoadingProvider>
-          </SocketProvider>
-        </ConnectivityProvider>
-      </SubscriptionProvider>
+      <CurrencyProvider>
+        <SubscriptionProvider>
+          <ConnectivityProvider>
+            <SocketProvider>
+              <LoadingProvider>
+                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <AppContent />
+                </BrowserRouter>
+              </LoadingProvider>
+            </SocketProvider>
+          </ConnectivityProvider>
+        </SubscriptionProvider>
+      </CurrencyProvider>
     </AuthProvider>
   );
 }

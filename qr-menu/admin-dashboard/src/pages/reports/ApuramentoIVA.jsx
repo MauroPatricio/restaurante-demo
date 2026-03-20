@@ -5,13 +5,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { FileText, Calculator, Download, Calendar, ArrowRight, TrendingUp, TrendingDown, Percent } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { exportToPDF, exportToExcel } from '../../utils/ExportUtils';
-import { getCurrencySymbol } from '../../utils/currencyUtils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ApuramentoIVA = () => {
     const { t } = useTranslation();
-    const { currentRestaurant, user } = useAuth();
-    const currencyCode = user?.restaurant?.settings?.currency || 'MZN';
-    const currencySymbol = getCurrencySymbol(currencyCode);
+    const { convertAndFormat } = useCurrency();
 
     // Default to current month
     const currentDate = new Date();
@@ -43,16 +41,13 @@ const ApuramentoIVA = () => {
         fetchData();
     }, [currentRestaurant?._id, dateRange.startDate, dateRange.endDate]);
 
-    const formatCurrency = (val) => {
-        return `${(val || 0).toLocaleString()} ${currencySymbol}`;
-    };
 
     const handleExportPDF = () => {
         if (!data) return;
         const columns = ['Descrição', 'Valor (MZN)'];
         const rows = [
-            ['IVA Liquidado (Vendas)', formatCurrency(data.ivaLiquidado)],
-            ['IVA Dedutível (Compras)', formatCurrency(data.ivaDedutivel)],
+            ['IVA Liquidado (Vendas)', convertAndFormat(data.ivaLiquidado, 'MZN')],
+            ['IVA Dedutível (Compras)', convertAndFormat(data.ivaDedutivel, 'MZN')],
             ['IVA a Pagar / (A Recuperar)', formatCurrency(data.ivaAPagar)]
         ];
         exportToPDF(`Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}.pdf`, columns, rows, 'Apuramento Mensal de IVA (PGC-NIRF)');
@@ -139,7 +134,7 @@ const ApuramentoIVA = () => {
                                         <p className="text-xs text-red-600">Conta 2433 - Imposto a entregar ao Estado</p>
                                     </div>
                                 </div>
-                                <span className="text-xl font-bold text-red-900">{formatCurrency(data.ivaLiquidado)}</span>
+                                <span className="text-xl font-bold text-red-900">{convertAndFormat(data.ivaLiquidado, 'MZN')}</span>
                             </div>
 
                             {/* Dedutível */}
@@ -153,7 +148,7 @@ const ApuramentoIVA = () => {
                                         <p className="text-xs text-green-600">Conta 2432 - Imposto a recuperar do Estado</p>
                                     </div>
                                 </div>
-                                <span className="text-xl font-bold text-green-900">{formatCurrency(data.ivaDedutivel)}</span>
+                                <span className="text-xl font-bold text-green-900">{convertAndFormat(data.ivaDedutivel, 'MZN')}</span>
                             </div>
 
                             <div className="h-px bg-gray-200 w-full my-4"></div>
@@ -174,7 +169,7 @@ const ApuramentoIVA = () => {
                                     </div>
                                 </div>
                                 <span className={`text-3xl font-black ${data.ivaAPagar >= 0 ? 'text-primary' : 'text-blue-700'}`}>
-                                    {formatCurrency(Math.abs(data.ivaAPagar))}
+                                    {convertAndFormat(Math.abs(data.ivaAPagar), 'MZN')}
                                 </span>
                             </div>
                         </div>

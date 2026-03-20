@@ -15,7 +15,7 @@ import {
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
 import TransactionModal from '../components/TransactionModal';
-import { fetchExchangeRates, convertCurrency, formatCurrency } from '../utils/currencyUtils';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const MetricCard = ({ title, value, subValue, icon: Icon, color, trend }) => (
     <div style={{
@@ -110,29 +110,13 @@ export default function AccountingDashboard() {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState(null);
-    const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-    const [rates, setRates] = useState(null);
+    const { convertAndFormat } = useCurrency();
     const displayCurrency = user?.restaurant?.settings?.currency || 'MZN';
 
     useEffect(() => {
-        const init = async () => {
-            await Promise.all([
-                fetchStats(),
-                fetchRates()
-            ]);
-        };
-        init();
+        fetchStats();
     }, []);
 
-    const fetchRates = async () => {
-        try {
-            const r = await fetchExchangeRates();
-            setRates(r);
-        } catch (error) {
-            console.error('Failed to fetch rates:', error);
-        }
-    };
 
     const fetchStats = async () => {
         try {
@@ -204,7 +188,7 @@ export default function AccountingDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '32px' }}>
                 <MetricCard
                     title={t('today_billing')}
-                    value={formatCurrency(convertCurrency(stats?.todayBilling || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    value={convertAndFormat(stats?.todayBilling || 0, 'MZN')}
                     subValue={t('today_billing_desc')}
                     icon={TrendingUp}
                     color="#4f46e5"
@@ -212,7 +196,7 @@ export default function AccountingDashboard() {
                 />
                 <MetricCard
                     title={t('daily_purchases')}
-                    value={formatCurrency(convertCurrency(stats?.totalPurchases || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    value={convertAndFormat(stats?.totalPurchases || 0, 'MZN')}
                     subValue={t('daily_purchases_desc')}
                     icon={ShoppingCart}
                     color="#ef4444"
@@ -220,14 +204,14 @@ export default function AccountingDashboard() {
                 />
                 <MetricCard
                     title={t('tax_payable')}
-                    value={formatCurrency(convertCurrency(stats?.taxPayable || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    value={convertAndFormat(stats?.taxPayable || 0, 'MZN')}
                     subValue={t('tax_payable_desc')}
                     icon={Landmark}
                     color="#f59e0b"
                 />
                 <MetricCard
                     title={t('cash_balance')}
-                    value={formatCurrency(convertCurrency(stats?.cashBalance || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    value={convertAndFormat(stats?.cashBalance || 0, 'MZN')}
                     subValue={t('cash_balance_desc')}
                     icon={Banknote}
                     color="#10b981"
@@ -237,7 +221,7 @@ export default function AccountingDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '48px' }}>
                 <MetricCard
                     title={t('gross_sales')}
-                    value={formatCurrency(convertCurrency(stats?.revenue || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    value={convertAndFormat(stats?.revenue || 0, 'MZN')}
                     subValue={t('gross_sales_desc')}
                     icon={TrendingUp}
                     color="#4f46e5"
@@ -245,7 +229,7 @@ export default function AccountingDashboard() {
                 />
                 <MetricCard
                     title={t('actual_expenses')}
-                    value={formatCurrency(convertCurrency(stats?.expenses || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    value={convertAndFormat(stats?.expenses || 0, 'MZN')}
                     subValue={t('actual_expenses_desc')}
                     icon={TrendingDown}
                     color="#ef4444"
@@ -253,7 +237,7 @@ export default function AccountingDashboard() {
                 />
                 <MetricCard
                     title={t('net_profit')}
-                    value={formatCurrency(convertCurrency(stats?.netProfit || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
+                    value={convertAndFormat(stats?.netProfit || 0, 'MZN')}
                     subValue={t('net_profit_desc')}
                     icon={Wallet}
                     color={stats?.netProfit >= 0 ? '#10b981' : '#ef4444'}
@@ -261,8 +245,8 @@ export default function AccountingDashboard() {
                 />
                 <MetricCard
                     title={t('vat_collected')}
-                    value={formatCurrency(convertCurrency(stats?.ivaLiquidado || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}
-                    subValue={`${t('vat_deductible')}: ${formatCurrency(convertCurrency(stats?.ivaDedutivel || 0, 'MZN', displayCurrency, rates), displayCurrency, i18n.language)}`}
+                    value={convertAndFormat(stats?.ivaLiquidado || 0, 'MZN')}
+                    subValue={`${t('vat_deductible')}: ${convertAndFormat(stats?.ivaDedutivel || 0, 'MZN')}`}
                     icon={Percent}
                     color="#8b5cf6"
                 />

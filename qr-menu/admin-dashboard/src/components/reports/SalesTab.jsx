@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { getCurrencySymbol } from '../../utils/currencyUtils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -38,9 +38,9 @@ const iconBoxStyle = (color, bg) => ({
     justifyContent: 'center'
 });
 
-export default function SalesTab({ data, loading, currency }) {
+export default function SalesTab({ data, loading }) {
     const { t } = useTranslation();
-    const currencySymbol = getCurrencySymbol(currency || 'MZN');
+    const { convert, format, convertAndFormat } = useCurrency();
 
     if (loading) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
@@ -78,7 +78,7 @@ export default function SalesTab({ data, loading, currency }) {
                             {t('total_revenue') || 'Total Revenue'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {totalRevenue.toLocaleString()} {currencySymbol}
+                            {convertAndFormat(totalRevenue, 'MZN')}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
@@ -138,7 +138,7 @@ export default function SalesTab({ data, loading, currency }) {
                             {t('avg_ticket') || 'Avg Ticket'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {avgItemPrice.toFixed(0)} {currencySymbol}
+                            {convertAndFormat(avgItemPrice, 'MZN')}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
@@ -173,7 +173,7 @@ export default function SalesTab({ data, loading, currency }) {
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value) => `${value.toLocaleString()} ${currencySymbol}`} />
+                                    <Tooltip formatter={(value) => convertAndFormat(value, 'MZN')} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -207,7 +207,7 @@ export default function SalesTab({ data, loading, currency }) {
                                     />
                                     <Tooltip
                                         formatter={(value, name) => [
-                                            name === 'revenue' ? `${value.toLocaleString()} ${currencySymbol}` : value,
+                                            name === 'revenue' ? convertAndFormat(value, 'MZN') : value,
                                             name === 'revenue' ? t('total_revenue') || 'Revenue' : t('items_sold') || 'Units Sold'
                                         ]}
                                     />
@@ -254,7 +254,7 @@ export default function SalesTab({ data, loading, currency }) {
                                         {item.count}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: '600', color: '#10b981' }}>
-                                        {item.revenue.toLocaleString()} {currencySymbol}
+                                        {convertAndFormat(item.revenue, 'MZN')}
                                     </td>
                                 </tr>
                             ))}

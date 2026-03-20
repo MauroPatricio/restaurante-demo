@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { roomServiceAPI } from '../services/api';
 import api from '../services/api';
-import { getCurrencySymbol } from '../utils/currencyUtils';
+import { useCurrency } from '../contexts/CurrencyContext';
 import {
     BedDouble, Clock, CheckCircle2, ChefHat,
     Footprints, RefreshCw, AlertCircle, ShoppingBag
@@ -29,7 +29,7 @@ function formatElapsed(dateStr, t) {
     return t('hours_ago', { count: Math.floor(diff / 60), minutes: diff % 60 });
 }
 
-function OrderCard({ order, onStatusChange, t }) {
+function OrderCard({ order, onStatusChange, t, user, convertAndFormat }) {
     const meta = STATUS_META[order.status] || STATUS_META.pending;
     const Icon = meta.icon;
     const nextStatus = STATUS_FLOW[STATUS_FLOW.indexOf(order.status) + 1];
@@ -63,7 +63,7 @@ function OrderCard({ order, onStatusChange, t }) {
                 {order.items?.map((it, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
                         <span>{it.qty}× {it.item?.name || it.name || t('item')}</span>
-                        <span style={{ color: 'var(--text-secondary)' }}>{(it.subtotal || it.itemPrice * it.qty || 0).toFixed(2)} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{convertAndFormat(it.subtotal || it.itemPrice * it.qty || 0, order.currency || 'MZN')}</span>
                     </div>
                 ))}
                 {order.notes && (
@@ -73,7 +73,7 @@ function OrderCard({ order, onStatusChange, t }) {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                    {t('total')}: {order.total?.toFixed(2)} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}
+                    {t('total')}: {convertAndFormat(order.total || 0, order.currency || 'MZN')}
                 </span>
                 {nextMeta && (
                     <button
@@ -101,9 +101,9 @@ const COLUMNS = [
 ];
 
 export default function RoomOrders() {
-    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const { socket } = useSocket();
+    const { convertAndFormat } = useCurrency();
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
     const [orders, setOrders] = useState([]);
@@ -214,7 +214,7 @@ export default function RoomOrders() {
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', padding: '20px 0' }}>{t('no_orders')}</p>
                                 ) : (
                                     colOrders.map(order => (
-                                        <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} t={t} />
+                                        <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} t={t} user={user} convertAndFormat={convertAndFormat} />
                                     ))
                                 )}
                             </div>

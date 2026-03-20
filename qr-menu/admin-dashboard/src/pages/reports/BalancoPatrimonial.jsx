@@ -3,15 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { accountingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-    Scale, TrendingUp, TrendingDown, Landmark, ArrowLeft,
-    RefreshCw, Printer, AlertCircle, CheckCircle,
     Building2, Wallet, Shield
 } from 'lucide-react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
-const fmt = (val, currency = 'MT') =>
-    `${Number(val || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
-
-const SectionCard = ({ title, icon: Icon, color, items, total, totalLabel }) => (
+const SectionCard = ({ title, icon: Icon, color, items, total, totalLabel, convertAndFormat }) => (
     <div style={{
         background: 'white',
         borderRadius: '24px',
@@ -51,7 +47,7 @@ const SectionCard = ({ title, icon: Icon, color, items, total, totalLabel }) => 
                         <span style={{ fontSize: '13px', color: '#475569', fontWeight: '600' }}>{acc.name}</span>
                     </div>
                     <span style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', fontFamily: 'monospace' }}>
-                        {fmt(Math.abs(acc.balance))}
+                        {convertAndFormat(Math.abs(acc.balance), 'MZN')}
                     </span>
                 </div>
             ))}
@@ -66,7 +62,7 @@ const SectionCard = ({ title, icon: Icon, color, items, total, totalLabel }) => 
                 {totalLabel}
             </span>
             <span style={{ fontSize: '18px', fontWeight: '900', color, fontFamily: 'monospace' }}>
-                {fmt(total)}
+                {convertAndFormat(total, 'MZN')}
             </span>
         </div>
     </div>
@@ -76,9 +72,7 @@ export default function BalancoPatrimonial() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
-    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN');
+    const { convertAndFormat } = useCurrency();
 
     const load = async () => {
         setLoading(true);
@@ -154,7 +148,7 @@ export default function BalancoPatrimonial() {
                             {balanced ? 'Balanço Equilibrado ✓' : 'Balanço Desequilibrado – Verifique os lançamentos'}
                         </p>
                         <p style={{ margin: 0, fontSize: '12px', color: balanced ? '#4ade80' : '#f87171', marginTop: '2px' }}>
-                            Activos: {fmt(totalAssets, currency)} | Passivos + Capital: {fmt(totalLiabilities + totalEquity, currency)}
+                            Activos: {convertAndFormat(totalAssets, 'MZN')} | Passivos + Capital: {convertAndFormat(totalLiabilities + totalEquity, 'MZN')}
                         </p>
                     </div>
                 </div>
@@ -184,6 +178,7 @@ export default function BalancoPatrimonial() {
                             items={filterActive(data?.assets)}
                             total={totalAssets}
                             totalLabel="Total do Activo"
+                            convertAndFormat={convertAndFormat}
                         />
                         <SectionCard
                             title="PASSIVO"
@@ -192,6 +187,7 @@ export default function BalancoPatrimonial() {
                             items={filterActive(data?.liabilities)}
                             total={totalLiabilities}
                             totalLabel="Total do Passivo"
+                            convertAndFormat={convertAndFormat}
                         />
                         <SectionCard
                             title="CAPITAL PRÓPRIO"
@@ -200,6 +196,7 @@ export default function BalancoPatrimonial() {
                             items={filterActive(data?.equity)}
                             total={totalEquity}
                             totalLabel="Total Capital Próprio"
+                            convertAndFormat={convertAndFormat}
                         />
                     </div>
 
@@ -226,7 +223,7 @@ export default function BalancoPatrimonial() {
                                         {item.label}
                                     </p>
                                     <p style={{ fontSize: '22px', fontWeight: '900', color: item.color, margin: '6px 0 0', fontFamily: 'monospace' }}>
-                                        {fmt(item.value, currency)}
+                                        {convertAndFormat(item.value, 'MZN')}
                                     </p>
                                 </div>
                             )

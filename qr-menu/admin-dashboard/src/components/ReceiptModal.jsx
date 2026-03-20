@@ -3,12 +3,13 @@ import { X, Printer, Download, Share2, Mail } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { analyticsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { getCurrencySymbol } from '../utils/currencyUtils';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const ReceiptModal = ({ order, onClose }) => {
     const { t } = useTranslation();
     const { user } = useAuth();
     const [sending, setSending] = useState(false);
+    const { convertAndFormat, convert } = useCurrency();
     const receiptRef = useRef();
 
     if (!order) return null;
@@ -16,9 +17,9 @@ const ReceiptModal = ({ order, onClose }) => {
     const restaurant = order.restaurant?.name ? order.restaurant : user?.restaurant;
 
     // Mozambique IVA (16%) calculations
-    const total = order.total || 0;
-    const subtotal = total / 1.16;
-    const tax = total - subtotal;
+    const totalValue = order.total || 0;
+    const subtotalValue = totalValue / 1.16;
+    const taxValue = totalValue - subtotalValue;
 
     const handlePrint = async () => {
         // Log print action
@@ -33,9 +34,8 @@ const ReceiptModal = ({ order, onClose }) => {
         try {
             await analyticsAPI.generateReceipt(order._id, { type: 'whatsapp' });
             
-            const currencyCode = user?.restaurant?.settings?.currency || order.currency || 'MZN';
-            const currencySymbol = getCurrencySymbol(currencyCode);
-            const text = `${t('receipt_title', { context: 'whatsapp' }) || 'Recibo Pedido'} #${order.orderNumber || order._id.toString().slice(-6)}\n${t('total')}: ${order.total.toLocaleString()} ${currencySymbol}`;
+            const whatsappTotal = convertAndFormat(order.total, order.currency);
+            const text = `${t('receipt_title', { context: 'whatsapp' }) || 'Recibo Pedido'} #${order.orderNumber || order._id.toString().slice(-6)}\n${t('total')}: ${whatsappTotal}`;
             const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         } catch (e) { console.error('Log error', e); }
@@ -101,7 +101,7 @@ const ReceiptModal = ({ order, onClose }) => {
                                     <td style={{ padding: '5px 0', verticalAlign: 'top' }}>{item.qty}x</td>
                                     <td style={{ padding: '5px 0' }}>{item.item?.name || 'Item'}</td>
                                     <td style={{ padding: '5px 0', textAlign: 'right' }}>
-                                        {(item.subtotal || 0).toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}
+                                        {convertAndFormat(item.subtotal || (item.price * item.qty) || 0, item.currency || order.currency)}
                                     </td>
                                 </tr>
                             ))}
@@ -111,15 +111,15 @@ const ReceiptModal = ({ order, onClose }) => {
                     <div style={{ borderTop: '1px dashed #000', paddingTop: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                             <span>SUBTOTAL:</span>
-                            <span>{subtotal.toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}</span>
+                            <span>{convertAndFormat(subtotal, order.currency)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                             <span>IVA (16%):</span>
-                            <span>{tax.toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}</span>
+                            <span>{convertAndFormat(tax, order.currency)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', marginTop: '5px' }}>
                             <span>TOTAL:</span>
-                            <span>{total.toLocaleString()} {getCurrencySymbol(user?.restaurant?.settings?.currency || order.currency || 'MZN')}</span>
+                            <span>{convertAndFormat(total, order.currency)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '10px' }}>
                             <span>{t('payment_label')}:</span>

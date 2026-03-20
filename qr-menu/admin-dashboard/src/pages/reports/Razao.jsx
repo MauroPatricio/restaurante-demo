@@ -9,11 +9,11 @@ import {
     FileImage
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { exportToPDF, exportToExcel } from '../../utils/ExportUtils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export default function Razao() {
     const { t } = useTranslation();
-    const { user } = useAuth();
+    const { convertAndFormat, preferredCurrency: currency } = useCurrency();
     const [accounts, setAccounts] = useState([]);
     const [selectedAccount, setSelectedAccount] = useState('');
     const [razaoData, setRazaoData] = useState(null);
@@ -60,7 +60,6 @@ export default function Razao() {
         }
     };
 
-    const currency = getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN'); // Modified currency declaration
 
     const handleExportPDF = () => {
         if (!razaoData) return;
@@ -75,9 +74,9 @@ export default function Razao() {
         const data = razaoData.entries.map(e => ({
             date: new Date(e.date).toLocaleDateString(),
             description: e.description,
-            debit: e.debit > 0 ? e.debit.toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-',
-            credit: e.credit > 0 ? e.credit.toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-',
-            balance: e.balance.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })
+            debit: e.debit > 0 ? convertAndFormat(e.debit, 'MZN') : '-',
+            credit: e.credit > 0 ? convertAndFormat(e.credit, 'MZN') : '-',
+            balance: convertAndFormat(e.balance, 'MZN')
         }));
 
         exportToPDF({
@@ -194,7 +193,7 @@ export default function Razao() {
                                 Saldo Atualizado
                             </span>
                             <h3 style={{ fontSize: '24px', fontWeight: '900', color: razaoData.closingBalance >= 0 ? '#10b981' : '#ef4444', margin: '4px 0 0 0' }}>
-                                {Math.abs(razaoData.closingBalance).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                                {convertAndFormat(Math.abs(razaoData.closingBalance), 'MZN')}
                                 {razaoData.closingBalance >= 0 ? '' : ' (Devedor)'}
                             </h3>
                         </div>
@@ -230,13 +229,13 @@ export default function Razao() {
                                             </p>
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: '700', color: '#1e293b', textAlign: 'right' }}>
-                                            {entry.debit > 0 ? entry.debit.toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-'}
+                                            {entry.debit > 0 ? convertAndFormat(entry.debit, 'MZN') : '-'}
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: '700', color: '#10b981', textAlign: 'right' }}>
-                                            {entry.credit > 0 ? entry.credit.toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-'}
+                                            {entry.credit > 0 ? convertAndFormat(entry.credit, 'MZN') : '-'}
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: '800', color: entry.balance >= 0 ? '#10b981' : '#ef4444', textAlign: 'right', background: '#f8fafc' }}>
-                                            {entry.balance.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}
+                                            {convertAndFormat(entry.balance, 'MZN')}
                                         </td>
                                     </tr>
                                 ))

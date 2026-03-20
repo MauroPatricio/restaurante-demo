@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchExchangeRates, formatCurrency, convertCurrency } from '../utils/currencyUtils';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { fetchExchangeRates, formatCurrency, convertCurrency as utilsConvertCurrency, getCurrencySymbol } from '../utils/currencyUtils';
 
 const CurrencyContext = createContext();
 
@@ -9,6 +9,7 @@ export const CurrencyProvider = ({ children }) => {
     const [rates, setRates] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Initial rates load
     useEffect(() => {
         const loadRates = async () => {
             try {
@@ -23,35 +24,41 @@ export const CurrencyProvider = ({ children }) => {
         loadRates();
     }, []);
 
-    // Sync with restaurant default currency - FORCE it if settings change
+    // Sync with restaurant default currency - priority over user preference if needed,
+    // OR just use it as the base for ALL conversions.
+    // The requirement says: "Administrator's selection as the single source of truth"
     useEffect(() => {
         if (restaurant?.settings?.currency) {
-            console.log('🔄 Syncing currency with restaurant default:', restaurant.settings.currency);
-            setCurrency(restaurant.settings.currency);
+            const adminCurrency = restaurant.settings.currency;
+            if (currency !== adminCurrency) {
+                console.log('🔄 Syncing currency with administrator selection:', adminCurrency);
+                setCurrency(adminCurrency);
+            }
         }
     }, [restaurant]);
 
-    const changeCurrency = (newCurrency) => {
+    const changeCurrency = useCallback((newCurrency) => {
         setCurrency(newCurrency);
         localStorage.setItem('preferred_currency', newCurrency);
-    };
+    }, []);
 
-    const formatPrice = (amount, fromCode) => {
-        const targetCurrency = currency;
-        
-        // If fromCode is specified and different from our target, try to convert
-        let finalAmount = amount;
-        if (fromCode && fromCode !== targetCurrency && rates) {
-            finalAmount = convertCurrency(amount, fromCode, targetCurrency, rates);
-        }
+    const convert = useCallback((amount, fromCurrency) => {
+        if (!rates || !fromCurrency) return amount;
+        return utilsConvertCurrency(amount, fromCurrency, currency, rates);
+    }, [rates, currency]);
 
-        return formatCurrency(
-            finalAmount, 
-            targetCurrency, 
-            undefined, 
-            restaurant?.settings?.customCurrencies || []
-        );
-    };
+    const format = useCallback((amount, code = currency) => {
+        return formatCurrency(amount, code);
+    }, [currency]);
+
+    const convertAndFormat = useCallback((amount, fromCurrency) => {
+        if (!amount && amount !== 0) return '';
+        const converted = convert(amount, fromCurrency || 'MZN');
+        return format(converted);
+    }, [convert, format]);
+
+    // LEGACY ALIAS for backward compatibility across the client-menu app
+    const formatPrice = convertAndFormat;
 
     return (
         <CurrencyContext.Provider value={{ 
@@ -60,6 +67,10 @@ export const CurrencyProvider = ({ children }) => {
             loading, 
             changeCurrency, 
             formatPrice,
+            convert,
+            format,
+            convertAndFormat,
+            getSymbol: () => getCurrencySymbol(currency),
             setRestaurant,
             restaurant 
         }}>
