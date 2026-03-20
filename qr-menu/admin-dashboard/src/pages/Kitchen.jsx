@@ -9,6 +9,7 @@ import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, 
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/PremiumTheme.css';
 
 const Kitchen = () => {
@@ -217,14 +218,28 @@ const Kitchen = () => {
         }
     };
 
-    const updateStatus = async (orderId, newStatus) => {
+    const updateStatus = useCallback(async (orderId, newStatus) => {
+        // 1. Save previous state for rollback
+        const previousOrders = [...orders];
+
+        // 2. Optimistic update
+        setOrders(prev => {
+            if (['completed', 'served', 'cancelled'].includes(newStatus)) {
+                return prev.filter(o => o._id !== orderId);
+            }
+            return prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o);
+        });
+
         try {
             await orderAPI.updateStatus(orderId, newStatus);
-            fetchData();
+            // We don't call fetchData() here because we trust the optimistic update
+            // and the socket event will eventually sync the full state if needed.
         } catch (error) {
             console.error('Failed to update order status:', error);
+            // 3. Rollback on error
+            setOrders(previousOrders);
         }
-    };
+    }, [orders]);
 
     const handleToggleKitchen = async () => {
         if (!restaurantId || togglingKitchen) return;
@@ -445,13 +460,28 @@ const Kitchen = () => {
                             flexDirection: 'column',
                             gap: '20px'
                         }}>
-                            {config.items.map(order => (
-                                <div key={order._id} className={`premium-card ${newOrderIds.has(order._id) ? 'premium-pulse-soft' : ''}`} style={{
-                                    padding: '24px',
-                                    borderLeft: `6px solid ${config.color}`,
-                                    position: 'relative',
-                                    backgroundColor: newOrderIds.has(order._id) ? `${config.color}08` : 'white'
-                                }}>
+                            <AnimatePresence mode="popLayout" initial={false}>
+                                {config.items.map(order => (
+                                    <motion.div
+                                        layout
+                                        key={order._id}
+                                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                                        transition={{ 
+                                            type: "spring",
+                                            stiffness: 500,
+                                            damping: 50,
+                                            mass: 1
+                                        }}
+                                        className={`premium-card ${newOrderIds.has(order._id) ? 'premium-pulse-soft' : ''}`}
+                                        style={{
+                                            padding: '24px',
+                                            borderLeft: `6px solid ${config.color}`,
+                                            position: 'relative',
+                                            backgroundColor: newOrderIds.has(order._id) ? `${config.color}08` : 'white'
+                                        }}
+                                    >
                                     <div style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
@@ -574,15 +604,20 @@ const Kitchen = () => {
                                             </button>
                                         )}
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
+                            </AnimatePresence>
                             {config.items.length === 0 && (
-                                <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
+                                <motion.div 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}
+                                >
                                     <div style={{ padding: '24px', background: 'white', borderRadius: '50%', marginBottom: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
                                         <config.icon size={48} strokeWidth={1.5} className="text-slate-200" />
                                     </div>
                                     <p className="text-premium-muted" style={{ fontSize: '13px' }}>Sem pedidos em {config.title}</p>
-                                </div>
+                                </motion.div>
                             )}
                         </div>
                     </div>
