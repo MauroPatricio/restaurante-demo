@@ -54,7 +54,7 @@ export default function DashboardLayout() {
     const { user, logout } = useAuth();
     const { subscription, isBlocked, requiresRenewal, isExpiring } = useSubscription();
     const { isBackendConnected } = useConnectivity();
-    const { pendingCount, isRinging, stopRinging, toggleAudio, audioEnabled } = useSocket();
+    const { dineInPendingCount, roomPendingCount, isRinging, stopRinging, toggleAudio, audioEnabled } = useSocket();
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -166,7 +166,8 @@ export default function DashboardLayout() {
                     label: t('orders'),
                     path: '/dashboard/orders',
                     show: hasPermission('manage_orders'),
-                    isOrders: true
+                    isOrders: true,
+                    orderSource: 'dine-in'
                 },
                 {
                     icon: Banknote,
@@ -222,7 +223,7 @@ export default function DashboardLayout() {
             title: t('room_service'),
             items: [
                 { icon: BedDouble, label: t('room_management'), path: '/dashboard/room-service', show: hasPermission('manage_tables') || hasPermission('manage_settings') },
-                { icon: ShoppingBag, label: t('room_orders'), path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders'), isOrders: true },
+                { icon: ShoppingBag, label: t('room_orders'), path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders'), isOrders: true, orderSource: 'room' },
             ]
         },
         {
@@ -467,8 +468,14 @@ export default function DashboardLayout() {
                                             <Icon size={20} />
                                             <span>{item.label}</span>
                                             {item.isPremium && isExpiring && <Lock size={14} className="ml-auto text-orange-400" />}
-                                            {isOrders && pendingCount > 0 && !isExpiring && (
-                                                <span className="nav-badge">{pendingCount}</span>
+                                            {isOrders && !isExpiring && (
+                                                <>
+                                                    {item.orderSource === 'room' ? (
+                                                        roomPendingCount > 0 && <span className="nav-badge">{roomPendingCount}</span>
+                                                    ) : (
+                                                        dineInPendingCount > 0 && <span className="nav-badge">{dineInPendingCount}</span>
+                                                    )}
+                                                </>
                                             )}
                                         </Link>
                                     );

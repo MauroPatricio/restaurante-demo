@@ -53,7 +53,8 @@ export const SocketProvider = ({ children }) => {
     });
 
     const [isRinging, setIsRinging] = useState(false);
-    const [pendingCount, setPendingCount] = useState(0); // Total orders in 'pending' state
+    const [dineInPendingCount, setDineInPendingCount] = useState(0); 
+    const [roomPendingCount, setRoomPendingCount] = useState(0);
     const ringingIntervalRef = useRef(null);
 
     // Audio hooks
@@ -99,9 +100,14 @@ export const SocketProvider = ({ children }) => {
                     // Fetch only pending orders to get count
                     const { data } = await orderAPI.getAll(restaurant._id, { status: 'pending' });
                     const orders = Array.isArray(data?.orders) ? data.orders : [];
-                    setPendingCount(orders.length);
+                    
+                    const dineIn = orders.filter(o => !o.roomService).length;
+                    const room = orders.filter(o => !!o.roomService).length;
+                    
+                    setDineInPendingCount(dineIn);
+                    setRoomPendingCount(room);
                 } catch (err) {
-                    console.error('Failed to fetch initial pending count', err);
+                    console.error('Failed to fetch initial pending counts', err);
                 }
             }
 
@@ -160,7 +166,7 @@ export const SocketProvider = ({ children }) => {
 
 
             // 1. Update Count
-            setPendingCount(prev => prev + 1);
+            setDineInPendingCount(prev => prev + 1);
 
             // 2. Start Ringing (Notification)
             // If user is already on Orders page, maybe distinct logic? 
@@ -173,7 +179,7 @@ export const SocketProvider = ({ children }) => {
 
         // Room-service orders — same notification as dine-in
         newSocket.on('room:order:new', (data) => {
-            setPendingCount(prev => prev + 1);
+            setRoomPendingCount(prev => prev + 1);
             setIsRinging(true);
             window.dispatchEvent(new CustomEvent('data-refresh', { detail: { type: 'order', action: 'new' } }));
         });
@@ -200,7 +206,8 @@ export const SocketProvider = ({ children }) => {
                 orderAPI.getAll(restaurant._id, { status: 'pending' })
                     .then(({ data }) => {
                         const orders = Array.isArray(data?.orders) ? data.orders : [];
-                        setPendingCount(orders.length);
+                        setDineInPendingCount(orders.filter(o => !o.roomService).length);
+                        setRoomPendingCount(orders.filter(o => !!o.roomService).length);
                     })
                     .catch(console.error);
             }
@@ -320,7 +327,8 @@ export const SocketProvider = ({ children }) => {
         removeRenewal,
         // New Props
         isRinging,
-        pendingCount,
+        dineInPendingCount,
+        roomPendingCount,
         audioEnabled,
         stopRinging,
         toggleAudio,
