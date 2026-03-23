@@ -40,8 +40,10 @@ export default function StaffTab({ data, loading }) {
     const { t } = useTranslation();
     const { convertAndFormat } = useCurrency();
 
+    const ranking = Array.isArray(data) ? data : (data?.ranking || []);
+
     if (loading) return <div className="p-8 text-center" style={{ color: '#64748b', fontWeight: '600' }}>{t('loading_staff_data') || 'Carregando dados do staff...'}</div>;
-    if (!data || !data.ranking || data.ranking.length === 0) {
+    if (ranking.length === 0) {
         return (
             <div style={{ ...cardStyle, textAlign: 'center', padding: '64px', color: '#94a3b8' }}>
                 <User size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
@@ -49,8 +51,6 @@ export default function StaffTab({ data, loading }) {
             </div>
         );
     }
-
-    const { ranking = [] } = data;
 
     // Calculate overall staff KPIs
     const totalOrders = ranking.reduce((sum, w) => sum + (w.totalOrders || 0), 0);

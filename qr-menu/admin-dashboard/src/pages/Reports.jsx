@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { analyticsAPI } from '../services/api';
+import { analyticsAPI, waiterAnalyticsAPI } from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Calendar, Download, BarChart2, DollarSign, List, Box, TrendingUp, FileText, User } from 'lucide-react';
@@ -11,7 +11,6 @@ import OperationalTab from '../components/reports/OperationalTab';
 import InventoryTab from '../components/reports/InventoryTab';
 import StaffTab from '../components/reports/StaffTab';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { waiterAnalyticsAPI } from '../services/api';
 
 // Modern styles matching Dashboard.jsx
 const cardStyle = {
@@ -45,7 +44,7 @@ export default function Reports() {
         setLoading(true);
         setReportData(null);
         try {
-            const restId = user.restaurant._id || user.restaurant;
+            const restId = user.restaurant?._id || user.restaurant?.id || user.restaurant;
             const params = {
                 startDate: new Date(dateRange.startDate).toISOString(),
                 endDate: new Date(dateRange.endDate).toISOString()
@@ -71,7 +70,12 @@ export default function Reports() {
                 default:
                     return;
             }
-            setReportData(res.data);
+            // Defensive check for staff ranking structure
+            if (activeTab === 'staff' && Array.isArray(res.data)) {
+                setReportData({ ranking: res.data });
+            } else {
+                setReportData(res.data);
+            }
         } catch (error) {
             console.error('Failed to fetch report data:', error);
         } finally {
