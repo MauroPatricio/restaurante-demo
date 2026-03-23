@@ -101,8 +101,8 @@ export default function Dashboard() {
 
     const fetchDashboardData = async () => {
         try {
-            // Use today's date for 'today's' stats
-            const today = new Date().toISOString().split('T')[0];
+            // Use local today's date for stats (avoids UTC off-by-one errors)
+            const today = new Date().toLocaleDateString('en-CA'); // 'yyyy-mm-dd' format
             const [restaurantStats, operationalReport] = await Promise.all([
                 analyticsAPI.getRestaurantStats(restaurantId, { startDate: today, endDate: today }),
                 analyticsAPI.getOperationalReport(restaurantId)
@@ -185,7 +185,7 @@ export default function Dashboard() {
 
     // Prepare Shifts Data for Pie Chart
     const shiftsData = stats.shifts?.map(s => ({
-        name: s._id,
+        name: t(s._id.toLowerCase()),
         value: s.orders
     })) || [];
 

@@ -5,7 +5,7 @@ import User from '../models/User.js';
 // ============================================================================
 // 🏆 HELPER: Calculate Top Waiter based on Performance Score
 // ============================================================================
-export async function calculateTopWaiter(restaurantIds, restaurants) {
+export async function calculateTopWaiter(restaurantIds, restaurants, dateFilter = {}) {
     try {
         // Get all orders with assigned waiters
         const waiterStats = await Order.aggregate([
@@ -13,7 +13,8 @@ export async function calculateTopWaiter(restaurantIds, restaurants) {
                 $match: {
                     restaurant: { $in: restaurantIds },
                     status: { $ne: 'cancelled' },
-                    createdByWaiter: { $exists: true, $ne: null }
+                    createdByWaiter: { $exists: true, $ne: null },
+                    ...dateFilter
                 }
             },
             {
@@ -68,13 +69,14 @@ export async function calculateTopWaiter(restaurantIds, restaurants) {
 // ============================================================================
 // 🍽️ HELPER: Calculate Top Dish based on Quantity Sold
 // ============================================================================
-export async function calculateTopDish(restaurantIds, restaurants) {
+export async function calculateTopDish(restaurantIds, restaurants, dateFilter = {}) {
     try {
         const dishStats = await Order.aggregate([
             {
                 $match: {
                     restaurant: { $in: restaurantIds },
-                    status: { $ne: 'cancelled' }
+                    status: { $ne: 'cancelled' },
+                    ...dateFilter
                 }
             },
             { $unwind: '$items' },
@@ -116,7 +118,7 @@ export async function calculateTopDish(restaurantIds, restaurants) {
 // ============================================================================
 // ⚡ HELPER: Calculate Fastest Dish based on Average Prep Time  
 // ============================================================================
-export async function calculateFastestDish(restaurantIds, restaurants) {
+export async function calculateFastestDish(restaurantIds, restaurants, dateFilter = {}) {
     try {
         const prepTimeStats = await Order.aggregate([
             {
@@ -124,7 +126,8 @@ export async function calculateFastestDish(restaurantIds, restaurants) {
                     restaurant: { $in: restaurantIds },
                     status: { $in: ['ready', 'completed'] },
                     actualReadyTime: { $exists: true },
-                    createdAt: { $exists: true }
+                    createdAt: { $exists: true }, // Ensure createdAt is included in match if filter is applied
+                    ...dateFilter
                 }
             },
             { $unwind: '$items' },

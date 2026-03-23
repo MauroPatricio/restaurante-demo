@@ -32,9 +32,51 @@ export const getOwnerStats = async (req, res) => {
             });
         }
 
+        const { period = 'today' } = req.query;
+        let dateFilter = {};
+
+        const now = new Date();
+        if (period === 'today') {
+            dateFilter = {
+                createdAt: {
+                    $gte: startOfDay(now),
+                    $lte: endOfDay(now)
+                }
+            };
+        } else if (period === 'week') {
+            dateFilter = {
+                createdAt: {
+                    $gte: subDays(now, 7),
+                    $lte: endOfDay(now)
+                }
+            };
+        } else if (period === 'month') {
+            dateFilter = {
+                createdAt: {
+                    $gte: subDays(now, 30),
+                    $lte: endOfDay(now)
+                }
+            };
+        } else if (period === 'lastMonth' || period === 'last_month') {
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+            dateFilter = {
+                createdAt: {
+                    $gte: startOfLastMonth,
+                    $lte: endOfLastMonth
+                }
+            };
+        }
+
         // 2. Aggregate Global Stats (Revenue & Orders)
         const globalStats = await Order.aggregate([
-            { $match: { restaurant: { $in: restaurantIds }, status: { $ne: 'cancelled' } } },
+            { 
+                $match: { 
+                    restaurant: { $in: restaurantIds }, 
+                    status: { $ne: 'cancelled' },
+                    ...dateFilter
+                } 
+            },
             {
                 $group: {
                     _id: null,
@@ -46,7 +88,13 @@ export const getOwnerStats = async (req, res) => {
 
         // 3. Aggregate Revenue by Restaurant
         const revenueByRestaurant = await Order.aggregate([
-            { $match: { restaurant: { $in: restaurantIds }, status: { $ne: 'cancelled' } } },
+            { 
+                $match: { 
+                    restaurant: { $in: restaurantIds }, 
+                    status: { $ne: 'cancelled' },
+                    ...dateFilter
+                } 
+            },
             {
                 $group: {
                     _id: '$restaurant',
@@ -69,13 +117,13 @@ export const getOwnerStats = async (req, res) => {
         }).sort((a, b) => b.revenue - a.revenue);
 
         // 4. 🏆 CALCULATE TOP WAITER based on performance
-        const topWaiter = await calculateTopWaiter(restaurantIds, restaurants);
+        const topWaiter = await calculateTopWaiter(restaurantIds, restaurants, dateFilter);
 
         // 5. 🍽️ CALCULATE TOP DISH based on quantity sold
-        const topDish = await calculateTopDish(restaurantIds, restaurants);
+        const topDish = await calculateTopDish(restaurantIds, restaurants, dateFilter);
 
         // 6. ⚡ CALCULATE FASTEST DISH based on prep time
-        const fastestDish = await calculateFastestDish(restaurantIds, restaurants);
+        const fastestDish = await calculateFastestDish(restaurantIds, restaurants, dateFilter);
 
         res.json({
             totalRevenue: globalStats[0]?.totalRevenue || 0,
@@ -308,6 +356,44 @@ export const getRestaurantStats = async (req, res) => {
             };
         });
 
+        // 6. Shifts Data (Morning, Afternoon, Night)
+        const shiftAggregation = await Order.aggregate([
+            { $match: query },
+            {
+                $project: {
+                    hour: { $hour: "$createdAt" }
+                }
+            },
+            {
+                $project: {
+                    shift: {
+                        $switch: {
+                            branches: [
+                                { case: { $and: [{ $gte: ["$hour", 6] }, { $lt: ["$hour", 12] }] }, then: "morning" },
+                                { case: { $and: [{ $gte: ["$hour", 12] }, { $lt: ["$hour", 18] }] }, then: "afternoon" }
+                            ],
+                            default: "night"
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$shift",
+                    orders: { $count: {} }
+                }
+            }
+        ]);
+
+        // Ensure all shifts are represented
+        const shifts = ['morning', 'afternoon', 'night'].map(s => {
+            const found = shiftAggregation.find(sa => sa._id === s);
+            return {
+                _id: s,
+                orders: found ? found.orders : 0
+            };
+        });
+
         res.json({
             realtime: {
                 activeOrders: activeOrdersCount,
@@ -325,7 +411,8 @@ export const getRestaurantStats = async (req, res) => {
             },
             operational: {
                 avgPrepTime: Math.round(kitchenStats[0]?.avgPrepTime || 0),
-                peakHours: formattedPeakHours
+                peakHours: formattedPeakHours,
+                shifts
             },
             customers: {
                 top: topCustomers
@@ -561,10 +648,10 @@ export const getOperationalReport = async (req, res) => {
                     shift: {
                         $switch: {
                             branches: [
-                                { case: { $and: [{ $gte: ["$hour", 6] }, { $lt: ["$hour", 12] }] }, then: "Morning" },
-                                { case: { $and: [{ $gte: ["$hour", 12] }, { $lt: ["$hour", 18] }] }, then: "Afternoon" }
+                                { case: { $and: [{ $gte: ["$hour", 6] }, { $lt: ["$hour", 12] }] }, then: "morning" },
+                                { case: { $and: [{ $gte: ["$hour", 12] }, { $lt: ["$hour", 18] }] }, then: "afternoon" }
                             ],
-                            default: "Night"
+                            default: "night"
                         }
                     },
                     total: 1
