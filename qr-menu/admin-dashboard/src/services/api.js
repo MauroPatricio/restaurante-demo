@@ -120,7 +120,9 @@ export const authAPI = {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
     getProfile: () => api.get('/auth/me'),
-    updateFCMToken: (token) => api.post('/auth/fcm-token', { fcmToken: token })
+    updateFCMToken: (token) => api.post('/auth/fcm-token', { fcmToken: token }),
+    forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+    resetPassword: (token, password) => api.post(`/auth/reset-password/${token}`, { password })
 };
 
 // Restaurant API

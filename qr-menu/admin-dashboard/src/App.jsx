@@ -59,6 +59,8 @@ import DashboardRedirect from './components/DashboardRedirect';
 import RoomServiceManagement from './pages/RoomServiceManagement';
 import RoomOrders from './pages/RoomOrders';
 import AboutUs from './pages/AboutUs';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -111,6 +113,8 @@ function AppContent() {
         <Route path="/register" element={<Register />} />
         <Route path="/create-restaurant" element={<CreateRestaurant />} />
         <Route path="/select-restaurant" element={<RestaurantSelection />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         <Route path="/change-password" element={
           <ProtectedRoute>

@@ -53,7 +53,10 @@ const UserSchema = new mongoose.Schema({
     available: { type: Boolean, default: false },
     rating: { type: Number, default: 5 },
     completedDeliveries: { type: Number, default: 0 }
-  }
+  },
+
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
 }, { timestamps: true });
 
 // Hash password before saving

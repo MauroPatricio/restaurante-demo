@@ -123,6 +123,12 @@ export default function Login() {
                             </div>
                         </div>
 
+                        <div className="forgot-password-link-wrapper">
+                            <Link to="/forgot-password">
+                                {t('forgot_password_q') || 'Esqueci minha senha'}
+                            </Link>
+                        </div>
+
                         <button
                             type="submit"
                             className="submit-btn"
@@ -206,6 +212,10 @@ export default function Login() {
                 .developer-credit { color: #94a3b8; font-size: 0.75rem; margin-top: 16px; margin-bottom: 0; font-weight: 500; }
 
                 .error-message { background: #fee2e2; color: #991b1b; padding: 14px; border-radius: 12px; margin-bottom: 24px; font-size: 0.9rem; border: 1px solid #fecaca; display: flex; align-items: center; gap: 8px; }
+
+                .forgot-password-link-wrapper { text-align: right; margin-top: -10px; margin-bottom: 10px; }
+                .forgot-password-link-wrapper a { color: #64748b; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: color 0.2s; }
+                .forgot-password-link-wrapper a:hover { color: #4f46e5; }
 
                 /* Right Side (Image) */
                 .selection-right { flex: 1; display: none; position: relative; }

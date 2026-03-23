@@ -1,11 +1,13 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import Role from '../models/Role.js'; // Import Role model
 import User from '../models/User.js';
 import Restaurant from '../models/Restaurant.js';
 import UserRestaurantRole from '../models/UserRestaurantRole.js';
 import Subscription from '../models/Subscription.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { sendResetPasswordEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -304,6 +306,81 @@ router.get('/me', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Get user info error:', error);
         res.status(500).json({ error: 'Failed to get user info' });
+    }
+});
+
+// Forgot Password - Step 1: Request reset
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email é obrigatório' });
+        }
+
+        const user = await User.findOne({ email });
+
+        // Security: Don't reveal if user exists or not
+        if (!user) {
+            return res.json({ message: 'Se este email estiver registado, receberá as instruções de recuperação.' });
+        }
+
+        // Generate secure token
+        const token = crypto.randomBytes(32).toString('hex');
+        
+        // Save to user with 15 mins expiration
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+        await user.save();
+
+        // Send email
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${token}`;
+        
+        const emailResult = await sendResetPasswordEmail(user, resetUrl);
+
+        if (!emailResult.success) {
+            return res.status(500).json({ error: 'Falha ao enviar email de recuperação' });
+        }
+
+        res.json({ message: 'Se este email estiver registado, receberá as instruções de recuperação.' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ error: 'Ocorreu um erro ao processar o seu pedido' });
+    }
+});
+
+// Reset Password - Step 2: Set new password
+router.post('/reset-password/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        if (!password || password.length < 6) {
+            return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
+        }
+
+        // Find user by valid token and non-expired
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ error: 'Link de recuperação inválido ou expirado' });
+        }
+
+        // Set new password
+        user.password = password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        user.isDefaultPassword = false; // Reset potential flag
+        
+        await user.save();
+
+        res.json({ message: 'Senha redefinida com sucesso! Pode agora fazer login.' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ error: 'Ocorreu um erro ao redefinir a sua senha' });
     }
 });
 

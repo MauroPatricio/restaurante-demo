@@ -18,7 +18,7 @@ const createTransporter = () => {
         return null;
     }
 
-    return nodemailer.createTransporter(config);
+    return nodemailer.createTransport(config);
 };
 
 // Send subscription payment reminder
@@ -154,9 +154,42 @@ export const sendOrderReceipt = async (order, customerEmail) => {
     }
 };
 
+// Send password reset email
+export const sendResetPasswordEmail = async (user, resetUrl) => {
+    const transporter = createTransporter();
+    if (!transporter) return { success: false, error: 'Email not configured' };
+
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+            to: user.email,
+            subject: 'Recuperação de Senha - Nhiquela',
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #4f46e5; text-align: center;">Recuperação de Senha</h2>
+                    <p>Olá <strong>${user.name}</strong>,</p>
+                    <p>Recebemos um pedido para redefinir a senha da sua conta no sistema Nhiquela.</p>
+                    <p>Clique no botão abaixo para escolher uma nova senha. Este link é válido por <strong>15 minutos</strong>.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetUrl}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Redefinir Senha</a>
+                    </div>
+                    <p>Se você não solicitou esta alteração, ignore este email. Sua senha permanecerá a mesma.</p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #666; text-align: center;">Este é um email automático, por favor não responda.</p>
+                </div>
+            `
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('Error sending reset password email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 export default {
-    sendPaymentReminder,
-    sendSuspensionNotice,
     sendRenewalConfirmation,
-    sendOrderReceipt
+    sendOrderReceipt,
+    sendResetPasswordEmail
 };
