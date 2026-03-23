@@ -9,7 +9,9 @@ import FinancialTab from '../components/reports/FinancialTab';
 import SalesTab from '../components/reports/SalesTab';
 import OperationalTab from '../components/reports/OperationalTab';
 import InventoryTab from '../components/reports/InventoryTab';
+import StaffTab from '../components/reports/StaffTab';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { waiterAnalyticsAPI } from '../services/api';
 
 // Modern styles matching Dashboard.jsx
 const cardStyle = {
@@ -63,6 +65,9 @@ export default function Reports() {
                 case 'inventory':
                     res = await analyticsAPI.getInventory(restId);
                     break;
+                case 'staff':
+                    res = await waiterAnalyticsAPI.getRanking(restId, params);
+                    break;
                 default:
                     return;
             }
@@ -89,7 +94,8 @@ export default function Reports() {
         { id: 'financial', label: t('financial') || 'Financial', icon: DollarSign, color: '#10b981', bg: '#ecfdf5' },
         { id: 'sales', label: t('sales_menu') || 'Sales & Menu', icon: List, color: '#3b82f6', bg: '#eff6ff' },
         { id: 'operational', label: t('operational') || 'Operational', icon: BarChart2, color: '#f59e0b', bg: '#fffbeb' },
-        { id: 'inventory', label: t('inventory') || 'Inventory', icon: Box, color: '#8b5cf6', bg: '#f5f3ff' }
+        { id: 'inventory', label: t('inventory') || 'Inventory', icon: Box, color: '#8b5cf6', bg: '#f5f3ff' },
+        { id: 'staff', label: t('staff') || 'Staff', icon: User, color: '#ec4899', bg: '#fdf2f8' }
     ];
 
     const activeTabData = tabs.find(tab => tab.id === activeTab);
@@ -285,6 +291,7 @@ export default function Reports() {
                         {activeTab === 'sales' && <SalesTab data={reportData} loading={loading} />}
                         {activeTab === 'operational' && <OperationalTab data={reportData} loading={loading} />}
                         {activeTab === 'inventory' && <InventoryTab data={reportData} loading={loading} />}
+                        {activeTab === 'staff' && <StaffTab data={reportData} loading={loading} />}
                     </>
                 )}
             </div>

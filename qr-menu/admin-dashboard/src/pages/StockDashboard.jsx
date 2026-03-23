@@ -45,7 +45,7 @@ const iconBoxStyle = (color, bg) => ({
 
 export default function StockDashboard() {
     const { user } = useAuth();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { convertAndFormat } = useCurrency();
     const [data, setData] = useState({ summary: {}, items: [] });
     const [loading, setLoading] = useState(true);
@@ -114,7 +114,7 @@ export default function StockDashboard() {
                     await stockAPI.restock({
                         menuItemId: id,
                         quantity: val,
-                        reason: 'Manual adjustment from dashboard',
+                        reason: 'stock_manual_adjustment',
                         unitCost: item.costPrice
                     });
                 } else if (val < 0) {
@@ -122,7 +122,7 @@ export default function StockDashboard() {
                         menuItemId: id,
                         quantity: val,
                         type: 'waste',
-                        reason: 'Manual correction'
+                        reason: 'stock_manual_correction'
                     });
                 }
             } else {
@@ -133,7 +133,7 @@ export default function StockDashboard() {
                         menuItemId: id,
                         quantity: diff,
                         type: 'adjustment',
-                        reason: 'Direct stock override'
+                        reason: 'stock_manual_override'
                     });
                 }
             }
@@ -457,7 +457,7 @@ export default function StockDashboard() {
                                                                     marginLeft: 'auto'
                                                                 }}
                                                             >
-                                                                <PlusCircle size={16} /> <span>Stock</span>
+                                                                <PlusCircle size={16} /> <span>{t('stock_col_stock')}</span>
                                                             </button>
                                                         )}
                                                     </td>
@@ -584,7 +584,11 @@ export default function StockDashboard() {
                                                     {mov.quantityAfter}
                                                 </td>
                                                 <td style={{ padding: '16px', color: '#64748b', fontSize: '13px' }}>
-                                                    {mov.reason || (mov.order ? `Pedido #${mov.order.orderNumber || 'ref'}` : 'Manual')}
+                                                    {mov.reason ? (
+                                                        mov.reason.startsWith('stock_') ? t(mov.reason) : mov.reason
+                                                    ) : (
+                                                        mov.order ? `${t('order_id')} ${mov.order.orderNumber || 'ref'}` : t('manual')
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

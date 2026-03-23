@@ -9,9 +9,9 @@ import {
 } from 'recharts';
 import {
     TrendingUp, Users, ShoppingBag, DollarSign,
-    ArrowRight, Building2, Calendar, Star, Utensils, Zap
+    ArrowRight, Building2, Calendar, Star, Utensils, Zap, Search
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format as formatDate } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
 import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
@@ -103,15 +103,17 @@ const OwnerDashboard = () => {
     const { t, i18n } = useTranslation();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    // No longer using client-side currency toggle to enforce restaurant base currency
+    const [period, setPeriod] = useState('today');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchStats();
-    }, []);
+    }, [period]);
 
     const fetchStats = async () => {
         try {
-            const { data } = await analyticsAPI.getOwnerStats();
+            setLoading(true);
+            const { data } = await analyticsAPI.getOwnerStats({ period });
             setStats(data);
         } catch (error) {
             console.error('Failed to fetch owner stats:', error);
@@ -129,8 +131,12 @@ const OwnerDashboard = () => {
         }
     };
 
-    // Skeleton loading - maintains dashboard layout
-    if (loading) return (
+    const filteredRestaurants = stats?.revenueByRestaurant?.filter(r => 
+        r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.id.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+    if (loading && !stats) return (
         <div className="p-6">
             <div className="mb-8">
                 <div className="h-12 w-96 bg-gray-200 rounded-xl animate-pulse mb-3"></div>
@@ -152,65 +158,68 @@ const OwnerDashboard = () => {
                 </div>
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'white', padding: '10px 20px', borderRadius: '50px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)', color: '#64748b', fontSize: '14px', fontWeight: '500'
+                    background: 'white', padding: '4px 12px', borderRadius: '50px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)', color: '#64748b', fontSize: '13px', fontWeight: '500'
                 }}>
-                    <Calendar size={18} />
-                    {format(new Date(), 'MMMM d, yyyy')}
-                    <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 10px' }}></div>
-                    <select style={{ border: 'none', background: 'transparent', fontWeight: '600', color: '#4f46e5', cursor: 'pointer', outline: 'none' }}>
-                        <option>Today</option>
-                        <option>This Week</option>
-                        <option>This Month</option>
-                        <option>Last Month</option>
+                    <Calendar size={16} />
+                    {formatDate(new Date(), 'MMMM d, yyyy')}
+                    <div style={{ width: '1px', height: '16px', background: '#e2e8f0', margin: '0 8px' }}></div>
+                    <select 
+                        value={period}
+                        onChange={(e) => setPeriod(e.target.value)}
+                        style={{ border: 'none', background: 'transparent', fontWeight: '700', color: '#4f46e5', cursor: 'pointer', outline: 'none', fontSize: '13px' }}
+                    >
+                        <option value="today">{t('today')}</option>
+                        <option value="week">{t('this_week')}</option>
+                        <option value="month">{t('this_month')}</option>
+                        <option value="last_month">{t('last_month')}</option>
                     </select>
                 </div>
 
-                <button
-                    onClick={async () => {
-                        if (window.confirm(t('confirm_clear_stats') || 'Tem certeza que deseja limpar TODOS os dados financeiros? Esta ação não pode ser desfeita.')) {
-                            try {
-                                await analyticsAPI.clearOwnerStats();
-                                window.location.reload();
-                            } catch (error) {
-                                console.error('Failed to clear stats', error);
-                                alert('Erro ao limpar dados');
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <button
+                        onClick={async () => {
+                            if (window.confirm(t('confirm_clear_stats') || 'Tem certeza que deseja limpar TODOS os dados financeiros? Esta ação não pode ser desfeita.')) {
+                                try {
+                                    await analyticsAPI.clearOwnerStats();
+                                    window.location.reload();
+                                } catch (error) {
+                                    console.error('Failed to clear stats', error);
+                                    alert('Erro ao limpar dados');
+                                }
                             }
-                        }
-                    }}
-                    style={{
-                        marginLeft: '16px',
-                        padding: '10px 20px',
-                        background: '#fee2e2',
-                        color: '#ef4444',
-                        border: 'none',
-                        borderRadius: '50px',
-                        fontWeight: '600',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s',
-                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.1)'
-                    }}
-                    onMouseOver={(e) => e.target.style.transform = 'translateY(-1px)'}
-                    onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
-                >
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }}></div>
-                    {t('clear_data') || 'Limpar Dados'}
-                </button>
-                <div className="language-switcher" style={{ marginLeft: '16px', display: 'flex', gap: '8px' }}>
-                    <select
-                        onChange={(e) => i18n.changeLanguage(e.target.value)}
-                        value={i18n.language}
-                        style={{ padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                        }}
+                        style={{
+                            padding: '10px 20px',
+                            background: '#fee2e2',
+                            color: '#ef4444',
+                            border: 'none',
+                            borderRadius: '50px',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.1)'
+                        }}
                     >
-                        <option value="pt">PT</option>
-                        <option value="en">EN</option>
-                        <option value="es">ES</option>
-                        <option value="fr">FR</option>
-                    </select>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }}></div>
+                        {t('clear_data')}
+                    </button>
+                    <div className="language-switcher" style={{ display: 'flex', gap: '8px' }}>
+                        <select
+                            onChange={(e) => i18n.changeLanguage(e.target.value)}
+                            value={i18n.language}
+                            style={{ padding: '8px 12px', borderRadius: '50px', border: '1px solid #e2e8f0', background: 'white', fontWeight: '600', fontSize: '13px' }}
+                        >
+                            <option value="pt">PT</option>
+                            <option value="en">EN</option>
+                            <option value="es">ES</option>
+                            <option value="fr">FR</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -261,10 +270,10 @@ const OwnerDashboard = () => {
                         <div style={premiumCardStyle}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div style={{ flex: 1 }}>
-                                    <p style={cardLabelStyle}>🏆 {t('top_waiter') || 'Melhor Garçom'}</p>
+                                    <p style={cardLabelStyle}>🏆 {t('top_waiter')}</p>
                                     <h3 style={cardValueStyle}>{stats.topWaiter.name}</h3>
                                     <p style={cardSubtextStyle}>
-                                        Score: {stats.topWaiter.score}% • {stats.topWaiter.ordersCount} {t('orders') || 'pedidos'}
+                                        Score: {stats.topWaiter.score}% • {stats.topWaiter.ordersCount} {t('orders')}
                                     </p>
                                     <span style={restaurantBadgeStyle}>{stats.topWaiter.restaurant}</span>
                                 </div>
@@ -280,10 +289,10 @@ const OwnerDashboard = () => {
                         <div style={premiumCardStyle}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div style={{ flex: 1 }}>
-                                    <p style={cardLabelStyle}>🍽️ {t('top_dish') || 'Prato Mais Vendido'}</p>
+                                    <p style={cardLabelStyle}>🍽️ {t('top_dish')}</p>
                                     <h3 style={cardValueStyle}>{stats.topDish.name}</h3>
                                     <p style={cardSubtextStyle}>
-                                        {stats.topDish.quantity} {t('sales') || 'vendas'}
+                                        {stats.topDish.quantity} {t('sales')}
                                     </p>
                                     <span style={restaurantBadgeStyle}>{stats.topDish.restaurant}</span>
                                 </div>
@@ -299,10 +308,10 @@ const OwnerDashboard = () => {
                         <div style={premiumCardStyle}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div style={{ flex: 1 }}>
-                                    <p style={cardLabelStyle}>⚡ {t('fastest_dish') || 'Prato Mais Rápido'}</p>
+                                    <p style={cardLabelStyle}>⚡ {t('fastest_dish')}</p>
                                     <h3 style={cardValueStyle}>{stats.fastestDish.name}</h3>
                                     <p style={cardSubtextStyle}>
-                                        {stats.fastestDish.avgTime} min {t('average') || 'média'}
+                                        {stats.fastestDish.avgTime} min {t('average')}
                                     </p>
                                     <span style={restaurantBadgeStyle}>{stats.fastestDish.restaurant}</span>
                                 </div>
@@ -322,62 +331,96 @@ const OwnerDashboard = () => {
                         <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>{t('revenue_by_restaurant')}</h3>
                     </div>
                     <div style={{ height: '350px' }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                            <BarChart
-                                data={stats?.revenueByRestaurant?.map(r => ({
-                                    ...r,
-                                    convertedRevenue: convert(r.revenue)
-                                }))}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                <Tooltip
-                                    cursor={{ fill: '#f1f5f9' }}
-                                    formatter={(value) => [format(value), t('revenue')]}
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
-                                />
-                                <Bar dataKey="convertedRevenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={50} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {loading ? (
+                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <LoadingSpinner />
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <BarChart
+                                    data={stats?.revenueByRestaurant?.map(r => ({
+                                        ...r,
+                                        convertedRevenue: convert(r.revenue)
+                                    }))}
+                                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                    <Tooltip
+                                        cursor={{ fill: '#f1f5f9' }}
+                                        formatter={(value) => [format(value), t('revenue')]}
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+                                    />
+                                    <Bar dataKey="convertedRevenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={50} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
                 <div style={{ ...sectionStyle, flex: 1, minWidth: '300px', marginBottom: 0 }}>
                     <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('order_distribution')}</h3>
                     <div style={{ height: '350px' }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                            <PieChart>
-                                <Pie
-                                    data={stats?.revenueByRestaurant}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={80}
-                                    outerRadius={110}
-                                    paddingAngle={5}
-                                    dataKey="orders"
-                                >
-                                    {stats?.revenueByRestaurant?.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        {loading ? (
+                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <LoadingSpinner />
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <PieChart>
+                                    <Pie
+                                        data={stats?.revenueByRestaurant}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={80}
+                                        outerRadius={110}
+                                        paddingAngle={5}
+                                        dataKey="orders"
+                                    >
+                                        {stats?.revenueByRestaurant?.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Restaurant List */}
             <div style={sectionStyle}>
-                <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', marginBottom: '20px' }}>{t('performance_ranking')}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', margin: 0 }}>{t('performance_ranking')}</h3>
+                    <div style={{ position: 'relative' }}>
+                        <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                        <input 
+                            type="text" 
+                            placeholder={t('search_restaurants')}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                padding: '10px 16px 10px 40px',
+                                borderRadius: '12px',
+                                border: '1px solid #e2e8f0',
+                                outline: 'none',
+                                fontSize: '14px',
+                                width: '300px',
+                                transition: 'all 0.2s'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                            onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                        />
+                    </div>
+                </div>
                 <div className="table-container" style={{ boxShadow: 'none', borderRadius: '0' }}>
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th style={{ paddingLeft: 0 }}>{t('table')}</th>
+                                <th style={{ paddingLeft: 0 }}>{t('restaurant')}</th>
                                 <th>{t('total_revenue')}</th>
                                 <th>{t('orders')}</th>
                                 <th>{t('avg_ticket')}</th>
@@ -386,8 +429,8 @@ const OwnerDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {stats?.revenueByRestaurant?.map((rest, index) => (
-                                <tr key={rest.id} style={{ borderBottom: index === stats.revenueByRestaurant.length - 1 ? 'none' : '1px solid #f1f5f9' }}>
+                            {filteredRestaurants.map((rest, index) => (
+                                <tr key={rest.id} style={{ borderBottom: index === filteredRestaurants.length - 1 ? 'none' : '1px solid #f1f5f9' }}>
                                     <td style={{ paddingLeft: 0, padding: '20px 0' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                             <div style={{
@@ -437,13 +480,18 @@ const OwnerDashboard = () => {
                                             onMouseOver={(e) => { e.target.style.borderColor = '#4f46e5'; e.target.style.background = '#eef2ff'; }}
                                             onMouseOut={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = 'white'; }}
                                         >
-                                            {t('manage_dashboard') || 'Manage Dashboard'} <ArrowRight size={16} />
+                                            {t('manage_dashboard')} <ArrowRight size={16} />
                                         </button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    {filteredRestaurants.length === 0 && (
+                        <div style={{ padding: '48px', textAlign: 'center', color: '#64748b', fontWeight: '600' }}>
+                            {t('no_items')}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -451,3 +499,4 @@ const OwnerDashboard = () => {
 };
 
 export default OwnerDashboard;
+
