@@ -302,18 +302,9 @@ export const processOrderCreation = async ({
 
     // Socket IO
     if (io) {
-        const payload = {
-            orderId: newOrder._id,
-            tableNumber: table.number,
-            total: newOrder.total,
-            customerName: newOrder.customerName,
-            itemsCount: populatedItems.length,
-            source: newOrder.source,
-            status: newOrder.status
-        };
         // Notify restaurant room
-        io.to(`restaurant:${restaurantId}`).emit('order:new', payload);
-        io.to(`restaurant:${restaurantId}`).emit('order:new:full', newOrder); // Maybe full object for some listeners
+        io.to(`restaurant:${restaurantId}`).emit('order:new', newOrder);
+        io.to(`restaurant:${restaurantId}`).emit('order:new:full', newOrder); 
     }
 
     return { order: newOrder, tableNumber: table.number };

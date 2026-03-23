@@ -146,25 +146,21 @@ const Kitchen = () => {
                     }
                 }));
             } else {
-                // Instant local update for visual responsiveness
-                setOrders(prev => {
-                    const index = prev.findIndex(o => o._id === data._id);
-                    if (index === -1) {
-                        if (['pending', 'confirmed', 'preparing', 'ready'].includes(data.status)) {
-                            return [data, ...prev];
-                        }
-                        return prev;
+            // Instant local update for visual responsiveness
+            setOrders(prev => {
+                const index = prev.findIndex(o => o._id === data._id);
+                if (index === -1) {
+                    if (['pending', 'confirmed', 'preparing', 'ready'].includes(data.status)) {
+                        return [data, ...prev];
                     }
-                    const newOrders = [...prev];
-                    newOrders[index] = { ...newOrders[index], ...data };
-                    return newOrders;
-                });
-            }
-
-            // Debounced full refresh to get complete data from server
-            if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-            refreshTimerRef.current = setTimeout(() => fetchData(), 800);
-        };
+                    return prev;
+                }
+                const newOrders = [...prev];
+                newOrders[index] = { ...newOrders[index], ...data };
+                return newOrders;
+            });
+        }
+    };
 
         const handleStatsUpdate = (data) => {
 
@@ -177,6 +173,7 @@ const Kitchen = () => {
         };
 
         socket.on('order:new', handleNewOrder);
+        socket.on('room:order:new', handleNewOrder);
         socket.on('order-updated', handleRealtimeUpdate);
         socket.on('stats:updated', handleStatsUpdate);
         socket.on('waiter:call', fetchData);
@@ -185,6 +182,7 @@ const Kitchen = () => {
 
         return () => {
             socket.off('order:new', handleNewOrder);
+            socket.off('room:order:new', handleNewOrder);
             socket.off('order-updated', handleRealtimeUpdate);
             socket.off('stats:updated', handleStatsUpdate);
             socket.off('waiter:call', fetchData);

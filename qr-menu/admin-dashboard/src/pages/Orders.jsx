@@ -33,13 +33,12 @@ export default function Orders() {
         if (!socket) return;
 
         const handleNewOrder = (newOrder) => {
-
-
             // Only add if it matches current filter or filter is 'all'
             if (filter === 'all' || filter === 'pending') {
                 setOrders(prev => {
-                    // Check if already exists
-                    if (prev.find(o => o._id === newOrder._id || o._id === newOrder.orderId)) return prev;
+                    // Check if already exists (handle both _id and orderId for robustness)
+                    const orderId = newOrder._id || newOrder.orderId;
+                    if (prev.find(o => o._id === orderId)) return prev;
 
                     // Add to list (at the top since it's most recent)
                     return [newOrder, ...prev];
@@ -84,10 +83,12 @@ export default function Orders() {
         };
 
         socket.on('order:new', handleNewOrder);
+        socket.on('room:order:new', handleNewOrder);
         socket.on('order-updated', handleOrderUpdate);
 
         return () => {
             socket.off('order:new', handleNewOrder);
+            socket.off('room:order:new', handleNewOrder);
             socket.off('order-updated', handleOrderUpdate);
         };
     }, [socket, filter, playNewOrder]);

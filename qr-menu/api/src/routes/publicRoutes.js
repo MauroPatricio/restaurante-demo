@@ -480,15 +480,7 @@ router.post('/room/orders', async (req, res) => {
         // Notify kitchen/admin via socket
         const io = req.app.get('io');
         if (io) {
-            io.to(`restaurant:${restaurantId}`).emit('room:order:new', {
-                orderId: newOrder._id,
-                roomNumber: room.number,
-                floor: room.floor,
-                total: newOrder.total,
-                customerName: newOrder.customerName,
-                itemsCount: populatedItems.length,
-                status: 'pending'
-            });
+            io.to(`restaurant:${restaurantId}`).emit('room:order:new', newOrder);
         }
 
         res.status(201).json({

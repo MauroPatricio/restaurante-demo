@@ -285,7 +285,11 @@ export default function RoomOrders() {
     useEffect(() => {
         if (!socket || !restaurantId) return;
         const handleNew = (data) => {
-            fetchOrders(); 
+            setOrders(prev => {
+                const orderId = data._id || data.orderId;
+                if (prev.find(o => o._id === orderId)) return prev;
+                return [data, ...prev];
+            });
         };
         const handleUpdated = (data) => {
             setOrders(prev => prev.map(o => o._id === data._id ? { ...o, ...data } : o));
