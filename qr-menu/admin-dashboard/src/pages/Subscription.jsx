@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { subscriptionAPI } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getCurrencySymbol } from '../utils/currencyUtils';
+import { getCurrencySymbol, fetchExchangeRates, convertCurrency, formatCurrency as formatProfessional } from '../utils/currencyUtils';
 import {
     CreditCard,
     Calendar,
@@ -32,11 +32,17 @@ export default function Subscription() {
     // New state for upload
     const [proofFile, setProofFile] = useState(null);
     const [uploading, setUploading] = useState(false);
+    const [rates, setRates] = useState(null);
 
     useEffect(() => {
         if (user?.restaurant) {
             fetchData();
         }
+        const getRates = async () => {
+            const r = await fetchExchangeRates();
+            setRates(r);
+        };
+        getRates();
     }, [user]);
 
     const fetchData = async () => {
@@ -161,8 +167,15 @@ export default function Subscription() {
     };
 
     const formatCurrency = (amount) => {
-        const symbol = getCurrencySymbol(subscription?.currency || user?.restaurant?.settings?.currency || 'MZN');
-        return `${amount?.toLocaleString() || '0'} ${symbol}`;
+        const currentCurrency = subscription?.currency || user?.restaurant?.settings?.currency || 'MZN';
+        const symbol = getCurrencySymbol(currentCurrency);
+        const primary = `${amount?.toLocaleString() || '0'} ${symbol}`;
+        
+        if (currentCurrency !== 'USD' && rates) {
+            const usdAmount = convertCurrency(amount, currentCurrency, 'USD', rates);
+            return `${primary} (${formatProfessional(usdAmount, 'USD')})`;
+        }
+        return primary;
     };
 
     return (
