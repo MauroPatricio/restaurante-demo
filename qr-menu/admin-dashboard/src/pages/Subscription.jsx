@@ -171,9 +171,24 @@ export default function Subscription() {
         const symbol = getCurrencySymbol(currentCurrency);
         const primary = `${amount?.toLocaleString() || '0'} ${symbol}`;
         
-        if (currentCurrency !== 'USD' && rates) {
-            const usdAmount = convertCurrency(amount, currentCurrency, 'USD', rates);
-            return `${primary} (${formatProfessional(usdAmount, 'USD')})`;
+        if (currentCurrency !== 'USD') {
+            let usdAmountDisplay;
+            
+            // User requested specific USD prices for specific tiers
+            // 1500 MZN is the "menores" tier (23 USD)
+            // 5000 MZN or more is the "Standard" tier (79 USD)
+            if (amount === 1500) {
+                usdAmountDisplay = "23.00 US$";
+            } else if (amount >= 5000) {
+                usdAmountDisplay = "79.00 US$";
+            } else if (rates) {
+                const usdAmount = convertCurrency(amount, currentCurrency, 'USD', rates);
+                usdAmountDisplay = formatProfessional(usdAmount, 'USD');
+            }
+
+            if (usdAmountDisplay) {
+                return `${primary} (${usdAmountDisplay})`;
+            }
         }
         return primary;
     };
