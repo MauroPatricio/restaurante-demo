@@ -493,9 +493,11 @@ const Kitchen = () => {
                                                 <span className="text-premium-header" style={{ fontSize: '26px' }}>
                                                     #{order.orderNumber || (order._id ? order._id.substr(-5).toUpperCase() : '----')}
                                                 </span>
-                                                <div className="premium-badge glass-surface" style={{ fontSize: '13px' }}>
-                                                    Mesa {order.table?.number || '?'}
-                                                </div>
+                                                 <div className="premium-badge glass-surface" style={{ fontSize: '13px' }}>
+                                                     {order.orderType === 'room-service' 
+                                                        ? `🛏️ Quarto ${order.roomService?.roomNumber || '—'}` 
+                                                        : `🪑 Mesa ${order.tableNumber || order.table?.number || order.table || '—'}`}
+                                                 </div>
                                             </div>
                                             <div className="text-premium-muted" style={{ marginTop: '6px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 <Clock size={14} />

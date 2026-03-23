@@ -302,9 +302,14 @@ export const processOrderCreation = async ({
 
     // Socket IO
     if (io) {
+        // Populate table and items for frontend display
+        const populatedOrder = await Order.findById(newOrder._id)
+            .populate('table', 'number location')
+            .populate('items.item', 'name price imageUrl');
+
         // Notify restaurant room
-        io.to(`restaurant:${restaurantId}`).emit('order:new', newOrder);
-        io.to(`restaurant:${restaurantId}`).emit('order:new:full', newOrder); 
+        io.to(`restaurant:${restaurantId}`).emit('order:new', populatedOrder);
+        io.to(`restaurant:${restaurantId}`).emit('order:new:full', populatedOrder); 
     }
 
     return { order: newOrder, tableNumber: table.number };

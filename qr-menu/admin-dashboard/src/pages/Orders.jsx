@@ -208,7 +208,7 @@ export default function Orders() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-sm font-black text-primary-600 dark:text-primary-400">
-                                                {order.orderType === 'room-service' ? `🛏️ ${order.roomService?.roomNumber}` : `🪑 ${order.table?.number || order.table || '-'}`}
+                                                {order.orderType === 'room-service' ? `🛏️ ${order.roomService?.roomNumber}` : `🪑 ${order.tableNumber || order.table?.number || order.table || '-'}`}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
