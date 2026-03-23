@@ -18,7 +18,7 @@ const SubscriptionTransactionSchema = new mongoose.Schema({
     },
     currency: {
         type: String,
-        default: 'MT'
+        default: 'USD'
     },
     method: {
         type: String,

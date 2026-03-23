@@ -55,10 +55,10 @@ export default function DRE() {
         ];
 
         const data = [
-            { description: '1. Receita Bruta de Vendas e Serviços', value: convertAndFormat(dreData.totalRevenue, 'MZN') },
-            ...dreData.revenues.map(r => ({ description: `   ${r.code} - ${r.name}`, value: convertAndFormat(r.movement, 'MZN') })),
-            { description: '2. Custos e Despesas Operacionais', value: `- ${convertAndFormat(dreData.totalExpenses, 'MZN')}` },
-            ...dreData.expenses.map(e => ({ description: `   ${e.code} - ${e.name}`, value: convertAndFormat(e.movement, 'MZN') }))
+            { description: '1. Receita Bruta de Vendas e Serviços', value: convertAndFormat(dreData.totalRevenue) },
+            ...dreData.revenues.map(r => ({ description: `   ${r.code} - ${r.name}`, value: convertAndFormat(r.movement) })),
+            { description: '2. Custos e Despesas Operacionais', value: `- ${convertAndFormat(dreData.totalExpenses)}` },
+            ...dreData.expenses.map(e => ({ description: `   ${e.code} - ${e.name}`, value: convertAndFormat(e.movement) }))
         ];
 
         exportToPDF({
@@ -175,7 +175,7 @@ export default function DRE() {
                                 <div>
                                     <p style={{ margin: 0, fontSize: '12px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Receita Bruta (Vendas)</p>
                                     <h3 style={{ margin: '8px 0 0 0', fontSize: '28px', fontWeight: '900', color: '#1e293b' }}>
-                                        {convertAndFormat(dreData.totalRevenue, 'MZN')}
+                                        {convertAndFormat(dreData.totalRevenue)}
                                     </h3>
                                 </div>
                                 <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '16px', color: '#10b981' }}>
@@ -189,7 +189,7 @@ export default function DRE() {
                                 <div>
                                     <p style={{ margin: 0, fontSize: '12px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Despesas Operacionais</p>
                                     <h3 style={{ margin: '8px 0 0 0', fontSize: '28px', fontWeight: '900', color: '#1e293b' }}>
-                                        {convertAndFormat(dreData.totalExpenses, 'MZN')}
+                                        {convertAndFormat(dreData.totalExpenses)}
                                     </h3>
                                 </div>
                                 <div style={{ background: '#fef2f2', padding: '12px', borderRadius: '16px', color: '#ef4444' }}>
@@ -205,7 +205,7 @@ export default function DRE() {
                                         {dreData.netIncome >= 0 ? 'Lucro Líquido' : 'Prejuízo Líquido'}
                                     </p>
                                     <h3 style={{ margin: '8px 0 0 0', fontSize: '32px', fontWeight: '900' }}>
-                                        {convertAndFormat(Math.abs(dreData.netIncome), 'MZN')}
+                                        {convertAndFormat(Math.abs(dreData.netIncome))}
                                     </h3>
                                 </div>
                                 <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '16px' }}>
@@ -228,7 +228,7 @@ export default function DRE() {
                                 {/* 1. Receitas */}
                                 <tr style={{ background: '#f8fafc' }}>
                                     <td style={{ padding: '16px 32px', fontSize: '16px', fontWeight: '900', color: '#0f172a' }}>1. Receita Bruta de Vendas e Serviços</td>
-                                    <td style={{ padding: '16px 32px', fontSize: '16px', fontWeight: '900', color: '#10b981', textAlign: 'right' }}>{convertAndFormat(dreData.totalRevenue, 'MZN')}</td>
+                                    <td style={{ padding: '16px 32px', fontSize: '16px', fontWeight: '900', color: '#10b981', textAlign: 'right' }}>{convertAndFormat(dreData.totalRevenue)}</td>
                                 </tr>
                                 {dreData.revenues.map(rev => (
                                     <tr key={rev._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -236,7 +236,7 @@ export default function DRE() {
                                             {rev.code} - {rev.name}
                                         </td>
                                         <td style={{ padding: '12px 32px', fontSize: '14px', fontWeight: '700', color: '#1e293b', textAlign: 'right' }}>
-                                            {convertAndFormat(rev.movement, 'MZN')}
+                                            {convertAndFormat(rev.movement)}
                                         </td>
                                     </tr>
                                 ))}
@@ -247,7 +247,7 @@ export default function DRE() {
                                 {/* 2. Despesas */}
                                 <tr style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
                                     <td style={{ padding: '16px 32px', fontSize: '16px', fontWeight: '900', color: '#0f172a' }}>2. Custos e Despesas Operacionais</td>
-                                    <td style={{ padding: '16px 32px', fontSize: '16px', fontWeight: '900', color: '#ef4444', textAlign: 'right' }}>- {convertAndFormat(dreData.totalExpenses, 'MZN')}</td>
+                                    <td style={{ padding: '16px 32px', fontSize: '16px', fontWeight: '900', color: '#ef4444', textAlign: 'right' }}>- {convertAndFormat(dreData.totalExpenses)}</td>
                                 </tr>
                                 {dreData.expenses.map(exp => (
                                     <tr key={exp._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -255,7 +255,7 @@ export default function DRE() {
                                             {exp.code} - {exp.name}
                                         </td>
                                         <td style={{ padding: '12px 32px', fontSize: '14px', fontWeight: '700', color: '#1e293b', textAlign: 'right' }}>
-                                            {convertAndFormat(exp.movement, 'MZN')}
+                                            {convertAndFormat(exp.movement)}
                                         </td>
                                     </tr>
                                 ))}
@@ -269,7 +269,7 @@ export default function DRE() {
                                         3. Resultado Líquido do Exercício
                                     </td>
                                     <td style={{ padding: '24px 32px', fontSize: '24px', fontWeight: '900', color: dreData.netIncome >= 0 ? '#4338ca' : '#b91c1c', textAlign: 'right' }}>
-                                        {convertAndFormat(Math.abs(dreData.netIncome), 'MZN')}
+                                        {convertAndFormat(Math.abs(dreData.netIncome))}
                                         {dreData.netIncome < 0 && ' (Prejuízo)'}
                                     </td>
                                 </tr>

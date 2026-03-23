@@ -8,10 +8,12 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../hooks/useToast';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function PlanOfAccounts() {
     const { t } = useTranslation();
     const { toast } = useToast();
+    const { convertAndFormat } = useCurrency();
     const [accounts, setAccounts] = useState([]);
     const [trialBalance, setTrialBalance] = useState([]);
     const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'trial'
@@ -224,7 +226,7 @@ export default function PlanOfAccounts() {
                                             </span>
                                         </div>
                                         <div style={{ textAlign: 'right', fontSize: '14px', fontWeight: '900', color: acc.balance < 0 ? '#ef4444' : '#0f172a' }}>
-                                            {acc.balance?.toLocaleString()} MT
+                                            {convertAndFormat(acc.balance)}
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             {!hasChildren && (

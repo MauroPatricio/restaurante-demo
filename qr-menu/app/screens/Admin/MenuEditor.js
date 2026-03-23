@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export default function MenuEditor({ route }) {
   const { t } = useTranslation();
+  const { convertAndFormat } = useCurrency();
   const { restaurantId = 'RESTAURANT_ID_FAKE' } = route.params || {};
   const [menu, setMenu] = useState([]);
   const [name, setName] = useState('');
@@ -63,7 +65,7 @@ export default function MenuEditor({ route }) {
         style={{ marginTop: 20 }}
         renderItem={({ item }) => (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 10, borderBottomWidth: 1 }}>
-            <Text>{item.name} - {item.price} {t('currency')}</Text>
+            <Text>{item.name} - {convertAndFormat(item.price)}</Text>
             <TouchableOpacity onPress={() => removeItem(item._id)}>
               <Text style={{ color: 'red' }}>{t('remove')}</Text>
             </TouchableOpacity>

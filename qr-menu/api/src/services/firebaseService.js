@@ -181,7 +181,7 @@ export const sendOrderNotification = async (order, type) => {
             case 'payment-received':
                 notification = {
                     title: 'Payment Received',
-                    body: `Payment of ${order.total} MT received for Order #${order._id.toString().slice(-6)}`,
+                    body: `Payment of ${order.total} ${order.currency || 'USD'} received for Order #${order._id.toString().slice(-6)}`,
                     data: { orderId: order._id.toString(), type: 'payment-received' }
                 };
                 targetRole = 'manager';

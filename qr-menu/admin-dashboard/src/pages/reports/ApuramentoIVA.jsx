@@ -9,7 +9,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ApuramentoIVA = () => {
     const { t } = useTranslation();
-    const { convertAndFormat } = useCurrency();
+    const { convertAndFormat, systemCurrency } = useCurrency();
 
     // Default to current month
     const currentDate = new Date();
@@ -44,11 +44,11 @@ const ApuramentoIVA = () => {
 
     const handleExportPDF = () => {
         if (!data) return;
-        const columns = ['Descrição', 'Valor (MZN)'];
+        const columns = ['Descrição', `Valor (${systemCurrency})` || 'Valor'];
         const rows = [
-            ['IVA Liquidado (Vendas)', convertAndFormat(data.ivaLiquidado, 'MZN')],
-            ['IVA Dedutível (Compras)', convertAndFormat(data.ivaDedutivel, 'MZN')],
-            ['IVA a Pagar / (A Recuperar)', formatCurrency(data.ivaAPagar)]
+            ['IVA Liquidado (Vendas)', convertAndFormat(data.ivaLiquidado)],
+            ['IVA Dedutível (Compras)', convertAndFormat(data.ivaDedutivel)],
+            ['IVA a Pagar / (A Recuperar)', convertAndFormat(data.ivaAPagar)]
         ];
         exportToPDF(`Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}.pdf`, columns, rows, 'Apuramento Mensal de IVA (PGC-NIRF)');
     };
@@ -56,9 +56,9 @@ const ApuramentoIVA = () => {
     const handleExportExcel = () => {
         if (!data) return;
         const exportData = [
-            { 'Descrição': 'IVA Liquidado (Vendas)', 'Valor (MZN)': data.ivaLiquidado },
-            { 'Descrição': 'IVA Dedutível (Compras)', 'Valor (MZN)': data.ivaDedutivel },
-            { 'Descrição': 'IVA a Pagar / (A Recuperar)', 'Valor (MZN)': data.ivaAPagar }
+            { 'Descrição': 'IVA Liquidado (Vendas)', [`Valor (${systemCurrency})`]: data.ivaLiquidado },
+            { 'Descrição': 'IVA Dedutível (Compras)', [`Valor (${systemCurrency})`]: data.ivaDedutivel },
+            { 'Descrição': 'IVA a Pagar / (A Recuperar)', [`Valor (${systemCurrency})`]: data.ivaAPagar }
         ];
         exportToExcel(exportData, `Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}.xlsx`);
     };
@@ -134,7 +134,7 @@ const ApuramentoIVA = () => {
                                         <p className="text-xs text-red-600">Conta 2433 - Imposto a entregar ao Estado</p>
                                     </div>
                                 </div>
-                                <span className="text-xl font-bold text-red-900">{convertAndFormat(data.ivaLiquidado, 'MZN')}</span>
+                                <span className="text-xl font-bold text-red-900">{convertAndFormat(data.ivaLiquidado)}</span>
                             </div>
 
                             {/* Dedutível */}
@@ -148,7 +148,7 @@ const ApuramentoIVA = () => {
                                         <p className="text-xs text-green-600">Conta 2432 - Imposto a recuperar do Estado</p>
                                     </div>
                                 </div>
-                                <span className="text-xl font-bold text-green-900">{convertAndFormat(data.ivaDedutivel, 'MZN')}</span>
+                                <span className="text-xl font-bold text-green-900">{convertAndFormat(data.ivaDedutivel)}</span>
                             </div>
 
                             <div className="h-px bg-gray-200 w-full my-4"></div>
@@ -169,7 +169,7 @@ const ApuramentoIVA = () => {
                                     </div>
                                 </div>
                                 <span className={`text-3xl font-black ${data.ivaAPagar >= 0 ? 'text-primary' : 'text-blue-700'}`}>
-                                    {convertAndFormat(Math.abs(data.ivaAPagar), 'MZN')}
+                                    {convertAndFormat(Math.abs(data.ivaAPagar))}
                                 </span>
                             </div>
                         </div>

@@ -7,6 +7,7 @@ import {
     Navigation, Clock, Package, Users
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useCurrency } from '../contexts/CurrencyContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 // Modern Card Styles (matching FinancialTab)
@@ -41,6 +42,7 @@ const iconBoxStyle = (color, bg) => ({
 
 export default function DeliveryDashboard() {
     const { user } = useAuth();
+    const { convertAndFormat } = useCurrency();
     const [orders, setOrders] = useState([]);
     const [drivers, setDrivers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -265,7 +267,7 @@ export default function DeliveryDashboard() {
                                     </div>
 
                                     <div style={{ fontSize: '12px', color: '#64748b', background: 'white', padding: '8px', borderRadius: '6px', marginBottom: '12px' }}>
-                                        {order.items.length} items • Total: {order.total} MT
+                                        {order.items.length} items • Total: {convertAndFormat(order.total, order.currency)}
                                     </div>
 
                                     {/* Action Area */}

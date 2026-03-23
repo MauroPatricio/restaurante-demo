@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CartProvider } from './contexts/CartContext';
 import { LoadingProvider } from './contexts/LoadingContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 
 import HomeScreen from './screens/HomeScreen';
 import CartScreen from './screens/CartScreen';
@@ -34,7 +35,7 @@ function HomeTabs() {
         name="Menu"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ focused }) => <span style={{ fontSize: 24 }}>{focused ? '🍽️' : '🍴'}</span>,
+          tabBarIcon: ({ focused }: { focused: boolean }) => <Text style={{ fontSize: 24 }}>{focused ? '🍽️' : '🍴'}</Text>,
           headerShown: false,
           tabBarLabel: t('menu')
         }}
@@ -43,7 +44,7 @@ function HomeTabs() {
         name="Cart"
         component={CartScreen}
         options={{
-          tabBarIcon: ({ focused }) => <span style={{ fontSize: 24 }}>{focused ? '🛒' : '🛍️'}</span>,
+          tabBarIcon: ({ focused }: { focused: boolean }) => <Text style={{ fontSize: 24 }}>{focused ? '🛒' : '🛍️'}</Text>,
           tabBarLabel: t('cart')
         }}
       />
@@ -55,37 +56,39 @@ export default function App() {
   const { t } = useTranslation();
   return (
     <LoadingProvider>
-      <CartProvider>
-        <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen
-              name="Home"
-              component={HomeTabs}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Checkout"
-              component={CheckoutScreen}
-              options={{ title: t('checkout') }}
-            />
-            <Stack.Screen
-              name="DeliveryAddress"
-              component={DeliveryAddressScreen}
-              options={{ title: t('delivery') }}
-            />
-            <Stack.Screen
-              name="OrderStatus"
-              component={OrderStatusScreen}
-              options={{ title: t('order_tracking') }}
-            />
-            <Stack.Screen
-              name="Feedback"
-              component={FeedbackScreen}
-              options={{ title: t('feedback_title') }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </CartProvider>
+      <CurrencyProvider>
+        <CartProvider>
+          <NavigationContainer>
+            <Stack.Navigator>
+              <Stack.Screen
+                name="Home"
+                component={HomeTabs}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Checkout"
+                component={CheckoutScreen}
+                options={{ title: t('checkout') }}
+              />
+              <Stack.Screen
+                name="DeliveryAddress"
+                component={DeliveryAddressScreen}
+                options={{ title: t('delivery') }}
+              />
+              <Stack.Screen
+                name="OrderStatus"
+                component={OrderStatusScreen}
+                options={{ title: t('order_tracking') }}
+              />
+              <Stack.Screen
+                name="Feedback"
+                component={FeedbackScreen}
+                options={{ title: t('feedback_title') }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </CartProvider>
+      </CurrencyProvider>
     </LoadingProvider>
   );
 }

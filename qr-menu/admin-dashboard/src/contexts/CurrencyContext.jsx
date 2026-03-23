@@ -18,7 +18,7 @@ export const CurrencyProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     // Get the base currency defined in restaurant settings
-    const systemCurrency = user?.restaurant?.settings?.currency || 'MZN';
+    const systemCurrency = user?.restaurant?.settings?.currency || 'USD';
 
     const loadRates = useCallback(async (force = false) => {
         try {
@@ -40,7 +40,7 @@ export const CurrencyProvider = ({ children }) => {
      */
     const convert = useCallback((amount, fromCurrency) => {
         if (!amount) return 0;
-        const from = fromCurrency || 'MZN';
+        const from = fromCurrency || systemCurrency;
         return convertCurrency(amount, from, systemCurrency, rates);
     }, [rates, systemCurrency]);
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { analyticsAPI, menuAPI, stockAPI } from '../services/api';
+import { useCurrency } from '../contexts/CurrencyContext';
 import {
     Package, AlertTriangle, TrendingUp, DollarSign,
     RefreshCw, Save, Edit2, X, Box, Boxes, TrendingDown,
@@ -44,7 +45,8 @@ const iconBoxStyle = (color, bg) => ({
 
 export default function StockDashboard() {
     const { user } = useAuth();
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
+    const { convertAndFormat } = useCurrency();
     const [data, setData] = useState({ summary: {}, items: [] });
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
@@ -268,7 +270,7 @@ export default function StockDashboard() {
                                     {t('stock_total_value_kpi')}
                                 </p>
                                 <h3 style={{ fontSize: '36px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                                    {data.summary.totalValue?.toLocaleString()} <span style={{ fontSize: '20px', color: '#64748b' }}>MT</span>
+                                    {convertAndFormat(data.summary.totalValue)}
                                 </h3>
                             </div>
                             <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
@@ -396,8 +398,8 @@ export default function StockDashboard() {
                                                     <td style={{ padding: '16px', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>
                                                         {item.stockControlled ? (item.stockMin || 0) : '--'}
                                                     </td>
-                                                    <td style={{ padding: '16px', color: '#475569', fontWeight: '500' }}>{item.price?.toLocaleString()} MT</td>
-                                                    <td style={{ padding: '16px', color: '#64748b' }}>{item.costPrice?.toLocaleString()} MT</td>
+                                                    <td style={{ padding: '16px', color: '#475569', fontWeight: '500' }}>{convertAndFormat(item.price)}</td>
+                                                    <td style={{ padding: '16px', color: '#64748b' }}>{convertAndFormat(item.costPrice)}</td>
                                                     <td style={{ padding: '16px' }}>
                                                         <span style={{
                                                             fontWeight: '700',
@@ -407,7 +409,7 @@ export default function StockDashboard() {
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: '16px', fontWeight: '600', color: '#1e293b' }}>
-                                                        {(item.stock * item.costPrice).toLocaleString()} MT
+                                                        {convertAndFormat(item.stock * item.costPrice)}
                                                     </td>
                                                     <td style={{ padding: '16px', textAlign: 'right' }}>
                                                         {editingId === item._id ? (
@@ -484,7 +486,7 @@ export default function StockDashboard() {
                                                         borderRadius: '12px',
                                                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                                     }}
-                                                    formatter={(value) => [`${value.toLocaleString()} MT`, t('stock_total_value_label')]}
+                                                    formatter={(value) => [convertAndFormat(value), t('stock_total_value_label')]}
                                                 />
                                                 <Bar dataKey="value" fill="#6366f1" radius={[0, 8, 8, 0]} />
                                             </BarChart>

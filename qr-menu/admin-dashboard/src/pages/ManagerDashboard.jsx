@@ -135,7 +135,7 @@ const ManagerDashboard = () => {
                     <div>
                         <p style={{ color: '#64748b', fontSize: '14px', fontWeight: '600', textTransform: 'uppercase' }}>Sales Today</p>
                         <h3 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b' }}>
-                            {stats.revenueToday.toLocaleString()} <span style={{ fontSize: '16px', color: '#94a3b8' }}>{getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}</span>
+                            {stats.revenueToday.toLocaleString()} <span style={{ fontSize: '16px', color: '#94a3b8' }}>{getCurrencySymbol(user?.restaurant?.settings?.currency)}</span>
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#eff6ff', '#3b82f6')}>
@@ -244,7 +244,7 @@ const ManagerDashboard = () => {
                                         {order.status}
                                     </span>
                                 </td>
-                                <td style={{ fontWeight: '600' }}>{order.total} {getCurrencySymbol(user?.restaurant?.settings?.currency || 'MZN')}</td>
+                                <td style={{ fontWeight: '600' }}>{order.total} {getCurrencySymbol(user?.restaurant?.settings?.currency)}</td>
                             </tr>
                         ))}
                         {recentOrders.length === 0 && (

@@ -78,7 +78,7 @@ export const CartProvider = ({ children }) => {
 
     // The cart should always use the system's preferred currency (synced with Admin selection)
     // as the base for the checkout and payment process.
-    const cartCurrency = preferredCurrency || 'MZN';
+    const cartCurrency = preferredCurrency;
 
     const cartTotal = cart.reduce((total, item) => {
         const itemUnitPrice = item.price + (item.customizations?.reduce((acc, c) => acc + (c.priceModifier || 0), 0) || 0);

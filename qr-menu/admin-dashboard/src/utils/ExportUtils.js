@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 
 // --- PDF EXPORTS ---
 
-export const exportToPDF = ({ title, subtitle, columns, data, filename, orientation = 'portrait', totals = null, currency = 'MT' }) => {
+export const exportToPDF = ({ title, subtitle, columns, data, filename, orientation = 'portrait', totals = null, currency = 'USD' }) => {
     const doc = new jsPDF(orientation, 'pt', 'a4');
 
     // Header
@@ -61,7 +61,7 @@ export const exportToPDF = ({ title, subtitle, columns, data, filename, orientat
 
 // --- EXCEL EXPORTS ---
 
-export const exportToExcel = ({ title, columns, data, filename, totals = null, currency = 'MT' }) => {
+export const exportToExcel = ({ title, columns, data, filename, totals = null, currency = 'USD' }) => {
     // Format data for excel based on columns
     const excelData = data.map(row => {
         const formattedRow = {};

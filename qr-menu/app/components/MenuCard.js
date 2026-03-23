@@ -1,7 +1,8 @@
-import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function MenuCard({ item, onPress, onAddToCart }) {
+    const { convertAndFormat } = useCurrency();
     const hasImage = item.photo && item.photo.trim() !== '';
 
     return (
@@ -39,7 +40,7 @@ export default function MenuCard({ item, onPress, onAddToCart }) {
                         {item.category && (
                             <Text style={styles.category}>{item.category}</Text>
                         )}
-                        <Text style={styles.price}>{item.price} MT</Text>
+                        <Text style={styles.price}>{convertAndFormat(item.price)}</Text>
                     </View>
 
                     {item.available && onAddToCart && (

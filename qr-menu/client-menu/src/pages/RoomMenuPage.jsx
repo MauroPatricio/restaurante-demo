@@ -258,7 +258,7 @@ export default function RoomMenuPage() {
     });
     const getQty = (id) => cart.find(c => c.item._id === id)?.qty || 0;
     const totalQty = cart.reduce((s, c) => s + c.qty, 0);
-    const cartCurrency = preferredCurrency || (restaurant?.settings?.currency || 'MZN');
+    const cartCurrency = preferredCurrency || restaurant?.settings?.currency;
     const totalPrice = cart.reduce((s, c) => s + c.qty * (c.item.price || 0), 0);
     const isKitchenOpen = restaurant?.settings?.isKitchenOpen !== false;
 

@@ -34,7 +34,7 @@ export const sendPaymentReminder = async (restaurant, daysUntilDue) => {
             message = `
         <h2>Payment Reminder</h2>
         <p>Dear ${restaurant.name},</p>
-        <p>This is a friendly reminder that your subscription payment of <strong>10,000 MT</strong> is due in <strong>${daysUntilDue} days</strong>.</p>
+        <p>This is a friendly reminder that your subscription payment of <strong>10,000 ${restaurant?.settings?.currency || 'USD'}</strong> is due in <strong>${daysUntilDue} days</strong>.</p>
         <p>Please make your payment to avoid service interruption.</p>
         <p>Thank you for using our service!</p>
       `;
@@ -43,7 +43,7 @@ export const sendPaymentReminder = async (restaurant, daysUntilDue) => {
             message = `
         <h2>Payment Overdue</h2>
         <p>Dear ${restaurant.name},</p>
-        <p>Your subscription payment of <strong>10,000 MT</strong> is now overdue.</p>
+        <p>Your subscription payment of <strong>10,000 ${restaurant?.settings?.currency || 'USD'}</strong> is now overdue.</p>
         <p>Please make your payment immediately to avoid service suspension.</p>
         <p>You have a 3-day grace period before your account is suspended.</p>
       `;
@@ -78,7 +78,7 @@ export const sendSuspensionNotice = async (restaurant) => {
         <h2>Account Suspended</h2>
         <p>Dear ${restaurant.name},</p>
         <p>Your account has been suspended due to non-payment of the subscription fee.</p>
-        <p>Amount due: <strong>10,000 MT</strong></p>
+        <p>Amount due: <strong>10,000 ${restaurant?.settings?.currency || 'USD'}</strong></p>
         <p>Please make your payment to reactivate your account.</p>
         <p>Contact us if you have any questions.</p>
       `
@@ -106,7 +106,7 @@ export const sendRenewalConfirmation = async (restaurant, payment) => {
         <h2>Subscription Renewed</h2>
         <p>Dear ${restaurant.name},</p>
         <p>Your subscription has been successfully renewed!</p>
-        <p>Payment received: <strong>${payment.amount} MT</strong></p>
+        <p>Payment received: <strong>${payment.amount} ${payment.currency || 'USD'}</strong></p>
         <p>Reference: ${payment.reference}</p>
         <p>Thank you for your continued business!</p>
       `
@@ -127,7 +127,7 @@ export const sendOrderReceipt = async (order, customerEmail) => {
 
     try {
         const itemsList = order.items.map(item =>
-            `<li>${item.item.name} x ${item.qty} - ${item.subtotal} MT</li>`
+            `<li>${item.item.name} x ${item.qty} - ${item.subtotal} ${order.currency || 'USD'}</li>`
         ).join('');
 
         const mailOptions = {
@@ -140,7 +140,7 @@ export const sendOrderReceipt = async (order, customerEmail) => {
         <p>Order #: <strong>${order._id.toString().slice(-6)}</strong></p>
         <h3>Items:</h3>
         <ul>${itemsList}</ul>
-        <p><strong>Total: ${order.total} MT</strong></p>
+        <p><strong>Total: ${order.total} ${order.currency || 'USD'}</strong></p>
         <p>Status: ${order.status}</p>
         ${order.estimatedReadyTime ? `<p>Estimated ready time: ${new Date(order.estimatedReadyTime).toLocaleTimeString()}</p>` : ''}
       `

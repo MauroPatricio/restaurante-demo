@@ -74,9 +74,9 @@ export default function Razao() {
         const data = razaoData.entries.map(e => ({
             date: new Date(e.date).toLocaleDateString(),
             description: e.description,
-            debit: e.debit > 0 ? convertAndFormat(e.debit, 'MZN') : '-',
-            credit: e.credit > 0 ? convertAndFormat(e.credit, 'MZN') : '-',
-            balance: convertAndFormat(e.balance, 'MZN')
+            debit: e.debit > 0 ? convertAndFormat(e.debit) : '-',
+            credit: e.credit > 0 ? convertAndFormat(e.credit) : '-',
+            balance: convertAndFormat(e.balance)
         }));
 
         exportToPDF({
@@ -193,7 +193,7 @@ export default function Razao() {
                                 Saldo Atualizado
                             </span>
                             <h3 style={{ fontSize: '24px', fontWeight: '900', color: razaoData.closingBalance >= 0 ? '#10b981' : '#ef4444', margin: '4px 0 0 0' }}>
-                                {convertAndFormat(Math.abs(razaoData.closingBalance), 'MZN')}
+                                {convertAndFormat(Math.abs(razaoData.closingBalance))}
                                 {razaoData.closingBalance >= 0 ? '' : ' (Devedor)'}
                             </h3>
                         </div>
@@ -229,13 +229,13 @@ export default function Razao() {
                                             </p>
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: '700', color: '#1e293b', textAlign: 'right' }}>
-                                            {entry.debit > 0 ? convertAndFormat(entry.debit, 'MZN') : '-'}
+                                            {entry.debit > 0 ? convertAndFormat(entry.debit) : '-'}
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: '700', color: '#10b981', textAlign: 'right' }}>
-                                            {entry.credit > 0 ? convertAndFormat(entry.credit, 'MZN') : '-'}
+                                            {entry.credit > 0 ? convertAndFormat(entry.credit) : '-'}
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: '800', color: entry.balance >= 0 ? '#10b981' : '#ef4444', textAlign: 'right', background: '#f8fafc' }}>
-                                            {convertAndFormat(entry.balance, 'MZN')}
+                                            {convertAndFormat(entry.balance)}
                                         </td>
                                     </tr>
                                 ))

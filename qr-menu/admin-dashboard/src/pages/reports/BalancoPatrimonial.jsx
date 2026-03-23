@@ -47,7 +47,7 @@ const SectionCard = ({ title, icon: Icon, color, items, total, totalLabel, conve
                         <span style={{ fontSize: '13px', color: '#475569', fontWeight: '600' }}>{acc.name}</span>
                     </div>
                     <span style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', fontFamily: 'monospace' }}>
-                        {convertAndFormat(Math.abs(acc.balance), 'MZN')}
+                        {convertAndFormat(Math.abs(acc.balance))}
                     </span>
                 </div>
             ))}
@@ -62,7 +62,7 @@ const SectionCard = ({ title, icon: Icon, color, items, total, totalLabel, conve
                 {totalLabel}
             </span>
             <span style={{ fontSize: '18px', fontWeight: '900', color, fontFamily: 'monospace' }}>
-                {convertAndFormat(total, 'MZN')}
+                {convertAndFormat(total)}
             </span>
         </div>
     </div>
@@ -148,7 +148,7 @@ export default function BalancoPatrimonial() {
                             {balanced ? 'Balanço Equilibrado ✓' : 'Balanço Desequilibrado – Verifique os lançamentos'}
                         </p>
                         <p style={{ margin: 0, fontSize: '12px', color: balanced ? '#4ade80' : '#f87171', marginTop: '2px' }}>
-                            Activos: {convertAndFormat(totalAssets, 'MZN')} | Passivos + Capital: {convertAndFormat(totalLiabilities + totalEquity, 'MZN')}
+                            Activos: {convertAndFormat(totalAssets)} | Passivos + Capital: {convertAndFormat(totalLiabilities + totalEquity)}
                         </p>
                     </div>
                 </div>
@@ -223,7 +223,7 @@ export default function BalancoPatrimonial() {
                                         {item.label}
                                     </p>
                                     <p style={{ fontSize: '22px', fontWeight: '900', color: item.color, margin: '6px 0 0', fontFamily: 'monospace' }}>
-                                        {convertAndFormat(item.value, 'MZN')}
+                                        {convertAndFormat(item.value)}
                                     </p>
                                 </div>
                             )

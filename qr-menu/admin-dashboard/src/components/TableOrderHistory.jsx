@@ -4,10 +4,12 @@ import { Clock, Package, DollarSign, ChevronDown, ChevronUp, Receipt } from 'luc
 import { tableAPI } from '../services/api';
 import { format } from 'date-fns';
 import { useSocket } from '../contexts/SocketContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const TableOrderHistory = ({ tableId }) => {
     const { t } = useTranslation();
     const { socket } = useSocket();
+    const { convertAndFormat } = useCurrency();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedOrder, setExpandedOrder] = useState(null);
@@ -125,7 +127,7 @@ const TableOrderHistory = ({ tableId }) => {
                             <div className="flex items-center gap-3">
                                 <div className="text-right">
                                     <div className="font-bold text-lg text-gray-900 dark:text-white">
-                                        {order.total?.toLocaleString() || 0} MT
+                                        {convertAndFormat(order.total, order.currency)}
                                     </div>
                                 </div>
                                 {expandedOrder === order._id ? (
@@ -158,7 +160,7 @@ const TableOrderHistory = ({ tableId }) => {
                                             </span>
                                         </div>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {((item.item?.price || 0) * item.qty).toLocaleString()} MT
+                                            {convertAndFormat((item.item?.price || 0) * item.qty, order.currency || item.item?.currency)}
                                         </span>
                                     </div>
                                 ))}
@@ -169,27 +171,27 @@ const TableOrderHistory = ({ tableId }) => {
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-600 dark:text-gray-400">{t('subtotal') || 'Subtotal'}</span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {order.subtotal?.toLocaleString() || 0} MT
+                                        {convertAndFormat(order.subtotal, order.currency)}
                                     </span>
                                 </div>
                                 {order.tax > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600 dark:text-gray-400">{t('tax') || 'Taxa'}</span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {order.tax?.toLocaleString() || 0} MT
+                                            {convertAndFormat(order.tax, order.currency)}
                                         </span>
                                     </div>
                                 )}
                                 {order.discount > 0 && (
                                     <div className="flex justify-between text-sm text-green-600">
                                         <span>{t('discount') || 'Desconto'}</span>
-                                        <span className="font-medium">-{order.discount?.toLocaleString() || 0} MT</span>
+                                         <span className="font-medium">-{convertAndFormat(order.discount, order.currency)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <span className="text-gray-900 dark:text-white">{t('total') || 'Total'}</span>
-                                    <span className="text-gray-900 dark:text-white">
-                                        {order.total?.toLocaleString() || 0} MT
+                                     <span className="text-gray-900 dark:text-white">
+                                        {convertAndFormat(order.total, order.currency)}
                                     </span>
                                 </div>
                             </div>

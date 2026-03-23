@@ -8,10 +8,12 @@ import {
     ArrowUpCircle, ArrowDownCircle, Info
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function GeneralLedger() {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { convertAndFormat } = useCurrency();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +34,7 @@ export default function GeneralLedger() {
         }
     };
 
-    const currency = user?.restaurant?.settings?.currency || 'MT';
+    const currency = user?.restaurant?.settings?.currency || 'USD';
 
     if (loading) return <div className="p-12"><LoadingSpinner /></div>;
 
@@ -102,7 +104,7 @@ export default function GeneralLedger() {
                                 {tx.items.filter(i => i.debit > 0).map((item, idx) => (
                                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', borderRadius: '12px', marginBottom: '8px' }}>
                                         <span style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>{item.account?.code} {item.account?.name}</span>
-                                        <span style={{ fontSize: '13px', fontWeight: '900', color: '#1e293b' }}>{item.debit.toLocaleString()} {currency}</span>
+                                        <span style={{ fontSize: '13px', fontWeight: '900', color: '#1e293b' }}>{convertAndFormat(item.debit)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -111,7 +113,7 @@ export default function GeneralLedger() {
                                 {tx.items.filter(i => i.credit > 0).map((item, idx) => (
                                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', borderRadius: '12px', marginBottom: '8px' }}>
                                         <span style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>{item.account?.code} {item.account?.name}</span>
-                                        <span style={{ fontSize: '13px', fontWeight: '900', color: '#1e293b' }}>{item.credit.toLocaleString()} {currency}</span>
+                                        <span style={{ fontSize: '13px', fontWeight: '900', color: '#1e293b' }}>{convertAndFormat(item.credit)}</span>
                                     </div>
                                 ))}
                             </div>

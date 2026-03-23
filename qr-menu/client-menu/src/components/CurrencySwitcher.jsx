@@ -1,12 +1,12 @@
 import React from 'react';
 import { useCurrency } from '../context/CurrencyContext';
-import { DollarSign } from 'lucide-react';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 
 const CurrencySwitcher = () => {
     const { currency, changeCurrency } = useCurrency();
 
     const currencies = [
-        { code: 'MZN', label: 'MT', flag: '🇲🇿' },
+        { code: 'MZN', label: getCurrencySymbol('MZN'), flag: '🇲🇿' },
         { code: 'USD', label: 'USD', flag: '🇺🇸' },
         { code: 'EUR', label: 'EUR', flag: '🇪🇺' },
         { code: 'ZAR', label: 'ZAR', flag: '🇿🇦' },
@@ -26,7 +26,7 @@ const CurrencySwitcher = () => {
                         }`}
                 >
                     <span>{curr.flag}</span>
-                    <span>{curr.code}</span>
+                    <span>{curr.label}</span>
                 </button>
             ))}
         </div>

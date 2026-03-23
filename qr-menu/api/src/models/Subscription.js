@@ -22,11 +22,11 @@ const SubscriptionSchema = new mongoose.Schema({
   },
   amount: {
     type: Number,
-    default: 10000 // 10,000 MT per month
+    default: 10000 // Monthly fee amount
   },
   currency: {
     type: String,
-    default: 'MZN'
+    default: 'USD'
   },
   graceEndDate: {
     type: Date // Date when grace period ends and suspension occurs

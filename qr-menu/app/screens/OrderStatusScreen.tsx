@@ -8,9 +8,11 @@ import {
 } from 'react-native';
 import { orderAPI } from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../contexts/CurrencyContext';
 
-export default function OrderStatusScreen({ route }) {
+export default function OrderStatusScreen({ route }: any) {
     const { t } = useTranslation();
+    const { convertAndFormat } = useCurrency();
     
     const STATUS_STEPS = [
         { key: 'pending', label: t('order_status_received'), emoji: '🕐' },
@@ -20,7 +22,7 @@ export default function OrderStatusScreen({ route }) {
         { key: 'completed', label: t('order_status_completed'), emoji: '🎉' },
     ];
     const { orderId } = route.params;
-    const [order, setOrder] = useState(null);
+    const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -104,7 +106,7 @@ export default function OrderStatusScreen({ route }) {
                 </View>
                 <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>{t('total')}:</Text>
-                    <Text style={styles.detailValue}>{order.total} {t('currency') || 'MT'}</Text>
+                    <Text style={styles.detailValue}>{convertAndFormat(order.total)}</Text>
                 </View>
                 {order.estimatedReadyTime && (
                     <View style={styles.detailRow}>

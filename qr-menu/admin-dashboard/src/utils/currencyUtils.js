@@ -26,11 +26,11 @@ export const fetchExchangeRates = async (force = false) => {
         console.error('Failed to fetch exchange rates:', error);
         // Fallback rates if API fails
         return {
-            MZN: 1,
-            USD: 0.0156,
-            EUR: 0.0143,
-            ZAR: 0.28,
-            GBP: 0.0123
+            USD: 1,
+            MZN: 64,
+            EUR: 0.92,
+            ZAR: 18.5,
+            GBP: 0.79
         };
     }
 };
@@ -43,9 +43,9 @@ export const convertCurrency = (amount, from, to, rates) => {
     if (from === to) return amount;
     if (!rates || !rates[from] || !rates[to]) return amount;
     
-    // Always convert to base (MZN) first if rates are relative to base
-    // Most rates from our API are { MZN: 1, USD: 0.015, ... } 
-    // to go from USD to EUR: (amount / rates.USD) * rates.EUR
+    // Always convert to base (USD) first if rates are relative to base
+    // Most rates from our API are { USD: 1, MZN: 64, ... } 
+    // to go from MZN to EUR: (amount / rates.MZN) * rates.EUR
     const amountInBase = amount / rates[from];
     return amountInBase * rates[to];
 };
@@ -53,13 +53,14 @@ export const convertCurrency = (amount, from, to, rates) => {
 /**
  * Format currency value professionally
  */
-export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') => {
+export const formatCurrency = (amount, currencyCode = 'USD', locale = 'pt-MZ') => {
     const numericAmount = Number(amount) || 0;
+    const symbol = getCurrencySymbol(currencyCode);
     
     try {
         // We use a custom approach for MZN/MT to ensure "100.00 MT" style
         if (currencyCode === 'MZN' || currencyCode === 'MT') {
-            return `${numericAmount.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+            return `${numericAmount.toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${symbol}`;
         }
 
         return new Intl.NumberFormat(locale, {
@@ -69,10 +70,7 @@ export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') =
         }).format(numericAmount);
     } catch (e) {
         // Fallback for any issues
-        const symbols = {
-            USD: '$', EUR: '€', ZAR: 'R', GBP: '£', BRL: 'R$', MZN: 'MT', MT: 'MT'
-        };
-        const symbol = symbols[currencyCode] || currencyCode;
+        const symbol = getCurrencySymbol(currencyCode);
         
         // Decide placement: common for MZN/EUR/ZAR to be after, USD before
         if (['USD', 'GBP', 'BRL'].includes(currencyCode)) {
@@ -85,7 +83,7 @@ export const formatCurrency = (amount, currencyCode = 'MZN', locale = 'pt-MZ') =
 /**
  * Get currency symbol mapping
  */
-export const getCurrencySymbol = (currencyCode = 'MZN') => {
+export const getCurrencySymbol = (currencyCode = 'USD') => {
     const symbolMap = {
         MZN: 'MT',
         MT: 'MT',

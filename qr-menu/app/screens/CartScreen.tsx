@@ -10,11 +10,12 @@ import {
     Alert
 } from 'react-native';
 import { useCart } from '../contexts/CartContext';
-
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../contexts/CurrencyContext';
 
-export default function CartScreen({ navigation }) {
+export default function CartScreen({ navigation }: any) {
     const { t } = useTranslation();
+    const { convertAndFormat } = useCurrency();
     const {
         items,
         subtotal,
@@ -37,9 +38,12 @@ export default function CartScreen({ navigation }) {
     const handleApplyCoupon = () => {
         // TODO: Validate coupon with API
         if (couponInput.trim()) {
-            const mockDiscount = 50; // Mock 50 MT discount
+            const mockDiscount = 50; // Mock discount value
             applyCoupon(couponInput.toUpperCase(), mockDiscount);
-            Alert.alert(t('success'), t('coupon_applied', { coupon: couponInput, discount: mockDiscount }));
+            Alert.alert(t('success'), t('coupon_applied', { 
+                coupon: couponInput, 
+                discount: convertAndFormat(mockDiscount) 
+            }));
             setCouponInput('');
         }
     };
@@ -52,16 +56,16 @@ export default function CartScreen({ navigation }) {
         navigation.navigate('Checkout');
     };
 
-    const renderCartItem = ({ item, index }) => (
+    const renderCartItem = ({ item, index }: any) => (
         <View style={styles.cartItem}>
             <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.menuItem.name}</Text>
                 {item.customizations && item.customizations.length > 0 && (
                     <Text style={styles.itemCustomizations}>
-                        {item.customizations.map(c => c.name).join(', ')}
+                        {item.customizations.map((c: any) => c.name).join(', ')}
                     </Text>
                 )}
-                <Text style={styles.itemPrice}>{item.menuItem.price} {t('currency') || 'MT'}</Text>
+                <Text style={styles.itemPrice}>{convertAndFormat(item.menuItem.price)}</Text>
             </View>
 
             <View style={styles.quantityControls}>
@@ -83,7 +87,7 @@ export default function CartScreen({ navigation }) {
             </View>
 
             <View style={styles.itemRight}>
-                <Text style={styles.itemSubtotal}>{item.subtotal} {t('currency') || 'MT'}</Text>
+                <Text style={styles.itemSubtotal}>{convertAndFormat(item.subtotal)}</Text>
                 <TouchableOpacity
                     onPress={() => removeItem(index)}
                     style={styles.removeButton}
@@ -153,7 +157,7 @@ export default function CartScreen({ navigation }) {
                 </View>
                 {couponCode && (
                     <View style={styles.appliedCoupon}>
-                        <Text style={styles.appliedCouponText}>✓ {t('coupon_applied', { coupon: couponCode, discount: discount })}</Text>
+                        <Text style={styles.appliedCouponText}>✓ {t('coupon_applied', { coupon: couponCode, discount: convertAndFormat(discount) })}</Text>
                         <TouchableOpacity onPress={removeCoupon}>
                             <Text style={styles.removeCouponText}>{t('remove')}</Text>
                         </TouchableOpacity>
@@ -165,31 +169,31 @@ export default function CartScreen({ navigation }) {
             <View style={styles.summarySection}>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>{t('subtotal')}</Text>
-                    <Text style={styles.summaryValue}>{subtotal.toFixed(2)} {t('currency') || 'MT'}</Text>
+                    <Text style={styles.summaryValue}>{convertAndFormat(subtotal)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>{t('tax')}</Text>
-                    <Text style={styles.summaryValue}>{tax.toFixed(2)} {t('currency') || 'MT'}</Text>
+                    <Text style={styles.summaryValue}>{convertAndFormat(tax)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>{t('service_charge')}</Text>
-                    <Text style={styles.summaryValue}>{serviceCharge.toFixed(2)} {t('currency') || 'MT'}</Text>
+                    <Text style={styles.summaryValue}>{convertAndFormat(serviceCharge)}</Text>
                 </View>
                 {deliveryFee > 0 && (
                     <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>{t('delivery_fee')}</Text>
-                        <Text style={styles.summaryValue}>{deliveryFee.toFixed(2)} {t('currency') || 'MT'}</Text>
+                        <Text style={styles.summaryValue}>{convertAndFormat(deliveryFee)}</Text>
                     </View>
                 )}
                 {discount > 0 && (
                     <View style={styles.summaryRow}>
                         <Text style={[styles.summaryLabel, styles.discountText]}>{t('discount')}</Text>
-                        <Text style={[styles.summaryValue, styles.discountText]}>-{discount.toFixed(2)} {t('currency') || 'MT'}</Text>
+                        <Text style={[styles.summaryValue, styles.discountText]}>-{convertAndFormat(discount)}</Text>
                     </View>
                 )}
                 <View style={[styles.summaryRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>{t('total')}</Text>
-                    <Text style={styles.totalValue}>{total.toFixed(2)} {t('currency') || 'MT'}</Text>
+                    <Text style={styles.totalValue}>{convertAndFormat(total)}</Text>
                 </View>
             </View>
 

@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { useCart } from '../contexts/CartContext';
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function DeliveryAddressScreen({ navigation }) {
     const { t } = useTranslation();
     const { deliveryAddress, setDeliveryAddress } = useCart();
+    const { convertAndFormat } = useCurrency();
 
     // Parse existing address if available
     const existingAddress = deliveryAddress ?
@@ -133,7 +135,7 @@ export default function DeliveryAddressScreen({ navigation }) {
                     <View style={styles.infoBox}>
                         <Text style={styles.infoIcon}>ℹ️</Text>
                         <Text style={styles.infoText}>
-                            {t('address_correct_check')}
+                            {t('address_correct_check', { fee: convertAndFormat(50) })}
                         </Text>
                     </View>
                 </View>

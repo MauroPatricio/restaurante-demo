@@ -149,7 +149,7 @@ const RenewalNotifications = () => {
                                                 {renewal.restaurantName || (renewal.restaurant?.name) || 'Restaurante'}
                                             </div>
                                             <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                                Plano {renewal.plan || 'Standard'} • {renewal.amount || '8,000'} MT
+                                                Plano {renewal.plan || 'Standard'} • {renewal.amount || '8,000'} {renewal.currency || 'USD'}
                                             </div>
                                         </div>
                                     </div>

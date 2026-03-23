@@ -71,7 +71,7 @@ const OrderSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'MZN'
+    default: 'USD'
   },
   customerName: String,
   phone: {

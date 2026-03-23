@@ -32,7 +32,7 @@ const MenuItemSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'MZN'
+    default: 'USD' // Default to USD if not specified, or dynamically set based on restaurant
   },
   // --- Image Fields ---
   imageUrl: {

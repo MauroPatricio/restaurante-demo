@@ -240,7 +240,7 @@ export default function Settings() {
                             <div className="form-group">
                                 <label>{t('default_currency') || 'Default Currency'}</label>
                                 <select
-                                    value={restaurant?.settings?.currency || 'MZN'}
+                                    value={restaurant?.settings?.currency || 'USD'}
                                     onChange={async (e) => {
                                         const newValue = e.target.value;
                                         try {

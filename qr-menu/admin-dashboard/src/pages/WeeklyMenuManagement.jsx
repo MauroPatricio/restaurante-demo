@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { weeklyMenuAPI, menuAPI } from '../services/api';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { Calendar, Plus, Edit, Trash2, Power, PowerOff, RefreshCw } from 'lucide-react';
 import './WeeklyMenuManagement.css';
 
@@ -21,6 +22,7 @@ const WeeklyMenuManagement = () => {
     });
 
     const { user } = useAuth();
+    const { convertAndFormat } = useCurrency();
     const restaurant = user?.restaurant;
 
     useEffect(() => {
@@ -287,7 +289,7 @@ const WeeklyMenuManagement = () => {
                                                 }
                                             }}
                                         />
-                                        <span>{item.name} - {item.price} MT</span>
+                                        <span>{item.name} - {convertAndFormat(item.price)}</span>
                                     </label>
                                 ))}
                             </div>

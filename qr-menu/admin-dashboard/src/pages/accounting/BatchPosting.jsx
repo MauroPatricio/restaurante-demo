@@ -8,11 +8,13 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useConnectivity } from '../../contexts/ConnectivityContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export default function BatchPosting() {
     const { t } = useTranslation();
     const { user } = useAuth();
     const { addToast } = useConnectivity();
+    const { convertAndFormat } = useCurrency();
 
     const [pendingOrders, setPendingOrders] = useState([]);
     const [selectedOrders, setSelectedOrders] = useState(new Set());
@@ -74,7 +76,7 @@ export default function BatchPosting() {
         }
     };
 
-    const currency = user?.restaurant?.settings?.currency || 'MT';
+    const currency = user?.restaurant?.settings?.currency || 'USD';
     const totalSelectedAmount = pendingOrders
         .filter(o => selectedOrders.has(o._id))
         .reduce((sum, o) => sum + o.total, 0);
@@ -144,7 +146,7 @@ export default function BatchPosting() {
                         </div>
                         {selectedOrders.size > 0 && (
                             <div style={{ fontSize: '16px', fontWeight: '900', color: '#10b981' }}>
-                                {t('total_to_post')}: {totalSelectedAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {user?.restaurant?.settings?.currency || currency}
+                                {t('total_to_post')}: {convertAndFormat(totalSelectedAmount)}
                             </div>
                         )}
                     </div>
@@ -203,7 +205,7 @@ export default function BatchPosting() {
                                             </span>
                                         </td>
                                         <td style={{ padding: '16px 24px', fontSize: '16px', fontWeight: '900', color: '#10b981', textAlign: 'right' }}>
-                                            {order.total.toLocaleString(undefined, { minimumFractionDigits: 2 })} {user?.restaurant?.settings?.currency || currency}
+                                            {convertAndFormat(order.total, order.currency)}
                                         </td>
                                     </tr>
                                 );

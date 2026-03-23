@@ -133,7 +133,7 @@ export const CartProvider = ({ children }) => {
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
     const tax = subtotal * 0.16; // 16% tax (adjustable)
     const serviceCharge = subtotal * 0.05; // 5% service charge (adjustable)
-    const deliveryFee = orderType === 'delivery' ? 50 : 0; // 50 MT delivery fee
+    const deliveryFee = orderType === 'delivery' ? 50 : 0; // Delivery fee value
     const total = subtotal + tax + serviceCharge + deliveryFee - discount;
 
     const value = {

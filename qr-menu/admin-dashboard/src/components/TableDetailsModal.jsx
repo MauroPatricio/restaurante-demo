@@ -4,8 +4,10 @@ import LoadingSpinner from './LoadingSpinner';
 import { analyticsAPI, tableAPI } from '../services/api';
 import { format, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function TableDetailsModal({ isOpen, onClose, table, restaurantId, onUpdate }) {
+    const { convertAndFormat } = useCurrency();
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -285,7 +287,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                                                 </td>
                                                 <td style={{ ...tdStyle, textAlign: 'center' }}>
                                                     <span style={{ fontSize: '14px', fontWeight: '900', color: tokens.primaryDark }}>
-                                                        {record.totalSpent.toLocaleString()} <span style={{ fontSize: '10px' }}>MT</span>
+                                                        {convertAndFormat(record.totalSpent)}
                                                     </span>
                                                 </td>
                                                 <td style={{ ...tdStyle, textAlign: 'right' }}>

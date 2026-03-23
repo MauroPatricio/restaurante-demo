@@ -6,7 +6,7 @@ class CurrencyService {
             rates: null,
             lastFetched: null
         };
-        this.BASE_CURRENCY = 'MZN';
+        this.BASE_CURRENCY = process.env.BASE_CURRENCY || 'USD';
         this.API_URL = `https://open.er-api.com/v6/latest/${this.BASE_CURRENCY}`;
         this.CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
     }
@@ -33,11 +33,11 @@ class CurrencyService {
 
             // Absolute fallbacks if everything fails
             return {
-                MZN: 1,
-                USD: 0.0156,
-                EUR: 0.0143,
-                ZAR: 0.28,
-                GBP: 0.0123
+                USD: 1,
+                EUR: 0.92,
+                ZAR: 18.5,
+                MZN: 64.0,
+                GBP: 0.79
             };
         }
     }

@@ -10,11 +10,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 
 import api, { tableAPI, menuAPI, categoryAPI } from '../../services/api';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const AssistedOrder = () => {
     const { tableId } = useParams();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { convertAndFormat } = useCurrency();
 
     // -- State --
     const [restaurantId, setRestaurantId] = useState(null);
@@ -202,7 +204,7 @@ const AssistedOrder = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h4 className="font-medium text-gray-800 dark:text-white truncate">{item.name}</h4>
-                                <p className="text-xs text-gray-500 font-medium">{(item.price * item.qty).toLocaleString()} MT</p>
+                                <p className="text-xs text-gray-500 font-medium">{convertAndFormat(item.price * item.qty, item.currency)}</p>
                             </div>
                         </div>
                     ))
@@ -213,7 +215,7 @@ const AssistedOrder = () => {
             <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between items-center mb-4">
                     <span className="text-gray-500 dark:text-gray-400 font-medium">{t('total') || 'Total'}</span>
-                    <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{cartTotal.toLocaleString()} <span className="text-sm font-normal text-gray-500">MT</span></span>
+                    <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{convertAndFormat(cartTotal)}</span>
                 </div>
                 <button
                     onClick={handleSubmitOrder}
@@ -347,8 +349,7 @@ const AssistedOrder = () => {
 
                                             <div className="flex items-center justify-between mt-2">
                                                 <div className="flex items-baseline gap-1">
-                                                    <span className="font-bold text-gray-900 dark:text-gray-100 text-lg tabular-nums">{item.price}</span>
-                                                    <span className="text-xs text-gray-400 font-medium">MT</span>
+                                                <span className="font-bold text-gray-900 dark:text-gray-100 text-lg tabular-nums">{convertAndFormat(item.price)}</span>
                                                 </div>
 
                                                 {/* Action Button */}
@@ -399,7 +400,7 @@ const AssistedOrder = () => {
                                 <div className="bg-primary-500 text-white px-3 py-1 rounded-lg text-sm font-bold">{cartCount}</div>
                                 <span className="text-sm font-medium text-gray-200">{t('view_order') || 'Ver Pedido'}</span>
                             </div>
-                            <span className="font-bold text-lg">{cartTotal.toLocaleString()} MT</span>
+                            <span className="font-bold text-lg">{convertAndFormat(cartTotal)}</span>
                         </button>
                     </motion.div>
                 )}

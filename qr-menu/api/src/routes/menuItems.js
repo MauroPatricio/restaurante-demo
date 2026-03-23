@@ -140,7 +140,7 @@ router.post('/', authenticateToken, authorizeRoles(['owner', 'manager']), upload
             category,
             subcategory: subcategory || null,
             price,
-            currency: req.body.currency || 'MZN',
+            currency: req.body.currency || 'USD',
             imageUrl: finalImageUrl,
             imagePublicId: finalImagePublicId,
             sku,

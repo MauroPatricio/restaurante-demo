@@ -185,9 +185,8 @@ const SubscriptionRenewalModal = ({ subscription, onRenew, onCancel }) => {
                         </span>
                     </div>
                     <div style={{ ...detailRowStyle, borderBottom: 'none' }}>
-                        <span style={detailLabelStyle}>{t('amount_label', 'Valor Mensal')}:</span>
                         <span style={{ ...detailValueStyle, color: '#dc2626' }}>
-                            {subscription?.price || '8,000'} MT
+                            {subscription?.price || '8,000'} {subscription?.currency || 'USD'}
                         </span>
                     </div>
                 </div>

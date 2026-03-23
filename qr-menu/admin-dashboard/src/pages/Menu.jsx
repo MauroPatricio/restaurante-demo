@@ -168,7 +168,7 @@ export default function Menu() {
                                 <div className="menu-card-header">
                                     <h3>{item.name}</h3>
                                     <span className="menu-card-price">
-                                        {item.price} {getCurrencySymbol(user?.restaurant?.settings?.currency || item.currency || 'MZN')}
+                                        {item.price} {getCurrencySymbol(user?.restaurant?.settings?.currency || item.currency)}
                                     </span>
                                 </div>
                                 <p className="menu-card-description">{item.description}</p>
@@ -410,7 +410,7 @@ function MenuItemModal({ item, user, onClose, onSave, onDelete, t, restaurantId,
                 tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean),
                 // Ensure subcategory is null if empty string to avoid Mongoose errors
                 subcategory: formData.subcategory || null,
-                currency: user?.restaurant?.settings?.currency || formData.currency || 'MZN'
+                currency: user?.restaurant?.settings?.currency || formData.currency || 'USD'
             };
 
             let response;

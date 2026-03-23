@@ -220,7 +220,7 @@ const OwnerDashboard = () => {
                     <div>
                         <p style={{ color: '#64748b', fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('total_revenue_cap')}</p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {convertAndFormat(stats?.totalRevenue || 0, 'MZN')}
+                            {convertAndFormat(stats?.totalRevenue || 0)}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#4f46e5', '#eef2ff')}>
@@ -326,7 +326,7 @@ const OwnerDashboard = () => {
                             <BarChart
                                 data={stats?.revenueByRestaurant?.map(r => ({
                                     ...r,
-                                    convertedRevenue: convert(r.revenue, 'MZN')
+                                    convertedRevenue: convert(r.revenue)
                                 }))}
                                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                             >
@@ -406,7 +406,7 @@ const OwnerDashboard = () => {
                                         </div>
                                     </td>
                                     <td style={{ fontWeight: '600', color: '#1e293b' }}>
-                                        {convertAndFormat(rest.revenue, 'MZN')}
+                                        {convertAndFormat(rest.revenue)}
                                     </td>
                                     <td>
                                         <span className="badge" style={{ background: '#f1f5f9', color: '#475569', fontSize: '14px' }}>
@@ -414,7 +414,7 @@ const OwnerDashboard = () => {
                                         </span>
                                     </td>
                                     <td style={{ color: '#64748b' }}>
-                                        {convertAndFormat(rest.orders > 0 ? (rest.revenue / rest.orders) : 0, 'MZN')}
+                                        {convertAndFormat(rest.orders > 0 ? (rest.revenue / rest.orders) : 0)}
                                     </td>
                                     <td>
                                         <span style={{

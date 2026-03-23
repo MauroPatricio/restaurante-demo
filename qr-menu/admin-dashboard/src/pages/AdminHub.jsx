@@ -58,7 +58,7 @@ export default function AdminHub() {
             address: '',
             language: 'pt',
             timezone: 'Africa/Maputo',
-            currency: 'MZN',
+            currency: 'USD',
             isKitchenOpen: true
         },
         visual: {
@@ -116,7 +116,7 @@ export default function AdminHub() {
                     address: typeof data.address === 'string' ? data.address : (data.address?.street || ''),
                     language: data.settings?.language || 'pt',
                     timezone: data.settings?.timezone || 'Africa/Maputo',
-                    currency: data.settings?.currency || 'MZN',
+                    currency: data.settings?.currency || 'USD',
                     isKitchenOpen: data.settings?.isKitchenOpen !== false
                 },
                 visual: {
@@ -935,7 +935,7 @@ export default function AdminHub() {
                                                                     <span style={{ fontWeight: '900', color: '#334155' }}>{c.orderCount} <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>Visitas</span></span>
                                                                 </div>
                                                                 <div>
-                                                                    <span style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a' }}>{new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' }).format(c.totalSpent)}</span>
+                                                                    <span style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a' }}>{new Intl.NumberFormat(formData.general.language === 'pt' ? 'pt-MZ' : 'en-US', { style: 'currency', currency: formData.general.currency }).format(c.totalSpent)}</span>
                                                                 </div>
                                                                 <div style={{ textAlign: 'right' }}>
                                                                     <span style={{ padding: '8px 16px', background: '#f1f5f9', borderRadius: '12px', fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -1092,7 +1092,7 @@ export default function AdminHub() {
                                                                 borderRadius: '24px', fontWeight: '900', fontSize: '24px', color: '#1e293b', outline: 'none'
                                                             }}
                                                             className="focus:ring-4 focus:ring-primary/5 shadow-sm"
-                                                            placeholder="MZN"
+                                                            placeholder={formData.general.currency}
                                                         />
                                                     </div>
                                                     <p style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', marginLeft: '16px', maxWidth: '320px', margin: 0 }}>{t('base_currency_desc')}</p>
@@ -1123,7 +1123,7 @@ export default function AdminHub() {
                                                                 <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '14px', color: '#64748b' }}>
                                                                     {curr}
                                                                 </div>
-                                                                <span style={{ fontWeight: '900', color: '#1e293b' }}>{curr === 'MZN' ? 'Metical' : curr === 'USD' ? 'Dólar' : curr === 'EUR' ? 'Euro' : 'Rand'}</span>
+                                                                <span style={{ fontWeight: '900', color: '#1e293b' }}>{getCurrencyDetails(curr).name}</span>
                                                             </div>
                                                             {formData.general.currency === curr && (
                                                                 <div style={{ padding: '4px 12px', background: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary-color)', borderRadius: '9999px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}>

@@ -1,10 +1,13 @@
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export default function Dashboard({ route }) {
   const { t } = useTranslation();
+  const { convertAndFormat } = useCurrency();
   const { restaurantId = 'RESTAURANT_ID_FAKE' } = route.params || {};
   const [orders, setOrders] = useState([]);
   const [totalSales, setTotalSales] = useState(0);
@@ -40,9 +43,9 @@ export default function Dashboard({ route }) {
     <View style={styles.container}>
       <Text style={styles.header}>{t('restaurant_dashboard')}</Text>
       
-      <Text style={styles.metric}>{t('sales_today', { total: totalSales.toFixed(2) })}</Text>
+      <Text style={styles.metric}>{t('sales_today', { total: convertAndFormat(totalSales) })}</Text>
       <Text style={styles.metric}>{t('open_orders', { count: orders.filter(o => o.status !== 'completed').length })}</Text>
-
+ 
       <Text style={styles.sectionHeader}>{t('current_orders')}</Text>
       <FlatList
         data={orders}
@@ -51,7 +54,7 @@ export default function Dashboard({ route }) {
           <View style={styles.card}>
             <Text>{t('table')}: {item.table}</Text>
             <Text>{t('status')}: {t(item.status)}</Text>
-            <Text>{t('total')}: {item.total} {t('currency')}</Text>
+            <Text>{t('total')}: {convertAndFormat(item.total)}</Text>
           </View>
         )}
       />

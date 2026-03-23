@@ -11,9 +11,11 @@ import {
 import { useCart } from '../contexts/CartContext';
 import { orderAPI } from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function CheckoutScreen({ navigation }) {
     const { t } = useTranslation();
+    const { convertAndFormat } = useCurrency();
     const {
         items,
         total,
@@ -132,7 +134,7 @@ export default function CheckoutScreen({ navigation }) {
                     <Text style={styles.sectionTitle}>{t('order_summary')}</Text>
                     <View style={styles.summaryCard}>
                         <Text style={styles.summaryText}>{items.length === 1 ? t('items_count_one') : t('items_count', { count: items.length })}</Text>
-                        <Text style={styles.summaryPrice}>{total.toFixed(2)} {t('currency') || 'MT'}</Text>
+                        <Text style={styles.summaryPrice}>{convertAndFormat(total)}</Text>
                     </View>
                 </View>
             </ScrollView>
@@ -143,7 +145,7 @@ export default function CheckoutScreen({ navigation }) {
                     onPress={handlePlaceOrder}
                 >
                     <Text style={styles.placeOrderButtonText}>
-                        {t('place_order')} - {total.toFixed(2)} {t('currency') || 'MT'}
+                        {t('place_order')} - {convertAndFormat(total)}
                     </Text>
                 </TouchableOpacity>
             </View>

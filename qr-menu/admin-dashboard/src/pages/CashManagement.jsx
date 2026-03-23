@@ -110,12 +110,12 @@ export default function CashManagement() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '48px' }}>
                         <div>
                             <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}>{t('initial_fund_label')}</p>
-                            <p style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b' }}>{convertAndFormat(activeSession.openingBalance, 'MZN')}</p>
+                            <p style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b' }}>{convertAndFormat(activeSession.openingBalance)}</p>
                         </div>
                         <div>
                             <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}>{t('recorded_sales_label')}</p>
                             <p style={{ fontSize: '20px', fontWeight: '900', color: '#6366f1' }}>
-                                {convertAndFormat(activeSession.transactions?.reduce((sum, tx) => sum + (tx.type === 'sale' ? tx.amount : 0), 0), 'MZN')}
+                                {convertAndFormat(activeSession.transactions?.reduce((sum, tx) => sum + (tx.type === 'sale' ? tx.amount : 0), 0))}
                             </p>
                         </div>
                         <div>
@@ -125,7 +125,7 @@ export default function CashManagement() {
                                     if (tx.type === 'sale' || tx.type === 'entry') return sum + tx.amount;
                                     if (tx.type === 'exit' || tx.type === 'refund') return sum - tx.amount;
                                     return sum;
-                                }, 0), 'MZN')}
+                                }, 0))}
                             </p>
                         </div>
                     </div>
@@ -165,15 +165,15 @@ export default function CashManagement() {
                                         <span style={{ fontSize: '14px', fontWeight: '700' }}>{s.operator?.name}</span>
                                     </div>
                                 </td>
-                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.closingBalance ? convertAndFormat(s.closingBalance, 'MZN') : '-'}</td>
-                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.actualBalance ? convertAndFormat(s.actualBalance, 'MZN') : '-'}</td>
+                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.closingBalance ? convertAndFormat(s.closingBalance) : '-'}</td>
+                                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: '700' }}>{s.actualBalance ? convertAndFormat(s.actualBalance) : '-'}</td>
                                 <td style={{ padding: '20px 24px' }}>
                                     {s.status === 'closed' && (
                                         <span style={{
                                             fontSize: '14px', fontWeight: '900',
                                             color: s.difference > 0 ? '#10b981' : s.difference < 0 ? '#ef4444' : '#64748b'
                                         }}>
-                                            {s.difference > 0 ? '+' : ''}{convertAndFormat(s.difference, 'MZN')}
+                                            {s.difference > 0 ? '+' : ''}{convertAndFormat(s.difference)}
                                         </span>
                                     )}
                                 </td>

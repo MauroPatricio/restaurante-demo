@@ -111,15 +111,15 @@ const ReceiptModal = ({ order, onClose }) => {
                     <div style={{ borderTop: '1px dashed #000', paddingTop: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                             <span>SUBTOTAL:</span>
-                            <span>{convertAndFormat(subtotal, order.currency)}</span>
+                            <span>{convertAndFormat(subtotalValue, order.currency)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                             <span>IVA (16%):</span>
-                            <span>{convertAndFormat(tax, order.currency)}</span>
+                            <span>{convertAndFormat(taxValue, order.currency)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', marginTop: '5px' }}>
                             <span>TOTAL:</span>
-                            <span>{convertAndFormat(total, order.currency)}</span>
+                            <span>{convertAndFormat(totalValue, order.currency)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '10px' }}>
                             <span>{t('payment_label')}:</span>

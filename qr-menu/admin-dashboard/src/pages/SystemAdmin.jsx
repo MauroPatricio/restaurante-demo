@@ -104,7 +104,7 @@ export default function SystemAdmin() {
                                         <td>{tx.requestedBy?.name || tx.requestedBy?.email}</td>
                                         <td>{tx.method.toUpperCase()}</td>
                                         <td className="font-mono">{tx.reference}</td>
-                                        <td>{tx.amount?.toLocaleString()} MT</td>
+                                        <td>{tx.amount?.toLocaleString()} {tx.currency || 'USD'}</td>
                                         <td>
                                             <span className={`status-badge ${tx.status}`}>
                                                 {tx.status}

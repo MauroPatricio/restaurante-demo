@@ -34,7 +34,7 @@ export const processOrderCreation = async ({
     createdByWaiterId = null, // NEW: Track waiter ID for analytics
     io, // socket.io instance
     tableSessionId, // optional, if already known
-    currency = 'MZN' // NEW: Order currency
+    currency = 'USD' // NEW: Order currency
 }) => {
 
     // 1. Validations
@@ -239,7 +239,7 @@ export const processOrderCreation = async ({
         serviceCharge,
         deliveryFee,
         total,
-        currency: restaurant.settings?.currency || 'MZN', // Always save in restaurant base currency
+        currency: restaurant.settings?.currency || 'USD', // Always save in restaurant base currency
         customerName: customerName || 'Cliente',
         phone: phone || '800000000',
         email,
