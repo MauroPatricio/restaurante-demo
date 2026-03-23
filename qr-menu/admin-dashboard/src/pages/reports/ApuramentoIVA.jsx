@@ -11,6 +11,9 @@ const ApuramentoIVA = () => {
     const { t } = useTranslation();
     const { convertAndFormat, systemCurrency } = useCurrency();
 
+    const { user } = useAuth();
+    const currentRestaurant = user?.restaurant;
+
     // Default to current month
     const currentDate = new Date();
     const [dateRange, setDateRange] = useState({
@@ -22,7 +25,8 @@ const ApuramentoIVA = () => {
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
-        if (!currentRestaurant?._id) return;
+        const restaurantId = currentRestaurant?._id || currentRestaurant;
+        if (!restaurantId) return;
         setLoading(true);
         try {
             const res = await accountingAPI.getIVAReport({
@@ -39,7 +43,7 @@ const ApuramentoIVA = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentRestaurant?._id, dateRange.startDate, dateRange.endDate]);
+    }, [currentRestaurant, dateRange.startDate, dateRange.endDate]);
 
 
     const handleExportPDF = () => {
@@ -50,7 +54,14 @@ const ApuramentoIVA = () => {
             ['IVA Dedutível (Compras)', convertAndFormat(data.ivaDedutivel)],
             ['IVA a Pagar / (A Recuperar)', convertAndFormat(data.ivaAPagar)]
         ];
-        exportToPDF(`Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}.pdf`, columns, rows, 'Apuramento Mensal de IVA (PGC-NIRF)');
+        exportToPDF({
+            title: 'Apuramento Mensal de IVA (PGC-NIRF)',
+            subtitle: `Período: ${dateRange.startDate} a ${dateRange.endDate}`,
+            columns: columns.map((col, idx) => ({ header: col, dataKey: idx === 0 ? 'desc' : 'val' })),
+            data: rows.map(r => ({ desc: r[0], val: r[1] })),
+            filename: `Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}`,
+            currency: systemCurrency
+        });
     };
 
     const handleExportExcel = () => {
@@ -60,7 +71,19 @@ const ApuramentoIVA = () => {
             { 'Descrição': 'IVA Dedutível (Compras)', [`Valor (${systemCurrency})`]: data.ivaDedutivel },
             { 'Descrição': 'IVA a Pagar / (A Recuperar)', [`Valor (${systemCurrency})`]: data.ivaAPagar }
         ];
-        exportToExcel(exportData, `Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}.xlsx`);
+        exportToExcel({
+            title: 'Apuramento Mensal de IVA (PGC-NIRF)',
+            columns: [
+                { header: 'Descrição', dataKey: 'desc' },
+                { header: `Valor (${systemCurrency})`, dataKey: 'val' }
+            ],
+            data: exportData.map(d => ({
+                desc: d['Descrição'],
+                val: d[`Valor (${systemCurrency})`]
+            })),
+            filename: `Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}`,
+            currency: systemCurrency
+        });
     };
 
     return (

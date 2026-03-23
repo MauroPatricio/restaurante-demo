@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { exportToPDF, exportToExcel } from '../../utils/ExportUtils';
 
 export default function Razao() {
     const { t } = useTranslation();

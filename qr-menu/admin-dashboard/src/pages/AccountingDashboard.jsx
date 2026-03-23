@@ -112,6 +112,8 @@ export default function AccountingDashboard() {
     const [loading, setLoading] = useState(true);
     const { convertAndFormat, systemCurrency } = useCurrency();
     const displayCurrency = systemCurrency;
+    const [stats, setStats] = useState(null);
+    const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
     useEffect(() => {
         fetchStats();
