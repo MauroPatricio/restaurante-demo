@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { analyticsAPI } from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar, Download, BarChart2, DollarSign, List, Box, TrendingUp, FileText } from 'lucide-react';
+import { Calendar, Download, BarChart2, DollarSign, List, Box, TrendingUp, FileText, User } from 'lucide-react';
 
 import FinancialTab from '../components/reports/FinancialTab';
 import SalesTab from '../components/reports/SalesTab';
