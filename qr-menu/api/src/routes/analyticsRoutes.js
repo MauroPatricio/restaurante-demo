@@ -9,7 +9,10 @@ import {
     getCustomerAnalytics,
     getHallAnalytics,
     getTableCustomerHistory,
-    anonymizeCustomer
+    anonymizeCustomer,
+    getCashFlowReport,
+    getProfitReport,
+    getOrdersReport
 } from '../controllers/analyticsController.js';
 import {
     getAllWaiterAnalytics,
@@ -41,6 +44,9 @@ router.get('/:id/sales', authenticateToken, checkSubscription, getSalesReport);
 router.get('/:id/operational', authenticateToken, checkSubscription, getOperationalReport);
 router.get('/:id/inventory', authenticateToken, checkSubscription, getInventoryReport);
 router.get('/:id/customers', authenticateToken, checkSubscription, getCustomerAnalytics);
+router.get('/:id/cash-flow', authenticateToken, checkSubscription, getCashFlowReport);
+router.get('/:id/profit', authenticateToken, checkSubscription, getProfitReport);
+router.get('/:id/orders-report', authenticateToken, checkSubscription, getOrdersReport);
 router.delete('/:id/customers/:phone', authenticateToken, authorizeRoles('owner', 'manager', 'admin'), checkSubscription, anonymizeCustomer);
 
 // Waiter Performance Analytics (Owner/Manager/Admin only)

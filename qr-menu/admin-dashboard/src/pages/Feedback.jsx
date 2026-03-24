@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { feedbackAPI } from '../services/api';
+import { feedbackAPI, SOCKET_URL } from '../services/api';
+import { io } from 'socket.io-client';
 import { useTranslation } from 'react-i18next';
 import {
     Star, MessageSquare, TrendingUp, ThumbsUp, ThumbsDown,
@@ -56,7 +57,29 @@ export default function CXDashboard() {
     });
 
     useEffect(() => {
-        if (user?.restaurant) fetchFeedback();
+        if (!user?.restaurant) return;
+        
+        const restaurantId = user.restaurant._id || user.restaurant;
+        fetchFeedback();
+
+        // Socket integration for real-time updates
+        const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+        
+        socket.on('connect', () => {
+            socket.emit('join:restaurant', { restaurantId });
+        });
+
+        socket.on('feedback:new', (newFeedback) => {
+            setFeedbacks(prev => {
+                const exists = prev.find(f => f._id === newFeedback._id);
+                if (exists) return prev;
+                const updated = [newFeedback, ...prev];
+                processFeedbacks(updated);
+                return updated;
+            });
+        });
+
+        return () => socket.disconnect();
     }, [user]);
 
     const fetchFeedback = async () => {

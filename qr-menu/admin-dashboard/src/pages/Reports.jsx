@@ -10,6 +10,10 @@ import SalesTab from '../components/reports/SalesTab';
 import OperationalTab from '../components/reports/OperationalTab';
 import InventoryTab from '../components/reports/InventoryTab';
 import StaffTab from '../components/reports/StaffTab';
+import CashFlowTab from '../components/reports/CashFlowTab';
+import ProfitTab from '../components/reports/ProfitTab';
+import OrdersTab from '../components/reports/OrdersTab';
+import CustomersTab from '../components/reports/CustomersTab';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 // Modern styles matching Dashboard.jsx
@@ -67,6 +71,18 @@ export default function Reports() {
                 case 'staff':
                     res = await waiterAnalyticsAPI.getRanking(restId, params);
                     break;
+                case 'cash-flow':
+                    res = await analyticsAPI.getCashFlow(restId, params);
+                    break;
+                case 'profit':
+                    res = await analyticsAPI.getProfit(restId, params);
+                    break;
+                case 'orders':
+                    res = await analyticsAPI.getOrdersReport(restId, params);
+                    break;
+                case 'customers':
+                    res = await analyticsAPI.getCustomers(restId, params);
+                    break;
                 default:
                     return;
             }
@@ -95,11 +111,15 @@ export default function Reports() {
     };
 
     const tabs = [
-        { id: 'financial', label: t('financial') || 'Financial', icon: DollarSign, color: '#10b981', bg: '#ecfdf5' },
-        { id: 'sales', label: t('sales_menu') || 'Sales & Menu', icon: List, color: '#3b82f6', bg: '#eff6ff' },
-        { id: 'operational', label: t('operational') || 'Operational', icon: BarChart2, color: '#f59e0b', bg: '#fffbeb' },
-        { id: 'inventory', label: t('inventory') || 'Inventory', icon: Box, color: '#8b5cf6', bg: '#f5f3ff' },
-        { id: 'staff', label: t('staff') || 'Staff', icon: User, color: '#ec4899', bg: '#fdf2f8' }
+        { id: 'financial', label: t('financial') || 'Financeiro', icon: DollarSign, color: '#10b981', bg: '#ecfdf5' },
+        { id: 'cash-flow', label: 'Fluxo de Caixa', icon: TrendingUp, color: '#059669', bg: '#ecfdf5' },
+        { id: 'profit', label: 'Lucro & Rentabilidade', icon: TrendingUp, color: '#059669', bg: '#ecfdf5' },
+        { id: 'sales', label: t('sales_menu') || 'Vendas & Menu', icon: List, color: '#3b82f6', bg: '#eff6ff' },
+        { id: 'orders', label: 'Pedidos', icon: FileText, color: '#6366f1', bg: '#eef2ff' },
+        { id: 'operational', label: t('operational') || 'Eficiência', icon: BarChart2, color: '#f59e0b', bg: '#fffbeb' },
+        { id: 'inventory', label: t('inventory') || 'Stock', icon: Box, color: '#8b5cf6', bg: '#f5f3ff' },
+        { id: 'customers', label: 'Clientes', icon: User, color: '#6366f1', bg: '#eef2ff' },
+        { id: 'staff', label: t('staff') || 'Equipa', icon: User, color: '#ec4899', bg: '#fdf2f8' }
     ];
 
     const activeTabData = tabs.find(tab => tab.id === activeTab);
@@ -296,6 +316,10 @@ export default function Reports() {
                         {activeTab === 'operational' && <OperationalTab data={reportData} loading={loading} />}
                         {activeTab === 'inventory' && <InventoryTab data={reportData} loading={loading} />}
                         {activeTab === 'staff' && <StaffTab data={reportData} loading={loading} />}
+                        {activeTab === 'cash-flow' && <CashFlowTab data={reportData} loading={loading} />}
+                        {activeTab === 'profit' && <ProfitTab data={reportData} loading={loading} />}
+                        {activeTab === 'orders' && <OrdersTab data={reportData} loading={loading} />}
+                        {activeTab === 'customers' && <CustomersTab data={reportData} loading={loading} />}
                     </>
                 )}
             </div>

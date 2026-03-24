@@ -22,6 +22,9 @@ if (import.meta.env.VITE_API_URL) {
 }
 
 const API_URL = base;
+const SOCKET_URL = base.replace('/api', '');
+
+export { API_URL, SOCKET_URL };
 
 // Create axios instance
 const api = axios.create({
@@ -247,6 +250,9 @@ export const analyticsAPI = {
     deleteCustomer: (restaurantId, phone) => api.delete(`/analytics/${restaurantId}/customers/${phone}`),
     getHall: (restaurantId, params) => api.get(`/analytics/${restaurantId}/hall`, { params }),
     getTableHistory: (restaurantId, tableId) => api.get(`/analytics/${restaurantId}/hall/${tableId}/history`),
+    getCashFlow: (restaurantId, params) => api.get(`/analytics/${restaurantId}/cash-flow`, { params }),
+    getProfit: (restaurantId, params) => api.get(`/analytics/${restaurantId}/profit`, { params }),
+    getOrdersReport: (restaurantId, params) => api.get(`/analytics/${restaurantId}/orders-report`, { params }),
     generateReceipt: (orderId, data) => api.post(`/analytics/orders/${orderId}/receipt`, data),
     clearOwnerStats: () => api.post('/analytics/owner/clear-stats')
 };

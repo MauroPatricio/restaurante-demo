@@ -53,6 +53,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
                     _id: '$createdByWaiter',
                     totalOrders: { $sum: 1 },
                     totalRevenue: { $sum: '$total' },
+                    totalTables: { $addToSet: '$table' },
                     cancelledOrders: {
                         $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] }
                     }
@@ -174,6 +175,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
 
             const totalOrders = orders?.totalOrders || 0;
             const totalRevenue = orders?.totalRevenue || 0;
+            const totalTables = orders?.totalTables?.length || 0;
             const callsResolved = calls?.callsResolved || 0;
             const avgServiceTime = service?.avgServiceTime || 0;
             const avgCompletionTime = completion?.avgCompletionTime || 0;
@@ -197,6 +199,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
                 metrics: {
                     totalOrders,
                     totalRevenue: Math.round(totalRevenue),
+                    totalTables,
                     callsResolved,
                     cancelledOrders: orders?.cancelledOrders || 0,
                     avgServiceTime: Math.round(avgServiceTime),

@@ -47,6 +47,11 @@ export const setupDefaultAccounts = async (restaurantId) => {
         { code: '611', name: 'Custo das mercadorias vendidas ou consumidas', type: 'expense', nature: 'debit', class: 6 },
         { code: '622', name: 'Remunerações dos trabalhadores', type: 'expense', nature: 'debit', class: 6, description: 'Salários e encargos sociais' },
         { code: '63', name: 'Fornecimentos e Serviços de Terceiros', type: 'expense', nature: 'debit', class: 6 },
+        { code: '64', name: 'Perdas por Imparidade do Periodo', type: 'expense', nature: 'debit', class: 6 },
+        { code: '65', name: 'Perdas por Reduções de Justo Valor', type: 'expense', nature: 'debit', class: 6 },
+        { code: '66', name: 'Perdas por Provisões do Periodo', type: 'expense', nature: 'debit', class: 6 },
+        { code: '68', name: 'Outros Gastos e Perdas Operacionais', type: 'expense', nature: 'debit', class: 6 },
+        { code: '69', name: 'Gastos e Perdas Financeiras', type: 'expense', nature: 'debit', class: 6 },
 
         // Classe 7: Rendimentos
         { code: '71', name: 'Vendas', type: 'revenue', nature: 'credit', class: 7, isGroup: true },

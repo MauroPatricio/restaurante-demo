@@ -53,10 +53,13 @@ export default function StaffTab({ data, loading }) {
     }
 
     // Calculate overall staff KPIs
-    const totalOrders = ranking.reduce((sum, w) => sum + (w.totalOrders || 0), 0);
-    const totalRevenue = ranking.reduce((sum, w) => sum + (w.totalRevenue || 0), 0);
+    const totalOrders = ranking.reduce((sum, w) => sum + (w.metrics?.totalOrders || w.totalOrders || 0), 0);
+    const totalTables = ranking.reduce((sum, w) => sum + (w.metrics?.totalTables || 0), 0);
+    const totalRevenue = ranking.reduce((sum, w) => sum + (w.metrics?.totalRevenue || w.totalRevenue || 0), 0);
     const avgOrders = ranking.length > 0 ? totalOrders / ranking.length : 0;
-    const bestWaiter = ranking.length > 0 ? ranking.reduce((prev, current) => (prev.totalOrders > current.totalOrders) ? prev : current) : null;
+    const bestWaiter = ranking.length > 0 ? ranking.reduce((prev, current) => 
+        ((prev.metrics?.totalOrders || prev.totalOrders || 0) > (current.metrics?.totalOrders || current.totalOrders || 0)) ? prev : current
+    ) : null;
 
     // Chart Data - Top 10 by Orders
     const chartData = ranking.slice(0, 10).map(w => ({
@@ -75,10 +78,10 @@ export default function StaffTab({ data, loading }) {
                 <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('total_staff_orders') || 'Total de Mesas/Pedidos'}
+                            {t('total_tables_attended') || 'Total de Mesas Atendidas'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {totalOrders}
+                            {totalTables}
                         </h3>
                         <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', fontWeight: '600' }}>
                            {t('avg_per_staff') || 'Média'}: {avgOrders.toFixed(1)}
@@ -137,6 +140,7 @@ export default function StaffTab({ data, loading }) {
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('staff_name') || 'Nome'}</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('tables_attended') || 'Mesas'}</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('orders') || 'Pedidos'}</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('revenue') || 'Vendas'}</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('score') || 'Pontuação'}</th>
@@ -154,12 +158,13 @@ export default function StaffTab({ data, loading }) {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#334155' }}>{waiter.totalOrders || 0}</td>
-                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '600', color: '#64748b' }}>{convertAndFormat(waiter.totalRevenue || 0)}</td>
+                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#6366f1' }}>{waiter.metrics?.totalTables || 0}</td>
+                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#334155' }}>{waiter.metrics?.totalOrders || waiter.totalOrders || 0}</td>
+                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '600', color: '#64748b' }}>{convertAndFormat(waiter.metrics?.totalRevenue || waiter.totalRevenue || 0)}</td>
                                         <td style={{ padding: '16px', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                                                 <Star size={14} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
-                                                <span style={{ fontWeight: '700', color: '#1e293b' }}>{waiter.avgRating?.toFixed(1) || '0.0'}</span>
+                                                <span style={{ fontWeight: '700', color: '#1e293b' }}>{waiter.metrics?.efficiency >= 0 ? (waiter.metrics.efficiency / 20).toFixed(1) : (waiter.avgRating?.toFixed(1) || '0.0')}</span>
                                             </div>
                                         </td>
                                     </tr>

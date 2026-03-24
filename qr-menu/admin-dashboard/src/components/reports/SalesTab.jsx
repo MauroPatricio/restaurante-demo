@@ -54,7 +54,7 @@ export default function SalesTab({ data, loading }) {
         </div>
     );
 
-    const { byCategory = [], topItems = [] } = data;
+    const { byCategory = [], topItems = [], bottomItems = [], paymentMethods = [], sources = [] } = data;
 
     // Calculate summary stats
     const totalRevenue = byCategory.reduce((sum, cat) => sum + (cat.revenue || 0), 0);
@@ -223,48 +223,94 @@ export default function SalesTab({ data, loading }) {
                 </div>
             </div>
 
-            {/* Detailed Table */}
+            {/* Second Row of Charts (New) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                
+                {/* Payment Methods */}
+                <div style={cardStyle}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
+                        Formas de Pagamento
+                    </h3>
+                    <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={paymentMethods}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={90}
+                                    paddingAngle={5}
+                                    dataKey="revenue"
+                                    nameKey="_id"
+                                >
+                                    {paymentMethods.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => convertAndFormat(value, 'MZN')} />
+                                <Legend verticalAlign="bottom" height={36}/>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Sales Sources */}
+                <div style={cardStyle}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
+                        Origem das Vendas
+                    </h3>
+                    <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={sources}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={90}
+                                    paddingAngle={5}
+                                    dataKey="revenue"
+                                    nameKey="_id"
+                                >
+                                    {sources.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => convertAndFormat(value, 'MZN')} />
+                                <Legend verticalAlign="bottom" height={36}/>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom 10 Items (New) */}
             <div style={cardStyle}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>
-                    {t('performance_detail') || 'Performance Detail'}
+                    Produtos Menos Vendidos (Ajustar Menu)
                 </h3>
                 <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', fontSize: '14px', textAlign: 'left' }}>
                         <thead style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                             <tr>
-                                <th style={{ padding: '12px 24px' }}>{t('product_name') || 'Product Name'}</th>
-                                <th style={{ padding: '12px 24px' }}>{t('category') || 'Category'}</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('items_sold') || 'Units Sold'}</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('total_revenue') || 'Revenue'}</th>
+                                <th style={{ padding: '12px 24px' }}>Produto</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Unidades</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Receita</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Rentabilidade</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {topItems.map((item, idx) => (
-                                <tr key={idx} style={{ background: 'white', borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                >
-                                    <td style={{ padding: '16px 24px', fontWeight: '600', color: '#1e293b' }}>
-                                        {item._id}
-                                    </td>
-                                    <td style={{ padding: '16px 24px', color: '#64748b' }}>
-                                        {item.category}
-                                    </td>
-                                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                        {item.count}
-                                    </td>
-                                    <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: '600', color: '#10b981' }}>
-                                        {convertAndFormat(item.revenue, 'MZN')}
+                            {bottomItems.map((item, idx) => (
+                                <tr key={idx} style={{ background: 'white', borderBottom: '1px solid #f1f5f9' }}>
+                                    <td style={{ padding: '16px 24px', fontWeight: '600', color: '#1e293b' }}>{item.name || item._id}</td>
+                                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>{item.count}</td>
+                                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>{convertAndFormat(item.revenue, 'MZN')}</td>
+                                    <td style={{ padding: '16px 24px', textAlign: 'right', color: item.profitability > 20 ? '#10b981' : '#ef4444', fontWeight: '700' }}>
+                                        {item.profitability?.toFixed(1) || 0}%
                                     </td>
                                 </tr>
                             ))}
-                            {topItems.length === 0 && (
-                                <tr>
-                                    <td colSpan="4" style={{ padding: '32px 24px', textAlign: 'center', color: '#94a3b8' }}>
-                                        {t('no_items') || 'No items found'}
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                 </div>

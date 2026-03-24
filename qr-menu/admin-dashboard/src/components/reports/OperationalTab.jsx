@@ -40,7 +40,7 @@ export default function OperationalTab({ data, loading }) {
     if (loading) return <div className="p-4 text-center">Loading operational data...</div>;
     if (!data) return <div className="p-4 text-center">No operational data available.</div>;
 
-    const { shifts = [], busiestDays = [], avgPrepTime = 0, slowestItems = [] } = data;
+    const { shifts = [], busiestDays = [], avgPrepTime = 0, slowestItems = [], avgDeliveryTime = 0 } = data;
 
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -124,18 +124,26 @@ export default function OperationalTab({ data, loading }) {
                     </div>
                 </div>
 
-                <div style={statCardStyle} onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.1)';
-                }} onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                }}>
+                <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('weekly_orders') || 'Pedidos Semanais'}
+                            Tempo Médio Delivery
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
+                            {avgDeliveryTime} <span style={{ fontSize: '16px', color: '#64748b', fontWeight: '600' }}>min</span>
+                        </h3>
+                    </div>
+                    <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
+                        <Clock size={24} strokeWidth={2.5} />
+                    </div>
+                </div>
+
+                <div style={statCardStyle}>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Pedidos Totais
+                        </p>
+                        <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', margin: '8px 0 0 0' }}>
                             {totalDayOrders}
                         </h3>
                     </div>

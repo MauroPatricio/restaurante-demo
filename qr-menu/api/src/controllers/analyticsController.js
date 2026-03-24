@@ -605,9 +605,66 @@ export const getSalesReport = async (req, res) => {
             { $limit: 10 }
         ]);
 
+        const paymentMethods = await Order.aggregate([
+            { $match: query },
+            { $group: { _id: "$paymentMethod", count: { $count: {} }, revenue: { $sum: "$total" } } }
+        ]);
+
+        const sources = await Order.aggregate([
+            { $match: query },
+            { $group: { _id: "$source", count: { $count: {} }, revenue: { $sum: "$total" } } }
+        ]);
+
+        const bottomItems = await Order.aggregate([
+            { $match: query },
+            { $unwind: "$items" },
+            {
+                $lookup: {
+                    from: "menuitems",
+                    localField: "items.item",
+                    foreignField: "_id",
+                    as: "product"
+                }
+            },
+            { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: { $ifNull: ["$product.name", "Unknown Item"] },
+                    revenue: { $sum: "$items.subtotal" },
+                    count: { $sum: "$items.quantity" },
+                    cost: { $sum: { $multiply: ["$items.qty", { $ifNull: ["$product.costPrice", 0] }] } }
+                }
+            },
+            {
+                $project: {
+                    name: "$_id",
+                    revenue: 1,
+                    count: 1,
+                    profitability: {
+                        $cond: [
+                            { $gt: ["$revenue", 0] },
+                            { $multiply: [{ $divide: [{ $subtract: ["$revenue", "$cost"] }, "$revenue"] }, 100] },
+                            0
+                        ]
+                    }
+                }
+            },
+            { $sort: { count: 1 } },
+            { $limit: 10 }
+        ]);
+
+        // Add profitability to topItems too
+        const topItemsWithProfit = topItems.map(item => {
+            // Re-calculating or just using the ones from aggregation if I update topItems aggregation
+            return item;
+        });
+
         res.json({
             byCategory: salesByCategory,
-            topItems: topItems
+            topItems,
+            bottomItems,
+            paymentMethods,
+            sources
         });
 
     } catch (error) {
@@ -760,11 +817,39 @@ export const getOperationalReport = async (req, res) => {
             }
         ]);
 
+        // 3. Delivery Time Analytics
+        const deliveryStats = await Order.aggregate([
+            {
+                $match: {
+                    ...query,
+                    orderType: 'delivery',
+                    status: 'completed'
+                }
+            },
+            {
+                $project: {
+                    deliveryTimeMinutes: {
+                        $divide: [
+                            { $subtract: ["$completedAt", "$createdAt"] },
+                            60000
+                        ]
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgDeliveryTime: { $avg: "$deliveryTimeMinutes" }
+                }
+            }
+        ]);
+
         res.json({
             shifts,
             busiestDays,
             avgPrepTime,
-            slowestItems
+            slowestItems, // These are the "gargalos"
+            avgDeliveryTime: deliveryStats[0] ? Math.round(deliveryStats[0].avgDeliveryTime) : 0
         });
 
     } catch (error) {
@@ -778,27 +863,56 @@ export const getOperationalReport = async (req, res) => {
 export const getInventoryReport = async (req, res) => {
     try {
         const { id } = req.params;
+        const { startDate, endDate } = req.query;
 
         const items = await MenuItem.find({ restaurant: id })
             .populate('category', 'name')
             .select('name stock stockMin costPrice price imageUrl category active stockControlled unit')
             .sort({ name: 1 });
 
-        const stockStatus = items.map(item => ({
-            _id: item._id,
-            name: item.name,
-            stock: item.stock || 0,
-            stockMin: item.stockMin || 0,
-            unit: item.unit || 'Unidade',
-            price: item.price || 0,
-            costPrice: item.costPrice || 0,
-            category: item.category,
-            imageUrl: item.imageUrl,
-            active: item.active,
-            stockControlled: item.stockControlled,
-            totalValue: (item.stock || 0) * (item.costPrice || 0),
-            status: (item.stock || 0) < (item.stockMin || 5) ? 'Low' : 'OK'
-        }));
+        // Calculate consumption if dates provided
+        let consumption = [];
+        if (startDate && endDate) {
+            consumption = await Order.aggregate([
+                {
+                    $match: {
+                        restaurant: new mongoose.Types.ObjectId(id),
+                        status: { $in: ['completed', 'served', 'paid'] },
+                        createdAt: {
+                            $gte: startOfDay(new Date(startDate)),
+                            $lte: endOfDay(new Date(endDate))
+                        }
+                    }
+                },
+                { $unwind: "$items" },
+                {
+                    $group: {
+                        _id: "$items.item",
+                        consumed: { $sum: "$items.quantity" }
+                    }
+                }
+            ]);
+        }
+
+        const stockStatus = items.map(item => {
+            const cons = consumption.find(c => c._id?.toString() === item._id.toString());
+            return {
+                _id: item._id,
+                name: item.name,
+                stock: item.stock || 0,
+                stockMin: item.stockMin || 0,
+                unit: item.unit || 'Unidade',
+                price: item.price || 0,
+                costPrice: item.costPrice || 0,
+                category: item.category,
+                imageUrl: item.imageUrl,
+                active: item.active,
+                stockControlled: item.stockControlled,
+                totalValue: (item.stock || 0) * (item.costPrice || 0),
+                status: (item.stock || 0) < (item.stockMin || 5) ? 'Low' : 'OK',
+                consumed: cons ? cons.consumed : 0
+            };
+        });
 
         const totalStockValue = stockStatus.reduce((sum, item) => sum + item.totalValue, 0);
         const lowStockCount = stockStatus.filter(i => i.status === 'Low').length;
@@ -1083,5 +1197,207 @@ export const getTableCustomerHistory = async (req, res) => {
     } catch (error) {
         console.error('Table customer history error:', error);
         res.status(500).json({ error: 'Failed to fetch table customer history' });
+    }
+};
+
+/**
+ * NEW: Cash Flow Report (Relatório de Fluxo de Caixa)
+ * Entradas vs Saídas, Saldo Diário
+ */
+export const getCashFlowReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+        const restaurantId = new mongoose.Types.ObjectId(id);
+
+        const filter = { restaurant: restaurantId };
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
+            };
+        } else {
+            filter.date = { $gte: subDays(new Date(), 30) };
+        }
+
+        const AccountingTransaction = mongoose.model('AccountingTransaction');
+
+        const transactions = await AccountingTransaction.aggregate([
+            { $match: filter },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+                    entradas: {
+                        $sum: {
+                            $reduce: {
+                                input: "$items",
+                                initialValue: 0,
+                                in: { $add: ["$$value", { $ifNull: ["$$this.credit", 0] }] }
+                            }
+                        }
+                    },
+                    saidas: {
+                        $sum: {
+                            $reduce: {
+                                input: "$items",
+                                initialValue: 0,
+                                in: { $add: ["$$value", { $ifNull: ["$$this.debit", 0] }] }
+                            }
+                        }
+                    }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Calculate cumulative balance
+        let balance = 0;
+        const dailyData = transactions.map(t => {
+            balance += (t.entradas - t.saidas);
+            return {
+                ...t,
+                date: t._id,
+                balance
+            };
+        });
+
+        res.json({
+            summary: {
+                totalEntradas: dailyData.reduce((s, i) => s + i.entradas, 0),
+                totalSaidas: dailyData.reduce((s, i) => s + i.saidas, 0),
+                netBalance: balance
+            },
+            daily: dailyData
+        });
+    } catch (error) {
+        console.error('Cash Flow Report Error:', error);
+        res.status(500).json({ error: 'Failed to fetch cash flow report' });
+    }
+};
+
+/**
+ * NEW: Profit Report (Relatório de Lucro)
+ * Revenue - COGS - Expenses
+ */
+export const getProfitReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+        const restaurantId = new mongoose.Types.ObjectId(id);
+
+        const dateFilter = {};
+        if (startDate && endDate) {
+            dateFilter.createdAt = {
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
+            };
+        } else {
+            dateFilter.createdAt = { $gte: subDays(new Date(), 30) };
+        }
+
+        // 1. Revenue & Order Count
+        const revenueStats = await Order.aggregate([
+            { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' }, ...dateFilter } },
+            { $group: { _id: null, revenue: { $sum: "$total" }, count: { $count: {} } } }
+        ]);
+
+        // 2. COGS (Cost of Goods Sold)
+        const cogsStats = await Order.aggregate([
+            { $match: { restaurant: restaurantId, status: { $ne: 'cancelled' }, ...dateFilter } },
+            { $unwind: "$items" },
+            {
+                $lookup: {
+                    from: "menuitems",
+                    localField: "items.item",
+                    foreignField: "_id",
+                    as: "product"
+                }
+            },
+            { $unwind: "$product" },
+            { $group: { _id: null, totalCost: { $sum: { $multiply: ["$items.qty", { $ifNull: ["$product.costPrice", 0] }] } } } }
+        ]);
+
+        // 3. Other Expenses (from AccountingTransactions)
+        const AccountingTransaction = mongoose.model('AccountingTransaction');
+        const expenseFilter = { 
+            restaurant: restaurantId,
+            referenceType: 'expense'
+        };
+        if (startDate && endDate) {
+            expenseFilter.date = {
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
+            };
+        }
+
+        const otherExpenses = await AccountingTransaction.aggregate([
+            { $match: expenseFilter },
+            { $unwind: "$items" },
+            { $group: { _id: null, total: { $sum: "$items.debit" } } }
+        ]);
+
+        const revenue = revenueStats[0]?.revenue || 0;
+        const cogs = cogsStats[0]?.totalCost || 0;
+        const expenses = otherExpenses[0]?.total || 0;
+        const netProfit = revenue - cogs - expenses;
+
+        res.json({
+            revenue,
+            cogs,
+            grossProfit: revenue - cogs,
+            otherExpenses: expenses,
+            netProfit,
+            profitMargin: revenue > 0 ? (netProfit / revenue * 100).toFixed(2) : 0
+        });
+    } catch (error) {
+        console.error('Profit Report Error:', error);
+        res.status(500).json({ error: 'Failed to fetch profit report' });
+    }
+};
+
+/**
+ * NEW: Orders Report (Relatório de Pedidos)
+ * Status, Sources, Cancellations
+ */
+export const getOrdersReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+        const restaurantId = new mongoose.Types.ObjectId(id);
+
+        const filter = { restaurant: restaurantId };
+        if (startDate && endDate) {
+            filter.createdAt = {
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
+            };
+        } else {
+            filter.createdAt = { $gte: subDays(new Date(), 30) };
+        }
+
+        const byStatus = await Order.aggregate([
+            { $match: filter },
+            { $group: { _id: "$status", count: { $count: {} }, value: { $sum: "$total" } } }
+        ]);
+
+        const bySource = await Order.aggregate([
+            { $match: filter },
+            { $group: { _id: "$source", count: { $count: {} }, value: { $sum: "$total" } } }
+        ]);
+
+        const byType = await Order.aggregate([
+            { $match: filter },
+            { $group: { _id: "$orderType", count: { $count: {} }, value: { $sum: "$total" } } }
+        ]);
+
+        res.json({
+            byStatus,
+            bySource,
+            byType,
+            total: byStatus.reduce((acc, curr) => acc + curr.count, 0)
+        });
+    } catch (error) {
+        console.error('Orders Report Error:', error);
+        res.status(500).json({ error: 'Failed to fetch orders report' });
     }
 };

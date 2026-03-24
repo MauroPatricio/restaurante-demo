@@ -8,7 +8,7 @@ const router = express.Router();
 // Submit customer feedback
 router.post('/', async (req, res) => {
     try {
-        const { orderId, emotions, rating, comment, aspects } = req.body;
+        const { orderId, emotions, rating, comment, aspects, customerName } = req.body;
 
         if (!orderId) {
             return res.status(400).json({ error: 'Order ID required' });
@@ -32,8 +32,14 @@ router.post('/', async (req, res) => {
             emotions,
             rating,
             comment,
+            customerName: customerName || order.customerName || "Guest",
             aspects
         });
+
+        // Emit real-time update
+        if (req.io) {
+            req.io.to(`restaurant:${order.restaurant}`).emit('feedback:new', feedback);
+        }
 
         // Update order with feedback reference
         order.feedback = feedback._id;
@@ -56,7 +62,7 @@ router.get('/:restaurantId', authenticateToken, checkSubscription, async (req, r
         const { limit = 50, skip = 0 } = req.query;
 
         const feedbacks = await Feedback.find({ restaurant: restaurantId })
-            .populate('order', 'items total createdAt')
+            .populate('order', 'items total createdAt customerName')
             .sort({ createdAt: -1 })
             .limit(parseInt(limit))
             .skip(parseInt(skip));

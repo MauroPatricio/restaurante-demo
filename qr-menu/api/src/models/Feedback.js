@@ -23,6 +23,7 @@ const FeedbackSchema = new mongoose.Schema({
         max: 5
     },
     comment: String,
+    customerName: String,
     aspects: {
         food: { type: Number, min: 1, max: 5 },
         service: { type: Number, min: 1, max: 5 },
