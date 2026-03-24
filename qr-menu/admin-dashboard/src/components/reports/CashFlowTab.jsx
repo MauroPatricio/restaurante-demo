@@ -4,7 +4,7 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Legend
 } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, wallet, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react';
 
 const cardStyle = {
     background: 'white',
