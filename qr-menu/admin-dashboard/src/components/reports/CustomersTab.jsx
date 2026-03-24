@@ -13,10 +13,21 @@ const cardStyle = {
     boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
     border: '1px solid rgba(0,0,0,0.02)',
 };
-
+export default function CustomersTab({ data, loading }) {
     const { t } = useTranslation();
     const { convertAndFormat } = useCurrency();
-    if (!data || loading) return null;
+    
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_customers_data') || 'Loading customers data...'}</p>
+        </div>
+    );
+
+    if (!data) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('no_customers_data') || 'No customers data available.'}</p>
+        </div>
+    );
 
     const { summary = {}, customers = [] } = data || {};
 

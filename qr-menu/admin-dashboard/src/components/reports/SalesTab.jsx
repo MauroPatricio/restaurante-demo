@@ -44,13 +44,13 @@ export default function SalesTab({ data, loading }) {
 
     if (loading) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
-            <p>{t('loading_data')}</p>
+            <p>{t('loading_sales_data') || 'Loading sales data...'}</p>
         </div>
     );
 
     if (!data) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
-            <p>{t('no_sales_data')}</p>
+            <p>{t('no_sales_data') || 'No sales data available.'}</p>
         </div>
     );
 

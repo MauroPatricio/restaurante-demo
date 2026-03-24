@@ -19,7 +19,17 @@ export default function ProfitTab({ data, loading }) {
     const { t } = useTranslation();
     const { convertAndFormat } = useCurrency();
 
-    if (!data || loading) return null;
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_profit_data') || 'Loading profit data...'}</p>
+        </div>
+    );
+
+    if (!data) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('no_profit_data') || 'No profit data available.'}</p>
+        </div>
+    );
 
     const { 
         revenue = 0, 

@@ -37,8 +37,17 @@ const iconBoxStyle = (color, bg) => ({
 export default function OperationalTab({ data, loading }) {
     const { t } = useTranslation();
 
-    if (loading) return <div className="p-4 text-center">{t('loading_operational_data')}</div>;
-    if (!data) return <div className="p-4 text-center">{t('no_operational_data')}</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_operational_data') || 'Loading operational data...'}</p>
+        </div>
+    );
+    
+    if (!data) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('no_operational_data') || 'No operational data available.'}</p>
+        </div>
+    );
 
     const { shifts = [], busiestDays = [], avgPrepTime = 0, slowestItems = [], avgDeliveryTime = 0 } = data || {};
 
@@ -74,7 +83,7 @@ export default function OperationalTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('avg_prep_time') || 'Tempo Médio'}
+                            {t('avg_prep_time') || 'Avg Prep Time'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {avgPrepTime} <span style={{ fontSize: '16px', color: '#64748b', fontWeight: '600' }}>min</span>
@@ -94,7 +103,7 @@ export default function OperationalTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('avg_orders_shift') || 'Média Pedidos/Turno'}
+                            {t('avg_orders_shift') || 'Avg Orders/Shift'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {avgOrdersPerShift.toFixed(0)}
@@ -114,12 +123,12 @@ export default function OperationalTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('busiest_day') || 'Dia Mais Movimentado'}
+                            {t('busiest_day') || 'Busiest Day'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {busiestDay ? busiestDay.day : 'N/A'}
                         </h3>
-                        {busiestDay && <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>{busiestDay.orders} {t('orders')?.toLowerCase() || 'pedidos'}</p>}
+                        {busiestDay && <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>{busiestDay.orders} {t('orders')?.toLowerCase() || 'orders'}</p>}
                     </div>
                     <div style={iconBoxStyle('#f59e0b', '#fffbeb')}>
                         <Calendar size={24} strokeWidth={2.5} />
@@ -160,7 +169,7 @@ export default function OperationalTab({ data, loading }) {
                 {/* ... existing charts ... */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        {t('orders_by_shift') || 'Pedidos por Turno'}
+                        {t('orders_by_shift') || 'Orders by Shift'}
                     </h3>
                     {shifts.length > 0 ? (
                         <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
@@ -170,7 +179,7 @@ export default function OperationalTab({ data, loading }) {
                                     <XAxis dataKey="_id" />
                                     <YAxis />
                                     <Tooltip />
-                                    <Bar dataKey="orders" fill="#8b5cf6" radius={[4, 4, 0, 0]} name={t('orders') || 'Pedidos'} />
+                                    <Bar dataKey="orders" fill="#8b5cf6" radius={[4, 4, 0, 0]} name={t('orders') || 'Orders'} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -183,7 +192,7 @@ export default function OperationalTab({ data, loading }) {
 
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        {t('busiest_days') || 'Dias Mais Movimentados'}
+                        {t('busiest_days') || 'Busiest Days'}
                     </h3>
                     {dayData.length > 0 ? (
                         <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
@@ -193,7 +202,7 @@ export default function OperationalTab({ data, loading }) {
                                     <XAxis dataKey="day" />
                                     <YAxis />
                                     <Tooltip />
-                                    <Bar dataKey="orders" fill="#f59e0b" radius={[4, 4, 0, 0]} name={t('orders') || 'Pedidos'} />
+                                    <Bar dataKey="orders" fill="#f59e0b" radius={[4, 4, 0, 0]} name={t('orders') || 'Orders'} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -209,7 +218,7 @@ export default function OperationalTab({ data, loading }) {
             <div style={{ ...cardStyle }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <AlertCircle size={20} className="text-red-500" />
-                    {t('slowest_dishes') || 'Pratos Mais Demorados (Top 5)'}
+                    {t('slowest_dishes') || 'Slowest Dishes (Top 5)'}
                 </h3>
 
                 {slowestItems && slowestItems.length > 0 ? (

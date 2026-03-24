@@ -43,12 +43,16 @@ export default function StaffTab({ data, loading }) {
     // Fix: Backend returns 'rankings', but tab expected 'ranking'
     const ranking = Array.isArray(data) ? data : (data?.rankings || data?.ranking || []);
 
-    if (loading) return <div className="p-8 text-center" style={{ color: '#64748b', fontWeight: '600' }}>{t('loading_staff_data') || 'Carregando dados do staff...'}</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_staff_data') || 'Loading staff data...'}</p>
+        </div>
+    );
     if (ranking.length === 0) {
         return (
             <div style={{ ...cardStyle, textAlign: 'center', padding: '64px', color: '#94a3b8' }}>
                 <User size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
-                <p style={{ fontSize: '16px', fontWeight: '600' }}>{t('no_staff_data') || 'Nenhum dado de staff disponível para o período selecionado.'}</p>
+                <p style={{ fontSize: '16px', fontWeight: '600' }}>{t('no_staff_data') || 'No staff data available for the selected period.'}</p>
             </div>
         );
     }
@@ -64,7 +68,7 @@ export default function StaffTab({ data, loading }) {
 
     // Chart Data - Top 10 by Orders
     const chartData = ranking.slice(0, 10).map(w => ({
-        name: w.name || t('waiter') || 'Funcionário',
+        name: w.name || t('waiter') || 'Staff Member',
         orders: w.totalOrders || 0,
         revenue: w.totalRevenue || 0
     }));
@@ -79,13 +83,13 @@ export default function StaffTab({ data, loading }) {
                 <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('total_tables_attended') || 'Total de Mesas Atendidas'}
+                            {t('total_tables_attended') || 'Total Tables Attended'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {totalTables}
                         </h3>
                         <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', fontWeight: '600' }}>
-                           {t('avg_per_staff') || 'Média'}: {avgOrders.toFixed(1)}
+                           {t('avg_per_staff') || 'Avg per Staff'}: {avgOrders.toFixed(1)}
                         </p>
                     </div>
                     <div style={iconBoxStyle('#3b82f6', '#eff6ff')}>
@@ -96,14 +100,14 @@ export default function StaffTab({ data, loading }) {
                 <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('best_performer') || 'Melhor Desempenho'}
+                            {t('best_performer') || 'Best Performer'}
                         </p>
                         <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {bestWaiter ? bestWaiter.name : 'N/A'}
                         </h3>
                         {bestWaiter && (
                             <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>
-                                {bestWaiter.totalOrders} {t('orders')?.toLowerCase() || 'pedidos'}
+                                {bestWaiter.totalOrders} {t('orders')?.toLowerCase() || 'orders'}
                             </p>
                         )}
                     </div>
@@ -115,7 +119,7 @@ export default function StaffTab({ data, loading }) {
                 <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('total_staff_sales') || 'Volume de Vendas (Staff)'}
+                            {t('total_staff_sales') || 'Sales Volume (Staff)'}
                         </p>
                         <h3 style={{ fontSize: '30px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {convertAndFormat(totalRevenue, 'MZN')}
@@ -134,17 +138,17 @@ export default function StaffTab({ data, loading }) {
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <User size={20} style={{ color: '#6366f1' }} />
-                        {t('staff_ranking') || 'Ranking de Funcionários'}
+                        {t('staff_ranking') || 'Staff Ranking'}
                     </h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('staff_name') || 'Nome'}</th>
-                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('tables_attended') || 'Mesas'}</th>
-                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('orders') || 'Pedidos'}</th>
-                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('revenue') || 'Vendas'}</th>
-                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('score') || 'Pontuação'}</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('staff_name') || 'Name'}</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('tables_attended') || 'Tables'}</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('orders') || 'Orders'}</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('revenue') || 'Sales'}</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('score') || 'Score'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -178,7 +182,7 @@ export default function StaffTab({ data, loading }) {
                 {/* Performance Chart */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        {t('orders_by_staff') || 'Pedidos por Funcionário'}
+                        {t('orders_by_staff') || 'Orders by Staff'}
                     </h3>
                     <div style={{ width: '100%', height: 400 }}>
                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
@@ -190,7 +194,7 @@ export default function StaffTab({ data, loading }) {
                                     cursor={{ fill: 'transparent' }}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                                 />
-                                <Bar dataKey="orders" name={t('orders') || 'Pedidos'} radius={[0, 4, 4, 0]} barSize={25}>
+                                <Bar dataKey="orders" name={t('orders') || 'Orders'} radius={[0, 4, 4, 0]} barSize={25}>
                                     {chartData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}

@@ -15,7 +15,17 @@ const cardStyle = {
 
 export default function OrdersTab({ data, loading }) {
     const { t } = useTranslation();
-    if (!data || loading) return null;
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('loading_orders_data') || 'Loading orders data...'}</p>
+        </div>
+    );
+
+    if (!data) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
+            <p>{t('no_orders_data') || 'No orders data available.'}</p>
+        </div>
+    );
 
     const { byStatus = [], bySource = [], byType = [], total = 0 } = data || {};
 

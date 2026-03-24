@@ -159,7 +159,7 @@ export default function InventoryTab({ data, loading }) {
                                 <th style={{ padding: '12px 24px' }}>{t('item_name') || 'Item Name'}</th>
                                 <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('cost_price') || 'Cost Price'}</th>
                                 <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('stock_qty') || 'Stock Qty'}</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Consumo</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('consumption') || 'Consumption'}</th>
                                 <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('total_value') || 'Total Value'}</th>
                                 <th style={{ padding: '12px 24px', textAlign: 'center' }}>{t('status') || 'Status'}</th>
                             </tr>
