@@ -1,5 +1,5 @@
-
-import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
@@ -14,7 +14,8 @@ const cardStyle = {
     border: '1px solid rgba(0,0,0,0.02)',
 };
 
-export default function CustomersTab({ data, loading }) {
+    const { t } = useTranslation();
+    const { convertAndFormat } = useCurrency();
     if (!data || loading) return null;
 
     const { summary = {}, customers = [] } = data || {};
@@ -22,8 +23,8 @@ export default function CustomersTab({ data, loading }) {
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     const loyaltyData = [
-        { name: 'Recorrentes', value: summary.recurringCustomers || 0 },
-        { name: 'Novos', value: (summary.totalCustomers || 0) - (summary.recurringCustomers || 0) }
+        { name: t('recurring_customers'), value: summary.recurringCustomers || 0 },
+        { name: t('new_customers'), value: (summary.totalCustomers || 0) - (summary.recurringCustomers || 0) }
     ];
 
     return (
@@ -33,7 +34,7 @@ export default function CustomersTab({ data, loading }) {
             <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Total de Clientes</span>
+                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('total_customers')}</span>
                         <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '8px', color: '#3b82f6' }}>
                             <Users size={20} />
                         </div>
@@ -43,7 +44,7 @@ export default function CustomersTab({ data, loading }) {
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Clientes Recorrentes</span>
+                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('recurring_customers_kpi')}</span>
                         <div style={{ padding: '8px', background: '#ecfdf5', borderRadius: '8px', color: '#10b981' }}>
                             <UserCheck size={20} />
                         </div>
@@ -53,7 +54,7 @@ export default function CustomersTab({ data, loading }) {
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Taxa de Fidelidade</span>
+                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('loyalty_rate')}</span>
                         <div style={{ padding: '8px', background: '#fffbeb', borderRadius: '8px', color: '#f59e0b' }}>
                             <Star size={20} />
                         </div>
@@ -66,7 +67,7 @@ export default function CustomersTab({ data, loading }) {
                 
                 {/* Loyalty Chart */}
                 <div style={cardStyle}>
-                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>Novos vs Recorrentes</h4>
+                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('new_vs_recurring')}</h4>
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -92,16 +93,16 @@ export default function CustomersTab({ data, loading }) {
 
                 {/* Top Customers Table */}
                 <div style={cardStyle}>
-                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>Ranking de Clientes (Top 10)</h4>
+                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('top_customers_ranking')}</h4>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #f1f5f9', textAlign: 'left' }}>
-                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Cliente</th>
-                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Pedidos</th>
-                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Total Gasto</th>
-                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Favorito</th>
-                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Última Visita</th>
+                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('customer')}</th>
+                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('orders')}</th>
+                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('total_spent')}</th>
+                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('favorite_label')}</th>
+                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('last_visit_label')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -116,13 +117,13 @@ export default function CustomersTab({ data, loading }) {
                                                     {c.name ? c.name.charAt(0).toUpperCase() : 'C'}
                                                 </div>
                                                 <div>
-                                                    <p style={{ margin: 0, fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>{c.name || 'Cliente'}</p>
+                                                    <p style={{ margin: 0, fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>{c.name || t('customer')}</p>
                                                     <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>{c.phone}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td style={{ padding: '12px', fontSize: '14px', color: '#1e293b', fontWeight: '600' }}>{c.orderCount}</td>
-                                        <td style={{ padding: '12px', fontSize: '14px', color: '#10b981', fontWeight: '700' }}>{c.totalSpent?.toLocaleString()} MT</td>
+                                        <td style={{ padding: '12px', fontSize: '14px', color: '#10b981', fontWeight: '700' }}>{convertAndFormat(c.totalSpent || 0, 'MZN')}</td>
                                         <td style={{ padding: '12px', fontSize: '14px', color: '#3b82f6', fontWeight: '500' }}>{c.favoriteItem || '-'}</td>
                                         <td style={{ padding: '12px', fontSize: '14px', color: '#64748b' }}>
                                             {c.lastVisit ? new Date(c.lastVisit).toLocaleDateString() : '-'}

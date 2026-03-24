@@ -228,15 +228,15 @@ export default function Reports() {
     };
 
     const tabs = [
-        { id: 'financial', label: t('financial') || 'Financeiro', icon: DollarSign, color: '#10b981', bg: '#ecfdf5' },
-        { id: 'cash-flow', label: 'Fluxo de Caixa', icon: TrendingUp, color: '#059669', bg: '#ecfdf5' },
-        { id: 'profit', label: 'Lucro & Rentabilidade', icon: TrendingUp, color: '#059669', bg: '#ecfdf5' },
-        { id: 'sales', label: t('sales_menu') || 'Vendas & Menu', icon: List, color: '#3b82f6', bg: '#eff6ff' },
-        { id: 'orders', label: 'Pedidos', icon: FileText, color: '#6366f1', bg: '#eef2ff' },
-        { id: 'operational', label: t('operational') || 'Eficiência', icon: BarChart2, color: '#f59e0b', bg: '#fffbeb' },
-        { id: 'inventory', label: t('inventory') || 'Stock', icon: Box, color: '#8b5cf6', bg: '#f5f3ff' },
-        { id: 'customers', label: 'Clientes', icon: User, color: '#6366f1', bg: '#eef2ff' },
-        { id: 'staff', label: t('staff') || 'Equipa', icon: User, color: '#ec4899', bg: '#fdf2f8' }
+        { id: 'financial', label: t('tab_financial') || 'Financeiro', icon: DollarSign, color: '#10b981', bg: '#ecfdf5' },
+        { id: 'cash-flow', label: t('tab_cashflow') || 'Fluxo de Caixa', icon: TrendingUp, color: '#059669', bg: '#ecfdf5' },
+        { id: 'profit', label: t('tab_profit') || 'Lucro & Rentabilidade', icon: TrendingUp, color: '#059669', bg: '#ecfdf5' },
+        { id: 'sales', label: t('tab_sales') || 'Vendas & Menu', icon: List, color: '#3b82f6', bg: '#eff6ff' },
+        { id: 'orders', label: t('tab_orders') || 'Pedidos', icon: FileText, color: '#6366f1', bg: '#eef2ff' },
+        { id: 'operational', label: t('tab_efficiency') || 'Eficiência', icon: BarChart2, color: '#f59e0b', bg: '#fffbeb' },
+        { id: 'inventory', label: t('tab_inventory') || 'Stock', icon: Box, color: '#8b5cf6', bg: '#f5f3ff' },
+        { id: 'customers', label: t('tab_customers') || 'Clientes', icon: User, color: '#6366f1', bg: '#eef2ff' },
+        { id: 'staff', label: t('tab_staff') || 'Equipa', icon: User, color: '#ec4899', bg: '#fdf2f8' }
     ];
 
     const activeTabData = tabs.find(tab => tab.id === activeTab);
@@ -248,10 +248,10 @@ export default function Reports() {
             <div className="dashboard-header-responsive" style={{ marginBottom: '32px' }}>
                 <div>
                     <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                        {t('reports') || 'reports'}
+                        {t('reports_title')}
                     </h1>
                     <p style={{ color: '#64748b', marginTop: '8px', fontSize: '16px' }}>
-                        {t('reports_desc') || 'Analyze your business performance'}
+                        {t('reports_management_desc')}
                     </p>
                 </div>
                 <div style={{

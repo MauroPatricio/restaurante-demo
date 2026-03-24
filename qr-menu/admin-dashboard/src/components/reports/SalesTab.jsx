@@ -44,13 +44,13 @@ export default function SalesTab({ data, loading }) {
 
     if (loading) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
-            <p>{t('loading_data') || 'Loading sales data...'}</p>
+            <p>{t('loading_data')}</p>
         </div>
     );
 
     if (!data) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#64748b' }}>
-            <p>{t('failed_load_data') || 'No sales data available.'}</p>
+            <p>{t('no_sales_data')}</p>
         </div>
     );
 
@@ -115,7 +115,7 @@ export default function SalesTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('items_sold') || 'Items Sold'}
+                            {t('items_sold')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {totalItems}
@@ -135,7 +135,7 @@ export default function SalesTab({ data, loading }) {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('avg_ticket') || 'Avg Ticket'}
+                            {t('avg_ticket')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {convertAndFormat(avgItemPrice, 'MZN')}
@@ -153,7 +153,7 @@ export default function SalesTab({ data, loading }) {
                 {/* Sales by Category */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        {t('sales_by_category') || 'Sales by Category'}
+                        {t('sales_by_category')}
                     </h3>
                     {byCategory.length > 0 ? (
                         <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
@@ -179,7 +179,7 @@ export default function SalesTab({ data, loading }) {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '350px', color: '#cbd5e1' }}>
-                            <p>{t('no_category_data') || 'No category data available'}</p>
+                            <p>{t('no_category_data')}</p>
                         </div>
                     )}
                 </div>
@@ -208,7 +208,7 @@ export default function SalesTab({ data, loading }) {
                                     <Tooltip
                                         formatter={(value, name) => [
                                             name === 'revenue' ? convertAndFormat(value, 'MZN') : value,
-                                            name === 'revenue' ? t('total_revenue') || 'Revenue' : t('items_sold') || 'Units Sold'
+                                            name === 'revenue' ? t('revenue') : t('units_sold')
                                         ]}
                                     />
                                     <Bar dataKey="revenue" name="Revenue" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
@@ -217,7 +217,7 @@ export default function SalesTab({ data, loading }) {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '350px', color: '#cbd5e1' }}>
-                            <p>{t('no_product_data') || 'No product data available'}</p>
+                            <p>{t('no_product_data')}</p>
                         </div>
                     )}
                 </div>
@@ -229,7 +229,7 @@ export default function SalesTab({ data, loading }) {
                 {/* Payment Methods */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        Formas de Pagamento
+                        {t('payment_methods')}
                     </h3>
                     <div style={{ width: '100%', height: 300, minHeight: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -258,7 +258,7 @@ export default function SalesTab({ data, loading }) {
                 {/* Sales Sources */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                        Origem das Vendas
+                        {t('sales_sources')}
                     </h3>
                     <div style={{ width: '100%', height: 300, minHeight: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -288,16 +288,16 @@ export default function SalesTab({ data, loading }) {
             {/* Bottom 10 Items (New) */}
             <div style={cardStyle}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>
-                    Produtos Menos Vendidos (Ajustar Menu)
+                    {t('bottom_products_sold')}
                 </h3>
                 <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', fontSize: '14px', textAlign: 'left' }}>
                         <thead style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                             <tr>
-                                <th style={{ padding: '12px 24px' }}>Produto</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Unidades</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Receita</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Rentabilidade</th>
+                                <th style={{ padding: '12px 24px' }}>{t('item')}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('qty')}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('revenue')}</th>
+                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>{t('profitability_label')}</th>
                             </tr>
                         </thead>
                         <tbody>

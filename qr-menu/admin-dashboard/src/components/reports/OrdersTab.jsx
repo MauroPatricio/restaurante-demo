@@ -1,5 +1,4 @@
-
-import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
@@ -15,6 +14,7 @@ const cardStyle = {
 };
 
 export default function OrdersTab({ data, loading }) {
+    const { t } = useTranslation();
     if (!data || loading) return null;
 
     const { byStatus = [], bySource = [], byType = [], total = 0 } = data || {};
@@ -49,7 +49,7 @@ export default function OrdersTab({ data, loading }) {
             <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Total de Pedidos</span>
+                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('total_orders')}</span>
                         <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '8px', color: '#3b82f6' }}>
                             <ShoppingBag size={20} />
                         </div>
@@ -59,7 +59,7 @@ export default function OrdersTab({ data, loading }) {
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Taxa de Conclusão</span>
+                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('completion_rate')}</span>
                         <div style={{ padding: '8px', background: '#ecfdf5', borderRadius: '8px', color: '#10b981' }}>
                             <ClipboardList size={20} />
                         </div>
@@ -71,7 +71,7 @@ export default function OrdersTab({ data, loading }) {
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Taxa de Cancelamento</span>
+                        <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('cancellation_rate')}</span>
                         <div style={{ padding: '8px', background: '#fef2f2', borderRadius: '8px', color: '#ef4444' }}>
                             <ClipboardList size={20} />
                         </div>
@@ -87,7 +87,7 @@ export default function OrdersTab({ data, loading }) {
                 
                 {/* Orders by Status */}
                 <div style={cardStyle}>
-                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>Pedidos por Estado</h4>
+                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('orders_by_status')}</h4>
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={byStatus}>
@@ -95,7 +95,7 @@ export default function OrdersTab({ data, loading }) {
                                 <XAxis dataKey="_id" axisLine={false} tickLine={false} fontSize={10} tick={{ fill: '#64748b' }} />
                                 <YAxis axisLine={false} tickLine={false} fontSize={12} tick={{ fill: '#64748b' }} />
                                 <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
-                                <Bar dataKey="count" radius={[4, 4, 0, 0]} name="Pedidos">
+                                <Bar dataKey="count" radius={[4, 4, 0, 0]} name={t('orders')}>
                                     {byStatus.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry._id] || '#cbd5e1'} />
                                     ))}
@@ -107,7 +107,7 @@ export default function OrdersTab({ data, loading }) {
 
                 {/* Orders by Source */}
                 <div style={cardStyle}>
-                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>Origem dos Pedidos</h4>
+                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('orders_by_source')}</h4>
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -134,7 +134,7 @@ export default function OrdersTab({ data, loading }) {
 
                 {/* Orders by Type */}
                 <div style={cardStyle}>
-                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>Tipo de Pedido</h4>
+                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('order_type')}</h4>
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -164,19 +164,19 @@ export default function OrdersTab({ data, loading }) {
             <div style={{ ...cardStyle, display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ padding: '6px', background: '#eff6ff', borderRadius: '4px', color: '#3b82f6' }}><QrCode size={16}/></div>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>Menu QR</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>{t('qr_menu_label')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ padding: '6px', background: '#ecfdf5', borderRadius: '4px', color: '#10b981' }}><ClipboardList size={16}/></div>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>Garçom</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>{t('waiter')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ padding: '6px', background: '#fffbeb', borderRadius: '4px', color: '#f59e0b' }}><Phone size={16}/></div>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>Telefone</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>{t('phone')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ padding: '6px', background: '#f5f3ff', borderRadius: '4px', color: '#8b5cf6' }}><Globe size={16}/></div>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>Delivery</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>{t('delivery')}</span>
                 </div>
             </div>
         </div>

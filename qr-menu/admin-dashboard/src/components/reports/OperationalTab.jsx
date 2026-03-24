@@ -37,16 +37,18 @@ const iconBoxStyle = (color, bg) => ({
 export default function OperationalTab({ data, loading }) {
     const { t } = useTranslation();
 
-    if (loading) return <div className="p-4 text-center">Loading operational data...</div>;
-    if (!data) return <div className="p-4 text-center">No operational data available.</div>;
+    if (loading) return <div className="p-4 text-center">{t('loading_operational_data')}</div>;
+    if (!data) return <div className="p-4 text-center">{t('no_operational_data')}</div>;
 
     const { shifts = [], busiestDays = [], avgPrepTime = 0, slowestItems = [], avgDeliveryTime = 0 } = data || {};
 
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const daysOfWeek = [t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat')].map(d => d || 'Unknown');
+    // Fallback if translations are missing
+    const fallbackDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     // Map day data to labels
     const dayData = busiestDays.map(d => ({
-        day: daysOfWeek[(d._id || 1) - 1] || 'Unknown',
+        day: daysOfWeek[(d._id || 1) - 1] || fallbackDays[(d._id || 1) - 1] || t('unknown'),
         orders: d.orders || 0,
         revenue: d.revenue || 0
     }));
@@ -127,10 +129,10 @@ export default function OperationalTab({ data, loading }) {
                 <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Tempo Médio Delivery
+                            {t('avg_delivery_time')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {avgDeliveryTime} <span style={{ fontSize: '16px', color: '#64748b', fontWeight: '600' }}>min</span>
+                            {avgDeliveryTime} <span style={{ fontSize: '16px', color: '#64748b', fontWeight: '600' }}>{t('min_suffix')}</span>
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
@@ -141,7 +143,7 @@ export default function OperationalTab({ data, loading }) {
                 <div style={statCardStyle}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Pedidos Totais
+                            {t('total_orders_kpi')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', margin: '8px 0 0 0' }}>
                             {totalDayOrders}
@@ -215,16 +217,16 @@ export default function OperationalTab({ data, loading }) {
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                                    <th style={{ padding: '12px 0', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('dish') || 'Prato'}</th>
-                                    <th style={{ padding: '12px 0', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('avg_time') || 'Tempo Médio'}</th>
-                                    <th style={{ padding: '12px 0', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('orders') || 'Pedidos'}</th>
+                                    <th style={{ padding: '12px 0', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('dish')}</th>
+                                    <th style={{ padding: '12px 0', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('avg_time')}</th>
+                                    <th style={{ padding: '12px 0', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('orders')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {slowestItems.map((item, index) => (
                                     <tr key={item._id || index} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                         <td style={{ padding: '16px 0', fontWeight: '600', color: '#334155' }}>{item.name}</td>
-                                        <td style={{ padding: '16px 0', textAlign: 'right', fontWeight: '700', color: '#ef4444' }}>{item.avgPrepTime} min</td>
+                                        <td style={{ padding: '16px 0', textAlign: 'right', fontWeight: '700', color: '#ef4444' }}>{item.avgPrepTime} {t('min_suffix')}</td>
                                         <td style={{ padding: '16px 0', textAlign: 'right', color: '#64748b' }}>{item.orderCount}</td>
                                     </tr>
                                 ))}
@@ -233,7 +235,7 @@ export default function OperationalTab({ data, loading }) {
                     </div>
                 ) : (
                     <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>
-                        {t('no_orders_found') || 'Sem dados suficientes para análise de tempo de preparo.'}
+                        {t('no_prep_time_data')}
                     </div>
                 )}
             </div>

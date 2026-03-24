@@ -251,14 +251,7 @@ export default function AdminHub() {
                 });
             }
 
-            // If it's a currency change, we do the managed reload
-            if (section === 'currencies' || (section === 'general' && formData.general.currency !== restaurant?.settings?.currency)) {
-                setRefreshMessage('Moeda atualizada com sucesso! Recarregando sistema para consistência total...');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-                return;
-            }
+            // Currency changes now update reactively via Context, no reload needed
 
             // If logo changed, refreshing the profile is the cleanest way 
             // to update all logo instances across the app without a full reload
@@ -760,14 +753,6 @@ export default function AdminHub() {
                                             
                                             // Update AuthContext state immediately
                                             updateRestaurantSettings({ currency: newCurrency });
-                                            
-                                            // Trigger Robust Managed Refresh
-                                            setIsRefreshing(true);
-                                            setRefreshMessage('Moeda atualizada com sucesso! Recarregando sistema para consistência total...');
-                                            
-                                            setTimeout(() => {
-                                                window.location.reload();
-                                            }, 1500);
                                         }}
                                     />
                                 </div>

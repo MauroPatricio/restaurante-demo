@@ -40,7 +40,8 @@ export default function StaffTab({ data, loading }) {
     const { t } = useTranslation();
     const { convertAndFormat } = useCurrency();
 
-    const ranking = Array.isArray(data) ? data : (data?.ranking || []);
+    // Fix: Backend returns 'rankings', but tab expected 'ranking'
+    const ranking = Array.isArray(data) ? data : (data?.rankings || data?.ranking || []);
 
     if (loading) return <div className="p-8 text-center" style={{ color: '#64748b', fontWeight: '600' }}>{t('loading_staff_data') || 'Carregando dados do staff...'}</div>;
     if (ranking.length === 0) {
@@ -117,7 +118,7 @@ export default function StaffTab({ data, loading }) {
                             {t('total_staff_sales') || 'Volume de Vendas (Staff)'}
                         </p>
                         <h3 style={{ fontSize: '30px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {convertAndFormat(totalRevenue)}
+                            {convertAndFormat(totalRevenue, 'MZN')}
                         </h3>
                     </div>
                     <div style={iconBoxStyle('#10b981', '#ecfdf5')}>
@@ -160,7 +161,7 @@ export default function StaffTab({ data, loading }) {
                                         </td>
                                         <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#6366f1' }}>{waiter.metrics?.totalTables || 0}</td>
                                         <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#334155' }}>{waiter.metrics?.totalOrders || waiter.totalOrders || 0}</td>
-                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '600', color: '#64748b' }}>{convertAndFormat(waiter.metrics?.totalRevenue || waiter.totalRevenue || 0)}</td>
+                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '600', color: '#64748b' }}>{convertAndFormat(waiter.metrics?.totalRevenue || waiter.totalRevenue || 0, 'MZN')}</td>
                                         <td style={{ padding: '16px', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                                                 <Star size={14} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
