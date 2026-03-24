@@ -17,7 +17,7 @@ const cardStyle = {
 export default function CashFlowTab({ data, loading }) {
     if (!data || loading) return null;
 
-    const { summary, daily } = data;
+    const { daily = [], summary = {} } = data || {};
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -31,32 +31,32 @@ export default function CashFlowTab({ data, loading }) {
                             <ArrowUpRight size={20} />
                         </div>
                     </div>
-                    <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#10b981', margin: '12px 0 4px 0' }}>
-                        {summary.totalEntradas.toLocaleString()} MT
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', marginTop: '12px' }}>
+                        {(summary.totalEntradas || 0).toLocaleString()} <span style={{ fontSize: '16px', color: '#64748b' }}>MT</span>
                     </h3>
                 </div>
 
-                <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
+                <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Saídas Totais</span>
                         <div style={{ padding: '8px', background: '#fef2f2', borderRadius: '8px', color: '#ef4444' }}>
                             <ArrowDownRight size={20} />
                         </div>
                     </div>
-                    <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#ef4444', margin: '12px 0 4px 0' }}>
-                        {summary.totalSaidas.toLocaleString()} MT
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#ef4444', marginTop: '12px' }}>
+                        {(summary.totalSaidas || 0).toLocaleString()} <span style={{ fontSize: '16px', color: '#64748b' }}>MT</span>
                     </h3>
                 </div>
 
-                <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
+                <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Saldo Líquido</span>
-                        <div style={{ padding: '8px', background: '#eff6ff', borderRadius: '8px', color: '#3b82f6' }}>
+                        <div style={{ padding: '8px', background: '#ecfdf5', borderRadius: '8px', color: '#10b981' }}>
                             <TrendingUp size={20} />
                         </div>
                     </div>
-                    <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#1e293b', margin: '12px 0 4px 0' }}>
-                        {summary.netBalance.toLocaleString()} MT
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: (summary.netBalance || 0) >= 0 ? '#10b981' : '#ef4444', marginTop: '12px' }}>
+                        {(summary.netBalance || 0).toLocaleString()} <span style={{ fontSize: '16px', color: '#64748b' }}>MT</span>
                     </h3>
                 </div>
             </div>

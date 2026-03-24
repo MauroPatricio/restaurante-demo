@@ -17,13 +17,13 @@ const cardStyle = {
 export default function CustomersTab({ data, loading }) {
     if (!data || loading) return null;
 
-    const { summary, customers } = data;
+    const { summary = {}, customers = [] } = data || {};
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     const loyaltyData = [
-        { name: 'Recorrentes', value: summary.recurringCustomers },
-        { name: 'Novos', value: summary.totalCustomers - summary.recurringCustomers }
+        { name: 'Recorrentes', value: summary.recurringCustomers || 0 },
+        { name: 'Novos', value: (summary.totalCustomers || 0) - (summary.recurringCustomers || 0) }
     ];
 
     return (
@@ -38,7 +38,7 @@ export default function CustomersTab({ data, loading }) {
                             <Users size={20} />
                         </div>
                     </div>
-                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', marginTop: '12px' }}>{summary.totalCustomers}</h3>
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', marginTop: '12px' }}>{summary.totalCustomers || 0}</h3>
                 </div>
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
@@ -48,7 +48,7 @@ export default function CustomersTab({ data, loading }) {
                             <UserCheck size={20} />
                         </div>
                     </div>
-                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', marginTop: '12px' }}>{summary.recurringCustomers}</h3>
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', marginTop: '12px' }}>{summary.recurringCustomers || 0}</h3>
                 </div>
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '200px' }}>
@@ -58,7 +58,7 @@ export default function CustomersTab({ data, loading }) {
                             <Star size={20} />
                         </div>
                     </div>
-                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#f59e0b', marginTop: '12px' }}>{summary.loyaltyRate}%</h3>
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#f59e0b', marginTop: '12px' }}>{summary.loyaltyRate || 0}%</h3>
                 </div>
             </div>
 

@@ -17,7 +17,7 @@ const cardStyle = {
 export default function OrdersTab({ data, loading }) {
     if (!data || loading) return null;
 
-    const { byStatus, bySource, byType, total } = data;
+    const { byStatus = [], bySource = [], byType = [], total = 0 } = data || {};
 
     const STATUS_COLORS = {
         completed: '#10b981',
@@ -65,7 +65,7 @@ export default function OrdersTab({ data, loading }) {
                         </div>
                     </div>
                     <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', marginTop: '12px' }}>
-                        {total > 0 ? ((byStatus.find(s => s._id === 'completed')?.count || 0) / total * 100).toFixed(1) : 0}%
+                        {total > 0 ? (((byStatus.find(s => s._id === 'completed')?.count || 0) / total) * 100).toFixed(1) : 0}%
                     </h3>
                 </div>
 
@@ -77,7 +77,7 @@ export default function OrdersTab({ data, loading }) {
                         </div>
                     </div>
                     <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#ef4444', marginTop: '12px' }}>
-                        {total > 0 ? ((byStatus.find(s => s._id === 'cancelled')?.count || 0) / total * 100).toFixed(1) : 0}%
+                        {total > 0 ? (((byStatus.find(s => s._id === 'cancelled')?.count || 0) / total) * 100).toFixed(1) : 0}%
                     </h3>
                 </div>
             </div>

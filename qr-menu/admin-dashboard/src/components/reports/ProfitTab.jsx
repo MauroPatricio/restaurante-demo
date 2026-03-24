@@ -17,7 +17,14 @@ const cardStyle = {
 export default function ProfitTab({ data, loading }) {
     if (!data || loading) return null;
 
-    const { revenue, cogs, grossProfit, otherExpenses, netProfit, profitMargin } = data;
+    const { 
+        revenue = 0, 
+        cogs = 0, 
+        grossProfit = 0, 
+        otherExpenses = 0, 
+        netProfit = 0, 
+        profitMargin = 0 
+    } = data || {};
 
     const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
     
@@ -53,13 +60,13 @@ export default function ProfitTab({ data, loading }) {
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '240px' }}>
                     <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase' }}>Lucro Bruto</p>
-                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', marginTop: '12px' }}>{grossProfit?.toLocaleString()} MT</h3>
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', marginTop: '12px' }}>{(grossProfit || 0).toLocaleString()} MT</h3>
                     <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Receita - COGS</p>
                 </div>
 
                 <div style={{ ...cardStyle, flex: 1, minWidth: '240px' }}>
                     <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase' }}>Lucro Líquido</p>
-                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', marginTop: '12px' }}>{netProfit?.toLocaleString()} MT</h3>
+                    <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#10b981', marginTop: '12px' }}>{(netProfit || 0).toLocaleString()} MT</h3>
                     <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Final após despesas</p>
                 </div>
             </div>
@@ -129,30 +136,30 @@ export default function ProfitTab({ data, loading }) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
                     <div>
                         <span style={{ opacity: 0.7, fontSize: '13px', fontWeight: '600', textTransform: 'uppercase' }}>Receita de Pedidos</span>
-                        <h4 style={{ fontSize: '24px', fontWeight: '800', margin: '8px 0' }}>{revenue?.toLocaleString()} MT</h4>
+                        <h4 style={{ fontSize: '24px', fontWeight: '800', margin: '8px 0' }}>{(revenue || 0).toLocaleString()} MT</h4>
                         <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
                             <div style={{ width: '100%', height: '100%', background: '#3b82f6' }}></div>
                         </div>
                     </div>
                     <div>
                         <span style={{ opacity: 0.7, fontSize: '13px', fontWeight: '600', textTransform: 'uppercase' }}>Custo Total (Produtos)</span>
-                        <h4 style={{ fontSize: '24px', fontWeight: '800', margin: '8px 0' }}>{cogs?.toLocaleString()} MT</h4>
+                        <h4 style={{ fontSize: '24px', fontWeight: '800', margin: '8px 0' }}>{(cogs || 0).toLocaleString()} MT</h4>
                         <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ width: `${(cogs/revenue)*100}%`, height: '100%', background: '#f59e0b' }}></div>
+                            <div style={{ width: `${revenue > 0 ? (cogs/revenue)*100 : 0}%`, height: '100%', background: '#f59e0b' }}></div>
                         </div>
                     </div>
                     <div>
                         <span style={{ opacity: 0.7, fontSize: '13px', fontWeight: '600', textTransform: 'uppercase' }}>Despesas Operacionais</span>
-                        <h4 style={{ fontSize: '24px', fontWeight: '800', margin: '8px 0' }}>{otherExpenses?.toLocaleString()} MT</h4>
+                        <h4 style={{ fontSize: '24px', fontWeight: '800', margin: '8px 0' }}>{(otherExpenses || 0).toLocaleString()} MT</h4>
                         <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ width: `${(otherExpenses/revenue)*100}%`, height: '100%', background: '#ef4444' }}></div>
+                            <div style={{ width: `${revenue > 0 ? (otherExpenses/revenue)*100 : 0}%`, height: '100%', background: '#ef4444' }}></div>
                         </div>
                     </div>
                     <div>
                         <span style={{ opacity: 0.7, fontSize: '13px', fontWeight: '600', textTransform: 'uppercase' }}>Lucro Final</span>
-                        <h4 style={{ fontSize: '24px', fontWeight: '800', color: '#10b981', margin: '8px 0' }}>{netProfit?.toLocaleString()} MT</h4>
+                        <h4 style={{ fontSize: '24px', fontWeight: '800', color: '#10b981', margin: '8px 0' }}>{(netProfit || 0).toLocaleString()} MT</h4>
                         <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ width: `${(netProfit/revenue)*100}%`, height: '100%', background: '#10b981' }}></div>
+                            <div style={{ width: `${revenue > 0 ? (netProfit/revenue)*100 : 0}%`, height: '100%', background: '#10b981' }}></div>
                         </div>
                     </div>
                 </div>

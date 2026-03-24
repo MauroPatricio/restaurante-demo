@@ -40,15 +40,15 @@ export default function OperationalTab({ data, loading }) {
     if (loading) return <div className="p-4 text-center">Loading operational data...</div>;
     if (!data) return <div className="p-4 text-center">No operational data available.</div>;
 
-    const { shifts = [], busiestDays = [], avgPrepTime = 0, slowestItems = [], avgDeliveryTime = 0 } = data;
+    const { shifts = [], busiestDays = [], avgPrepTime = 0, slowestItems = [], avgDeliveryTime = 0 } = data || {};
 
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     // Map day data to labels
     const dayData = busiestDays.map(d => ({
-        day: daysOfWeek[d._id - 1] || 'Unknown',
-        orders: d.orders,
-        revenue: d.revenue
+        day: daysOfWeek[(d._id || 1) - 1] || 'Unknown',
+        orders: d.orders || 0,
+        revenue: d.revenue || 0
     }));
 
     // Calculate stats
@@ -161,7 +161,7 @@ export default function OperationalTab({ data, loading }) {
                         {t('orders_by_shift') || 'Pedidos por Turno'}
                     </h3>
                     {shifts.length > 0 ? (
-                        <div style={{ width: '100%', height: 350 }}>
+                        <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart data={shifts}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -184,7 +184,7 @@ export default function OperationalTab({ data, loading }) {
                         {t('busiest_days') || 'Dias Mais Movimentados'}
                     </h3>
                     {dayData.length > 0 ? (
-                        <div style={{ width: '100%', height: 350 }}>
+                        <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart data={dayData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />

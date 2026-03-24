@@ -51,7 +51,7 @@ export default function InventoryTab({ data, loading }) {
     const {
         summary = { totalValue: 0, lowStockCount: 0, totalItems: 0 },
         items = []
-    } = data;
+    } = data || {};
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -135,10 +135,10 @@ export default function InventoryTab({ data, loading }) {
                             {t('stock_health') || 'Stock Health'}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
-                            {summary.totalItems > 0 ? ((1 - summary.lowStockCount / summary.totalItems) * 100).toFixed(0) : 100}%
+                            {summary?.totalItems > 0 ? ((1 - (summary?.lowStockCount || 0) / summary.totalItems) * 100).toFixed(0) : 100}%
                         </h3>
                         <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>
-                            {summary.totalItems - summary.lowStockCount} {t('items_ok') || 'items OK'}
+                            {(summary?.totalItems || 0) - (summary?.lowStockCount || 0)} {t('items_ok') || 'items OK'}
                         </p>
                     </div>
                     <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>

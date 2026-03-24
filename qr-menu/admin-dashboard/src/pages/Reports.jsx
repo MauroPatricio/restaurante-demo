@@ -107,7 +107,124 @@ export default function Reports() {
     };
 
     const handleDownloadCSV = () => {
-        alert('CSV Export coming soon for new reports!');
+        if (!reportData) return alert(t('no_data_to_export') || 'Sem dados para exportar');
+
+        let headers = [];
+        let rows = [];
+        let filename = `report_${activeTab}_${dateRange.startDate}.csv`;
+
+        switch (activeTab) {
+            case 'financial':
+                headers = ["Period", "Revenue", "Gross Margin", "Margin %", "Avg Ticket", "Orders"];
+                rows = (reportData.trend || []).map(t => [
+                    t._id,
+                    t.revenue || 0,
+                    t.grossMargin || 0,
+                    t.marginPercentage?.toFixed(1) || 0,
+                    t.avgTicket || 0,
+                    t.orders || 0
+                ]);
+                break;
+
+            case 'cash-flow':
+                headers = ["Day", "Entries", "Exits", "Balance"];
+                rows = (reportData.daily || []).map(d => [
+                    d.day,
+                    d.entradas || 0,
+                    d.saidas || 0,
+                    (d.entradas || 0) - (d.saidas || 0)
+                ]);
+                break;
+
+            case 'profit':
+                headers = ["Category", "Total Revenue", "COGS", "Gross Profit", "Margin %"];
+                rows = (reportData.categories || []).map(c => [
+                    c.name,
+                    c.revenue || 0,
+                    c.cogs || 0,
+                    c.grossProfit || 0,
+                    c.margin?.toFixed(1) || 0
+                ]);
+                break;
+
+            case 'sales':
+                headers = ["Product", "Quantity", "Revenue", "Source"];
+                rows = (reportData.topItems || []).map(i => [
+                    i.name,
+                    i.quantity,
+                    i.revenue,
+                    "General"
+                ]);
+                break;
+
+            case 'inventory':
+                headers = ["Item", "Stock Qty", "Cost Price", "Consumed", "Total Value", "Status"];
+                rows = (reportData.items || []).map(i => [
+                    i.name,
+                    i.stock || 0,
+                    i.costPrice || 0,
+                    i.consumed || 0,
+                    i.totalValue || 0,
+                    i.status || 'OK'
+                ]);
+                break;
+
+            case 'operational':
+                headers = ["Metric", "Value", "Unit"];
+                rows = [
+                    ["Avg Prep Time", reportData.avgPrepTime || 0, "min"],
+                    ["Avg Delivery Time", reportData.avgDeliveryTime || 0, "min"],
+                    ["Total Orders", reportData.busiestDays?.reduce((sum, d) => sum + d.orders, 0) || 0, "units"]
+                ];
+                break;
+
+            case 'customers':
+                headers = ["Customer Name", "Phone", "Total Orders", "Total Spent", "Last Visit"];
+                rows = (reportData.topCustomers || []).map(c => [
+                    c.name,
+                    c.phone || '-',
+                    c.orders,
+                    c.spent,
+                    c.lastVisit ? new Date(c.lastVisit).toLocaleDateString() : 'N/A'
+                ]);
+                break;
+
+            case 'staff':
+                headers = ["Staff Name", "Tables", "Orders", "Revenue", "Score"];
+                const ranking = Array.isArray(reportData) ? reportData : (reportData.ranking || []);
+                rows = ranking.map(w => [
+                    w.name,
+                    w.metrics?.totalTables || 0,
+                    w.metrics?.totalOrders || w.totalOrders || 0,
+                    w.metrics?.totalRevenue || w.totalRevenue || 0,
+                    w.metrics?.efficiency || w.avgRating || 0
+                ]);
+                break;
+
+            case 'orders':
+                headers = ["Status", "Order Count", "Revenue"];
+                rows = (reportData.byStatus || []).map(s => [
+                    s._id,
+                    s.count,
+                    s.revenue
+                ]);
+                break;
+
+            default:
+                return alert('Export format not defined for this tab');
+        }
+
+        const csvContent = "\uFEFF" + headers.join(",") + "\n"
+            + rows.map(r => r.map(cell => `"${cell}"`).join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const tabs = [

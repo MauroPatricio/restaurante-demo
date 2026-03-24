@@ -54,7 +54,7 @@ export default function SalesTab({ data, loading }) {
         </div>
     );
 
-    const { byCategory = [], topItems = [], bottomItems = [], paymentMethods = [], sources = [] } = data;
+    const { byCategory = [], topItems = [], bottomItems = [], paymentMethods = [], sources = [] } = data || {};
 
     // Calculate summary stats
     const totalRevenue = byCategory.reduce((sum, cat) => sum + (cat.revenue || 0), 0);
@@ -156,7 +156,7 @@ export default function SalesTab({ data, loading }) {
                         {t('sales_by_category') || 'Sales by Category'}
                     </h3>
                     {byCategory.length > 0 ? (
-                        <div style={{ width: '100%', height: 350 }}>
+                        <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <PieChart>
                                     <Pie
@@ -190,7 +190,7 @@ export default function SalesTab({ data, loading }) {
                         {t('top_products_sold') || 'Top 10 Products'}
                     </h3>
                     {topItems.length > 0 ? (
-                        <div style={{ width: '100%', height: 350 }}>
+                        <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart
                                     data={topItems}
@@ -231,7 +231,7 @@ export default function SalesTab({ data, loading }) {
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
                         Formas de Pagamento
                     </h3>
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div style={{ width: '100%', height: 300, minHeight: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -260,7 +260,7 @@ export default function SalesTab({ data, loading }) {
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
                         Origem das Vendas
                     </h3>
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div style={{ width: '100%', height: 300, minHeight: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
