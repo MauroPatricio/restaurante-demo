@@ -22,12 +22,40 @@ import {
     getIVAReport
 } from '../controllers/accountingController.js';
 import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
+import Restaurant from '../models/Restaurant.js';
 
 const router = express.Router();
 
 // Todas as rotas de contabilidade requerem autenticação e subscrição activa
 router.use(authenticateToken);
 router.use(checkSubscription);
+
+// Restringe o acesso ao módulo Fiscal & Contabilidade com base na moeda
+const checkAccountingCurrency = async (req, res, next) => {
+    try {
+        const restaurantId = req.restaurantId || req.user.restaurant || req.headers['restaurant-id'];
+        if (!restaurantId) {
+            return res.status(400).json({ error: 'Restaurant context required' });
+        }
+        
+        const restaurant = await Restaurant.findById(restaurantId).select('settings.currency');
+        if (!restaurant) {
+            return res.status(404).json({ error: 'Restaurant not found' });
+        }
+        
+        const currency = restaurant.settings?.currency?.toUpperCase();
+        if (!currency || !['MT', 'MZN'].includes(currency)) {
+             return res.status(403).json({ error: 'O módulo de Contabilidade só está disponível para MZN (Metical).', code: 'CURRENCY_RESTRICTED' });
+        }
+        
+        next();
+    } catch (error) {
+        console.error('Currency check error:', error);
+        res.status(500).json({ error: 'Failed to verify currency constraints' });
+    }
+};
+
+router.use(checkAccountingCurrency);
 
 // ── Dashboard e Estatísticas ───────────────────────────────
 router.get('/stats', authorizeRoles('owner', 'manager', 'contabilista', 'admin'), getAccountingStats);

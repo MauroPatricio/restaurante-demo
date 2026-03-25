@@ -44,6 +44,7 @@ import { useConnectivity } from '../contexts/ConnectivityContext';
 import SubscriptionBlockedScreen from './SubscriptionBlockedScreen';
 import SubscriptionAlert from './SubscriptionAlert';
 import { useSocket } from '../contexts/SocketContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 import WaiterCallAlerts from './WaiterCallAlerts';
 import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
 import SubscriptionRenewalModal from './SubscriptionRenewalModal';
@@ -55,6 +56,7 @@ export default function DashboardLayout() {
     const { subscription, isBlocked, requiresRenewal, isExpiring } = useSubscription();
     const { isBackendConnected } = useConnectivity();
     const { dineInPendingCount, roomPendingCount, isRinging, stopRinging, toggleAudio, audioEnabled } = useSocket();
+    const { systemCurrency } = useCurrency();
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -208,7 +210,7 @@ export default function DashboardLayout() {
             title: t('financial_stock') || '📦 CONTROLO FINANCEIRO & STOCK',
             items: [
                 { icon: Package, label: t('stock_costs'), path: '/dashboard/stock-management', show: hasPermission('manage_settings'), isPremium: true },
-                { icon: Landmark, label: t('accounting_fiscal'), path: '/dashboard/accounting', show: ['Owner', 'Manager', 'Contabilista'].includes(user?.role?.name) || user?.role?.isSystem, isPremium: true },
+                { icon: Landmark, label: t('accounting_fiscal'), path: '/dashboard/accounting', show: (['MT', 'MZN'].includes(systemCurrency?.toUpperCase())) && (['Owner', 'Manager', 'Contabilista'].includes(user?.role?.name) || user?.role?.isSystem), isPremium: true },
                 { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports'), isPremium: true },
                 { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: ['Owner', 'Manager'].includes(user?.role?.name) },
             ]

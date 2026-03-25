@@ -49,6 +49,14 @@ export default function AdminHub() {
     const [supportedCurrencies, setSupportedCurrencies] = useState([]);
     const [currencySearchTerm, setCurrencySearchTerm] = useState('');
 
+    // Security State
+    const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState('');
+    const [showPw1, setShowPw1] = useState(false);
+    const [showPw2, setShowPw2] = useState(false);
+    const [showPw3, setShowPw3] = useState(false);
+
     // Form State for Restaurant
     const [formData, setFormData] = useState({
         general: {
@@ -299,6 +307,33 @@ export default function AdminHub() {
             fetchUsersAndRoles();
         } catch (error) {
             console.error('Delete failed:', error);
+        }
+    };
+
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+        setPasswordError('');
+        setPasswordSuccess('');
+        
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            return setPasswordError('As novas senhas não coincidem.');
+        }
+        if (passwordData.newPassword.length < 6) {
+            return setPasswordError('A nova senha deve ter pelo menos 6 caracteres.');
+        }
+
+        setSaving(true);
+        try {
+            await usersAPI.changePassword({ 
+                currentPassword: passwordData.currentPassword, 
+                newPassword: passwordData.newPassword 
+            });
+            setPasswordSuccess('Senha alterada com sucesso!');
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            setPasswordError(error.response?.data?.error || 'Falha ao alterar a senha');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -755,6 +790,103 @@ export default function AdminHub() {
                                             updateRestaurantSettings({ currency: newCurrency });
                                         }}
                                     />
+                                </div>
+                            )}
+
+                            {activeTab === 'security' && (
+                                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ padding: '40px 0', maxWidth: '600px', margin: '0 auto' }}>
+                                    
+                                    <div style={{ background: 'white', padding: '40px', borderRadius: '32px', border: '1px solid #f1f5f9', boxShadow: '0 20px 40px -12px rgba(0,0,0,0.05)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
+                                            <div style={{ padding: '12px', background: '#fef2f2', color: '#ef4444', borderRadius: '16px' }}>
+                                                <Key size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 style={{ fontSize: '20px', fontWeight: '800', margin: 0, color: '#1e293b' }}>Alterar Senha de Acesso</h3>
+                                                <p style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 0 0', fontWeight: '500' }}>Para sua segurança, recomendamos criar uma senha forte e única.</p>
+                                            </div>
+                                        </div>
+
+                                        {passwordError && (
+                                            <div style={{ padding: '16px', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: '16px', marginBottom: '24px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <XCircle size={18} />
+                                                {passwordError}
+                                            </div>
+                                        )}
+
+                                        {passwordSuccess && (
+                                            <div style={{ padding: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a', borderRadius: '16px', marginBottom: '24px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <CheckCircle size={18} />
+                                                {passwordSuccess}
+                                            </div>
+                                        )}
+
+                                        <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                            
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Senha Atual</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <Lock style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1' }} size={20} />
+                                                    <input 
+                                                        type={showPw1 ? 'text' : 'password'}
+                                                        value={passwordData.currentPassword}
+                                                        onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                                                        required
+                                                        style={{ width: '100%', padding: '16px 48px', background: '#f8fafc', border: '2px solid transparent', borderRadius: '20px', fontSize: '15px', color: '#1e293b', outline: 'none' }}
+                                                        placeholder="Sua senha atual"
+                                                    />
+                                                    <button type="button" onClick={() => setShowPw1(!showPw1)} style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                                                        {showPw1 ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Nova Senha</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <Key style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1' }} size={20} />
+                                                    <input 
+                                                        type={showPw2 ? 'text' : 'password'}
+                                                        value={passwordData.newPassword}
+                                                        onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                                                        required
+                                                        style={{ width: '100%', padding: '16px 48px', background: '#f8fafc', border: '2px solid transparent', borderRadius: '20px', fontSize: '15px', color: '#1e293b', outline: 'none' }}
+                                                        placeholder="Mínimo 6 caracteres"
+                                                    />
+                                                    <button type="button" onClick={() => setShowPw2(!showPw2)} style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                                                        {showPw2 ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Confirmar Nova Senha</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <ShieldCheck style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1' }} size={20} />
+                                                    <input 
+                                                        type={showPw3 ? 'text' : 'password'}
+                                                        value={passwordData.confirmPassword}
+                                                        onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                                                        required
+                                                        style={{ width: '100%', padding: '16px 48px', background: '#f8fafc', border: '2px solid transparent', borderRadius: '20px', fontSize: '15px', color: '#1e293b', outline: 'none' }}
+                                                        placeholder="Repita a nova senha"
+                                                    />
+                                                    <button type="button" onClick={() => setShowPw3(!showPw3)} style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                                                        {showPw3 ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <button 
+                                                type="submit" 
+                                                disabled={saving}
+                                                style={{ marginTop: '16px', padding: '16px', background: '#ef4444', color: 'white', borderRadius: '20px', fontWeight: '800', fontSize: '15px', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', transition: 'all 0.3s' }}
+                                            >
+                                                {saving ? <LoadingSpinner size={20} color="white" /> : 'Atualizar Senha'}
+                                            </button>
+
+                                        </form>
+                                    </div>
                                 </div>
                             )}
 

@@ -40,7 +40,7 @@ import BatchPosting from './pages/accounting/BatchPosting';
 import BalancoPatrimonial from './pages/reports/BalancoPatrimonial';
 import Balancete from './pages/reports/Balancete';
 import { SocketProvider } from './contexts/SocketContext';
-import { CurrencyProvider } from './contexts/CurrencyContext';
+import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import './App.css';
 
 import UserManagement from './pages/UserManagement';
@@ -77,6 +77,18 @@ function ProtectedRoute({ children }) {
 
   if (user?.isDefaultPassword && location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />;
+  }
+
+  return children;
+}
+
+function AccountingGuard({ children }) {
+  const { systemCurrency } = useCurrency();
+  const allowedCurrencies = ['MT', 'MZN'];
+
+  // If currency is somehow not loaded yet, ignore, but if it is and it's not MT/MZN, block it
+  if (systemCurrency && !allowedCurrencies.includes(systemCurrency.toUpperCase())) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -164,20 +176,22 @@ function AppContent() {
             </PremiumFeatureGate>
           } />
           <Route path="accounting" element={
-            <PremiumFeatureGate featureName="Módulo Contabilístico & Fiscal">
-              <AccountingDashboard />
-            </PremiumFeatureGate>
+            <AccountingGuard>
+              <PremiumFeatureGate featureName="Módulo Contabilístico & Fiscal">
+                <AccountingDashboard />
+              </PremiumFeatureGate>
+            </AccountingGuard>
           } />
-          <Route path="accounting/invoices" element={<FiscalInvoices />} />
-          <Route path="accounting/cash" element={<CashManagement />} />
-          <Route path="accounting/accounts" element={<PlanOfAccounts />} />
-          <Route path="accounting/ledger" element={<GeneralLedger />} />
-          <Route path="accounting/batch" element={<BatchPosting />} />
-          <Route path="accounting/razao" element={<Razao />} />
-          <Route path="accounting/dre" element={<DRE />} />
-          <Route path="accounting/iva" element={<ApuramentoIVA />} />
-          <Route path="accounting/balance-sheet" element={<BalancoPatrimonial />} />
-          <Route path="accounting/balancete" element={<Balancete />} />
+          <Route path="accounting/invoices" element={<AccountingGuard><FiscalInvoices /></AccountingGuard>} />
+          <Route path="accounting/cash" element={<AccountingGuard><CashManagement /></AccountingGuard>} />
+          <Route path="accounting/accounts" element={<AccountingGuard><PlanOfAccounts /></AccountingGuard>} />
+          <Route path="accounting/ledger" element={<AccountingGuard><GeneralLedger /></AccountingGuard>} />
+          <Route path="accounting/batch" element={<AccountingGuard><BatchPosting /></AccountingGuard>} />
+          <Route path="accounting/razao" element={<AccountingGuard><Razao /></AccountingGuard>} />
+          <Route path="accounting/dre" element={<AccountingGuard><DRE /></AccountingGuard>} />
+          <Route path="accounting/iva" element={<AccountingGuard><ApuramentoIVA /></AccountingGuard>} />
+          <Route path="accounting/balance-sheet" element={<AccountingGuard><BalancoPatrimonial /></AccountingGuard>} />
+          <Route path="accounting/balancete" element={<AccountingGuard><Balancete /></AccountingGuard>} />
           <Route path="clients" element={<Clients />} />
           <Route path="hall" element={<HallDashboard />} />
           <Route path="waiter-analytics" element={<WaiterAnalytics />} />
