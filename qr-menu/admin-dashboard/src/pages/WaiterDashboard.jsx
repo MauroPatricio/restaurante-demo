@@ -5,7 +5,7 @@ import { useSocket } from '../contexts/SocketContext';
 import { tableAPI, orderAPI, waiterCallAPI } from '../services/api';
 import {
     User, Users, Bell, CheckCircle, Clock, MapPin,
-    UtensilsCrossed, AlertTriangle, Coffee, Loader2
+    UtensilsCrossed, AlertTriangle, Coffee, Loader2, ChevronRight
 } from 'lucide-react';
 
 import { formatDistanceToNow } from 'date-fns';
@@ -459,6 +459,12 @@ export default function WaiterDashboard() {
                                                 >
                                                     <StatusIcon size={18} strokeWidth={2.5} className={config.text} />
                                                 </div>
+                                            </div>
+
+                                            {/* Tap hint */}
+                                            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-center gap-0.5 text-[10px] text-gray-400 dark:text-gray-600">
+                                                <ChevronRight size={10} />
+                                                <span>{t('tap_for_details') || 'Toque para detalhes'}</span>
                                             </div>
                                         </div>
                                     );

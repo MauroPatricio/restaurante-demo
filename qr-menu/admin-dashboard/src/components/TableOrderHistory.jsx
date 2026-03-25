@@ -73,8 +73,10 @@ const TableOrderHistory = ({ tableId }) => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="space-y-3">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="bg-gray-100 dark:bg-gray-800 rounded-xl h-16 animate-pulse" />
+                ))}
             </div>
         );
     }
@@ -96,32 +98,37 @@ const TableOrderHistory = ({ tableId }) => {
                     key={order._id}
                     className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden transition-all hover:shadow-md"
                 >
-                    {/* Order Header */}
+                    {/* Order Header - clickable to expand */}
                     <div
-                        className="p-4 cursor-pointer"
+                        className="p-4 cursor-pointer select-none"
                         onClick={() => toggleOrderExpand(order._id)}
                     >
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="font-bold text-gray-900 dark:text-white">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="font-bold text-gray-900 dark:text-white text-sm">
                                         #{order.orderNumber || order._id.slice(-6).toUpperCase()}
                                     </span>
                                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
                                         {t(order.status) || order.status}
                                     </span>
                                 </div>
-
-                                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                                    <div className="flex items-center gap-1">
-                                        <Clock size={12} />
-                                        <span>{format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm')}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <Package size={12} />
-                                        <span>{order.items?.length || 0} {t('items') || 'itens'}</span>
-                                    </div>
+                                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                                    <span className="flex items-center gap-1">
+                                        <Clock size={11} />
+                                        {format(new Date(order.createdAt), 'HH:mm · dd/MM/yy')}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <Package size={11} />
+                                        {order.items?.length || 0} {t('items') || 'itens'}
+                                    </span>
                                 </div>
+                                {expandedOrder !== order._id && (
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-1 flex items-center gap-0.5">
+                                        <ChevronDown size={10} />
+                                        {t('tap_to_expand') || 'Toque para ver detalhes'}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-3">
