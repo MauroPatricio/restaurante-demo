@@ -1,3 +1,7 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useCurrency } from '../context/CurrencyContext';
 import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle, X, ArrowLeft, History, Package, Sparkles } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import SuggestionsModal from '../components/SuggestionsModal';
