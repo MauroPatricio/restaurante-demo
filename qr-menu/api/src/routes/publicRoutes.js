@@ -360,7 +360,9 @@ router.get('/room/menu/:restaurantId', async (req, res) => {
 
         const [restaurant, items, categories] = await Promise.all([
             Restaurant.findById(restaurantId).select('name logo settings currency'),
-            MenuItem.find({ restaurant: restaurantId, available: true }).lean(),
+            MenuItem.find({ restaurant: restaurantId, available: true })
+                .select('name description price costPrice currency imageUrl image photo category popular orderCount stock stockControlled stockMin prepTime active unit')
+                .lean(),
             Category.find({ restaurant: restaurantId }).sort('order').lean()
         ]);
 
@@ -556,6 +558,48 @@ router.post('/room/waiter-call', async (req, res) => {
     } catch (error) {
         console.error('Room waiter call error:', error);
         res.status(500).json({ error: 'Failed to call waiter' });
+    }
+});
+
+/**
+ * Get smart suggestions for a menu item (e.g. when out of stock)
+ * GET /api/public/menu-item/:itemId/suggestions
+ */
+router.get('/menu-item/:itemId/suggestions', async (req, res) => {
+    try {
+        const { itemId } = req.params;
+        const MenuItem = (await import('../models/MenuItem.js')).default;
+
+        const originalItem = await MenuItem.findById(itemId);
+        if (!originalItem) return res.status(404).json({ error: 'Item not found' });
+
+        // Find alternatives: same category, available, and in stock
+        const suggestions = await MenuItem.find({
+            restaurant: originalItem.restaurant,
+            category: originalItem.category,
+            _id: { $ne: itemId },
+            available: true,
+            $or: [
+                { stockControlled: false },
+                { stockControlled: true, stock: { $gt: 0 } }
+            ]
+        })
+        .select('name description price currency imageUrl image photo popular orderCount stock stockControlled costPrice')
+        .lean();
+
+        // Sort by popularity and margin
+        const rankedSuggestions = suggestions.map(item => {
+            const margin = item.costPrice > 0 ? (item.price - item.costPrice) : 0;
+            const score = (item.popular ? 100 : 0) + (item.orderCount || 0) + margin;
+            return { ...item, score };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 4);
+
+        res.json({ suggestions: rankedSuggestions });
+    } catch (error) {
+        console.error('Suggestions fetch error:', error);
+        res.status(500).json({ error: 'Failed to fetch suggestions' });
     }
 });
 

@@ -107,6 +107,7 @@
     "table_status_available": "Disponível",
     "table_status_occupied": "Ocupado",
     "table_status_reserved": "Reservado",
+    "table_status_almost_ready": "Quase Pronto",
     "tap_to_close": "Toque para fechar",
     "total": "Total",
     "track_order": "Acompanhar Pedido",
@@ -167,5 +168,10 @@
     "status_ready": "A Caminho",
     "status_served": "Entregue",
     "status_completed": "Concluído",
-    "status_cancelled": "Cancelado"
+    "status_cancelled": "Cancelado",
+    "out_of_stock_badge": "INDISPONÍVEL",
+    "view_alternatives": "Ver alternativas similares",
+    "item_unavailable_title": "Ops! Este item acabou",
+    "item_unavailable_desc": "O {{name}} não está disponível no momento. Que tal estas sugestões?",
+    "add_to_cart": "Adicionar"
 }

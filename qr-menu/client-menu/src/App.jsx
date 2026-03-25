@@ -261,13 +261,16 @@ function CodeEntry() {
 
 import RestaurantLoader from './components/RestaurantLoader';
 
+import { SocketProvider } from './context/SocketContext';
+
 function App() {
     return (
         <ThemeProvider>
             <CurrencyProvider>
                 <CartProvider>
-                    <NotificationProvider>
-                        <LoadingProvider>
+                    <SocketProvider>
+                        <NotificationProvider>
+                            <LoadingProvider>
                             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                                 <Routes>
                                     <Route path="/menu" element={<QRRedirect />} />
@@ -284,10 +287,11 @@ function App() {
                             </div>
                         </LoadingProvider>
                     </NotificationProvider>
-                </CartProvider>
-            </CurrencyProvider>
-        </ThemeProvider>
-    );
+                </SocketProvider>
+            </CartProvider>
+        </CurrencyProvider>
+    </ThemeProvider>
+);
 }
 
 export default App;

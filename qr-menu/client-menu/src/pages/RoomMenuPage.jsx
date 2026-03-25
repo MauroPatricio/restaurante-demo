@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useCurrency } from '../context/CurrencyContext';
-import { useNotification } from '../context/NotificationContext';
-import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle, X, ArrowLeft, History, Package } from 'lucide-react';
+import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle, X, ArrowLeft, History, Package, Sparkles } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
+import SuggestionsModal from '../components/SuggestionsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { API_URL } from '../config/api';
@@ -165,6 +162,21 @@ function OrderHistoryScreen({ restaurantId, roomId, token, orders, onBack, navig
                     })
                 )}
             </div>
+            {/* Suggestions Modal */}
+            <SuggestionsModal 
+                item={suggestingItem}
+                suggestions={suggestions}
+                loading={loadingSuggestions}
+                isOpen={!!suggestingItem}
+                onClose={() => setSuggestingItem(null)}
+                onAdd={(suggested) => {
+                    addItem(suggested);
+                    setSuggestingItem(null);
+                }}
+                formatPrice={formatPrice}
+                currency={cartCurrency}
+                t={t}
+            />
         </div>
     );
 }
@@ -198,6 +210,11 @@ export default function RoomMenuPage() {
     const [waiterCalled, setWaiterCalled] = useState(false);
     const { t } = useTranslation();
     const searchRef = useRef(null);
+    const { socket, joinRestaurant } = useSocket();
+
+    const [suggestingItem, setSuggestingItem] = useState(null);
+    const [suggestions, setSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
     /* ── Step 1: Validate QR ── */
     useEffect(() => {
@@ -242,7 +259,44 @@ export default function RoomMenuPage() {
                 setPhase('error');
             }
         })();
-    }, [phase, restaurantId, roomId, token]);
+    }, [phase, restaurantId, roomId, token, t]);
+
+    /* ── Step 3: Socket connection ── */
+    useEffect(() => {
+        if (!restaurantId || !socket) return;
+        joinRestaurant(restaurantId);
+
+        const handleStockUpdate = (data) => {
+            console.log('🔌 Stock updated event:', data);
+            setMenuItems(prev => prev.map(item => {
+                if (item._id === data.menuItemId) {
+                    return { ...item, stock: data.newStock };
+                }
+                return item;
+            }));
+        };
+
+        socket.on('stock:updated', handleStockUpdate);
+        return () => {
+            socket.off('stock:updated', handleStockUpdate);
+        };
+    }, [restaurantId, socket]);
+
+    /* ── Suggestions helper ── */
+    const openSuggestions = async (item) => {
+        setSuggestingItem(item);
+        setLoadingSuggestions(true);
+        try {
+            const res = await fetch(`${API_URL}/public/menu-item/${item._id}/suggestions`);
+            const data = await res.json();
+            setSuggestions(data.suggestions || []);
+        } catch (e) {
+            console.error('Error fetching suggestions:', e);
+            setSuggestions([]);
+        } finally {
+            setLoadingSuggestions(false);
+        }
+    };
 
     /* ── Cart helpers ── */
     const addItem = (item) => setCart(prev => {
@@ -328,6 +382,10 @@ export default function RoomMenuPage() {
         const matchSearch = !searchQuery || (it.name || '').toLowerCase().includes(searchLower);
         return matchCat && matchSearch;
     });
+    /* ── Stock check helper ── */
+    const isOutOfStock = (item) => {
+        return item.stockControlled && (item.stock || 0) <= 0;
+    };
 
     /* ────────────────── SCREENS ─── */
 
@@ -563,6 +621,8 @@ export default function RoomMenuPage() {
                 <AnimatePresence mode='popLayout'>
                     {filtered.map((item, index) => {
                         const qty = getQty(item._id);
+                        const outOfStock = isOutOfStock(item);
+
                         return (
                             <motion.div
                                 key={item._id}
@@ -570,7 +630,10 @@ export default function RoomMenuPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700 flex gap-3 active:scale-[0.98] transition-all"
+                                className={clsx(
+                                    "bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700 flex gap-3 transition-all",
+                                    outOfStock ? "opacity-75 grayscale-[0.5]" : "active:scale-[0.98]"
+                                )}
                             >
                                 <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 relative">
                                     {(item.imageUrl || item.image || item.photo) ? (
@@ -591,20 +654,37 @@ export default function RoomMenuPage() {
                                             <Star size={8} fill="currentColor" /> {t('popular')}
                                         </div>
                                     )}
+                                    {outOfStock && (
+                                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+                                            <span className="bg-white/90 dark:bg-gray-900/90 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg text-rose-600 shadow-xl border border-rose-100">
+                                                {t('out_of_stock_badge') || 'Indisponível'}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex-1 flex flex-col justify-between py-0.5">
-                                    <div>
+                                    <div onClick={() => outOfStock && openSuggestions(item)} className={outOfStock ? 'cursor-pointer' : ''}>
                                         <div className="flex justify-between items-start">
                                             <h3 className="font-bold text-gray-800 dark:text-white text-base leading-tight">{item.name}</h3>
                                         </div>
                                         {item.description && (
                                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">{item.description}</p>
                                         )}
+                                        {outOfStock && (
+                                            <button 
+                                                className="mt-2 text-[10px] font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1 hover:underline"
+                                            >
+                                                <Sparkles size={10} /> {t('view_alternatives') || 'Ver alternativas similares'}
+                                            </button>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center justify-between mt-2">
-                                        <span className="font-bold text-gray-900 dark:text-gray-100 text-lg tabular-nums">
+                                        <span className={clsx(
+                                            "font-bold text-lg tabular-nums",
+                                            outOfStock ? "text-gray-400" : "text-gray-900 dark:text-gray-100"
+                                        )}>
                                             {formatPrice(item.price || 0, item.currency || cartCurrency)}
                                         </span>
 
@@ -621,25 +701,37 @@ export default function RoomMenuPage() {
                                                     <span className="font-black text-primary-700 dark:text-primary-300 min-w-[20px] text-center">{qty}</span>
                                                     <motion.button
                                                         whileTap={{ scale: 0.8 }}
-                                                        onClick={() => addItem(item)}
-                                                        className="h-8 w-8 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-md shadow-primary-500/20"
+                                                        onClick={() => !outOfStock && addItem(item)}
+                                                        className={clsx(
+                                                            "h-8 w-8 rounded-full flex items-center justify-center shadow-md",
+                                                            outOfStock ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-primary-600 text-white shadow-primary-500/20"
+                                                        )}
                                                     >
                                                         <Plus size={14} strokeWidth={3} />
                                                     </motion.button>
                                                 </div>
                                             ) : (
                                                 <motion.button
-                                                    whileTap={isKitchenOpen ? { scale: 0.9 } : {}}
-                                                    onClick={() => isKitchenOpen && addItem(item)}
+                                                    whileTap={(isKitchenOpen && !outOfStock) ? { scale: 0.9 } : {}}
+                                                    onClick={() => {
+                                                        if (!isKitchenOpen) return;
+                                                        if (outOfStock) {
+                                                            openSuggestions(item);
+                                                            return;
+                                                        }
+                                                        addItem(item);
+                                                    }}
                                                     className={clsx(
                                                         "h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm",
-                                                        isKitchenOpen 
+                                                        (isKitchenOpen && !outOfStock)
                                                             ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-600 hover:text-white dark:hover:bg-primary-500 dark:hover:text-white' 
-                                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-200 dark:border-gray-700'
+                                                            : outOfStock
+                                                                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-100 dark:border-amber-900/30'
+                                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-200 dark:border-gray-700'
                                                     )}
-                                                    title={!isKitchenOpen ? t('kitchen_closed') : ''}
+                                                    title={!isKitchenOpen ? t('kitchen_closed') : outOfStock ? t('view_alternatives') : ''}
                                                 >
-                                                    {isKitchenOpen ? <Plus size={18} strokeWidth={2.5} /> : <X size={16} />}
+                                                    {isKitchenOpen ? (outOfStock ? <Sparkles size={18} /> : <Plus size={18} strokeWidth={2.5} />) : <X size={16} />}
                                                 </motion.button>
                                             )}
                                         </div>

@@ -163,5 +163,10 @@
     "status_ready": "On the way",
     "status_served": "Delivered",
     "status_completed": "Completed",
-    "status_cancelled": "Cancelled"
+    "status_cancelled": "Cancelled",
+    "out_of_stock_badge": "UNAVAILABLE",
+    "view_alternatives": "View similar alternatives",
+    "item_unavailable_title": "Oops! Out of stock",
+    "item_unavailable_desc": "{{name}} is currently unavailable. How about these suggestions?",
+    "add_to_cart": "Add"
 }
