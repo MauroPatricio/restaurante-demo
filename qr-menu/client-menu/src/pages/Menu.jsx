@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
-import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle, X } from 'lucide-react';
+import { ShoppingBag, ChevronDown, Plus, Minus, Search, AlertCircle, Star, ChefHat, User, MessageCircle, AlertTriangle, X, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,8 @@ import { API_URL } from '../config/api';
 import ThemeToggle from '../components/ThemeToggle';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import WaiterCallButton from '../components/WaiterCallButton';
+import SuggestionsModal from '../components/SuggestionsModal';
+import { useSocket } from '../context/SocketContext';
 import ReactionButtons from '../components/ReactionButtons';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { createWaiterCall, createClientReaction } from '../services/waiterCallAPI';
@@ -23,6 +25,29 @@ const Menu = () => {
     const [searchParams] = useSearchParams();
     const { t, i18n } = useTranslation();
     const { currency: preferredCurrency, formatPrice, restaurant, setRestaurant } = useCurrency();
+    const { socket } = useSocket();
+
+    const [suggestingItem, setSuggestingItem] = useState(null);
+    const [suggestions, setSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+    const openSuggestions = async (item) => {
+        setSuggestingItem(item);
+        setLoadingSuggestions(true);
+        try {
+            const res = await api.get(`/public/menu-item/${item._id}/suggestions`);
+            setSuggestions(res.data.suggestions || []);
+        } catch (e) {
+            console.error('Error fetching suggestions:', e);
+            setSuggestions([]);
+        } finally {
+            setLoadingSuggestions(false);
+        }
+    };
+
+    const isOutOfStock = (item) => {
+        return item.stockControlled && (item.stock || 0) <= 0;
+    };
 
     // Logic: Get table from URL OR LocalStorage
     // Support both 't' (short) and 'table' (long)
@@ -202,6 +227,23 @@ const Menu = () => {
         };
         fetchTableInfo();
     }, [tableNumber, lastTableUpdate]);
+
+    // Handle real-time stock updates
+    useEffect(() => {
+        if (!socket) return;
+        const handleStockUpdate = (data) => {
+            console.log('🔌 Stock updated event:', data);
+            setMenuItems(prev => prev.map(item => {
+                if (item._id === data.menuItemId) {
+                    return { ...item, stock: data.newStock };
+                }
+                return item;
+            }));
+        };
+
+        socket.on('stock:updated', handleStockUpdate);
+        return () => socket.off('stock:updated', handleStockUpdate);
+    }, [socket]);
 
     const filteredItems = menuItems.filter(item => {
         // Get the category ID from the item (handle both string and object)
@@ -483,7 +525,11 @@ const Menu = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ delay: index * 0.05 }}
-                            className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700 flex gap-3 active:scale-[0.98] transition-all"
+                            className={clsx(
+                                "bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100/50 dark:border-gray-700 flex gap-3 transition-all",
+                                isOutOfStock(item) ? "opacity-75 grayscale-[0.8] cursor-pointer" : "active:scale-[0.98]"
+                            )}
+                            onClick={() => isOutOfStock(item) && openSuggestions(item)}
                         >
                             <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 relative">
                                 {(item.imageUrl || item.image || item.photo) ? (
@@ -499,7 +545,11 @@ const Menu = () => {
                                         <ChefHat size={32} strokeWidth={1.5} />
                                     </div>
                                 )}
-                                {item.popular && (
+                                {isOutOfStock(item) ? (
+                                    <div className="absolute top-1 left-1 bg-red-500 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white flex items-center gap-0.5 shadow-sm">
+                                        {t('out_of_stock_badge') || 'INDISPONÍVEL'}
+                                    </div>
+                                ) : item.popular && (
                                     <div className="absolute top-1 left-1 bg-yellow-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-yellow-900 flex items-center gap-0.5 shadow-sm">
                                         <Star size={8} fill="currentColor" /> {t('popular')}
                                     </div>
@@ -550,16 +600,26 @@ const Menu = () => {
 
                                         return (
                                             <motion.button
-                                                whileTap={isKitchenOpen ? { scale: 0.9 } : {}}
-                                                onClick={() => isKitchenOpen && addToCart(item)}
+                                                whileTap={(isKitchenOpen && !isOutOfStock(item)) ? { scale: 0.9 } : {}}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (!isKitchenOpen) return;
+                                                    if (isOutOfStock(item)) {
+                                                        openSuggestions(item);
+                                                        return;
+                                                    }
+                                                    addToCart(item);
+                                                }}
                                                 className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm ${
-                                                    isKitchenOpen 
+                                                    (isKitchenOpen && !isOutOfStock(item))
                                                         ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-600 hover:text-white dark:hover:bg-primary-500 dark:hover:text-white' 
-                                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-200 dark:border-gray-700'
+                                                        : isOutOfStock(item)
+                                                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-100 dark:border-amber-900/30'
+                                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-200 dark:border-gray-700'
                                                 }`}
-                                                title={!isKitchenOpen ? t('kitchen_closed') : ''}
+                                                title={!isKitchenOpen ? t('kitchen_closed') : isOutOfStock(item) ? (t('view_alternatives') || 'Ver alternativas similares') : ''}
                                             >
-                                                {isKitchenOpen ? <Plus size={18} strokeWidth={2.5} /> : <X size={16} />}
+                                                {isKitchenOpen ? (isOutOfStock(item) ? <Sparkles size={18} /> : <Plus size={18} strokeWidth={2.5} />) : <X size={16} />}
                                             </motion.button>
                                         );
                                     })()}
@@ -774,6 +834,22 @@ const Menu = () => {
                     {t('developed_by')}
                 </p>
             </div>
+
+            {/* Suggestions Modal */}
+            <SuggestionsModal 
+                item={suggestingItem}
+                suggestions={suggestions}
+                loading={loadingSuggestions}
+                isOpen={!!suggestingItem}
+                onClose={() => setSuggestingItem(null)}
+                onAdd={(suggested) => {
+                    addToCart(suggested);
+                    setSuggestingItem(null);
+                }}
+                formatPrice={formatPrice}
+                currency={preferredCurrency || restaurant?.settings?.currency}
+                t={t}
+            />
         </div>
     );
 };
