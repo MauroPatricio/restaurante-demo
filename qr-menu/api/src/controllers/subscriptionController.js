@@ -5,6 +5,7 @@ import AuditLog from '../models/AuditLog.js';
 import SystemSetting from '../models/SystemSetting.js';
 import User from '../models/User.js';
 import { calculateGlobalStatus, findCriticalSubscription } from '../utils/subscriptionHelper.js';
+import { sendPaymentPendingAlert } from '../services/emailService.js';
 
 // Get current subscription
 export const getSubscription = async (req, res) => {
@@ -150,6 +151,18 @@ export const createTransaction = async (req, res) => {
                 requestedAt: new Date()
             });
         }
+
+        // Fire email notification (non-blocking — does NOT delay the response)
+        Restaurant.findById(restaurantId).select('name settings').then(restaurant => {
+            sendPaymentPendingAlert({
+                restaurantName: restaurant?.name || req.user.restaurantName || 'Restaurante',
+                clientName: req.user.name || req.user.email || 'Cliente',
+                amount: transaction.amount,
+                currency: restaurant?.settings?.currency || 'MT',
+                method: transaction.method,
+                proofUrl: transaction.proofUrl
+            }).catch(err => console.error('Payment alert email failed silently:', err));
+        }).catch(() => {});
 
         res.status(201).json({ message: 'Payment request submitted', transaction });
     } catch (error) {

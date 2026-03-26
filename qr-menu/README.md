@@ -293,7 +293,7 @@ JWT_SECRET=your-super-secret-key
 # Email
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
+EMAIL_USER=nhiquelaservicos@gmail.com
 EMAIL_PASSWORD=your-app-password
 
 # Payment APIs (when available)

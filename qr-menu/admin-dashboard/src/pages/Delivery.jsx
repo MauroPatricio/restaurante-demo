@@ -9,6 +9,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useCurrency } from '../contexts/CurrencyContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useTranslation } from 'react-i18next';
 
 // Modern Card Styles (matching FinancialTab)
 const cardStyle = {
@@ -41,6 +42,7 @@ const iconBoxStyle = (color, bg) => ({
 });
 
 export default function DeliveryDashboard() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { convertAndFormat } = useCurrency();
     const [orders, setOrders] = useState([]);
@@ -85,9 +87,9 @@ export default function DeliveryDashboard() {
     };
 
     const columns = {
-        ready: { title: 'Ready for Pickup', color: '#f59e0b', bg: '#fffbeb' },
-        out_for_delivery: { title: 'In Transit', color: '#3b82f6', bg: '#eff6ff' },
-        delivered: { title: 'Delivered', color: '#10b981', bg: '#ecfdf5' }
+        ready: { title: t('delivery_ready_for_pickup'), color: '#f59e0b', bg: '#fffbeb', emptyKey: 'delivery_no_orders_ready' },
+        out_for_delivery: { title: t('delivery_in_transit'), color: '#3b82f6', bg: '#eff6ff', emptyKey: 'delivery_no_orders_transit' },
+        delivered: { title: t('delivery_delivered'), color: '#10b981', bg: '#ecfdf5', emptyKey: 'delivery_no_orders_delivered' }
     };
 
     // Calculate stats
@@ -99,7 +101,7 @@ export default function DeliveryDashboard() {
     if (loading) return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '80vh' }}>
             <LoadingSpinner size={48} />
-            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>Loading Delivery Manager...</span>
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>{t('delivery_loading')}</span>
         </div>
     );
 
@@ -109,10 +111,10 @@ export default function DeliveryDashboard() {
             {/* Header */}
             <div>
                 <h1 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Truck style={{ color: '#3b82f6' }} /> Delivery Dispatch
+                    <Truck style={{ color: '#3b82f6' }} /> {t('delivery_dispatch_title')}
                 </h1>
                 <p style={{ color: '#64748b', marginTop: '8px', fontSize: '14px' }}>
-                    Manage outgoing orders and fleet
+                    {t('delivery_dispatch_subtitle')}
                 </p>
             </div>
 
@@ -127,7 +129,7 @@ export default function DeliveryDashboard() {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Ready for Pickup
+                            {t('delivery_ready_for_pickup')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {readyCount}
@@ -147,7 +149,7 @@ export default function DeliveryDashboard() {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            In Transit
+                            {t('delivery_in_transit')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {transitCount}
@@ -167,7 +169,7 @@ export default function DeliveryDashboard() {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Delivered
+                            {t('delivery_delivered')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {deliveredCount}
@@ -187,13 +189,13 @@ export default function DeliveryDashboard() {
                 }}>
                     <div>
                         <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Active Drivers
+                            {t('delivery_active_drivers')}
                         </p>
                         <h3 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '8px 0 0 0' }}>
                             {activeDrivers}/{drivers.length}
                         </h3>
                         <p style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: '600' }}>
-                            {activeDrivers} online now
+                            {t('delivery_online_now', { count: activeDrivers })}
                         </p>
                     </div>
                     <div style={iconBoxStyle('#8b5cf6', '#f5f3ff')}>
@@ -278,7 +280,7 @@ export default function DeliveryDashboard() {
                                                     style={{ flex: 1, fontSize: '13px', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px' }}
                                                     onChange={(e) => assignDriver(order._id, e.target.value)}
                                                 >
-                                                    <option value="">Assign Driver...</option>
+                                                    <option value="">{t('delivery_assign_driver')}</option>
                                                     {drivers.map(d => (
                                                         <option key={d._id} value={d._id}>{d.name}</option>
                                                     ))}
@@ -321,7 +323,7 @@ export default function DeliveryDashboard() {
                                                     fontSize: '13px'
                                                 }}
                                             >
-                                                <CheckCircle size={16} /> Mark Delivered
+                                                <CheckCircle size={16} /> {t('delivery_mark_delivered')}
                                             </button>
                                         )}
                                     </div>
@@ -329,7 +331,7 @@ export default function DeliveryDashboard() {
                             ))}
                             {orders.filter(o => o.status === status).length === 0 && (
                                 <div style={{ textAlign: 'center', padding: '40px 20px', color: '#cbd5e1', fontSize: '13px', fontStyle: 'italic' }}>
-                                    No orders {config.title.toLowerCase()}
+                                    {t(config.emptyKey)}
                                 </div>
                             )}
                         </div>

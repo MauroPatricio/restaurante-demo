@@ -2,11 +2,11 @@ import nodemailer from 'nodemailer';
 
 // Create email transporter
 const createTransporter = () => {
-    // Use environment variables for email configuration
+    const port = parseInt(process.env.EMAIL_PORT) || 587;
     const config = {
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: process.env.EMAIL_PORT || 587,
-        secure: false, // true for 465, false for other ports
+        port,
+        secure: port === 465, // true for 465 (SSL), false for 587 (STARTTLS)
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASSWORD
@@ -20,6 +20,7 @@ const createTransporter = () => {
 
     return nodemailer.createTransport(config);
 };
+
 
 // Send subscription payment reminder
 export const sendPaymentReminder = async (restaurant, daysUntilDue) => {
@@ -188,8 +189,93 @@ export const sendResetPasswordEmail = async (user, resetUrl) => {
     }
 };
 
+// Send payment pending alert to admin (nhiquelaservicos@gmail.com)
+export const sendPaymentPendingAlert = async ({ restaurantName, clientName, amount, currency, method, proofUrl }) => {
+    const transporter = createTransporter();
+    if (!transporter) return { success: false, error: 'Email not configured' };
+
+    const ADMIN_EMAIL = 'nhiquelaservicos@gmail.com';
+    const methodLabel = (method || 'N/A').toUpperCase();
+    const dateStr = new Date().toLocaleString('pt-PT', { timeZone: 'Africa/Maputo' });
+
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+            to: ADMIN_EMAIL,
+            subject: `💳 Novo Pagamento Aguarda Confirmação — ${restaurantName}`,
+            html: `
+                <div style="font-family: 'Segoe UI', sans-serif; max-width: 620px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #1e3a5f, #2563eb); padding: 28px 32px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">💳 Novo Pagamento Submetido</h1>
+                        <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px;">Nhiquela · Sistema de Restaurantes</p>
+                    </div>
+
+                    <!-- Body -->
+                    <div style="padding: 32px; background: #ffffff;">
+                        <p style="font-size: 15px; color: #334155; margin: 0 0 24px;">
+                            Um cliente submeteu um comprovativo de pagamento e está a aguardar a sua confirmação.
+                        </p>
+
+                        <!-- Info Table -->
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                            <tr style="background: #f8fafc;">
+                                <td style="padding: 12px 16px; font-size: 13px; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 40%;">Restaurante</td>
+                                <td style="padding: 12px 16px; font-size: 14px; color: #1e293b; font-weight: 700; border-bottom: 1px solid #e2e8f0;">${restaurantName}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px 16px; font-size: 13px; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Cliente / Contacto</td>
+                                <td style="padding: 12px 16px; font-size: 14px; color: #1e293b; border-bottom: 1px solid #e2e8f0;">${clientName}</td>
+                            </tr>
+                            <tr style="background: #f8fafc;">
+                                <td style="padding: 12px 16px; font-size: 13px; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Valor do Pagamento</td>
+                                <td style="padding: 12px 16px; font-size: 15px; color: #2563eb; font-weight: 800; border-bottom: 1px solid #e2e8f0;">${amount?.toLocaleString('pt-PT') || '—'} ${currency || 'MT'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px 16px; font-size: 13px; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Método</td>
+                                <td style="padding: 12px 16px; font-size: 14px; color: #1e293b; border-bottom: 1px solid #e2e8f0;">${methodLabel}</td>
+                            </tr>
+                            <tr style="background: #f8fafc;">
+                                <td style="padding: 12px 16px; font-size: 13px; color: #64748b; font-weight: 600;">Data / Hora</td>
+                                <td style="padding: 12px 16px; font-size: 14px; color: #1e293b;">${dateStr}</td>
+                            </tr>
+                        </table>
+
+                        ${proofUrl ? `
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="${proofUrl}"
+                               style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block;">
+                               📎 Ver Comprovativo de Pagamento
+                            </a>
+                        </div>
+                        ` : ''}
+
+                        <p style="font-size: 13px; color: #94a3b8; text-align: center; margin: 24px 0 0;">
+                            Por favor, aceda ao painel de administração para aprovar ou rejeitar este pagamento.
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background: #f1f5f9; padding: 16px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                            Nhiquela Serviços e Consultoria, LDA · nhiquelaservicos.com
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('Error sending payment pending alert:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 export default {
     sendRenewalConfirmation,
     sendOrderReceipt,
-    sendResetPasswordEmail
+    sendResetPasswordEmail,
+    sendPaymentPendingAlert
 };
