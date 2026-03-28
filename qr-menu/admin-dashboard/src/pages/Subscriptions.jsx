@@ -571,7 +571,7 @@ export default function Subscriptions() {
                                                                                     </span>
                                                                                 ) : (
                                                                                     <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', background: '#f3f4f6', color: '#374151', fontWeight: '600' }}>
-                                                                                        {t('price_additional', 'Additional')} (50%)
+                                                                                        {t('price_additional', 'Additional')} (25%)
                                                                                     </span>
                                                                                 )}
                                                                             </td>

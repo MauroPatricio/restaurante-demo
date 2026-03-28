@@ -30,7 +30,7 @@ export const getSubscription = async (req, res) => {
         // Calculate effective price (Main vs Additional)
         // 1. Fetch base price
         const priceSetting = await SystemSetting.findOne({ key: 'base_subscription_price' });
-        const basePrice = priceSetting ? Number(priceSetting.value) : 1000;
+        const basePrice = priceSetting ? Number(priceSetting.value) : 4850;
 
         let effectivePrice = basePrice;
 
@@ -40,9 +40,9 @@ export const getSubscription = async (req, res) => {
             const ownerRestaurants = await Restaurant.find({ owner: restaurant.owner }).sort({ createdAt: 1 });
             if (ownerRestaurants.length > 0) {
                 const mainRestaurantId = ownerRestaurants[0]._id.toString();
-                // If this is NOT the first restaurant, apply 50% discount
+                // If this is NOT the first restaurant, apply 75% discount (pay only 25%)
                 if (mainRestaurantId !== restaurantId) {
-                    effectivePrice = basePrice * 0.5;
+                    effectivePrice = basePrice * 0.25;
                 }
             }
         }
@@ -516,7 +516,7 @@ export const getOwnersSummary = async (req, res) => {
                     amount = basePrice;
                     priceType = 'main';
                 } else {
-                    amount = basePrice * 0.5;
+                    amount = basePrice * 0.25;
                     priceType = 'additional';
                 }
 

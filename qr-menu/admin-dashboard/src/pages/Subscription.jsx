@@ -175,15 +175,16 @@ export default function Subscription() {
             let usdAmountDisplay;
             
             // Specific USD prices for specific tiers
-            // 1500 MZN is the "menores" tier (23 USD)
+            // 1200 MZN is the "menores" tier (18 USD)
             // 4850 MZN or more is the "Standard" tier (76 USD)
-            if (amount === 1500) {
-                usdAmountDisplay = "23.00 US$";
+            if (amount === 1200) {
+                usdAmountDisplay = "18.00 US$";
             } else if (amount >= 4850) {
                 usdAmountDisplay = "76.00 US$";
-            } else if (rates) {
+            } else if (rates || currentCurrency === 'MT' || currentCurrency === 'MZN') {
                 const usdAmount = convertCurrency(amount, currentCurrency, 'USD', rates);
-                usdAmountDisplay = formatProfessional(usdAmount, 'USD');
+                // For exact tiers we already handled them. For others (like totals), show approximate
+                usdAmountDisplay = `~ ${formatProfessional(usdAmount, 'USD')}`;
             }
 
             if (usdAmountDisplay) {

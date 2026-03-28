@@ -19,7 +19,13 @@ export const fetchExchangeRates = async (force = false) => {
         // For simplicity in this utility, we'll try to get it from a relative path or env
         const apiUrl = import.meta.env.VITE_API_URL || '/api';
         const response = await axios.get(`${apiUrl}/currency/rates`);
-        exchangeRates = response.data.rates;
+        const rates = response.data.rates;
+        
+        // Normalize: Ensure both MZN and MT exist if one does
+        if (rates.MZN && !rates.MT) rates.MT = rates.MZN;
+        if (rates.MT && !rates.MZN) rates.MZN = rates.MT;
+        
+        exchangeRates = rates;
         lastFetched = now;
         return exchangeRates;
     } catch (error) {
@@ -28,6 +34,7 @@ export const fetchExchangeRates = async (force = false) => {
         return {
             USD: 1,
             MZN: 64,
+            MT: 64, // Added MT fallback
             EUR: 0.92,
             ZAR: 18.5,
             GBP: 0.79
@@ -41,13 +48,18 @@ export const fetchExchangeRates = async (force = false) => {
 export const convertCurrency = (amount, from, to, rates) => {
     if (!amount) return 0;
     if (from === to) return amount;
-    if (!rates || !rates[from] || !rates[to]) return amount;
+    // Normalize case and match both MZN/MT
+    const fromKey = (from === 'MT' || from === 'MZN') ? (rates.MZN ? 'MZN' : 'MT') : from;
+    const toKey = (to === 'MT' || to === 'MZN') ? (rates.MZN ? 'MZN' : 'MT') : to;
+
+    if (!rates[fromKey] || !rates[toKey]) {
+        // Last resort: if we are going from MT/MZN to USD, use a hardcoded 64 rate if missing
+        if ((fromKey === 'MZN' || fromKey === 'MT') && toKey === 'USD') return amount / 64;
+        return amount;
+    }
     
-    // Always convert to base (USD) first if rates are relative to base
-    // Most rates from our API are { USD: 1, MZN: 64, ... } 
-    // to go from MZN to EUR: (amount / rates.MZN) * rates.EUR
-    const amountInBase = amount / rates[from];
-    return amountInBase * rates[to];
+    const amountInBase = amount / rates[fromKey];
+    return amountInBase * rates[toKey];
 };
 
 /**
