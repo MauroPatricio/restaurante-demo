@@ -30,7 +30,7 @@ export const getSubscription = async (req, res) => {
         // Calculate effective price (Main vs Additional)
         // 1. Fetch base price
         const priceSetting = await SystemSetting.findOne({ key: 'base_subscription_price' });
-        const basePrice = priceSetting ? Number(priceSetting.value) : 4850;
+        const basePrice = priceSetting ? Number(priceSetting.value) : 4200;
 
         let effectivePrice = basePrice;
 

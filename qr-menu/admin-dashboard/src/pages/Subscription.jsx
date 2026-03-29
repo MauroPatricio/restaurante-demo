@@ -175,12 +175,12 @@ export default function Subscription() {
             let usdAmountDisplay;
             
             // Specific USD prices for specific tiers
-            // 1200 MZN is the "menores" tier (18 USD)
-            // 4850 MZN or more is the "Standard" tier (76 USD)
-            if (amount === 1200) {
-                usdAmountDisplay = "18.00 US$";
-            } else if (amount >= 4850) {
-                usdAmountDisplay = "76.00 US$";
+            // 1050 MZN is the additional restaurant tier (16 USD)
+            // 4200 MZN is the "Standard" tier (65 USD)
+            if (amount === 1050) {
+                usdAmountDisplay = "16.00 US$";
+            } else if (amount >= 4200) {
+                usdAmountDisplay = "65.00 US$";
             } else if (rates || currentCurrency === 'MT' || currentCurrency === 'MZN') {
                 const usdAmount = convertCurrency(amount, currentCurrency, 'USD', rates);
                 // For exact tiers we already handled them. For others (like totals), show approximate
