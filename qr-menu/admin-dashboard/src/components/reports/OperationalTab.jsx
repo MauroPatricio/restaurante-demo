@@ -172,8 +172,8 @@ export default function OperationalTab({ data, loading }) {
                         {t('orders_by_shift') || 'Orders by Shift'}
                     </h3>
                     {shifts.length > 0 ? (
-                        <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <div style={{ width: '100%', height: 350, minHeight: '350px', minWidth: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                                 <BarChart data={shifts}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                     <XAxis dataKey="_id" />
@@ -195,8 +195,8 @@ export default function OperationalTab({ data, loading }) {
                         {t('busiest_days') || 'Busiest Days'}
                     </h3>
                     {dayData.length > 0 ? (
-                        <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <div style={{ width: '100%', height: 350, minHeight: '350px', minWidth: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                                 <BarChart data={dayData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                     <XAxis dataKey="day" />

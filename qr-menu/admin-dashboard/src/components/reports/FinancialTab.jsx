@@ -130,8 +130,8 @@ export default function FinancialTab({ data, loading }) {
                     {t('revenue_trend') || 'Revenue Trend'}
                 </h3>
                 {trend.length > 0 ? (
-                    <div style={{ width: '100%', height: 350 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                    <div style={{ width: '100%', height: 350, minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <AreaChart data={trend}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">

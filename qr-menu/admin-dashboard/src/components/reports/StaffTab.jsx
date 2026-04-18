@@ -137,8 +137,8 @@ export default function StaffTab({ data, loading }) {
                 {/* Waiter Performance Table */}
                 <div style={cardStyle}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <User size={20} style={{ color: '#6366f1' }} />
-                        {t('staff_ranking') || 'Staff Ranking'}
+                        <Users size={20} style={{ color: '#ec4899' }} />
+                        {t('staff_ranking') || 'Ranking da Equipa'}
                     </h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -148,6 +148,7 @@ export default function StaffTab({ data, loading }) {
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('tables_attended') || 'Tables'}</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('orders') || 'Orders'}</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('revenue') || 'Sales'}</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('avg_service_time') || 'Tempo'}</th>
                                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>{t('score') || 'Score'}</th>
                                 </tr>
                             </thead>
@@ -166,6 +167,7 @@ export default function StaffTab({ data, loading }) {
                                         <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#6366f1' }}>{waiter.metrics?.totalTables || 0}</td>
                                         <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#334155' }}>{waiter.metrics?.totalOrders || waiter.totalOrders || 0}</td>
                                         <td style={{ padding: '16px', textAlign: 'right', fontWeight: '600', color: '#64748b' }}>{convertAndFormat(waiter.metrics?.totalRevenue || waiter.totalRevenue || 0, 'MZN')}</td>
+                                        <td style={{ padding: '16px', textAlign: 'right', fontWeight: '700', color: '#eb4899' }}>{waiter.metrics?.avgServiceTime || waiter.avgServiceTime || 0}m</td>
                                         <td style={{ padding: '16px', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                                                 <Star size={14} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
@@ -184,8 +186,8 @@ export default function StaffTab({ data, loading }) {
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
                         {t('orders_by_staff') || 'Orders by Staff'}
                     </h3>
-                    <div style={{ width: '100%', height: 400 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                    <div style={{ width: '100%', height: 400, minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30, top: 10, bottom: 10 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                                 <XAxis type="number" hide />

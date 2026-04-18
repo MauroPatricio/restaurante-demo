@@ -344,6 +344,95 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
             { $limit: 30 }
         ]);
 
+        // Top Customers served by this waiter
+        const topCustomers = await Order.aggregate([
+            {
+                $match: {
+                    restaurant: new mongoose.Types.ObjectId(restaurantId),
+                    createdByWaiter: new mongoose.Types.ObjectId(waiterId),
+                    status: { $ne: 'cancelled' },
+                    phone: { $exists: true, $ne: null, $not: /^anon_/ },
+                    ...dateFilter
+                }
+            },
+            {
+                $group: {
+                    _id: "$phone",
+                    name: { $first: "$customerName" },
+                    totalSpent: { $sum: "$total" },
+                    orderCount: { $count: {} }
+                }
+            },
+            { $sort: { totalSpent: -1 } },
+            { $limit: 10 }
+        ]);
+
+        // Efficiency Insights
+        // Get restaurant average for comparison (over same period)
+        const restaurantAvg = await Order.aggregate([
+            {
+                $match: {
+                    restaurant: new mongoose.Types.ObjectId(restaurantId),
+                    status: { $ne: 'cancelled' },
+                    actualReadyTime: { $exists: true },
+                    ...dateFilter
+                }
+            },
+            {
+                $project: {
+                    completionTime: {
+                        $divide: [
+                            { $subtract: ['$actualReadyTime', '$createdAt'] },
+                            1000 * 60
+                        ]
+                    }
+                }
+            },
+            {
+                $match: { completionTime: { $gte: 0, $lte: 180 } }
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgCompletionTime: { $avg: '$completionTime' }
+                }
+            }
+        ]);
+
+        const waiterAvg = await Order.aggregate([
+            {
+                $match: {
+                    restaurant: new mongoose.Types.ObjectId(restaurantId),
+                    createdByWaiter: new mongoose.Types.ObjectId(waiterId),
+                    status: { $ne: 'cancelled' },
+                    actualReadyTime: { $exists: true },
+                    ...dateFilter
+                }
+            },
+            {
+                $project: {
+                    completionTime: {
+                        $divide: [
+                            { $subtract: ['$actualReadyTime', '$createdAt'] },
+                            1000 * 60
+                        ]
+                    }
+                }
+            },
+            {
+                $match: { completionTime: { $gte: 0, $lte: 180 } }
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgCompletionTime: { $avg: '$completionTime' }
+                }
+            }
+        ]);
+
+        const resAvg = restaurantAvg[0]?.avgCompletionTime || 0;
+        const wAvg = waiterAvg[0]?.avgCompletionTime || 0;
+
         res.json({
             waiter: {
                 id: waiter._id,
@@ -358,7 +447,19 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
                     date: w._id,
                     orders: w.orders,
                     revenue: Math.round(w.revenue)
-                }))
+                })),
+                topCustomers: topCustomers.map(tc => ({
+                    name: tc.name || 'Cliente',
+                    phone: tc._id,
+                    spent: Math.round(tc.totalSpent),
+                    orders: tc.orderCount
+                })),
+                insights: {
+                    avgCompletionTime: Math.round(wAvg),
+                    restaurantAvgCompletionTime: Math.round(resAvg),
+                    isFasterThanAverage: wAvg < resAvg,
+                    differencePercentage: resAvg > 0 ? Math.round(((resAvg - wAvg) / resAvg) * 100) : 0
+                }
             }
         });
     } catch (error) {

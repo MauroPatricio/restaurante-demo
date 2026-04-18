@@ -157,7 +157,7 @@ export default function SalesTab({ data, loading }) {
                     </h3>
                     {byCategory.length > 0 ? (
                         <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                                 <PieChart>
                                     <Pie
                                         data={byCategory}
@@ -191,7 +191,7 @@ export default function SalesTab({ data, loading }) {
                     </h3>
                     {topItems.length > 0 ? (
                         <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                                 <BarChart
                                     data={topItems}
                                     layout="vertical"
@@ -231,8 +231,8 @@ export default function SalesTab({ data, loading }) {
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
                         {t('payment_methods')}
                     </h3>
-                    <div style={{ width: '100%', height: 300, minHeight: '300px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ width: '100%', height: 300, minHeight: '300px', minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <PieChart>
                                 <Pie
                                     data={paymentMethods}
@@ -260,8 +260,8 @@ export default function SalesTab({ data, loading }) {
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
                         {t('sales_sources')}
                     </h3>
-                    <div style={{ width: '100%', height: 300, minHeight: '300px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ width: '100%', height: 300, minHeight: '300px', minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <PieChart>
                                 <Pie
                                     data={sources}

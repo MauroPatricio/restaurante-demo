@@ -79,8 +79,8 @@ export default function CustomersTab({ data, loading }) {
                 {/* Loyalty Chart */}
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('new_vs_recurring')}</h4>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <PieChart>
                                 <Pie
                                     data={loyaltyData}
@@ -110,6 +110,7 @@ export default function CustomersTab({ data, loading }) {
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #f1f5f9', textAlign: 'left' }}>
                                     <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('customer')}</th>
+                                    <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('visits_label')}</th>
                                     <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('orders')}</th>
                                     <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('total_spent')}</th>
                                     <th style={{ padding: '12px', color: '#64748b', fontSize: '13px', fontWeight: '600' }}>{t('favorite_label')}</th>
@@ -133,7 +134,8 @@ export default function CustomersTab({ data, loading }) {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td style={{ padding: '12px', fontSize: '14px', color: '#1e293b', fontWeight: '600' }}>{c.orderCount}</td>
+                                        <td style={{ padding: '12px', fontSize: '14px', color: '#10b981', fontWeight: '700' }}>{c.visitCount || c.orders || 1}</td>
+                                        <td style={{ padding: '12px', fontSize: '14px', color: '#1e293b', fontWeight: '600' }}>{c.orderCount || c.orders}</td>
                                         <td style={{ padding: '12px', fontSize: '14px', color: '#10b981', fontWeight: '700' }}>{convertAndFormat(c.totalSpent || 0, 'MZN')}</td>
                                         <td style={{ padding: '12px', fontSize: '14px', color: '#3b82f6', fontWeight: '500' }}>{c.favoriteItem || '-'}</td>
                                         <td style={{ padding: '12px', fontSize: '14px', color: '#64748b' }}>

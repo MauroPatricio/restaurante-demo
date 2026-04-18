@@ -48,12 +48,13 @@ export default function Clients() {
 
 
     const exportCSV = () => {
-        const headers = [t('clients_col_client'), t('clients_col_lifetime'), t('clients_col_orders'), t('clients_col_favorite'), t('clients_col_tables'), t('clients_col_last_visit')];
+        const headers = [t('clients_col_client'), t('clients_col_lifetime'), t('visits_label'), t('clients_col_orders'), t('clients_col_favorite'), t('clients_col_tables'), t('clients_col_last_visit')];
         const rows = filteredClients.map(c => [
             c.name || t('client'),
             c.phone,
             c.totalSpent,
-            c.orderCount,
+            c.visitCount || 1,
+            c.orderCount || c.orders,
             c.favoriteItem || 'N/A',
             (c.tables || []).join(', ') || 'N/A',
             format(new Date(c.lastVisit), 'yyyy-MM-dd')
@@ -183,6 +184,7 @@ export default function Clients() {
                             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_client').toUpperCase()}</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_lifetime').toUpperCase()}</th>
+                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('visits_label').toUpperCase()}</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_orders').toUpperCase()}</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_favorite').toUpperCase()}</th>
                                 <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_tables').toUpperCase()}</th>
@@ -219,11 +221,20 @@ export default function Clients() {
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
                                         <span style={{
+                                            background: (client.visitCount || 1) > 1 ? '#dcfce7' : '#f8fafc',
+                                            color: (client.visitCount || 1) > 1 ? '#166534' : '#64748b',
+                                            padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700'
+                                        }}>
+                                            {client.visitCount || 1} {t('visits_label')}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '20px 24px' }}>
+                                        <span style={{
                                             background: client.isRecurring ? '#eff6ff' : '#f8fafc',
                                             color: client.isRecurring ? '#3b82f6' : '#64748b',
                                             padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700'
                                         }}>
-                                            {client.orderCount} {t('clients_visits')}
+                                            {client.orderCount || client.orders} {t('orders')}
                                         </span>
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>

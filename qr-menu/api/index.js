@@ -173,6 +173,7 @@ const allowedOrigins = [
   'http://127.0.0.1:5175',
   'http://127.0.0.1:5173',
   'http://localhost:5000',
+  'http://127.0.0.1:5000',
   'http://gestaomodernaonline.com',
   'https://gestaomodernaonline.com',
   'http://menu.gestaomodernaonline.com',
@@ -181,13 +182,24 @@ const allowedOrigins = [
   'https://api.gestaomodernaonline.com',
   'https://gestaomodernaonline.com',
   'https://www.gestaomodernaonline.com',
-
 ];
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"]
+    origin: (origin, callback) => {
+      // In development, allow all origins
+      if (process.env.NODE_ENV !== 'production' || !origin) {
+        return callback(null, true);
+      }
+      
+      if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('gestaomodernaonline.com')) {
+        return callback(null, true);
+      }
+      
+      return callback(new Error('Not allowed by CORS'), false);
+    },
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 

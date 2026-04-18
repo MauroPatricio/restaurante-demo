@@ -698,7 +698,13 @@ router.get('/clients', authenticateToken, authorizeRoles('owner', 'manager', 'ad
           phone: { $first: "$phone" },
           totalSpent: { $sum: "$total" },
           lastOrderDate: { $max: "$createdAt" },
-          orderCount: { $sum: 1 }
+          orderCount: { $sum: 1 },
+          visitCount: { $addToSet: { $ifNull: ["$tableSession", "$_id"] } }
+        }
+      },
+      {
+        $addFields: {
+          visitCount: { $size: "$visitCount" }
         }
       },
       { $sort: { lastOrderDate: -1 } }

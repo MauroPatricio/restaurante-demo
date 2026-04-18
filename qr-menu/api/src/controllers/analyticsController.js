@@ -323,7 +323,13 @@ export const getRestaurantStats = async (req, res) => {
                     _id: "$phone",
                     name: { $first: "$customerName" },
                     totalSpent: { $sum: "$total" },
-                    orderCount: { $count: {} }
+                    orderCount: { $count: {} },
+                    visitCount: { $addToSet: { $ifNull: ["$tableSession", "$_id"] } }
+                }
+            },
+            {
+                $addFields: {
+                    visitCount: { $size: "$visitCount" }
                 }
             },
             { $sort: { totalSpent: -1 } },
@@ -965,9 +971,15 @@ export const getCustomerAnalytics = async (req, res) => {
                     name: { $first: "$customerName" },
                     totalSpent: { $sum: "$total" },
                     orderCount: { $count: {} },
+                    visitCount: { $addToSet: { $ifNull: ["$tableSession", "$_id"] } },
                     lastVisit: { $max: "$createdAt" },
                     firstVisit: { $min: "$createdAt" },
                     tables: { $addToSet: { $ifNull: ["$tableInfo.number", "$tableNumber"] } }
+                }
+            },
+            {
+                $addFields: {
+                    visitCount: { $size: "$visitCount" }
                 }
             },
             { $sort: { lastVisit: -1 } }

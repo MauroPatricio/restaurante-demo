@@ -12,10 +12,11 @@
 }
 
 .analytics-header h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin: 0 0 8px 0;
+    font-size: 32px;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.05em;
 }
 
 .subtitle {
@@ -64,46 +65,46 @@
 }
 
 .summary-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px;
+    background: white;
+    border-radius: 20px;
     padding: 24px;
     display: flex;
     gap: 20px;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.02);
 }
 
-.summary-card:nth-child(2) {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.summary-card:nth-child(3) {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.card-icon {
-    opacity: 0.9;
-}
+.summary-card:nth-child(1) .card-icon { color: #ec4899; background: #fdf2f8; padding: 12px; border-radius: 12px; }
+.summary-card:nth-child(2) .card-icon { color: #3b82f6; background: #eff6ff; padding: 12px; border-radius: 12px; }
+.summary-card:nth-child(3) .card-icon { color: #f59e0b; background: #fffbeb; padding: 12px; border-radius: 12px; }
 
 .card-content h3 {
-    font-size: 36px;
-    font-weight: 700;
-    margin: 0 0 4px 0;
+    font-size: 32px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
 }
 
 .card-content p {
-    margin: 0;
-    opacity: 0.9;
-    font-size: 14px;
+    margin: 4px 0 0 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .card-badge {
     display: inline-block;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
+    background: #f8fafc;
+    color: #94a3b8;
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
     margin-top: 8px;
+    border: 1px solid #f1f5f9;
 }
 
 /* Waiters Table */
@@ -316,22 +317,28 @@
 }
 
 .shift-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: #f8fafc;
+    color: #1e293b;
     padding: 20px;
-    border-radius: 12px;
-    text-align: center;
+    border-radius: 16px;
+    text-align: left;
+    border: 1px solid #f1f5f9;
 }
 
 .shift-card h4 {
     margin: 0 0 8px 0;
-    font-size: 16px;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.5px;
 }
 
 .shift-card p {
     margin: 4px 0;
-    font-size: 14px;
-    opacity: 0.9;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 /* Day Bars */
@@ -393,9 +400,9 @@
 
 .trend-fill {
     width: 100%;
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-    border-radius: 4px 4px 0 0;
-    min-height: 20px;
+    background: #6366f1;
+    border-radius: 6px 6px 0 0;
+    min-height: 4px;
     transition: height 0.3s ease;
 }
 

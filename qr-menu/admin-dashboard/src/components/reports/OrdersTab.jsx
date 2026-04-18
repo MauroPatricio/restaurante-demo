@@ -98,8 +98,8 @@ export default function OrdersTab({ data, loading }) {
                 {/* Orders by Status */}
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('orders_by_status')}</h4>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <BarChart data={byStatus}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="_id" axisLine={false} tickLine={false} fontSize={10} tick={{ fill: '#64748b' }} />
@@ -118,8 +118,8 @@ export default function OrdersTab({ data, loading }) {
                 {/* Orders by Source */}
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('orders_by_source')}</h4>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <PieChart>
                                 <Pie
                                     data={bySource}
@@ -145,8 +145,8 @@ export default function OrdersTab({ data, loading }) {
                 {/* Orders by Type */}
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('order_type')}</h4>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <PieChart>
                                 <Pie
                                     data={byType}
