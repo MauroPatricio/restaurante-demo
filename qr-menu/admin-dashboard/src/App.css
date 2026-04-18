@@ -706,8 +706,8 @@ body {
 
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
 }
 
 .menu-card {
@@ -724,14 +724,16 @@ body {
 
 .menu-card-image {
   width: 100%;
-  height: 180px;
+  height: 90px;
   overflow: hidden;
+  position: relative;
 }
 
 .menu-card-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f8fafc;
 }
 
 .placeholder-image {
@@ -744,7 +746,7 @@ body {
 }
 
 .menu-card-content {
-  padding: 16px;
+  padding: 10px;
 }
 
 .menu-card-header {
@@ -755,21 +757,25 @@ body {
 }
 
 .menu-card-header h3 {
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--gray-900);
+  margin-bottom: 2px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .menu-card-price {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 800;
   color: var(--primary);
+  display: block;
 }
 
 .menu-card-description {
-  color: var(--gray-600);
-  font-size: 14px;
-  margin-bottom: 12px;
-  line-height: 1.5;
+  display: none; /* Hidden in extreme compact mode */
 }
 
 .menu-card-meta {
@@ -780,7 +786,67 @@ body {
 
 .menu-card-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+}
+
+/* Category Organization */
+.category-section {
+  margin-bottom: 32px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--gray-50);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 1px solid transparent;
+}
+
+.category-header:hover {
+  background: var(--gray-100);
+}
+
+.category-header.expanded {
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.category-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.category-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.category-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+}
+
+.category-content {
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.category-content.collapsed {
+  display: none;
 }
 
 /* ==========================================================================

@@ -1061,5 +1061,9 @@
     "welcome_user": "Bienvenue, {{name}}",
     "whatsapp": "WhatsApp",
     "yes": "Oui",
-    "your_establishments": "Vos établissements"
+    "your_establishments": "Vos établissements",
+    "collapse_all": "Tout replier",
+    "expand_all": "Tout déplier",
+    "others": "Autres",
+    "items_count": "articles"
 }

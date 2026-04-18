@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { menuAPI, categoryAPI, subcategoryAPI, uploadAPI } from '../services/api';
-import { Plus, Edit, Trash2, X, Image as ImageIcon, Package, AlertTriangle, CheckCircle, DollarSign } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, Package, AlertTriangle, CheckCircle, DollarSign, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ImageUpload from '../components/ImageUpload';
 import { getCurrencySymbol } from '../utils/currencyUtils';
@@ -16,6 +16,7 @@ export default function Menu() {
     const [editItem, setEditItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [supportedCurrencies, setSupportedCurrencies] = useState([]);
+    const [collapsedSections, setCollapsedSections] = useState({});
 
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
@@ -112,6 +113,46 @@ export default function Menu() {
         setShowModal(true);
     };
 
+    const toggleSection = (categoryId) => {
+        setCollapsedSections(prev => ({
+            ...prev,
+            [categoryId]: !prev[categoryId]
+        }));
+    };
+
+    // Helper to group items by category
+    const getGroupedItems = () => {
+        if (filter !== 'all') {
+            return [{
+                category: categories.find(c => c._id === filter) || { name: t('filtered_items'), _id: 'filtered' },
+                items: items
+            }];
+        }
+
+        const grouped = categories.map(cat => ({
+            category: cat,
+            items: items.filter(item => {
+                const itemCatId = item.category?._id || item.category;
+                return itemCatId === cat._id;
+            })
+        })).filter(group => group.items.length > 0);
+
+        // Catch items without category or category not in list
+        const otherItems = items.filter(item => {
+            const itemCatId = item.category?._id || item.category;
+            return !categories.find(c => c._id === itemCatId);
+        });
+
+        if (otherItems.length > 0) {
+            grouped.push({
+                category: { name: t('others'), _id: 'others' },
+                items: otherItems
+            });
+        }
+
+        return grouped;
+    };
+
 
     return (
         <div className="menu-page">
@@ -130,6 +171,20 @@ export default function Menu() {
             <div className="filters-scroll-container">
                 <div className="filters">
                     <button
+                        onClick={() => {
+                            const allCollapsed = Object.keys(collapsedSections).length === categories.length + 1 && Object.values(collapsedSections).every(Boolean);
+                            const nextState = !allCollapsed;
+                            const newState = {};
+                            categories.forEach(c => newState[c._id] = nextState);
+                            newState['others'] = nextState;
+                            setCollapsedSections(newState);
+                        }}
+                        className="filter-btn"
+                        style={{ borderStyle: 'dashed' }}
+                    >
+                        {Object.values(collapsedSections).some(Boolean) ? t('expand_all') : t('collapse_all')}
+                    </button>
+                    <button
                         onClick={() => setFilter('all')}
                         className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
                     >
@@ -147,100 +202,106 @@ export default function Menu() {
                 </div>
             </div>
 
-            {/* Menu Grid */}
+            {/* Menu Sections By Category */}
             {loading ? (
                 <div className="loading">{t('loading')}</div>
             ) : (
-                <div className="menu-grid">
-                    {items.map(item => (
-                        <div key={item._id} className={`menu-card ${!item.available ? 'unavailable' : ''}`}>
-                            <div className="menu-card-image">
-                                {(item.imageUrl || item.photo) ? (
-                                    <img src={item.imageUrl || item.photo} alt={item.name} />
-                                ) : (
-                                    <div className="placeholder-image">
-                                        <ImageIcon size={48} color="#cbd5e1" />
-                                    </div>
-                                )}
-                                {!item.available && <div className="overlay">{t('unavailable')}</div>}
+                <div className="menu-sections">
+                    {getGroupedItems().map(group => (
+                        <div key={group.category._id} className="category-section">
+                            <div 
+                                className={`category-header ${!collapsedSections[group.category._id] ? 'expanded' : ''}`}
+                                onClick={() => toggleSection(group.category._id)}
+                            >
+                                <div className="category-header-left">
+                                    {!collapsedSections[group.category._id] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                    <h3 className="category-title">{group.category.name}</h3>
+                                    <span className="category-count">{group.items.length} {t('items_count')}</span>
+                                </div>
                             </div>
-                            <div className="menu-card-content">
-                                <div className="menu-card-header">
-                                    <h3>{item.name}</h3>
-                                    <span className="menu-card-price">
-                                        {item.price} {getCurrencySymbol(user?.restaurant?.settings?.currency || item.currency)}
-                                    </span>
-                                </div>
-                                <p className="menu-card-description">{item.description}</p>
-                                <div className="menu-card-meta" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                                        <span className="badge">
-                                            {typeof item.category === 'object' ? item.category.name : (categories.find(c => c._id === item.category)?.name || item.category)}
-                                        </span>
-                                        {item.subcategory && (
-                                            <span className="badge" style={{ background: '#e0f2fe', fontSize: '0.75rem', fontWeight: '500' }}>
-                                                {typeof item.subcategory === 'object'
-                                                    ? item.subcategory.name
-                                                    : (categories.flatMap(c => c.subcategories || []).find(s => s._id === item.subcategory)?.name || t('subcategory'))}
-                                            </span>
-                                        )}
-                                        {item.featured && <span className="badge" style={{ background: '#ffeb3b', color: '#000' }}>{t('featured')}</span>}
-                                        {item.seasonal && <span className="badge" style={{ background: '#e0f2fe', color: '#000' }}>{item.seasonal}</span>}
-                                        {item.tags && item.tags.slice(0, 2).map(tag => (
-                                            <span key={tag} className="badge" style={{ background: '#f3f4f6', color: '#666' }}>{tag}</span>
-                                        ))}
-                                    </div>
+                            
+                            <div className={`category-content ${collapsedSections[group.category._id] ? 'collapsed' : ''}`}>
+                                <div className="menu-grid">
+                                    {group.items.map(item => (
+                                        <div key={item._id} className={`menu-card ${!item.available ? 'unavailable' : ''}`}>
+                                            <div className="menu-card-image">
+                                                {(item.imageUrl || item.photo) ? (
+                                                    <img src={item.imageUrl || item.photo} alt={item.name} />
+                                                ) : (
+                                                    <div className="placeholder-image">
+                                                        <ImageIcon size={40} color="#cbd5e1" />
+                                                    </div>
+                                                )}
+                                                {!item.available && <div className="overlay">{t('unavailable')}</div>}
+                                            </div>
+                                            <div className="menu-card-content">
+                                                <div className="menu-card-header" style={{ marginBottom: '5px' }}>
+                                                    <h3 title={item.name}>{item.name}</h3>
+                                                    <span className="menu-card-price">
+                                                        {item.price} {getCurrencySymbol(user?.restaurant?.settings?.currency || item.currency)}
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="menu-card-meta" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                                                        {item.subcategory && (
+                                                            <span className="badge" style={{ background: '#e0f2fe', fontSize: '9px', padding: '1px 4px' }}>
+                                                                {typeof item.subcategory === 'object'
+                                                                    ? item.subcategory.name
+                                                                    : (categories.flatMap(c => c.subcategories || []).find(s => s._id === item.subcategory)?.name || '')}
+                                                            </span>
+                                                        )}
+                                                        {item.featured && <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontSize: '9px', padding: '1px 4px' }}>★</span>}
+                                                    </div>
 
-                                    {/* Stock Badge */}
-                                    {item.stockControlled && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            {item.stock === 0 ? (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '700', background: '#fee2e2', color: '#dc2626', padding: '3px 8px', borderRadius: '20px' }}>
-                                                    <AlertTriangle size={12} /> {t('out_of_stock')}
-                                                </span>
-                                            ) : item.stockMin && item.stock <= item.stockMin ? (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '700', background: '#fef3c7', color: '#d97706', padding: '3px 8px', borderRadius: '20px' }}>
-                                                    <AlertTriangle size={12} /> {t('low_stock')} {item.stock} {item.unit || t('unit_short')}
-                                                </span>
-                                            ) : (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600', background: '#dcfce7', color: '#16a34a', padding: '3px 8px', borderRadius: '20px' }}>
-                                                    <CheckCircle size={12} /> {item.stock} {item.unit || t('unit_short')}
-                                                </span>
-                                            )}
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                                        {/* Simple Stock Status */}
+                                                        {item.stockControlled ? (
+                                                            <span style={{ 
+                                                                fontSize: '10px', 
+                                                                fontWeight: '800', 
+                                                                color: item.stock === 0 ? '#dc2626' : (item.stockMin && item.stock <= item.stockMin ? '#d97706' : '#16a34a'),
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '3px'
+                                                            }}>
+                                                                <Package size={10} />
+                                                                {item.stock} {item.unit || t('unit_short')}
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{ fontSize: '10px', color: '#94a3b8' }}>{t('unlimited')}</span>
+                                                        )}
+                                                        
+                                                        <label className="toggle-switch" style={{ transform: 'scale(0.8)', originX: 'right' }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={item.available}
+                                                                onChange={() => handleToggleAvailability(item)}
+                                                            />
+                                                            <span className="slider"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="menu-card-actions" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', justifyContent: 'space-between' }}>
+                                                    <button onClick={() => openModal(item)} className="icon-btn" style={{ padding: '6px', background: '#f1f5f9' }} title={t('edit')}>
+                                                        <Edit size={14} color="#6366f1" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(item._id);
+                                                        }}
+                                                        className="icon-btn"
+                                                        title={t('delete')}
+                                                        style={{ padding: '6px', background: '#fee2e2' }}
+                                                    >
+                                                        <Trash2 size={14} color="#dc2626" />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.8rem', color: '#888' }}>
-                                            {item.portionSize && `${item.portionSize} • `}
-                                            {item.prepTime} {t('minutes_short')}
-                                        </span>
-                                        <label className="toggle-switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={item.available}
-                                                onChange={() => handleToggleAvailability(item)}
-                                            />
-                                            <span className="slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className="menu-card-actions">
-                                    <button onClick={() => openModal(item)} className="btn-small btn-secondary">
-                                        <Edit size={16} />
-                                        {t('edit')}
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(item._id);
-                                        }}
-                                        className="btn-small btn-danger"
-                                        title={t('delete') || 'Delete'}
-                                        style={{ padding: '8px' }}
-                                    >
-                                        <Trash2 size={16} color="#dc2626" />
-                                    </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>

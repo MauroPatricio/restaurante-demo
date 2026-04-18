@@ -163,17 +163,14 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   process.env.ADMIN_URL || 'http://localhost:5173',
-  'http://localhost:5174', // Client Menu alternative
-  'http://localhost:5175',  // Client Menu actual port
-  'http://46.62.246.24:5175',
-  'http://46.62.246.24:5174',
-  'http://46.62.246.24:5173',
-  'http://192.168.0.6:5175', // Local Network Client
-  'http://192.168.0.6:5173', // Local Network Admin
-  'http://127.0.0.1:5175',
+  'http://localhost:5173',
+  'https://localhost:5173',
   'http://127.0.0.1:5173',
-  'http://localhost:5000',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5175',
   'http://127.0.0.1:5000',
+  'http://localhost:5000',
   'http://gestaomodernaonline.com',
   'https://gestaomodernaonline.com',
   'http://menu.gestaomodernaonline.com',

@@ -1181,5 +1181,9 @@
     "welcome_user": "Bem-vindo, {{name}}",
     "whatsapp": "WhatsApp",
     "yes": "Sim",
-    "your_establishments": "Seus estabelecimentos"
+    "your_establishments": "Seus estabelecimentos",
+    "collapse_all": "Recolher Tudo",
+    "expand_all": "Expandir Tudo",
+    "others": "Outros",
+    "items_count": "itens"
 }
