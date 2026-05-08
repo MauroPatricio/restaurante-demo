@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { kitchenAnalyticsAPI } from '../services/api';
 import { getCurrencySymbol } from '../utils/currencyUtils';
-import { exportToCSV, exportToExcel, formatKitchenDishReportForExport, formatKitchenShiftReportForExport } from '../utils/exportUtils';
+import { exportToCSV, exportToExcel, formatKitchenDishReportForExport, formatKitchenShiftReportForExport } from '../utils/export_utils';
 import {
     UtensilsCrossed, Clock, BarChart2, TrendingUp, TrendingDown,
     AlertTriangle, CheckCircle, RefreshCw, Download, Zap, Flame
 } from 'lucide-react';
 import './KitchenAnalytics.css';
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const KPICard = ({ icon: Icon, label, value, sub, color, alert }) => (
     <div className="ka-kpi-card" style={{ '--ka-color': color }}>
         <div className="ka-kpi-icon"><Icon size={22} /></div>
@@ -22,7 +22,7 @@ const KPICard = ({ icon: Icon, label, value, sub, color, alert }) => (
     </div>
 );
 
-// ─── Bar Chart (horizontal) ───────────────────────────────────────────────────
+// â”€â”€â”€ Bar Chart (horizontal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const HBar = ({ value, max, color = '#6366f1', label }) => (
     <div className="ka-hbar-row">
         <span className="ka-hbar-label">{label}</span>
@@ -33,7 +33,7 @@ const HBar = ({ value, max, color = '#6366f1', label }) => (
     </div>
 );
 
-// ─── Timeline Chart (vertical bars, per hour) ─────────────────────────────────
+// â”€â”€â”€ Timeline Chart (vertical bars, per hour) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TimelineChart = ({ data, peakHour }) => {
     const max = Math.max(...data.map(d => d.orders), 1);
     return (
@@ -54,9 +54,9 @@ const TimelineChart = ({ data, peakHour }) => {
     );
 };
 
-// ─── Shift Card ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Shift Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ShiftCard = ({ shift }) => {
-    const icons = { morning: '🌅', afternoon: '☀️', night: '🌙' };
+    const icons = { morning: 'ðŸŒ…', afternoon: 'â˜€ï¸', night: 'ðŸŒ™' };
     const effColor = shift.efficiency >= 80 ? '#10b981' : shift.efficiency >= 60 ? '#f59e0b' : '#ef4444';
     return (
         <div className="ka-shift-card">
@@ -75,7 +75,7 @@ const ShiftCard = ({ shift }) => {
                 </div>
                 <div className="ka-shift-kpi">
                     <div className="ka-shift-val" style={{ color: effColor }}>{shift.efficiency}%</div>
-                    <div className="ka-shift-lbl">Eficiência</div>
+                    <div className="ka-shift-lbl">EficiÃªncia</div>
                 </div>
             </div>
             {shift.delayedOrders > 0 && (
@@ -88,14 +88,14 @@ const ShiftCard = ({ shift }) => {
     );
 };
 
-// ─── Bottleneck Badge ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Bottleneck Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PrepTimeBadge = ({ minutes }) => {
     if (minutes == null) return <span className="ka-badge-na">N/D</span>;
     const cls = minutes > 30 ? 'danger' : minutes > 20 ? 'warn' : 'good';
     return <span className={`ka-prep-badge ka-prep-${cls}`}>{minutes}m</span>;
 };
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const KitchenAnalytics = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -110,7 +110,7 @@ const KitchenAnalytics = () => {
     const [slowest, setSlowest] = useState([]);
     const [fastest, setFastest] = useState([]);
     const [timeline, setTimeline] = useState([]);
-    const [peakHour, setPeakHour] = useState('—');
+    const [peakHour, setPeakHour] = useState('â€”');
     const [shifts, setShifts] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
     const [dishSort, setDishSort] = useState('quantity');
@@ -131,7 +131,7 @@ const KitchenAnalytics = () => {
             setSlowest(dishRes.data.slowestDishes || []);
             setFastest(dishRes.data.fastestDishes || []);
             setTimeline(timelineRes.data.timeline || []);
-            setPeakHour(timelineRes.data.peakHour || '—');
+            setPeakHour(timelineRes.data.peakHour || 'â€”');
             setShifts(shiftRes.data.shifts || []);
         } catch (err) {
             console.error('Failed to load kitchen analytics:', err);
@@ -152,7 +152,7 @@ const KitchenAnalytics = () => {
 
     const handleExportDishes = () => {
         const rows = formatKitchenDishReportForExport(sortedDishes, period);
-        exportToExcel({ title: 'Analytics Cozinha — Pratos', columns: Object.keys(rows[0]).map(k => ({ header: k, dataKey: k })), data: rows, filename: `cozinha_pratos_${period}` });
+        exportToExcel({ title: 'Analytics Cozinha â€” Pratos', columns: Object.keys(rows[0]).map(k => ({ header: k, dataKey: k })), data: rows, filename: `cozinha_pratos_${period}` });
     };
 
     const handleExportShifts = () => {
@@ -196,7 +196,7 @@ const KitchenAnalytics = () => {
             {bottlenecks > 0 && (
                 <div className="ka-alert-banner">
                     <AlertTriangle size={18} />
-                    <span><strong>{bottlenecks} prato{bottlenecks > 1 ? 's' : ''}</strong> com tempo médio de preparo acima de 30 minutos — {t('ka_bottleneck_alert', { count: bottlenecks })}</span>
+                    <span><strong>{bottlenecks} prato{bottlenecks > 1 ? 's' : ''}</strong> com tempo mÃ©dio de preparo acima de 30 minutos â€” {t('ka_bottleneck_alert', { count: bottlenecks })}</span>
                 </div>
             )}
 
@@ -204,7 +204,7 @@ const KitchenAnalytics = () => {
             {dashboard && (
                 <div className="ka-kpi-row">
                     <KPICard icon={UtensilsCrossed} label={t('ka_dishes_prepared')} value={dashboard.totalDishes} sub={`${dashboard.completedOrders} pedidos`} color="#6366f1" />
-                    <KPICard icon={Clock} label={t('ka_avg_time')} value={`${dashboard.avgPrepTime}m`} sub={`Min: ${dashboard.minPrepTime}m · Máx: ${dashboard.maxPrepTime}m`} color="#f59e0b" />
+                    <KPICard icon={Clock} label={t('ka_avg_time')} value={`${dashboard.avgPrepTime}m`} sub={`Min: ${dashboard.minPrepTime}m Â· MÃ¡x: ${dashboard.maxPrepTime}m`} color="#f59e0b" />
                     <KPICard icon={CheckCircle} label={t('ka_efficiency')} value={`${dashboard.efficiency}%`} sub={t('ka_within_25')} color="#10b981" />
                     <KPICard icon={Flame} label={t('ka_delayed')} value={`${dashboard.delayRate}%`} sub={t('ka_delayed_over30', { count: dashboard.delayedOrders })} color="#ef4444" alert />
                     <KPICard icon={BarChart2} label={t('ka_peak_hour')} value={peakHour} sub={t('ka_peak_volume')} color="#ec4899" />
@@ -215,10 +215,10 @@ const KitchenAnalytics = () => {
             {/* Tabs */}
             <div className="ka-tab-bar">
                 {[
-                    { id: 'overview', label: `📊 ${t('ka_tab_overview')}` },
-                    { id: 'dishes', label: `🍽️ ${t('ka_tab_dishes')}` },
-                    { id: 'shifts', label: `🕐 ${t('ka_tab_shifts')}` },
-                    { id: 'timeline', label: `📈 ${t('ka_tab_timeline')}` }
+                    { id: 'overview', label: `ðŸ“Š ${t('ka_tab_overview')}` },
+                    { id: 'dishes', label: `ðŸ½ï¸ ${t('ka_tab_dishes')}` },
+                    { id: 'shifts', label: `ðŸ• ${t('ka_tab_shifts')}` },
+                    { id: 'timeline', label: `ðŸ“ˆ ${t('ka_tab_timeline')}` }
                 ].map(tab => (
                     <button key={tab.id} className={`ka-tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
                         {tab.label}
@@ -226,7 +226,7 @@ const KitchenAnalytics = () => {
                 ))}
             </div>
 
-            {/* ── Overview Tab ── */}
+            {/* â”€â”€ Overview Tab â”€â”€ */}
             {activeTab === 'overview' && (
                 <div className="ka-grid-2">
                     {/* Fastest Dishes */}
@@ -279,7 +279,7 @@ const KitchenAnalytics = () => {
                 </div>
             )}
 
-            {/* ── Dishes Tab ── */}
+            {/* â”€â”€ Dishes Tab â”€â”€ */}
             {activeTab === 'dishes' && (
                 <div className="ka-card">
                     <div className="ka-card-header">
@@ -340,8 +340,8 @@ const KitchenAnalytics = () => {
                                             <td><PrepTimeBadge minutes={dish.avgPrepTime} /></td>
                                             <td className="ka-minmax">
                                                 {dish.minPrepTime != null ? (
-                                                    <span>{dish.minPrepTime}m — {dish.maxPrepTime}m</span>
-                                                ) : '—'}
+                                                    <span>{dish.minPrepTime}m â€” {dish.maxPrepTime}m</span>
+                                                ) : 'â€”'}
                                             </td>
                                             <td>
                                                 {dish.isBottleneck ? (
@@ -361,7 +361,7 @@ const KitchenAnalytics = () => {
                 </div>
             )}
 
-            {/* ── Shifts Tab ── */}
+            {/* â”€â”€ Shifts Tab â”€â”€ */}
             {activeTab === 'shifts' && (
                 <div>
                     <div className="ka-card-header-standalone">
@@ -412,7 +412,7 @@ const KitchenAnalytics = () => {
                 </div>
             )}
 
-            {/* ── Timeline Tab ── */}
+            {/* â”€â”€ Timeline Tab â”€â”€ */}
             {activeTab === 'timeline' && (
                 <div className="ka-card">
                     <div className="ka-card-header">
@@ -450,3 +450,4 @@ const KitchenAnalytics = () => {
 };
 
 export default KitchenAnalytics;
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { accountingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { exportToPDF, exportToExcel } from '../../utils/exportUtils';
+import { exportToPDF, exportToExcel } from '../../utils/export_utils';
 
 export default function Razao() {
     const { t } = useTranslation();
@@ -66,9 +66,9 @@ export default function Razao() {
         if (!razaoData) return;
         const columns = [
             { header: 'Data', dataKey: 'date' },
-            { header: 'Descrição', dataKey: 'description' },
-            { header: 'Débito', dataKey: 'debit' },
-            { header: 'Crédito', dataKey: 'credit' },
+            { header: 'DescriÃ§Ã£o', dataKey: 'description' },
+            { header: 'DÃ©bito', dataKey: 'debit' },
+            { header: 'CrÃ©dito', dataKey: 'credit' },
             { header: 'Saldo Acumulado', dataKey: 'balance' }
         ];
 
@@ -81,8 +81,8 @@ export default function Razao() {
         }));
 
         exportToPDF({
-            title: `Razão - ${razaoData.account.code} ${razaoData.account.name}`,
-            subtitle: `Extrato de movimentos | Período: Todos os Registos`,
+            title: `RazÃ£o - ${razaoData.account.code} ${razaoData.account.name}`,
+            subtitle: `Extrato de movimentos | PerÃ­odo: Todos os Registos`,
             columns,
             data,
             filename: `Razao_${razaoData.account.code}_${new Date().toISOString().split('T')[0]}`,
@@ -94,9 +94,9 @@ export default function Razao() {
         if (!razaoData) return;
         const columns = [
             { header: 'Data', dataKey: 'date' },
-            { header: 'Descrição', dataKey: 'description' },
-            { header: 'Débito', dataKey: 'debit' },
-            { header: 'Crédito', dataKey: 'credit' },
+            { header: 'DescriÃ§Ã£o', dataKey: 'description' },
+            { header: 'DÃ©bito', dataKey: 'debit' },
+            { header: 'CrÃ©dito', dataKey: 'credit' },
             { header: 'Saldo Acumulado', dataKey: 'balance' }
         ];
 
@@ -109,7 +109,7 @@ export default function Razao() {
         }));
 
         exportToExcel({
-            title: `Razão - ${razaoData.account.code} ${razaoData.account.name}`,
+            title: `RazÃ£o - ${razaoData.account.code} ${razaoData.account.name}`,
             columns,
             data,
             filename: `Razao_${razaoData.account.code}_${new Date().toISOString().split('T')[0]}`,
@@ -122,8 +122,8 @@ export default function Razao() {
             {/* Header */}
             <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h2 style={{ fontSize: '32px', fontWeight: '900', color: '#0f172a', margin: 0 }}>Razão</h2>
-                    <p style={{ color: '#94a3b8', fontWeight: '700' }}>Extrato de movimentos por conta contabilística</p>
+                    <h2 style={{ fontSize: '32px', fontWeight: '900', color: '#0f172a', margin: 0 }}>RazÃ£o</h2>
+                    <p style={{ color: '#94a3b8', fontWeight: '700' }}>Extrato de movimentos por conta contabilÃ­stica</p>
                 </div>
                 <div style={{ display: 'flex', gap: '16px' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -174,7 +174,7 @@ export default function Razao() {
             {!loading && !selectedAccount && (
                 <div style={{ padding: '64px', textAlign: 'center', background: '#f8fafc', borderRadius: '32px', border: '2px dashed #e2e8f0' }}>
                     <Search size={48} style={{ color: '#cbd5e1', marginBottom: '16px', mx: 'auto' }} />
-                    <h4 style={{ color: '#64748b', fontWeight: '800' }}>Selecione uma conta para visualizar o Razão</h4>
+                    <h4 style={{ color: '#64748b', fontWeight: '800' }}>Selecione uma conta para visualizar o RazÃ£o</h4>
                 </div>
             )}
 
@@ -204,9 +204,9 @@ export default function Razao() {
                         <thead style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0' }}>
                             <tr>
                                 <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', width: '120px' }}>Data</th>
-                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>Descrição</th>
-                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', width: '150px', textAlign: 'right' }}>Débito</th>
-                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', width: '150px', textAlign: 'right' }}>Crédito</th>
+                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase' }}>DescriÃ§Ã£o</th>
+                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', width: '150px', textAlign: 'right' }}>DÃ©bito</th>
+                                <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', width: '150px', textAlign: 'right' }}>CrÃ©dito</th>
                                 <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', width: '150px', textAlign: 'right' }}>Saldo Acumulado</th>
                             </tr>
                         </thead>
@@ -248,3 +248,4 @@ export default function Razao() {
         </div>
     );
 }
+

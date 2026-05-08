@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { waiterAnalyticsAPI } from '../services/api';
@@ -8,17 +8,17 @@ import {
     Download, Star, Table2, UtensilsCrossed, DollarSign, BarChart2,
     AlertCircle, CheckCircle, Zap, ShoppingBag, Phone, Timer, Eye
 } from 'lucide-react';
-import { exportToCSV, exportToExcel, formatWaiterReportForExport, formatWaiterTableHistoryForExport } from '../utils/exportUtils';
+import { exportToCSV, exportToExcel, formatWaiterReportForExport, formatWaiterTableHistoryForExport } from '../utils/export_utils';
 import './WaiterAnalytics.css';
 
-// ─── Mini Bar Chart ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Mini Bar Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MiniBar = ({ value, max, color = '#6366f1' }) => (
     <div className="wa-minibar-track">
         <div className="wa-minibar-fill" style={{ width: `${max > 0 ? (value / max) * 100 : 0}%`, background: color }} />
     </div>
 );
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const KPICard = ({ icon: Icon, label, value, sub, color, trend }) => (
     <div className="wa-kpi-card" style={{ '--kpi-color': color }}>
         <div className="wa-kpi-icon"><Icon size={22} /></div>
@@ -30,7 +30,7 @@ const KPICard = ({ icon: Icon, label, value, sub, color, trend }) => (
     </div>
 );
 
-// ─── Efficiency Badge ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Efficiency Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const EffBadge = ({ value }) => {
     const { t } = useTranslation();
     const cls = value >= 85 ? 'high' : value >= 60 ? 'mid' : 'low';
@@ -43,7 +43,7 @@ const EffBadge = ({ value }) => {
     );
 };
 
-// ─── Table Detail Panel ────────────────────────────────────────────────────────
+// â”€â”€â”€ Table Detail Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TableDetailPanel = ({ waiter, restaurantId, period, currency, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
@@ -98,7 +98,7 @@ const TableDetailPanel = ({ waiter, restaurantId, period, currency, onClose }) =
                         { label: 'Mesas', value: waiter.metrics.totalTables },
                         { label: 'Pratos', value: waiter.metrics.totalDishes },
                         { label: 'Receita', value: `${(waiter.metrics.totalRevenue || 0).toLocaleString('pt-MZ')} ${currency}` },
-                        { label: 'Eficiência', value: `${waiter.metrics.efficiency}%` }
+                        { label: 'EficiÃªncia', value: `${waiter.metrics.efficiency}%` }
                     ].map(s => (
                         <div key={s.label} className="wa-panel-sum-item">
                             <div className="wa-panel-sum-val">{s.value}</div>
@@ -110,9 +110,9 @@ const TableDetailPanel = ({ waiter, restaurantId, period, currency, onClose }) =
                 {/* Tabs */}
                 <div className="wa-panel-tabs">
                     {[
-                        { id: 'tables', label: '🪑 Mesas' },
-                        { id: 'performance', label: '📈 Performance' },
-                        { id: 'customers', label: '👥 Clientes' }
+                        { id: 'tables', label: 'ðŸª‘ Mesas' },
+                        { id: 'performance', label: 'ðŸ“ˆ Performance' },
+                        { id: 'customers', label: 'ðŸ‘¥ Clientes' }
                     ].map(tab => (
                         <button key={tab.id} className={`wa-tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
                             {tab.label}
@@ -129,23 +129,23 @@ const TableDetailPanel = ({ waiter, restaurantId, period, currency, onClose }) =
                             {activeTab === 'tables' && data?.tables && (
                                 <div>
                                     <div className="wa-panel-meta">
-                                        <span>📊 {data.tables.summary.totalTables} mesas</span>
-                                        <span>🍽️ {data.tables.summary.totalDishes} pratos</span>
-                                        <span>💰 {(data.tables.summary.totalRevenue || 0).toLocaleString('pt-MZ')} {currency}</span>
+                                        <span>ðŸ“Š {data.tables.summary.totalTables} mesas</span>
+                                        <span>ðŸ½ï¸ {data.tables.summary.totalDishes} pratos</span>
+                                        <span>ðŸ’° {(data.tables.summary.totalRevenue || 0).toLocaleString('pt-MZ')} {currency}</span>
                                     </div>
                                     {data.tables.tables.map(table => (
                                         <div key={table.tableId} className="wa-table-card">
                                             <div className="wa-table-card-header">
                                                 <span className="wa-table-num">Mesa {table.tableNumber}</span>
                                                 {table.tableLocation && <span className="wa-table-loc">{table.tableLocation}</span>}
-                                                <span className="wa-table-stat">{table.totalOrders} pedidos · {(table.totalRevenue || 0).toLocaleString('pt-MZ')} {currency}</span>
+                                                <span className="wa-table-stat">{table.totalOrders} pedidos Â· {(table.totalRevenue || 0).toLocaleString('pt-MZ')} {currency}</span>
                                             </div>
                                             {table.orders.map(order => (
                                                 <div key={order.orderId} className="wa-order-row">
                                                     <span className="wa-order-time">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                     <span className="wa-order-dishes">
                                                         {order.dishes.map((d, i) => (
-                                                            <span key={i} className="wa-dish-chip">{d.qty}× {d.name}</span>
+                                                            <span key={i} className="wa-dish-chip">{d.qty}Ã— {d.name}</span>
                                                         ))}
                                                     </span>
                                                     <span className="wa-order-total">{(order.total || 0).toLocaleString('pt-MZ')} {currency}</span>
@@ -171,8 +171,8 @@ const TableDetailPanel = ({ waiter, restaurantId, period, currency, onClose }) =
                                             </div>
                                             <div className="wa-insight-sub">
                                                 {t('wa_avg_time_label')}: <strong>{data.detail.performance.insights.avgCompletionTime} min</strong>
-                                                {' · '}{t('wa_restaurant_avg')}: <strong>{data.detail.performance.insights.restaurantAvgCompletionTime} min</strong>
-                                                {' · '}<strong>{Math.abs(data.detail.performance.insights.differencePercentage)}%</strong> {t('wa_difference')}
+                                                {' Â· '}{t('wa_restaurant_avg')}: <strong>{data.detail.performance.insights.restaurantAvgCompletionTime} min</strong>
+                                                {' Â· '}<strong>{Math.abs(data.detail.performance.insights.differencePercentage)}%</strong> {t('wa_difference')}
                                             </div>
                                         </div>
                                     </div>
@@ -258,7 +258,7 @@ const TableDetailPanel = ({ waiter, restaurantId, period, currency, onClose }) =
     );
 };
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const WaiterAnalytics = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -300,7 +300,7 @@ const WaiterAnalytics = () => {
 
     const handleExportAll = () => {
         const rows = formatWaiterReportForExport(sortedWaiters, period);
-        exportToExcel({ title: 'Relatório de Garçons', columns: Object.keys(rows[0]).map(k => ({ header: k, dataKey: k })), data: rows, filename: `garcons_${period}` });
+        exportToExcel({ title: 'RelatÃ³rio de GarÃ§ons', columns: Object.keys(rows[0]).map(k => ({ header: k, dataKey: k })), data: rows, filename: `garcons_${period}` });
     };
 
     if (loading) {
@@ -388,7 +388,7 @@ const WaiterAnalytics = () => {
                             </thead>
                             <tbody>
                                 {sortedWaiters.map((waiter, index) => {
-                                    const medals = ['🥇', '🥈', '🥉'];
+                                    const medals = ['ðŸ¥‡', 'ðŸ¥ˆ', 'ðŸ¥‰'];
                                     return (
                                         <tr key={waiter.waiterId} className={selectedWaiter?.waiterId === waiter.waiterId ? 'selected' : ''}>
                                             <td className="wa-rank-cell">
@@ -419,7 +419,7 @@ const WaiterAnalytics = () => {
                                             </td>
                                             <td className="wa-num-cell">{waiter.metrics.callsResolved}</td>
                                             <td className="wa-num-cell">
-                                                {waiter.metrics.avgServiceTime > 0 ? `${waiter.metrics.avgServiceTime}m` : '—'}
+                                                {waiter.metrics.avgServiceTime > 0 ? `${waiter.metrics.avgServiceTime}m` : 'â€”'}
                                             </td>
                                             <td><EffBadge value={waiter.metrics.efficiency} /></td>
                                             <td>
@@ -456,3 +456,4 @@ const WaiterAnalytics = () => {
 };
 
 export default WaiterAnalytics;
+
