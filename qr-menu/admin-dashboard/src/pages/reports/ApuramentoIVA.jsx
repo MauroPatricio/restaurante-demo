@@ -4,7 +4,7 @@ import { accountingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { FileText, Calculator, Download, Calendar, ArrowRight, TrendingUp, TrendingDown, Percent } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { exportToPDF, exportToExcel } from '../../utils/ExportUtils';
+import { exportToPDF, exportToExcel } from '../../utils/exportUtils';
 import { useCurrency } from '../../contexts/CurrencyContext';
 
 const ApuramentoIVA = () => {
