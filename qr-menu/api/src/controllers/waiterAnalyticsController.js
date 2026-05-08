@@ -1,8 +1,59 @@
 import Order from '../models/Order.js';
 import WaiterCall from '../models/WaiterCall.js';
 import User from '../models/User.js';
+import UserRestaurantRole from '../models/UserRestaurantRole.js';
+import Role from '../models/Role.js';
 import mongoose from 'mongoose';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
+
+/**
+ * Helper: Get all waiter IDs for a restaurant using UserRestaurantRole
+ * FIX: Old code queried User.role which doesn't exist on the User model.
+ *       Roles are stored in UserRestaurantRole collection.
+ */
+async function getWaiterIdsForRestaurant(restaurantId) {
+    // Find all roles named "Waiter" (case-insensitive variants)
+    const waiterRoles = await Role.find({
+        name: { $in: ['Waiter', 'Garçom', 'Garcom', 'Atendente', 'waiter'] }
+    }).select('_id');
+
+    const waiterRoleIds = waiterRoles.map(r => r._id);
+
+    // Find all UserRestaurantRole entries for this restaurant with waiter roles
+    const userRoles = await UserRestaurantRole.find({
+        restaurant: restaurantId,
+        role: { $in: waiterRoleIds },
+        active: true
+    }).populate('user', '_id name email active avatar');
+
+    return userRoles
+        .filter(urr => urr.user && urr.user._id) // filter nulls
+        .map(urr => ({
+            _id: urr.user._id,
+            name: urr.user.name,
+            email: urr.user.email,
+            active: urr.user.active,
+            avatar: urr.user.avatar
+        }));
+}
+
+/**
+ * Build date filter from query params
+ */
+function buildDateFilter(startDate, endDate, period = '30d') {
+    if (startDate && endDate) {
+        return {
+            createdAt: {
+                $gte: startOfDay(new Date(startDate)),
+                $lte: endOfDay(new Date(endDate))
+            }
+        };
+    }
+    const days = parseInt(period.replace('d', '')) || 30;
+    return {
+        createdAt: { $gte: subDays(new Date(), days) }
+    };
+}
 
 /**
  * Get all waiters with summary performance metrics
@@ -13,30 +64,24 @@ export const getAllWaiterAnalytics = async (req, res) => {
         const { id: restaurantId } = req.params;
         const { startDate, endDate, period = '30d' } = req.query;
 
-        // Date Filter
-        let dateFilter = {};
-        if (startDate && endDate) {
-            dateFilter = {
-                createdAt: {
-                    $gte: new Date(startDate),
-                    $lte: new Date(endDate)
-                }
-            };
-        } else {
-            // Default: last 30 days
-            const days = parseInt(period.replace('d', '')) || 30;
-            dateFilter = {
-                createdAt: { $gte: subDays(new Date(), days) }
-            };
-        }
+        const dateFilter = buildDateFilter(startDate, endDate, period);
 
-        // 1. Get all waiters for this restaurant
-        const waiters = await User.find({
-            restaurant: restaurantId,
-            'role.name': { $in: ['Waiter', 'Garçom', 'Atendente'] }
-        }).select('_id name email active');
-
+        // 1. Get all waiters for this restaurant via UserRestaurantRole (FIXED)
+        const waiters = await getWaiterIdsForRestaurant(restaurantId);
         const waiterIds = waiters.map(w => w._id);
+
+        if (waiterIds.length === 0) {
+            return res.json({
+                period: startDate ? `${startDate} to ${endDate}` : `Last ${period}`,
+                waiters: [],
+                summary: {
+                    totalWaiters: 0,
+                    activeWaiters: 0,
+                    totalOrders: 0,
+                    avgEfficiency: 0
+                }
+            });
+        }
 
         // 2. Aggregate Order Stats per Waiter
         const orderStats = await Order.aggregate([
@@ -54,6 +99,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
                     totalOrders: { $sum: 1 },
                     totalRevenue: { $sum: '$total' },
                     totalTables: { $addToSet: '$table' },
+                    totalDishes: { $sum: { $sum: '$items.qty' } },
                     cancelledOrders: {
                         $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] }
                     }
@@ -87,7 +133,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
             }
         ]);
 
-        // 4. Calculate Service Time (Table occupation to order creation)
+        // 4. Calculate Average Service Time (session start → order creation)
         const serviceTimeStats = await Order.aggregate([
             {
                 $match: {
@@ -124,7 +170,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
                 }
             },
             {
-                $match: { serviceTime: { $ne: null, $gte: 0, $lte: 120 } } // Filter outliers
+                $match: { serviceTime: { $ne: null, $gte: 0, $lte: 120 } }
             },
             {
                 $group: {
@@ -156,7 +202,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
                 }
             },
             {
-                $match: { completionTime: { $gte: 0, $lte: 180 } } // 0-180 min filter
+                $match: { completionTime: { $gte: 0, $lte: 180 } }
             },
             {
                 $group: {
@@ -176,18 +222,18 @@ export const getAllWaiterAnalytics = async (req, res) => {
             const totalOrders = orders?.totalOrders || 0;
             const totalRevenue = orders?.totalRevenue || 0;
             const totalTables = orders?.totalTables?.length || 0;
+            const totalDishes = orders?.totalDishes || 0;
             const callsResolved = calls?.callsResolved || 0;
             const avgServiceTime = service?.avgServiceTime || 0;
             const avgCompletionTime = completion?.avgCompletionTime || 0;
 
-            // Calculate efficiency score (0-100)
-            // Factors: orders count (40%), service time (30%), calls resolved (20%), completion time (10%)
+            // Efficiency score (0-100)
             let efficiency = 0;
             if (totalOrders > 0) {
-                const orderScore = Math.min((totalOrders / 50) * 40, 40); // 50 orders = max 40 points
-                const serviceScore = avgServiceTime > 0 ? Math.max(30 - (avgServiceTime / 10), 0) : 0;
-                const callScore = Math.min((callsResolved / 20) * 20, 20); // 20 calls = max 20 points
-                const completionScore = avgCompletionTime > 0 ? Math.max(10 - (avgCompletionTime / 30), 0) : 0;
+                const orderScore = Math.min((totalOrders / 50) * 40, 40);
+                const serviceScore = avgServiceTime > 0 ? Math.max(30 - (avgServiceTime / 10), 0) : 15;
+                const callScore = Math.min((callsResolved / 20) * 20, 20);
+                const completionScore = avgCompletionTime > 0 ? Math.max(10 - (avgCompletionTime / 30), 0) : 5;
                 efficiency = Math.min(orderScore + serviceScore + callScore + completionScore, 100);
             }
 
@@ -195,11 +241,13 @@ export const getAllWaiterAnalytics = async (req, res) => {
                 waiterId: waiter._id,
                 waiterName: waiter.name,
                 waiterEmail: waiter.email,
+                waiterAvatar: waiter.avatar,
                 active: waiter.active,
                 metrics: {
                     totalOrders,
                     totalRevenue: Math.round(totalRevenue),
                     totalTables,
+                    totalDishes,
                     callsResolved,
                     cancelledOrders: orders?.cancelledOrders || 0,
                     avgServiceTime: Math.round(avgServiceTime),
@@ -210,7 +258,7 @@ export const getAllWaiterAnalytics = async (req, res) => {
             };
         });
 
-        // Sort by efficiency
+        // Sort by efficiency descending
         waiterAnalytics.sort((a, b) => b.metrics.efficiency - a.metrics.efficiency);
 
         res.json({
@@ -220,14 +268,15 @@ export const getAllWaiterAnalytics = async (req, res) => {
                 totalWaiters: waiters.length,
                 activeWaiters: waiters.filter(w => w.active).length,
                 totalOrders: waiterAnalytics.reduce((sum, w) => sum + w.metrics.totalOrders, 0),
+                totalRevenue: waiterAnalytics.reduce((sum, w) => sum + w.metrics.totalRevenue, 0),
                 avgEfficiency: Math.round(
-                    waiterAnalytics.reduce((sum, w) => sum + w.metrics.efficiency, 0) / waiters.length || 0
+                    waiterAnalytics.reduce((sum, w) => sum + w.metrics.efficiency, 0) / (waiters.length || 1)
                 )
             }
         });
     } catch (error) {
         console.error('Get waiter analytics error:', error);
-        res.status(500).json({ error: 'Failed to fetch waiter analytics' });
+        res.status(500).json({ error: 'Failed to fetch waiter analytics', details: error.message });
     }
 };
 
@@ -240,24 +289,10 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
         const { id: restaurantId, waiterId } = req.params;
         const { startDate, endDate, period = '30d' } = req.query;
 
-        // Date Filter
-        let dateFilter = {};
-        if (startDate && endDate) {
-            dateFilter = {
-                createdAt: {
-                    $gte: new Date(startDate),
-                    $lte: new Date(endDate)
-                }
-            };
-        } else {
-            const days = parseInt(period.replace('d', '')) || 30;
-            dateFilter = {
-                createdAt: { $gte: subDays(new Date(), days) }
-            };
-        }
+        const dateFilter = buildDateFilter(startDate, endDate, period);
 
         // Get waiter info
-        const waiter = await User.findById(waiterId).select('name email active');
+        const waiter = await User.findById(waiterId).select('name email active avatar');
         if (!waiter) {
             return res.status(404).json({ error: 'Waiter not found' });
         }
@@ -357,9 +392,9 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
             },
             {
                 $group: {
-                    _id: "$phone",
-                    name: { $first: "$customerName" },
-                    totalSpent: { $sum: "$total" },
+                    _id: '$phone',
+                    name: { $first: '$customerName' },
+                    totalSpent: { $sum: '$total' },
                     orderCount: { $count: {} }
                 }
             },
@@ -368,7 +403,6 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
         ]);
 
         // Efficiency Insights
-        // Get restaurant average for comparison (over same period)
         const restaurantAvg = await Order.aggregate([
             {
                 $match: {
@@ -388,15 +422,8 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
                     }
                 }
             },
-            {
-                $match: { completionTime: { $gte: 0, $lte: 180 } }
-            },
-            {
-                $group: {
-                    _id: null,
-                    avgCompletionTime: { $avg: '$completionTime' }
-                }
-            }
+            { $match: { completionTime: { $gte: 0, $lte: 180 } } },
+            { $group: { _id: null, avgCompletionTime: { $avg: '$completionTime' } } }
         ]);
 
         const waiterAvg = await Order.aggregate([
@@ -419,15 +446,8 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
                     }
                 }
             },
-            {
-                $match: { completionTime: { $gte: 0, $lte: 180 } }
-            },
-            {
-                $group: {
-                    _id: null,
-                    avgCompletionTime: { $avg: '$completionTime' }
-                }
-            }
+            { $match: { completionTime: { $gte: 0, $lte: 180 } } },
+            { $group: { _id: null, avgCompletionTime: { $avg: '$completionTime' } } }
         ]);
 
         const resAvg = restaurantAvg[0]?.avgCompletionTime || 0;
@@ -438,7 +458,8 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
                 id: waiter._id,
                 name: waiter.name,
                 email: waiter.email,
-                active: waiter.active
+                active: waiter.active,
+                avatar: waiter.avatar
             },
             performance: {
                 byShift: performanceByShift,
@@ -464,7 +485,7 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
         });
     } catch (error) {
         console.error('Get waiter detailed analytics error:', error);
-        res.status(500).json({ error: 'Failed to fetch waiter detailed analytics' });
+        res.status(500).json({ error: 'Failed to fetch waiter detailed analytics', details: error.message });
     }
 };
 
@@ -475,26 +496,21 @@ export const getWaiterDetailedAnalytics = async (req, res) => {
 export const getWaiterRanking = async (req, res) => {
     try {
         const { id: restaurantId } = req.params;
-        const { metric = 'efficiency', period = '7d' } = req.query;
+        const { metric = 'orders', period = '7d' } = req.query;
 
         const days = parseInt(period.replace('d', '')) || 7;
         const dateFilter = {
             createdAt: { $gte: subDays(new Date(), days) }
         };
 
-        // Get all waiters
-        const waiters = await User.find({
-            restaurant: restaurantId,
-            'role.name': { $in: ['Waiter', 'Garçom', 'Atendente'] },
-            active: true
-        }).select('_id name');
+        // Get all waiters via UserRestaurantRole (FIXED)
+        const waiters = await getWaiterIdsForRestaurant(restaurantId);
+        const activeWaiters = waiters.filter(w => w.active);
+        const waiterIds = activeWaiters.map(w => w._id);
 
-        const waiterIds = waiters.map(w => w._id);
-
-        // Aggregate based on metric
         let rankings = [];
 
-        if (metric === 'orders') {
+        if (metric === 'revenue') {
             rankings = await Order.aggregate([
                 {
                     $match: {
@@ -504,31 +520,7 @@ export const getWaiterRanking = async (req, res) => {
                         ...dateFilter
                     }
                 },
-                {
-                    $group: {
-                        _id: '$createdByWaiter',
-                        value: { $sum: 1 }
-                    }
-                },
-                { $sort: { value: -1 } },
-                { $limit: 10 }
-            ]);
-        } else if (metric === 'revenue') {
-            rankings = await Order.aggregate([
-                {
-                    $match: {
-                        restaurant: new mongoose.Types.ObjectId(restaurantId),
-                        createdByWaiter: { $in: waiterIds },
-                        status: { $ne: 'cancelled' },
-                        ...dateFilter
-                    }
-                },
-                {
-                    $group: {
-                        _id: '$createdByWaiter',
-                        value: { $sum: '$total' }
-                    }
-                },
+                { $group: { _id: '$createdByWaiter', value: { $sum: '$total' } } },
                 { $sort: { value: -1 } },
                 { $limit: 10 }
             ]);
@@ -542,12 +534,22 @@ export const getWaiterRanking = async (req, res) => {
                         ...dateFilter
                     }
                 },
+                { $group: { _id: '$resolvedBy', value: { $sum: 1 } } },
+                { $sort: { value: -1 } },
+                { $limit: 10 }
+            ]);
+        } else {
+            // Default: orders
+            rankings = await Order.aggregate([
                 {
-                    $group: {
-                        _id: '$resolvedBy',
-                        value: { $sum: 1 }
+                    $match: {
+                        restaurant: new mongoose.Types.ObjectId(restaurantId),
+                        createdByWaiter: { $in: waiterIds },
+                        status: { $ne: 'cancelled' },
+                        ...dateFilter
                     }
                 },
+                { $group: { _id: '$createdByWaiter', value: { $sum: 1 } } },
                 { $sort: { value: -1 } },
                 { $limit: 10 }
             ]);
@@ -555,7 +557,7 @@ export const getWaiterRanking = async (req, res) => {
 
         // Enrich with waiter names
         const enrichedRankings = rankings.map((r, index) => {
-            const waiter = waiters.find(w => w._id.toString() === r._id?.toString());
+            const waiter = activeWaiters.find(w => w._id.toString() === r._id?.toString());
             return {
                 rank: index + 1,
                 waiterId: r._id,
@@ -564,13 +566,89 @@ export const getWaiterRanking = async (req, res) => {
             };
         });
 
-        res.json({
-            metric,
-            period,
-            rankings: enrichedRankings
-        });
+        res.json({ metric, period, rankings: enrichedRankings });
     } catch (error) {
         console.error('Get waiter ranking error:', error);
-        res.status(500).json({ error: 'Failed to fetch waiter ranking' });
+        res.status(500).json({ error: 'Failed to fetch waiter ranking', details: error.message });
+    }
+};
+
+/**
+ * Get waiter table-level history (which tables, which dishes, amounts)
+ * GET /api/analytics/:restaurantId/waiters/:waiterId/tables
+ */
+export const getWaiterTableHistory = async (req, res) => {
+    try {
+        const { id: restaurantId, waiterId } = req.params;
+        const { startDate, endDate, period = '7d' } = req.query;
+
+        const dateFilter = buildDateFilter(startDate, endDate, period);
+
+        // Get orders with table and item details
+        const orders = await Order.find({
+            restaurant: new mongoose.Types.ObjectId(restaurantId),
+            createdByWaiter: new mongoose.Types.ObjectId(waiterId),
+            status: { $ne: 'cancelled' },
+            ...dateFilter
+        })
+            .populate('table', 'number location')
+            .populate('items.item', 'name category price')
+            .sort({ createdAt: -1 })
+            .limit(100)
+            .lean();
+
+        // Group by table
+        const tableMap = {};
+        for (const order of orders) {
+            const tableKey = order.table?._id?.toString() || 'no-table';
+            const tableNum = order.table?.number || '—';
+
+            if (!tableMap[tableKey]) {
+                tableMap[tableKey] = {
+                    tableId: tableKey,
+                    tableNumber: tableNum,
+                    tableLocation: order.table?.location || '',
+                    orders: [],
+                    totalRevenue: 0,
+                    totalOrders: 0,
+                    totalDishes: 0
+                };
+            }
+
+            const dishes = (order.items || []).map(item => ({
+                name: item.item?.name || 'Desconhecido',
+                qty: item.qty || 1,
+                price: item.itemPrice || item.item?.price || 0,
+                subtotal: item.subtotal || 0
+            }));
+
+            tableMap[tableKey].orders.push({
+                orderId: order._id,
+                createdAt: order.createdAt,
+                status: order.status,
+                total: order.total,
+                dishes,
+                customerName: order.customerName || 'Cliente'
+            });
+
+            tableMap[tableKey].totalRevenue += order.total || 0;
+            tableMap[tableKey].totalOrders += 1;
+            tableMap[tableKey].totalDishes += dishes.reduce((s, d) => s + d.qty, 0);
+        }
+
+        const tables = Object.values(tableMap).sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+        // Summary
+        const summary = {
+            totalOrders: orders.length,
+            totalTables: tables.length,
+            totalRevenue: tables.reduce((s, t) => s + t.totalRevenue, 0),
+            totalDishes: tables.reduce((s, t) => s + t.totalDishes, 0)
+        };
+
+        res.json({ tables, summary });
+    } catch (error) {
+        console.error('Get waiter table history error:', error);
+        res.status(500).json({ error: 'Failed to fetch waiter table history', details: error.message });
     }
 };

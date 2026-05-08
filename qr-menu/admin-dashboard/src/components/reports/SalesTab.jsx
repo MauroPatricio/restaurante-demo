@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -157,7 +157,7 @@ export default function SalesTab({ data, loading }) {
                     </h3>
                     {byCategory.length > 0 ? (
                         <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                            <ResponsiveContainer width="100%" height={350} debounce={50}>
                                 <PieChart>
                                     <Pie
                                         data={byCategory}
@@ -191,7 +191,7 @@ export default function SalesTab({ data, loading }) {
                     </h3>
                     {topItems.length > 0 ? (
                         <div style={{ width: '100%', height: 350, minHeight: '350px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                            <ResponsiveContainer width="100%" height={350} debounce={50}>
                                 <BarChart
                                     data={topItems}
                                     layout="vertical"
@@ -232,7 +232,7 @@ export default function SalesTab({ data, loading }) {
                         {t('payment_methods')}
                     </h3>
                     <div style={{ width: '100%', height: 300, minHeight: '300px', minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <PieChart>
                                 <Pie
                                     data={paymentMethods}
@@ -261,7 +261,7 @@ export default function SalesTab({ data, loading }) {
                         {t('sales_sources')}
                     </h3>
                     <div style={{ width: '100%', height: 300, minHeight: '300px', minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <PieChart>
                                 <Pie
                                     data={sources}
@@ -318,3 +318,4 @@ export default function SalesTab({ data, loading }) {
         </div>
     );
 }
+

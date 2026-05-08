@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -80,7 +80,7 @@ export default function CustomersTab({ data, loading }) {
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('new_vs_recurring')}</h4>
                     <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <PieChart>
                                 <Pie
                                     data={loyaltyData}
@@ -151,3 +151,4 @@ export default function CustomersTab({ data, loading }) {
         </div>
     );
 }
+

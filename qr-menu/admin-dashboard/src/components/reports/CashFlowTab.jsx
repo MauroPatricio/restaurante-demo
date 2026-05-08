@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { 
@@ -74,7 +74,7 @@ export default function CashFlowTab({ data, loading }) {
                         {t('daily_entries_exits')}
                     </h4>
                     <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <BarChart data={daily}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="date" axisLine={false} tickLine={false} fontSize={12} tick={{ fill: '#64748b' }} />
@@ -160,3 +160,4 @@ export default function CashFlowTab({ data, loading }) {
         </div>
     );
 }
+

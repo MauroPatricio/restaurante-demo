@@ -38,7 +38,11 @@ import {
     Store,
     BedDouble,
     Landmark,
-    Info
+    Info,
+    ChefHat,
+    TrendingUp,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { useConnectivity } from '../contexts/ConnectivityContext';
 import SubscriptionBlockedScreen from './SubscriptionBlockedScreen';
@@ -60,7 +64,17 @@ export default function DashboardLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    // Persist sidebar state across navigations and refreshes
+    const [sidebarOpen, setSidebarOpen] = useState(() => {
+        try {
+            const saved = localStorage.getItem('sidebar_open');
+            // Default: open on desktop, closed on mobile
+            if (saved !== null) return saved === 'true';
+            return window.innerWidth >= 1024;
+        } catch {
+            return window.innerWidth >= 1024;
+        }
+    });
     const [dismissedRenewalModal, setDismissedRenewalModal] = useState(false);
 
     // Blocking Logic
@@ -114,8 +128,18 @@ export default function DashboardLayout() {
     const restaurantData = getRestaurantData();
     const isActive = (path) => location.pathname === path;
 
-    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-    const closeSidebar = () => setSidebarOpen(false);
+    const toggleSidebar = () => setSidebarOpen(prev => {
+        const next = !prev;
+        try { localStorage.setItem('sidebar_open', String(next)); } catch {}
+        return next;
+    });
+    // Only close on mobile (overlay tap) — never auto-close on navigation
+    const closeSidebarMobile = () => {
+        if (window.innerWidth < 1024) {
+            setSidebarOpen(false);
+            try { localStorage.setItem('sidebar_open', 'false'); } catch {}
+        }
+    };
 
     // Check if user is Owner or Manager
     const isOwnerOrManager = user?.role?.name === 'Owner' || user?.role?.name === 'Manager' || user?.role?.isSystem;
@@ -233,6 +257,23 @@ export default function DashboardLayout() {
             items: [
                 { icon: UsersIcon, label: t('users'), path: '/dashboard/users', show: hasPermission('manage_staff') },
                 { icon: Shield, label: t('profiles'), path: '/dashboard/profiles', show: hasPermission('manage_staff') },
+            ]
+        },
+        {
+            title: '📊 STAFF & DESEMPENHO',
+            items: [
+                {
+                    icon: TrendingUp,
+                    label: t('nav_waiter_analytics'),
+                    path: '/dashboard/waiter-analytics',
+                    show: hasPermission('view_reports') || hasPermission('manage_staff')
+                },
+                {
+                    icon: ChefHat,
+                    label: t('nav_kitchen_analytics'),
+                    path: '/dashboard/kitchen-analytics',
+                    show: hasPermission('view_reports') || hasPermission('manage_staff')
+                }
             ]
         },
         {
@@ -384,17 +425,20 @@ export default function DashboardLayout() {
                 </div>
             )}
 
-            {/* Mobile Overlay */}
+            {/* Mobile Overlay — only visible (and functional) on mobile */}
             <div
                 className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
                 style={{ top: `${bannerOffset}px` }}
-                onClick={closeSidebar}
+                onClick={closeSidebarMobile}
             />
 
             {/* Sidebar */}
             <aside
                 className={`sidebar ${sidebarOpen ? 'open' : ''}`}
-                style={{ top: !isBackendConnected ? '48px' : '0', height: !isBackendConnected ? 'calc(100vh - 48px)' : '100vh' }}
+                style={{
+                    top: !isBackendConnected ? '48px' : '0',
+                    height: !isBackendConnected ? 'calc(100vh - 48px)' : '100vh'
+                }}
             >
                 <div className="sidebar-header">
                     <div className="restaurant-info">
@@ -460,8 +504,9 @@ export default function DashboardLayout() {
                                             key={item.path}
                                             to={item.path}
                                             onClick={() => {
-                                                // Close sidebar automatically on navigation - better UX
-                                                closeSidebar();
+                                                // On mobile: close sidebar after navigation
+                                                // On desktop: keep sidebar open (persistent)
+                                                closeSidebarMobile();
                                                 // Stop ringing for orders
                                                 if (isOrders) stopRinging();
                                             }}
@@ -499,7 +544,9 @@ export default function DashboardLayout() {
             {/* Main Content */}
             <div
                 className="main-content"
-                style={{ marginTop: !isBackendConnected ? '48px' : '0', height: !isBackendConnected ? 'calc(100vh - 48px)' : '100vh' }}
+                style={{
+                    marginTop: !isBackendConnected ? '48px' : '0'
+                }}
             >
                 {/* Header */}
                 <header className="header">
@@ -507,10 +554,9 @@ export default function DashboardLayout() {
                         <button
                             onClick={toggleSidebar}
                             className="icon-btn sidebar-toggle-btn"
-                            style={{ background: 'transparent', border: 'none', padding: 0 }}
                             title={sidebarOpen ? t('collapse_menu') : t('expand_menu')}
                         >
-                            {sidebarOpen ? <X size={24} /> : <MenuIcon size={24} />}
+                            {sidebarOpen ? <EyeOff size={22} /> : <Eye size={22} />}
                         </button>
                         <h1 className="header-title">{t('welcome_user', { name: user?.name })}</h1>
                     </div>

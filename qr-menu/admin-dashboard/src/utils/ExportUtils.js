@@ -83,3 +83,102 @@ export const exportToExcel = ({ title, columns, data, filename, totals = null, c
     XLSX.utils.book_append_sheet(wb, ws, "Report");
     XLSX.writeFile(wb, `${filename}.xlsx`);
 };
+
+// ============================================================
+// STAFF ANALYTICS EXPORTS
+// ============================================================
+
+/**
+ * Export any array of objects to CSV and trigger download
+ */
+export function exportToCSV(rows, filename = 'export.csv') {
+    if (!rows || rows.length === 0) return;
+    const headers = Object.keys(rows[0]);
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row =>
+            headers.map(h => {
+                const val = row[h] ?? '';
+                const str = String(val).replace(/"/g, '""');
+                return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+            }).join(',')
+        )
+    ].join('\r\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+/** Format waiter list for CSV export */
+export function formatWaiterReportForExport(waiters, period) {
+    return waiters.map((w, i) => ({
+        'Rank': i + 1,
+        'Nome': w.waiterName,
+        'Email': w.waiterEmail || '',
+        'Activo': w.active ? 'Sim' : 'Não',
+        'Total Pedidos': w.metrics.totalOrders,
+        'Total Mesas': w.metrics.totalTables,
+        'Total Pratos': w.metrics.totalDishes,
+        'Receita Total': w.metrics.totalRevenue,
+        'Chamadas Resolvidas': w.metrics.callsResolved,
+        'Tempo Médio Serviço (min)': w.metrics.avgServiceTime,
+        'Eficiência (%)': w.metrics.efficiency,
+        'Período': period
+    }));
+}
+
+/** Format kitchen dish stats for CSV export */
+export function formatKitchenDishReportForExport(dishes, period) {
+    return dishes.map(d => ({
+        'Prato': d.name,
+        'Categoria': d.category,
+        'Qtd Preparada': d.totalQuantity,
+        'Receita Total': d.totalRevenue,
+        'Pedidos': d.orderCount,
+        'Tempo Médio Prep (min)': d.avgPrepTime ?? 'N/A',
+        'Tempo Mín (min)': d.minPrepTime ?? 'N/A',
+        'Tempo Máx (min)': d.maxPrepTime ?? 'N/A',
+        'Gargalo': d.isBottleneck ? 'Sim' : 'Não',
+        'Período': period
+    }));
+}
+
+/** Format kitchen shift report for CSV export */
+export function formatKitchenShiftReportForExport(shifts) {
+    return shifts.map(s => ({
+        'Turno': s.label,
+        'Total Pedidos': s.totalOrders,
+        'Pedidos Concluídos': s.completedOrders,
+        'Receita Total': s.totalRevenue,
+        'Tempo Médio Prep (min)': s.avgPrepTime,
+        'Pedidos Atrasados': s.delayedOrders,
+        'Eficiência (%)': s.efficiency
+    }));
+}
+
+/** Format waiter table history for CSV export */
+export function formatWaiterTableHistoryForExport(tables, waiterName) {
+    const rows = [];
+    for (const table of tables) {
+        for (const order of table.orders) {
+            rows.push({
+                'Garçom': waiterName,
+                'Mesa': table.tableNumber,
+                'Localização': table.tableLocation || '',
+                'Data/Hora': new Date(order.createdAt).toLocaleString('pt-MZ'),
+                'Status': order.status,
+                'Total': order.total,
+                'Pratos': order.dishes.map(d => `${d.qty}x ${d.name}`).join(' | ')
+            });
+        }
+    }
+    return rows;
+}
+

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { 
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
@@ -99,7 +99,7 @@ export default function OrdersTab({ data, loading }) {
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('orders_by_status')}</h4>
                     <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <BarChart data={byStatus}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="_id" axisLine={false} tickLine={false} fontSize={10} tick={{ fill: '#64748b' }} />
@@ -119,7 +119,7 @@ export default function OrdersTab({ data, loading }) {
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('orders_by_source')}</h4>
                     <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <PieChart>
                                 <Pie
                                     data={bySource}
@@ -146,7 +146,7 @@ export default function OrdersTab({ data, loading }) {
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('order_type')}</h4>
                     <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <PieChart>
                                 <Pie
                                     data={byType}
@@ -192,3 +192,4 @@ export default function OrdersTab({ data, loading }) {
         </div>
     );
 }
+

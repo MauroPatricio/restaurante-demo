@@ -1,4 +1,4 @@
-
+﻿
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { 
@@ -92,7 +92,7 @@ export default function ProfitTab({ data, loading }) {
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('cost_structure_profit')}</h4>
                     <div style={{ width: '100%', height: 350, minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={350} debounce={50}>
                             <PieChart>
                                 <Pie
                                     data={pieData}
@@ -181,3 +181,4 @@ export default function ProfitTab({ data, loading }) {
         </div>
     );
 }
+

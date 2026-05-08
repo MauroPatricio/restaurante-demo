@@ -53,6 +53,7 @@ import Subcategories from './pages/Subcategories';
 import AssistedOrder from './pages/waiter/AssistedOrder';
 import PremiumFeatureGate from './components/PremiumFeatureGate';
 import WaiterAnalytics from './pages/WaiterAnalytics';
+import KitchenAnalytics from './pages/KitchenAnalytics';
 import WeeklyMenuManagement from './pages/WeeklyMenuManagement';
 
 import DashboardRedirect from './components/DashboardRedirect';
@@ -195,6 +196,7 @@ function AppContent() {
           <Route path="clients" element={<Clients />} />
           <Route path="hall" element={<HallDashboard />} />
           <Route path="waiter-analytics" element={<WaiterAnalytics />} />
+          <Route path="kitchen-analytics" element={<KitchenAnalytics />} />
           <Route path="weekly-menus" element={<WeeklyMenuManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="profiles" element={<Profiles />} />

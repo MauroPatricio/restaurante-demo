@@ -17,8 +17,15 @@ import {
 import {
     getAllWaiterAnalytics,
     getWaiterDetailedAnalytics,
-    getWaiterRanking
+    getWaiterRanking,
+    getWaiterTableHistory
 } from '../controllers/waiterAnalyticsController.js';
+import {
+    getKitchenDashboard,
+    getDishPrepStats,
+    getKitchenTimeline,
+    getKitchenShiftReport
+} from '../controllers/kitchenAnalyticsController.js';
 import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -49,7 +56,7 @@ router.get('/:id/profit', authenticateToken, checkSubscription, getProfitReport)
 router.get('/:id/orders-report', authenticateToken, checkSubscription, getOrdersReport);
 router.delete('/:id/customers/:phone', authenticateToken, authorizeRoles('owner', 'manager', 'admin'), checkSubscription, anonymizeCustomer);
 
-// Waiter Performance Analytics (Owner/Manager/Admin only)
+// ============ WAITER PERFORMANCE ANALYTICS ============
 router.get('/:id/waiters',
     authenticateToken,
     authorizeRoles('owner', 'manager', 'admin'),
@@ -62,11 +69,43 @@ router.get('/:id/waiters/ranking',
     checkSubscription,
     getWaiterRanking
 );
+router.get('/:id/waiters/:waiterId/tables',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getWaiterTableHistory
+);
 router.get('/:id/waiters/:waiterId',
     authenticateToken,
     authorizeRoles('owner', 'manager', 'admin'),
     checkSubscription,
     getWaiterDetailedAnalytics
+);
+
+// ============ KITCHEN ANALYTICS ============
+router.get('/:id/kitchen',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getKitchenDashboard
+);
+router.get('/:id/kitchen/dishes',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getDishPrepStats
+);
+router.get('/:id/kitchen/timeline',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getKitchenTimeline
+);
+router.get('/:id/kitchen/shifts',
+    authenticateToken,
+    authorizeRoles('owner', 'manager', 'admin'),
+    checkSubscription,
+    getKitchenShiftReport
 );
 
 router.get('/:id/hall', authenticateToken, checkSubscription, getHallAnalytics);

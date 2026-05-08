@@ -306,7 +306,16 @@ export const clientAPI = {
 export const waiterAnalyticsAPI = {
     getAll: (restaurantId, params) => api.get(`/analytics/${restaurantId}/waiters`, { params }),
     getDetails: (restaurantId, waiterId, params) => api.get(`/analytics/${restaurantId}/waiters/${waiterId}`, { params }),
-    getRanking: (restaurantId, params) => api.get(`/analytics/${restaurantId}/waiters/ranking`, { params })
+    getRanking: (restaurantId, params) => api.get(`/analytics/${restaurantId}/waiters/ranking`, { params }),
+    getTableHistory: (restaurantId, waiterId, params) => api.get(`/analytics/${restaurantId}/waiters/${waiterId}/tables`, { params })
+};
+
+// Kitchen Analytics API
+export const kitchenAnalyticsAPI = {
+    getDashboard: (restaurantId, params) => api.get(`/analytics/${restaurantId}/kitchen`, { params }),
+    getDishStats: (restaurantId, params) => api.get(`/analytics/${restaurantId}/kitchen/dishes`, { params }),
+    getTimeline: (restaurantId, params) => api.get(`/analytics/${restaurantId}/kitchen/timeline`, { params }),
+    getShiftReport: (restaurantId, params) => api.get(`/analytics/${restaurantId}/kitchen/shifts`, { params })
 };
 
 // Weekly Menu API

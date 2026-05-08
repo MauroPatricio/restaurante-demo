@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { User, ShoppingBag, Star, TrendingUp, Award, Award as Medal } from 'lucide-react';
+import { User, Users, ShoppingBag, Star, TrendingUp, Award, Award as Medal } from 'lucide-react';
 import { useCurrency } from '../../contexts/CurrencyContext';
 
 // Modern Card Styles
@@ -187,7 +187,7 @@ export default function StaffTab({ data, loading }) {
                         {t('orders_by_staff') || 'Orders by Staff'}
                     </h3>
                     <div style={{ width: '100%', height: 400, minWidth: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
+                        <ResponsiveContainer width="100%" height={400} debounce={50}>
                             <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30, top: 10, bottom: 10 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                                 <XAxis type="number" hide />
