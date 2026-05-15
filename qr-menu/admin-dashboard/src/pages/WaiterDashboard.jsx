@@ -5,7 +5,7 @@ import { useSocket } from '../contexts/SocketContext';
 import { tableAPI, orderAPI, waiterCallAPI } from '../services/api';
 import {
     User, Users, Bell, CheckCircle, Clock, MapPin,
-    UtensilsCrossed, AlertTriangle, Coffee, Loader2, ChevronRight
+    UtensilsCrossed, AlertTriangle, Coffee, Loader2, ChevronRight, ArrowRight, Zap, Monitor, Layout
 } from 'lucide-react';
 
 import { formatDistanceToNow } from 'date-fns';
@@ -13,32 +13,19 @@ import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
 import TableManagementPanel from '../components/TableManagementPanel';
+import './WaiterDashboard.css';
 
-const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
-    <div
-        className="bg-white dark:bg-gray-800 rounded-xl p-5 cursor-pointer transition-all duration-200 hover:shadow-2xl hover:-translate-y-2 shadow-lg dark:shadow-gray-900/50"
-        style={{
-            boxShadow: '0 6px 10px -2px rgba(0, 0, 0, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.15)'
-        }}
-    >
-        <div className="flex justify-between items-start">
-            <div className="flex-1">
-                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                    {title}
-                </p>
-                <div className="flex items-baseline gap-2">
-                    <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white">{value}</h3>
-                    {subValue && <span className="text-sm text-gray-500 dark:text-gray-400">{subValue}</span>}
-                </div>
+const KpiCard = ({ title, value, subValue, icon: Icon, iconClass, className }) => (
+    <div className={`kpi-card ${className}`}>
+        <div className="kpi-info">
+            <p>{title}</p>
+            <div className="kpi-value-main">
+                <h3 className="kpi-value">{value}</h3>
+                {subValue && <span className="kpi-sub">{subValue}</span>}
             </div>
-            <div
-                className={`p-3 rounded-full ${pulse ? 'animate-pulse' : ''}`}
-                style={{
-                    backgroundColor: `${color}15`
-                }}
-            >
-                <Icon size={20} style={{ color: color }} />
-            </div>
+        </div>
+        <div className={`kpi-icon-container ${iconClass}`}>
+            <Icon size={28} strokeWidth={2.5} />
         </div>
     </div>
 );
@@ -53,32 +40,23 @@ export default function WaiterDashboard() {
     const [loading, setLoading] = useState(true);
     const [selectedTable, setSelectedTable] = useState(null);
     const [showManagementPanel, setShowManagementPanel] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('all');
 
     const restaurantId = user?.restaurant?._id || user?.restaurant?.id || localStorage.getItem('restaurantId');
-    const isRinging = activeCalls.length > 0;
 
     useEffect(() => {
         if (!restaurantId) {
             setLoading(false);
             return;
         }
-
         fetchData();
         const interval = setInterval(fetchData, 15000);
-
-        return () => {
-            clearInterval(interval);
-        };
+        return () => clearInterval(interval);
     }, [restaurantId]);
 
     useEffect(() => {
         if (!socket || !restaurantId) return;
-
-        const handleRealtimeUpdate = (data) => {
-
-            fetchData();
-        };
-
+        const handleRealtimeUpdate = () => fetchData();
         socket.on('order:new', handleRealtimeUpdate);
         socket.on('order-updated', handleRealtimeUpdate);
         socket.on('waiter:call', handleRealtimeUpdate);
@@ -86,7 +64,6 @@ export default function WaiterDashboard() {
         socket.on('waiter:call:resolved', handleRealtimeUpdate);
         socket.on('table:update', handleRealtimeUpdate);
         socket.on('table-alert', handleRealtimeUpdate);
-
         return () => {
             socket.off('order:new', handleRealtimeUpdate);
             socket.off('order-updated', handleRealtimeUpdate);
@@ -108,7 +85,6 @@ export default function WaiterDashboard() {
             const { data } = await tableAPI.getAll(restaurantId, { background: true });
             setTables(Array.isArray(data?.tables) ? data.tables : []);
         } catch (error) {
-            console.error('Failed to fetch tables:', error);
             setTables([]);
         } finally {
             setLoading(false);
@@ -120,7 +96,6 @@ export default function WaiterDashboard() {
             const { data } = await orderAPI.getAll(restaurantId, { status: 'ready' }, { background: true });
             setReadyOrders(Array.isArray(data?.orders) ? data.orders : []);
         } catch (error) {
-            console.error('Failed to fetch ready orders:', error);
             setReadyOrders([]);
         }
     };
@@ -140,355 +115,158 @@ export default function WaiterDashboard() {
         setShowManagementPanel(true);
     };
 
-    const handleClosePanel = () => {
-        setShowManagementPanel(false);
-        setSelectedTable(null);
-        // Refresh data after closing
-        fetchData();
-    };
-
     if (loading) return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-            <LoadingSpinner size={48} message={t('loading_waiter') || "Carregando Área do Garçom..."} />
+        <div className="min-h-screen flex items-center justify-center">
+            <LoadingSpinner size={48} />
         </div>
     );
 
-    if (!restaurantId) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
-                <div className="text-center max-w-md">
-                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <AlertTriangle className="h-8 w-8 text-amber-500" />
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('restaurant_not_found') || "Restaurante não identificado"}</h2>
-                    <p className="text-gray-500 dark:text-gray-400">{t('login_again') || "Por favor, faça login novamente ou selecione um restaurante."}</p>
-                </div>
-            </div>
-        );
-    }
-
-    const freeTables = tables.filter(t => t.status === 'free').length;
-    const occupiedTables = tables.filter(t => t.status === 'occupied').length;
-    const myTables = tables.filter(t => t.assignedWaiter === user?.name).length;
+    const occupiedTablesCount = tables.filter(t => t.status === 'occupied').length;
+    const freeTablesCount = tables.filter(t => t.status === 'free' || !t.status).length;
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 lg:p-8">
-            <div className="max-w-full mx-auto space-y-8">
-
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-                            {t('waiter_area') || 'Área do Garçom'}
-                        </h1>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                            </span>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {t('manage_tables_desc') || 'Gerencie mesas e pedidos em tempo real'} <span className="mx-2">•</span> <span className="font-semibold text-gray-700 dark:text-gray-200">{user?.name}</span>
-                            </p>
+        <div className="waiter-page-wrapper animate-fade-in">
+            <div className="waiter-layout-split">
+                {/* ── Sidebar (Left) ── */}
+                <aside className="waiter-sidebar">
+                    {/* Table Calls Section */}
+                    <div className="sidebar-section">
+                        <div className="section-header">
+                            <div className="icon-box calls">
+                                <Bell size={18} />
+                            </div>
+                            <h3>{t('table_calls', 'Table Calls')}</h3>
                         </div>
-                    </div>
-                    <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 self-start md:self-auto">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        {t('online') || 'Online'}
-                    </div>
-                </div>
-
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <KpiCard
-                        title={t('active_alerts') || 'Chamadas Ativas'}
-                        value={activeCalls.length}
-                        icon={Bell}
-                        color="#ef4444"
-                        pulse={activeCalls.length > 0}
-                    />
-                    <KpiCard
-                        title={t('ready_orders') || 'Pedidos Prontos'}
-                        value={readyOrders.length}
-                        icon={CheckCircle}
-                        color="#10b981"
-                        pulse={readyOrders.length > 0}
-                    />
-                    <KpiCard
-                        title={t('my_tables') || 'Minhas Mesas'}
-                        value={myTables}
-                        icon={User}
-                        color="#8b5cf6"
-                    />
-                    <div
-                        className={`rounded-xl p-5 cursor-pointer transition-all duration-200 hover:shadow-2xl hover:-translate-y-2 shadow-lg dark:shadow-gray-900/50 ${occupiedTables > (tables.length - occupiedTables)
-                            ? 'bg-red-50 dark:bg-red-900/20'
-                            : 'bg-green-50 dark:bg-green-900/20'
-                            }`}
-                        style={{
-                            boxShadow: '0 6px 10px -2px rgba(0, 0, 0, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.15)'
-                        }}
-                    >
-                        <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400">
-                                    {t('table_status') || 'Estado da Mesa'}
-                                </p>
-                                <div className="flex items-baseline gap-2">
-                                    <h3 className="text-3xl font-extrabold text-red-600 dark:text-red-500">
-                                        {occupiedTables}
-                                    </h3>
-                                    <span className="text-2xl font-bold text-gray-900 dark:text-white">/</span>
-                                    <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-                                        {tables.length}
-                                    </h3>
-                                </div>
-                            </div>
-                            <div
-                                className="p-3 rounded-full"
-                                style={{
-                                    backgroundColor: occupiedTables > (tables.length - occupiedTables) ? '#ef444415' : '#10b98115'
-                                }}
-                            >
-                                <UtensilsCrossed
-                                    size={20}
-                                    style={{
-                                        color: occupiedTables > (tables.length - occupiedTables) ? '#ef4444' : '#10b981'
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
-                    {/* Left Column: Alerts & Ready Orders */}
-                    <div className="space-y-8 xl:col-span-1">
-
-                        {/* Active Alerts */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <div className="p-2 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-lg">
-                                        <Bell size={18} />
-                                    </div>
-                                    {t('table_calls') || 'Chamadas'}
-                                </h2>
-                                {activeCalls.length > 0 && (
-                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{activeCalls.length}</span>
-                                )}
-                            </div>
-
-                            {activeCalls.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <Bell className="mx-auto h-10 w-10 mb-3 text-gray-300 dark:text-gray-600" />
-                                    <p className="text-sm text-gray-400 dark:text-gray-500">{t('no_active_calls') || 'Nenhuma chamada ativa'}</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
+                        <div className="section-content">
+                            {activeCalls.length > 0 ? (
+                                <div className="calls-list">
                                     {activeCalls.map(call => (
-                                        <div key={call.callId} className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-xl p-4">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h3 className="font-bold text-gray-900 dark:text-white">{t('table') || 'Mesa'} {call.tableNumber || '?'}</h3>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                        {call.customerName || 'Cliente'} • <span className="font-medium text-red-600 dark:text-red-400">{call.type === 'payment' ? 'Pagamento' : 'Serviço'}</span>
-                                                    </p>
-                                                </div>
-                                                <span className="text-xs text-gray-400 flex items-center gap-1">
-                                                    <Clock size={12} /> {formatDistanceToNow(new Date(call.createdAt || call.timestamp), { addSuffix: true, locale: pt })}
-                                                </span>
+                                        <div key={call._id} className="call-item-card">
+                                            <div className="call-info">
+                                                <span className="call-table">Mesa {call.table?.number}</span>
+                                                <span className="call-time">{formatDistanceToNow(new Date(call.createdAt), { addSuffix: true, locale: pt })}</span>
                                             </div>
-                                            <button
-                                                onClick={() => waiterCallAPI.resolve(call.callId)}
-                                                className="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
-                                            >
-                                                {t('attend') || 'Atender Mesa'}
+                                            <button onClick={() => removeCall(call._id)} className="btn-resolve">
+                                                {t('attend', 'Atender')}
                                             </button>
                                         </div>
                                     ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Ready Orders */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <div className="p-2 bg-green-50 dark:bg-green-900/20 text-green-500 rounded-lg">
-                                        <CheckCircle size={18} />
-                                    </div>
-                                    {t('ready_for_pickup') || 'Prontos'}
-                                </h2>
-                                {readyOrders.length > 0 && (
-                                    <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">{readyOrders.length}</span>
-                                )}
-                            </div>
-
-                            {readyOrders.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <UtensilsCrossed className="mx-auto h-10 w-10 mb-3 text-gray-300 dark:text-gray-600" />
-                                    <p className="text-sm text-gray-400 dark:text-gray-500">{t('no_ready_orders') || 'Nenhum pedido pronto'}</p>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    {readyOrders.map(order => (
-                                        <div key={order._id} className="bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl p-4 shadow-sm">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <span className="font-bold text-gray-900 dark:text-white">{t('table') || 'Mesa'} {order.table?.number || '?'}</span>
-                                                <span className="bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded font-mono">
-                                                    #{order.orderNumber || order._id.slice(-4)}
-                                                </span>
-                                            </div>
-                                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-3">
-                                                <ul className="text-sm space-y-1">
-                                                    {order.items?.map((item, idx) => (
-                                                        <li key={idx} className="flex gap-2">
-                                                            <span className="font-bold text-primary-600 dark:text-primary-400 text-xs">{item.qty}x</span>
-                                                            <span className="text-gray-700 dark:text-gray-300 truncate">{item.item?.name || item.name}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                            <button
-                                                onClick={() => markOrderServed(order._id)}
-                                                className="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-600/20 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <CheckCircle size={16} /> {t('mark_delivered') || 'Marcar como Entregue'}
-                                            </button>
-                                        </div>
-                                    ))}
+                                <div className="empty-sidebar-state">
+                                    <Bell size={40} strokeWidth={1} />
+                                    <p>{t('no_active_calls', 'No active calls')}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Right Column: Tables Grid */}
-                    <div className="xl:col-span-2">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 h-full flex flex-col">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('floor_map') || 'Mapa do Salão'}</h2>
-                                <div className="flex flex-wrap gap-2">
-                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div> {t('free') || 'Livre'}
-                                    </div>
-                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                        <div className="w-2 h-2 rounded-full bg-red-500"></div> {t('occupied') || 'Ocupada'}
-                                    </div>
-                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500"></div> {t('cleaning') || 'Limpeza'}
-                                    </div>
-                                    <div className="px-3 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                        <div className="w-2 h-2 rounded-full bg-amber-500"></div> {t('reserved') || 'Reservada'}
-                                    </div>
-                                </div>
+                    {/* Ready for Pickup Section */}
+                    <div className="sidebar-section">
+                        <div className="section-header">
+                            <div className="icon-box pickup">
+                                <CheckCircle size={18} />
                             </div>
+                            <h3>{t('ready_for_pickup', 'Ready for Pickup')}</h3>
+                        </div>
+                        <div className="section-content">
+                            {readyOrders.length > 0 ? (
+                                <div className="pickup-list">
+                                    {readyOrders.map(order => (
+                                        <div key={order._id} className="pickup-item-card">
+                                            <div className="pickup-info">
+                                                <span className="pickup-table">Mesa {order.table?.number}</span>
+                                                <span className="pickup-items">{order.items.length} {t('items', 'itens')}</span>
+                                            </div>
+                                            <button onClick={() => markOrderServed(order._id)} className="btn-serve">
+                                                {t('serve', 'Servir')}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="empty-sidebar-state">
+                                    <UtensilsCrossed size={40} strokeWidth={1} />
+                                    <p>{t('no_ready_orders', 'No ready orders')}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </aside>
 
-                            <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ${isRinging ? 'animate-pulse' : ''}`}>
-                                {tables.map(table => {
-                                    const isMyTable = table.assignedWaiter === user?.name;
+                {/* ── Main Content (Right) ── */}
+                <main className="waiter-main-content">
+                    <div className="floor-map-container">
+                        <header className="map-header-premium">
+                            <h2 className="text-2xl font-900 text-gray-900">{t('floor_map', 'Floor Map')}</h2>
+                            <div className="status-filters-premium">
+                                {['all', 'free', 'occupied', 'cleaning', 'reserved'].map(status => (
+                                    <button
+                                        key={status}
+                                        onClick={() => setStatusFilter(status)}
+                                        className={`filter-pill ${statusFilter === status ? 'active' : ''}`}
+                                    >
+                                        <div className={`filter-dot ${status}`} />
+                                        {t(status, status.charAt(0).toUpperCase() + status.slice(1))}
+                                    </button>
+                                ))}
+                            </div>
+                        </header>
 
-                                    const statusConfig = {
-                                        free: { border: 'border-green-500', text: 'text-green-600', bg: 'bg-green-50', badge: 'bg-green-100 text-green-700' },
-                                        occupied: { border: 'border-red-500', text: 'text-red-600', bg: 'bg-red-50', badge: 'bg-red-100 text-red-700' },
-                                        cleaning: { border: 'border-blue-500', text: 'text-blue-600', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-700' },
-                                        reserved: { border: 'border-amber-500', text: 'text-amber-600', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-700' }
-                                    };
-                                    const config = statusConfig[table.status] || statusConfig.free;
-
-                                    const StatusIcon =
-                                        table.status === 'occupied' ? Users :
-                                            table.status === 'reserved' ? Clock :
-                                                table.status === 'cleaning' ? Coffee :
-                                                    CheckCircle;
+                        <div className="premium-tables-grid">
+                            {tables
+                                .filter(t => statusFilter === 'all' || (t.status || 'free') === statusFilter)
+                                .map(table => {
+                                    const status = table.status || 'free';
+                                    const StatusIcon = status === 'occupied' ? Users : status === 'reserved' ? Clock : status === 'cleaning' ? Coffee : CheckCircle;
 
                                     return (
                                         <div
                                             key={table._id}
                                             onClick={() => handleTableClick(table)}
-                                            className="relative p-5 rounded-xl bg-white dark:bg-gray-800 cursor-pointer transition-all duration-200 hover:shadow-2xl hover:-translate-y-2 shadow-lg dark:shadow-gray-900/50"
-                                            style={{
-                                                boxShadow: '0 6px 10px -2px rgba(0, 0, 0, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.15)'
-                                            }}
+                                            className={`premium-table-card ${status}`}
                                         >
-                                            {isMyTable && (
-                                                <div className="absolute top-3 right-3 p-1 bg-indigo-600 text-white rounded-full shadow-sm z-10" title={t('assigned_you') || 'Atribuída a você'}>
-                                                    <User size={10} fill="currentColor" />
-                                                </div>
-                                            )}
-
-                                            {/* Header: Table Number */}
-                                            <div className="mb-3">
-                                                <span className={`font-black text-3xl ${table.status === 'free' ? 'text-green-600 dark:text-green-500' :
-                                                    table.status === 'occupied' ? 'text-red-600 dark:text-red-500' :
-                                                        table.status === 'reserved' ? 'text-purple-600 dark:text-purple-500' :
-                                                            table.status === 'cleaning' ? 'text-blue-600 dark:text-blue-500' :
-                                                                'text-gray-600 dark:text-gray-500'
-                                                    }`}>
-                                                    {table.number}
+                                            <div className="card-top">
+                                                <span className="table-number-large">
+                                                    {table.number < 10 ? `0${table.number}` : table.number}
                                                 </span>
+                                                <span className="table-status-centered">{t(status).toUpperCase()}</span>
                                             </div>
-
-                                            {/* Status Label */}
-                                            <div className="mb-4">
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
-                                                    {t(table.status) || table.status}
-                                                </p>
-                                                {table.activeOrders > 0 && (
-                                                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
-                                                        {table.activeOrders} {t('active_orders') || 'pedidos'}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Footer: Icon and Capacity */}
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
+                                            
+                                            <div className="card-middle">
+                                                <div className="capacity-info">
                                                     <Users size={14} />
-                                                    <span className="text-xs font-semibold">{table.capacity || 4}</span>
+                                                    <span>{table.capacity || 4} lugares</span>
                                                 </div>
-
-                                                {/* Status Icon Circle */}
-                                                <div
-                                                    className={`p-2.5 rounded-full ${config.badge}`}
-                                                    style={{
-                                                        backgroundColor: `${config.border.replace('border-', '#').replace('500', '')}15`
-                                                    }}
-                                                >
-                                                    <StatusIcon size={18} strokeWidth={2.5} className={config.text} />
+                                                <div className="card-status-icon">
+                                                    <StatusIcon size={20} />
                                                 </div>
                                             </div>
 
-                                            {/* Tap hint */}
-                                            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-center gap-0.5 text-[10px] text-gray-400 dark:text-gray-600">
-                                                <ChevronRight size={10} />
-                                                <span>{t('tap_for_details') || 'Toque para detalhes'}</span>
+                                            <div className="card-bottom">
+                                                <span className="tap-hint">
+                                                    <ChevronRight size={12} />
+                                                    Tap for details
+                                                </span>
                                             </div>
                                         </div>
                                     );
                                 })}
-
-                                {tables.length === 0 && (
-                                    <div className="col-span-full py-12 text-center text-gray-400">
-                                        <MapPin className="mx-auto h-12 w-12 mb-3 opacity-20" />
-                                        <p>{t('no_tables') || 'Nenhuma mesa cadastrada'}</p>
-                                    </div>
-                                )}
-                            </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Table Management Panel */}
-                {showManagementPanel && selectedTable && (
-                    <TableManagementPanel
-                        table={selectedTable}
-                        onClose={handleClosePanel}
-                    />
-                )}
+                </main>
             </div>
+
+            {showManagementPanel && selectedTable && (
+                <TableManagementPanel
+                    table={selectedTable}
+                    onClose={() => { setShowManagementPanel(false); fetchData(); }}
+                />
+            )}
         </div>
     );
 }
+
+// Ensure statusFilter state is defined
+import { TrendingUp } from 'lucide-react';
+

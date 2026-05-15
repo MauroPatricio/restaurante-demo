@@ -1,80 +1,120 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { analyticsAPI } from '../services/api';
-import {
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
     LayoutGrid, Timer, CheckCircle, AlertCircle,
     MessageSquare, Utensils, Clock, User, Search,
     Filter, ChevronRight, TrendingUp, Users, Info,
-    Sparkles, Zap, ShoppingBag
+    Sparkles, Zap, ShoppingBag, Bell, Edit, ChevronDown, List, RefreshCw, Coffee as CoffeeIcon
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
-import WaiterCallsModal from '../components/WaiterCallsModal';
+import { useTranslation } from 'react-i18next';
+import { analyticsAPI, tableAPI, waiterCallAPI } from '../services/api';
+import TableGridMap from '../components/TableGridMap';
 import TableDetailsModal from '../components/TableDetailsModal';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { SkeletonGrid } from '../components/Skeleton';
-import WaiterCallToast from '../components/WaiterCallToast';
-import { useSound } from '../hooks/useSound';
-import { waiterCallAPI } from '../services/api';
+import TableSessionModal from '../components/TableSessionModal';
 
-const KpiCard = ({ title, value, icon: Icon, color, subValue, pulse }) => (
+const KpiCard = ({ title, value, subValue, icon: Icon, color, trend }) => (
     <div style={{
         background: 'white',
-        borderRadius: '32px',
-        padding: '32px',
-        boxShadow: '0 20px 40px -12px rgba(0,0,0,0.05)',
-        border: '1px solid white',
+        padding: '24px',
+        borderRadius: '24px',
+        border: '1px solid #f1f5f9',
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '20px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
         position: 'relative',
-        minHeight: '160px',
-        transition: 'all 0.5s ease',
         overflow: 'hidden'
-    }} className="group hover-scale">
+    }}>
         <div style={{
-            position: 'absolute', top: 0, right: 0, width: '96px', height: '96px',
-            borderRadius: '50%', filter: 'blur(40px)', opacity: 0.1,
-            marginRight: '-32px', marginTop: '-32px', background: color
-        }} />
-        <div>
-            <div style={{
-                fontSize: '10px',
-                fontWeight: '900',
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                marginBottom: '12px'
-            }}>
-                {title}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ fontSize: '40px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.05em' }}>
-                    {value}
-                </span>
-                {subValue && (
-                    <span style={{ fontSize: '12px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                        {subValue}
-                    </span>
-                )}
-            </div>
-        </div>
-        <div style={{
-            position: 'absolute',
-            top: '24px',
-            right: '24px',
-            padding: '16px',
+            width: '56px',
+            height: '56px',
             borderRadius: '16px',
-            background: `${color}12`,
+            background: `${color}10`,
             color: color,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.5s ease'
-        }} className="group-hover:scale-110">
-            <Icon size={24} />
-            {pulse && (
-                <span style={{
+            justifyContent: 'center'
+        }}>
+            <Icon size={28} />
+        </div>
+        <div>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '4px' }}>
+                <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', margin: 0 }}>{value}</h3>
+                {subValue && <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>{subValue}</span>}
+            </div>
+        </div>
+    </div>
+);
+
+const CallNotification = ({ call, onAttend, color = '#ef4444' }) => (
+    <div style={{
+        background: 'white',
+        borderRadius: '16px',
+        padding: '16px',
+        borderLeft: `4px solid ${color}`,
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        animation: 'slideIn 0.3s ease-out'
+    }}>
+        <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '12px',
+            background: `${color}10`,
+            color: color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
+            <Bell size={20} />
+        </div>
+        <div style={{ flex: 1 }}>
+            <span style={{ fontSize: '14px', fontWeight: '900', color: '#0f172a' }}>Mesa {call.tableNumber}</span>
+            <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Solicitando atendimento</p>
+        </div>
+        <button 
+            onClick={() => onAttend(call._id)}
+            style={{
+                padding: '8px 16px',
+                background: color,
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: '800',
+                cursor: 'pointer'
+            }}
+        >
+            Atender
+        </button>
+    </div>
+);
+
+const StatusIndicator = ({ status, color }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ position: 'relative', width: '12px', height: '12px' }}>
+            <div style={{
+                width: '12px',
+                height: '12px',
+                background: color,
+                borderRadius: '50%',
+                opacity: 0.2
+            }} />
+            <div style={{
+                position: 'absolute',
+                top: '2px',
+                left: '2px',
+                width: '8px',
+                height: '8px',
+                background: color,
+                borderRadius: '50%'
+            }} />
+            {status === 'occupied' && (
+                <div style={{
                     position: 'absolute',
                     top: '-4px',
                     right: '-4px',
@@ -101,12 +141,14 @@ export default function HallDashboard() {
     const [selectedTable, setSelectedTable] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [viewType, setViewType] = useState('grid');
+    const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+    const [sessionData, setSessionData] = useState(null);
 
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
     const [activeCalls, setActiveCalls] = useState([]);
     const [latestCall, setLatestCall] = useState(null);
-    const { play: playBell } = useSound('/sounds/bell.mp3');
 
     useEffect(() => {
         if (restaurantId) {
@@ -114,6 +156,18 @@ export default function HallDashboard() {
             fetchActiveCalls();
         }
     }, [restaurantId]);
+
+    // Real-time recalculation of summary to ensure accuracy
+    const summary = useMemo(() => {
+        const counts = {
+            totalTables: data.tables.length,
+            freeCount: data.tables.filter(t => t.status === 'free').length,
+            occupiedCount: data.tables.filter(t => t.status === 'occupied').length,
+            reservedCount: data.tables.filter(t => t.status === 'reserved').length,
+            cleaningCount: data.tables.filter(t => t.status === 'cleaning').length
+        };
+        return counts;
+    }, [data.tables]);
 
     const fetchActiveCalls = async () => {
         try {
@@ -134,39 +188,24 @@ export default function HallDashboard() {
             fetchHallData();
         };
 
-        const handleNewCall = (newCall) => {
-            playBell();
-            setLatestCall(newCall);
-            fetchActiveCalls(); // Refresh list
-            fetchHallData(); // Refresh table stats
+        const handleNewCall = (call) => {
+            if (call.restaurantId === restaurantId) {
+                setActiveCalls(prev => [call, ...prev]);
+                setLatestCall(call);
+            }
         };
 
-        const handleCallResolved = () => {
-            fetchActiveCalls();
-            fetchHallData();
+        const handleCallResolved = (callId) => {
+            setActiveCalls(prev => prev.filter(c => c._id !== callId));
         };
 
         const handleTableStatusUpdate = (update) => {
-
             setData(prev => {
                 const tableIndex = prev.tables.findIndex(t => t._id === update.tableId);
                 if (tableIndex === -1) return prev;
 
                 const newTables = [...prev.tables];
-                const oldStatus = newTables[tableIndex].status;
                 newTables[tableIndex] = { ...newTables[tableIndex], status: update.status };
-
-                // Incrementally update summary if status changed
-                const newSummary = { ...prev.summary };
-                if (oldStatus !== update.status) {
-                    // Decrement old status count
-                    if (oldStatus === 'free') newSummary.freeCount = Math.max(0, (newSummary.freeCount || 0) - 1);
-                    if (oldStatus === 'occupied') newSummary.occupiedCount = Math.max(0, (newSummary.occupiedCount || 0) - 1);
-
-                    // Increment new status count
-                    if (update.status === 'free') newSummary.freeCount = (newSummary.freeCount || 0) + 1;
-                    if (update.status === 'occupied') newSummary.occupiedCount = (newSummary.occupiedCount || 0) + 1;
-                }
 
                 // Update selectedTable if it's the one that was updated
                 setSelectedTable(current => {
@@ -176,7 +215,7 @@ export default function HallDashboard() {
                     return current;
                 });
 
-                return { ...prev, tables: newTables, summary: newSummary };
+                return { ...prev, tables: newTables };
             });
         };
 
@@ -195,12 +234,12 @@ export default function HallDashboard() {
             socket.off('order:updated', handleUpdate);
             socket.off('order:new', handleUpdate);
         };
-    }, [socket, playBell]);
+    }, [socket, restaurantId]);
 
     const handleAttendCall = async (callId) => {
         try {
             await waiterCallAPI.resolve(callId);
-            setLatestCall(null); // Dismiss toast
+            setLatestCall(null);
             fetchActiveCalls();
         } catch (error) {
             console.error('Failed to attend call:', error);
@@ -218,9 +257,7 @@ export default function HallDashboard() {
         }
     };
 
-    const { summary = {}, tables = [] } = data;
-
-    const filteredTables = tables.filter(table => {
+    const filteredTables = data.tables.filter(table => {
         const matchesSearch = table.number.toString().includes(searchTerm) ||
             (table.location && table.location.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesStatus = statusFilter === 'all' || table.status === statusFilter;
@@ -229,338 +266,425 @@ export default function HallDashboard() {
 
     const getStatusInfo = (status) => {
         switch (status) {
-            case 'free': return { color: '#10b981', label: t('free'), bg: '#ecfdf5' };
-            case 'occupied': return { color: '#ef4444', label: t('occupied'), bg: '#fef2f2' };
-            case 'reserved': return { color: '#f59e0b', label: t('reserved'), bg: '#fffbeb' };
-            case 'cleaning': return { color: '#3b82f6', label: t('cleaning'), bg: '#eff6ff' };
-            default: return { color: '#64748b', label: status, bg: '#f8fafc' };
+            case 'free': return { color: '#10b981', label: t('hall_status_free', 'Livre'), bg: '#ecfdf5', icon: CheckCircle };
+            case 'occupied': return { color: '#ef4444', label: t('hall_status_occupied', 'Ocupada'), bg: '#fef2f2', icon: Users };
+            case 'reserved': return { color: '#f59e0b', label: t('hall_status_reserved', 'Reservada'), bg: '#fffbeb', icon: Clock };
+            case 'cleaning': return { color: '#3b82f6', label: t('hall_status_cleaning', 'Limpeza'), bg: '#eff6ff', icon: CoffeeIcon };
+            default: return { color: '#64748b', label: status, bg: '#f8fafc', icon: Info };
         }
     };
 
-    const handleOpenDetails = (table) => {
+    const handleOpenDetails = async (table) => {
         setSelectedTable(table);
-        setIsDetailsModalOpen(true);
+        
+        if (table.status === 'occupied') {
+            try {
+                const response = await tableAPI.getCurrentSession(table._id);
+                if (response.data && response.data.success) {
+                    setSessionData(response.data);
+                    setIsSessionModalOpen(true);
+                } else {
+                    setIsDetailsModalOpen(true);
+                }
+            } catch (error) {
+                console.error('Failed to fetch session details:', error);
+                setIsDetailsModalOpen(true);
+            }
+        } else {
+            setIsDetailsModalOpen(true);
+        }
     };
 
-    // Skeleton loading - maintains layout
+    const handleFreeTable = async (tableId) => {
+        try {
+            await tableAPI.updateStatus(tableId, 'free');
+            setIsSessionModalOpen(false);
+            fetchHallData();
+        } catch (error) {
+            console.error('Failed to free table:', error);
+        }
+    };
+
     if (loading) return (
-        <div className="p-6">
-            <div className="mb-6">
-                <div className="h-10 w-64 bg-gray-200 rounded-lg animate-pulse mb-2"></div>
-                <div className="h-4 w-80 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <SkeletonGrid items={5} columns={5} height="160px" gap="24px" />
+        <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+            <RefreshCw className="animate-spin" size={40} color="#4f46e5" />
+            <p style={{ fontSize: '14px', fontWeight: '700', color: '#64748b' }}>Carregando mapa de mesas...</p>
         </div>
     );
 
     return (
-        <div style={{ padding: '40px', maxWidth: '1600px', margin: '0 auto', minHeight: '100vh', background: '#f8fafc' }}>
-            {/* Page Header */}
-            <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                        <div style={{ padding: '8px', background: 'white', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', borderRadius: '12px', color: '#10b981' }}>
-                            <Sparkles size={20} />
-                        </div>
-                        <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#059669' }}>{t('hall_terminal_title')}</span>
+        <div style={{ padding: '40px', maxWidth: '1400px', margin: '0 auto' }}>
+            {/* Header Section */}
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '40px',
+                background: 'white',
+                padding: '24px 32px',
+                borderRadius: '24px',
+                border: '1px solid #f1f5f9',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ 
+                        width: '48px', height: '48px', 
+                        background: '#eff6ff', 
+                        color: '#3b82f6', 
+                        borderRadius: '16px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        border: '1px solid #eff6ff'
+                    }}>
+                        <LayoutGrid size={24} />
                     </div>
-                    <h1 style={{ fontSize: '48px', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.05em', lineHeight: 1.1 }}>
-                        {t('monitor')} <span style={{ color: '#10b981' }}>{t('occupancy')}</span>
-                    </h1>
-                    <p style={{ color: '#94a3b8', fontWeight: '700', fontSize: '14px', margin: 0 }}>
-                        {t('hall_dashboard_desc')}
-                    </p>
+                    <div>
+                        <h1 style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+                            {t('table_map_title', 'Mapa de Mesas')}
+                        </h1>
+                        <p style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600', margin: '4px 0 0 0' }}>
+                            {t('table_map_subtitle', 'Selecione uma mesa para ver os detalhes e fazer o atendimento.')}
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <button
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div 
                         onClick={() => setIsCallsModalOpen(true)}
-                        style={{
-                            background: '#0f172a',
-                            color: 'white',
-                            padding: '20px 40px',
-                            borderRadius: '24px',
-                            fontWeight: '900',
-                            fontSize: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            border: 'none',
-                            boxShadow: '0 20px 40px -8px rgba(15, 23, 42, 0.3)'
+                        style={{ 
+                            width: '40px', height: '40px', 
+                            background: 'white', 
+                            borderRadius: '12px', 
+                            border: '1px solid #f1f5f9',
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: '#0f172a',
+                            position: 'relative',
+                            cursor: 'pointer'
                         }}
-                        className="hover-scale group"
                     >
-                        <Zap size={20} style={{ transition: 'color 0.3s' }} className="group-hover:text-yellow-400" />
-                        {t('active_requests')}
+                        <Bell size={20} />
                         {activeCalls.length > 0 && (
                             <span style={{
-                                background: '#ef4444',
-                                color: 'white',
-                                padding: '2px 8px',
-                                borderRadius: '12px',
-                                fontSize: '12px',
-                                marginLeft: 'auto'
+                                position: 'absolute', top: '-4px', right: '-4px',
+                                background: '#ef4444', color: 'white',
+                                width: '18px', height: '18px', borderRadius: '50%',
+                                fontSize: '10px', fontWeight: '900',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                border: '2px solid white'
                             }}>
                                 {activeCalls.length}
                             </span>
                         )}
-                    </button>
+                    </div>
                 </div>
             </div>
 
             {/* Dashboards Section */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '48px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '40px' }}>
                 <KpiCard
-                    title={t('total_tables')}
-                    value={summary.totalTables || 0}
-                    icon={LayoutGrid}
-                    color="#3b82f6"
-                />
-                <KpiCard
-                    title={t('free_tables')}
-                    value={summary.freeCount || 0}
+                    title={t('hall_kpi_free', 'Livre')}
+                    value={`${summary.freeCount || 0} ${t('tables_qr_codes', 'Tables & QR Codes')}`}
                     icon={CheckCircle}
                     color="#10b981"
                 />
                 <KpiCard
-                    title={t('occupied_tables')}
-                    value={summary.occupiedCount || 0}
-                    icon={Timer}
+                    title={t('hall_kpi_occupied', 'Occupied')}
+                    value={`${summary.occupiedCount || 0} ${t('tables_qr_codes', 'Tables & QR Codes')}`}
+                    icon={Users}
                     color="#ef4444"
                 />
                 <KpiCard
-                    title={t('highlight_table')}
-                    value={summary.mostRequestedTable ? (summary.mostRequestedTable.number < 10 ? `0${summary.mostRequestedTable.number}` : summary.mostRequestedTable.number) : '--'}
-                    subValue={`#${summary.mostRequestedTable?.requests || 0}`}
-                    icon={TrendingUp}
+                    title={t('hall_kpi_reserved', 'Reserved')}
+                    value={`${summary.reservedCount || 0} ${t('table_singular', 'Table')}`}
+                    icon={Clock}
                     color="#f59e0b"
                 />
                 <KpiCard
-                    title={t('requests_today')}
-                    value={tables.filter(t => t.callsToday > 0).length}
-                    icon={Zap}
-                    color="#8b5cf6"
-                    pulse={tables.some(t => t.callsToday > 0)}
+                    title={t('hall_kpi_cleaning', 'Limpa')}
+                    value={`${summary.cleaningCount || 0} ${t('tables_qr_codes', 'Tables & QR Codes')}`}
+                    icon={CoffeeIcon}
+                    color="#3b82f6"
                 />
             </div>
 
-            {/* Filter and Search Bar */}
-            <div style={{
-                background: 'rgba(255, 255, 255, 0.7)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '40px',
-                padding: '16px 24px',
-                marginBottom: '32px',
-                display: 'flex',
-                gap: '24px',
-                alignItems: 'center',
-                boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.05)',
-                border: '1px solid white'
-            }}>
-                <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-                    <Search size={20} style={{ position: 'absolute', left: '20px', color: '#cbd5e1' }} />
-                    <input
-                        type="text"
-                        placeholder={t('search_tables_placeholder')}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '16px 16px 16px 56px',
-                            background: '#f8fafc',
-                            border: '2px solid transparent',
-                            borderRadius: '20px',
-                            fontSize: '14px',
-                            fontWeight: '700',
-                            color: '#1e293b',
-                            outline: 'none',
-                            transition: 'all 0.3s'
-                        }}
-                    />
-                </div>
+            {/* Manual Update Action */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+                <button 
+                    onClick={fetchHallData}
+                    style={{
+                        padding: '12px 24px',
+                        background: 'white',
+                        border: '1px solid #f1f5f9',
+                        borderRadius: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        color: '#64748b',
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#3b82f6';
+                        e.currentTarget.style.color = '#3b82f6';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#f1f5f9';
+                        e.currentTarget.style.color = '#64748b';
+                    }}
+                >
+                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    {t('btn_update', 'Actualizar')}
+                </button>
+            </div>
 
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <Filter size={18} style={{ color: '#cbd5e1', marginRight: '8px' }} />
-                    {['all', 'free', 'occupied', 'cleaning'].map(status => (
+            {/* Filter Bar */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '24px'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    background: 'white',
+                    borderRadius: '16px',
+                    padding: '4px',
+                    border: '1px solid #f1f5f9',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+                }}>
+                    {['all', 'free', 'occupied', 'reserved', 'cleaning'].map(status => (
                         <button
                             key={status}
                             onClick={() => setStatusFilter(status)}
                             style={{
-                                padding: '12px 24px',
-                                borderRadius: '16px',
-                                fontSize: '11px',
-                                fontWeight: '900',
+                                padding: '10px 20px',
+                                borderRadius: '12px',
+                                fontSize: '13px',
+                                fontWeight: '700',
                                 border: 'none',
-                                background: statusFilter === status ? '#0f172a' : 'white',
-                                color: statusFilter === status ? 'white' : '#94a3b8',
+                                background: statusFilter === status ? '#4f46e5' : 'transparent',
+                                color: statusFilter === status ? 'white' : '#64748b',
                                 cursor: 'pointer',
-                                transition: 'all 0.3s',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.1em',
-                                boxShadow: statusFilter === status ? '0 10px 20px -5px rgba(15, 23, 42, 0.2)' : 'none'
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            {t(status)}
+                            <div style={{ 
+                                width: '6px', height: '6px', borderRadius: '50%', 
+                                background: status === 'all' ? '#64748b' : 
+                                           status === 'free' ? '#10b981' : 
+                                           status === 'occupied' ? '#ef4444' : 
+                                           status === 'reserved' ? '#f59e0b' : '#3b82f6'
+                            }} />
+                            {t(`hall_status_${status}`, status.charAt(0).toUpperCase() + status.slice(1))}
                         </button>
                     ))}
                 </div>
+
+                <div style={{
+                    display: 'flex',
+                    background: 'white',
+                    borderRadius: '12px',
+                    padding: '4px',
+                    border: '1px solid #f1f5f9'
+                }}>
+                    <button 
+                        onClick={() => setViewType('grid')}
+                        style={{
+                            padding: '8px',
+                            borderRadius: '8px',
+                            background: viewType === 'grid' ? '#eff6ff' : 'transparent',
+                            color: viewType === 'grid' ? '#3b82f6' : '#94a3b8',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <LayoutGrid size={18} />
+                    </button>
+                    <button 
+                        onClick={() => setViewType('list')}
+                        style={{
+                            padding: '8px',
+                            borderRadius: '8px',
+                            background: viewType === 'list' ? '#eff6ff' : 'transparent',
+                            color: viewType === 'list' ? '#3b82f6' : '#94a3b8',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <List size={18} />
+                    </button>
+                </div>
             </div>
 
-            {/* Tables List */}
-            <div style={{
-                background: 'rgba(255, 255, 255, 0.7)',
-                backdropFilter: 'blur(30px)',
-                borderRadius: '48px',
-                border: '1px solid white',
-                overflow: 'hidden',
-                boxShadow: '0 32px 64px -16px rgba(0,0,0,0.08)'
-            }}>
-                <div style={{ padding: '24px 40px', display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 160px', borderBottom: '1px solid #f1f5f9', background: 'rgba(248, 250, 252, 0.5)', width: '100%', gap: '20px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('table_identification')}</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('table_status')}</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{t('capacity')}</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{t('today_activity')}</span>
-                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'right' }}>{t('controls')}</span>
-                </div>
+            {/* Content */}
+            {viewType === 'grid' ? (
+                <TableGridMap 
+                    tables={filteredTables} 
+                    onTableClick={handleOpenDetails} 
+                />
+            ) : (
+                <div style={{
+                    background: 'white',
+                    borderRadius: '24px',
+                    border: '1px solid #f1f5f9',
+                    overflow: 'hidden',
+                    boxShadow: '0 10px 30px -10px rgba(0,0,0,0.04)'
+                }}>
+                    <div style={{ padding: '24px 40px', display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 160px', borderBottom: '1px solid #f1f5f9', background: 'rgba(248, 250, 252, 0.5)', width: '100%', gap: '20px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('table_identification', 'Identificação')}</span>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{t('table_status', 'Estado')}</span>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{t('capacity', 'Capacidade')}</span>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{t('today_activity', 'Atividade')}</span>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'right' }}>{t('controls', 'Controles')}</span>
+                    </div>
 
-                <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                    {filteredTables.map(table => {
-                        const sInfo = getStatusInfo(table.status);
-                        return (
-                            <div
-                                key={table._id}
-                                style={{
-                                    padding: '32px 40px',
-                                    display: 'grid',
-                                    gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 160px',
-                                    borderBottom: '1px solid #f8fafc',
-                                    borderLeft: `8px solid ${sInfo.color}30`, // Subtle status border
-                                    alignItems: 'center',
-                                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    gap: '20px',
-                                    background: table.status === 'occupied' ? '#fffafb' : 'transparent'
-                                }}
-                                className="hover:bg-white/50 group"
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                    <div style={{
-                                        width: '64px',
-                                        height: '64px',
-                                        background: sInfo.color,
-                                        color: 'white',
-                                        borderRadius: '24px',
-                                        display: 'flex',
+                    {filteredTables.length === 0 ? (
+                        <div style={{ padding: '100px', textAlign: 'center' }}>
+                            <div style={{ width: '80px', height: '80px', background: '#f8fafc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto' }}>
+                                <Search size={32} color="#cbd5e1" />
+                            </div>
+                            <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: '0 0 8px 0' }}>{t('no_tables_found', 'Nenhuma mesa encontrada')}</h3>
+                            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>{t('try_different_filter', 'Tente outro filtro ou termo de pesquisa.')}</p>
+                        </div>
+                    ) : (
+                        filteredTables.map(table => {
+                            const statusInfo = getStatusInfo(table.status);
+                            return (
+                                <div 
+                                    key={table._id}
+                                    style={{ 
+                                        padding: '20px 40px', 
+                                        display: 'grid', 
+                                        gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 160px', 
+                                        borderBottom: '1px solid #f8fafc', 
                                         alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: '900',
-                                        fontSize: '24px',
-                                        boxShadow: `0 12px 24px -8px ${sInfo.color}60`,
-                                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-                                    }} className="group-hover:scale-110 group-hover:-rotate-3">
-                                        {table.number < 10 ? `0${table.number}` : table.number}
+                                        gap: '20px',
+                                        transition: 'background 0.2s ease',
+                                        cursor: 'pointer'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#fcfdfe'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                    onClick={() => handleOpenDetails(table)}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div style={{ 
+                                            width: '44px', height: '44px', 
+                                            background: statusInfo.bg, 
+                                            color: statusInfo.color,
+                                            borderRadius: '14px',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: '16px', fontWeight: '900'
+                                        }}>
+                                            {table.number}
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: '15px', fontWeight: '900', color: '#0f172a', display: 'block' }}>{table.location || t('main_hall', 'Salão')}</span>
+                                            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>ID: {table._id.slice(-6).toUpperCase()}</span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.02em' }}>{table.location || t('main_hall')}</div>
-                                        <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ID: {table._id.slice(-6).toUpperCase()}</div>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'flex' }}>
-                                    <div style={{
-                                        padding: '10px 20px',
-                                        borderRadius: '16px',
-                                        background: 'white',
-                                        color: sInfo.color,
-                                        fontSize: '11px',
-                                        fontWeight: '900',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        border: `1px solid ${sInfo.color}20`,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.1em',
-                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
-                                    }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: sInfo.color }} className="animate-pulse" />
-                                        {sInfo.label}
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#64748b', fontWeight: '900' }}>
-                                    <div style={{ padding: '8px', background: '#f8fafc', borderRadius: '12px' }}>
-                                        <Users size={18} />
-                                    </div>
-                                    <span style={{ fontSize: '14px' }}>{table.capacity}</span>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', letterSpacing: '-0.05em' }}>{table.ordersToday}</div>
-                                        <div style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('orders')}</div>
-                                    </div>
-                                    <div style={{ width: '1px', height: '32px', background: '#f1f5f9' }} />
-                                    <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#10b981', letterSpacing: '-0.05em' }}>{table.callsToday}</div>
-                                        <div style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('calls')}</div>
-                                    </div>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <button
-                                        onClick={() => handleOpenDetails(table)}
-                                        style={{
-                                            marginLeft: 'auto',
-                                            width: '48px',
-                                            height: '48px',
-                                            background: '#0f172a',
-                                            color: 'white',
-                                            borderRadius: '16px',
+                                    
+                                    <div style={{ display: 'flex' }}>
+                                        <div style={{ 
+                                            padding: '8px 16px', 
+                                            background: `${statusInfo.color}10`, 
+                                            color: statusInfo.color,
+                                            borderRadius: '12px',
+                                            fontSize: '11px',
+                                            fontWeight: '900',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
                                             display: 'flex',
                                             alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <statusInfo.icon size={14} />
+                                            {statusInfo.label}
+                                        </div>
+                                    </div>
+
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#475569' }}>
+                                            <Users size={16} />
+                                            <span style={{ fontSize: '14px', fontWeight: '900' }}>{table.capacity}</span>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <span style={{ fontSize: '13px', fontWeight: '900', color: '#0f172a' }}>{table.ordersToday || 0} {t('orders', 'Pedidos')}</span>
+                                            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700' }}>{table.callsToday || 0} {t('calls', 'Chamadas')}</span>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ 
+                                            display: 'inline-flex',
+                                            width: '40px', height: '40px',
+                                            background: '#0f172a',
+                                            color: 'white',
+                                            borderRadius: '12px',
+                                            alignItems: 'center',
                                             justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.3s ease',
-                                            border: 'none',
-                                            boxShadow: '0 8px 16px rgba(15, 23, 42, 0.2)'
-                                        }}
-                                        className="hover-scale"
-                                    >
-                                        <ChevronRight size={20} />
-                                    </button>
+                                            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)'
+                                        }}>
+                                            <ChevronRight size={18} />
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                    {filteredTables.length === 0 && (
-                        <div className="py-20 text-center">
-                            <Info size={48} className="mx-auto text-slate-200 mb-4" />
-                            <p className="text-slate-400 font-bold">{t('no_tables_found_criteria')}</p>
-                        </div>
+                            );
+                        })
                     )}
                 </div>
-            </div>
+            )}
 
-            {/* Modal Components */}
-            <WaiterCallsModal
-                isOpen={isCallsModalOpen}
-                onClose={() => setIsCallsModalOpen(false)}
-                restaurantId={restaurantId}
-            />
+            {/* Toasts / Modals */}
+            {latestCall && (
+                <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000, width: '320px' }}>
+                    <CallNotification 
+                        call={latestCall} 
+                        onAttend={handleAttendCall} 
+                    />
+                </div>
+            )}
 
-            <TableDetailsModal
-                isOpen={isDetailsModalOpen}
-                onClose={() => setIsDetailsModalOpen(false)}
-                table={selectedTable}
-                restaurantId={restaurantId}
-                onUpdate={fetchHallData}
-            />
+            {isSessionModalOpen && selectedTable && (
+                <TableSessionModal 
+                    onClose={() => setIsSessionModalOpen(false)}
+                    table={selectedTable}
+                    session={sessionData?.session}
+                    orders={sessionData?.orders}
+                    stats={sessionData?.stats}
+                    canFree={true}
+                    onFreeTable={handleFreeTable}
+                    onUpdateStatus={(tableId, status) => {
+                        tableAPI.updateStatus(tableId, status).then(() => fetchHallData());
+                    }}
+                    onRefresh={() => {
+                        if (selectedTable) {
+                            handleOpenDetails(selectedTable);
+                            fetchHallData();
+                        }
+                    }}
+                />
+            )}
 
-            <WaiterCallToast
-                call={latestCall}
-                onDismiss={() => setLatestCall(null)}
-                onAttend={handleAttendCall}
-            />
+            {isDetailsModalOpen && selectedTable && (
+                <TableDetailsModal
+                    isOpen={isDetailsModalOpen}
+                    onClose={() => setIsDetailsModalOpen(false)}
+                    table={selectedTable}
+                    restaurantId={restaurantId}
+                />
+            )}
         </div>
     );
 }

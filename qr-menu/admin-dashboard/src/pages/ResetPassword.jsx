@@ -194,7 +194,7 @@ const sharedStyles = `
     .responsive-image { width: 100%; height: 100%; object-fit: cover; }
     .image-overlay { position: absolute; inset: 0; background: linear-gradient(to top, #0f172a, transparent); opacity: 0.85; }
     .image-content { position: absolute; bottom: 80px; left: 60px; right: 60px; color: white; z-index: 10; }
-    .image-content h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; }
-    .image-content p { font-size: 1.15rem; color: #cbd5e1; }
+    .image-content h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; color: white; }
+    .image-content p { font-size: 1.15rem; color: #ffffff; }
     @media(min-width: 1024px) { .selection-right { display: block; } }
 `;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { X, Plus, History, Info, Users, MapPin, ChevronRight, UtensilsCrossed, Edit, Trash2, Maximize2 } from 'lucide-react';
+import { X, Plus, History, Info, Users, MapPin, ChevronRight, ArrowRight, UtensilsCrossed, Edit, Trash2, Maximize2 } from 'lucide-react';
 import TableOrderHistory from './TableOrderHistory';
 import TableStatusSelector from './TableStatusSelector';
 import { tableAPI } from '../services/api';
@@ -62,83 +62,83 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
 
     return (
         <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-8 sm:p-16 animate-fade-in"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden"
-                style={{ maxHeight: 'calc(100dvh - 32px)' }}>
+            <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-slide-up"
+                style={{ maxHeight: '80vh', background: 'var(--surface)' }}>
 
                 {/* ── Header ── */}
-                <div className={`${cfg.light} ${cfg.border} border-b px-5 py-4 flex items-center justify-between flex-shrink-0`}>
+                <div className={`${cfg.light} px-5 py-3 flex items-center justify-between flex-shrink-0 border-b border-white/20`}>
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl ${cfg.bg} text-white flex items-center justify-center font-black text-lg shadow-sm`}>
+                        <div className={`w-9 h-9 rounded-lg ${cfg.bg} text-white flex items-center justify-center font-black text-base shadow-lg`}>
                             {table?.number}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">
+                                <h2 className="text-xl font-900 text-gray-900 dark:text-white tracking-tight">
                                     {t('table') || 'Mesa'} {table?.number}
                                 </h2>
-                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${cfg.light} ${cfg.text}`}>
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-900 uppercase tracking-wider ${cfg.light} ${cfg.text}`}>
                                     {t(table?.status) || table?.status}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center gap-3 mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
                                 {table?.location && (
-                                    <span className="flex items-center gap-1"><MapPin size={11} />{table.location}</span>
+                                    <span className="flex items-center gap-1"><MapPin size={12} />{table.location}</span>
                                 )}
                                 {table?.capacity && (
-                                    <span className="flex items-center gap-1"><Users size={11} />{table.capacity} {t('seats') || 'lugares'}</span>
+                                    <span className="flex items-center gap-1"><Users size={12} />{table.capacity} {t('seats')}</span>
                                 )}
                             </div>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        className="p-2.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
                     >
-                        <X size={20} />
+                        <X size={24} />
                     </button>
                 </div>
 
                 {/* ── Create Order CTA ── */}
-                <div className="px-5 pt-4 pb-3 flex-shrink-0">
+                <div className="px-5 pt-3 pb-2 flex-shrink-0">
                     <button
                         onClick={handleCreateOrder}
-                        className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md shadow-green-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                        className="w-full bg-primary hover:bg-primary-hover text-white py-2.5 px-5 rounded-xl font-800 text-sm shadow-premium flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                     >
-                        <Plus size={18} strokeWidth={2.5} />
+                        <Plus size={20} strokeWidth={3} />
                         {t('create_new_order') || 'Criar Novo Pedido'}
                     </button>
                 </div>
 
                 {/* ── Tabs ── */}
-                <div className="flex border-b border-gray-100 dark:border-gray-800 mx-5 flex-shrink-0">
+                <div className="flex border-b border-gray-100 dark:border-gray-800 mx-6 flex-shrink-0">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 py-2.5 px-3 flex items-center justify-center gap-1.5 text-sm font-semibold transition-colors relative
+                            className={`flex-1 py-4 px-4 flex items-center justify-center gap-2 text-sm font-bold transition-all relative
                                 ${activeTab === tab.id
-                                    ? 'text-primary-600 dark:text-primary-400'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                    ? 'text-primary'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                         >
-                            <tab.icon size={15} />
+                            <tab.icon size={18} strokeWidth={2.5} />
                             {tab.label}
                             {activeTab === tab.id && (
-                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 rounded-full" />
+                                <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
                             )}
                         </button>
                     ))}
                 </div>
 
                 {/* ── Tab Content (scrollable) ── */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {activeTab === 'history' && (
                         <div className="p-5">
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-1">
-                                <ChevronRight size={12} />
-                                {t('tap_order_details') || 'Toque num pedido para ver os detalhes'}
+                            <p className="text-[10px] font-700 text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <ArrowRight size={12} />
+                                {t('tap_order_details')}
                             </p>
                             <TableOrderHistory tableId={table._id} />
                         </div>
@@ -152,20 +152,20 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
                             />
 
                             {/* Info card */}
-                            <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-                                <h4 className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                            <div className="glass-card p-5">
+                                <h4 className="text-[10px] font-900 text-gray-400 uppercase tracking-widest mb-4">
                                     {t('table_information') || 'Informações da Mesa'}
                                 </h4>
-                                <div className="space-y-2.5 text-sm">
+                                <div className="space-y-3.5 text-sm">
                                     {[
-                                        { label: t('table_number') || 'Número', value: `Mesa ${table.number}` },
-                                        table.capacity && { label: t('capacity') || 'Capacidade', value: `${table.capacity} ${t('people') || 'pessoas'}` },
-                                        table.location && { label: t('location') || 'Localização', value: table.location },
-                                        table.type && { label: t('type') || 'Tipo', value: table.type },
+                                        { label: t('table_number'), value: `Mesa ${table.number}` },
+                                        table.capacity && { label: t('capacity'), value: `${table.capacity} ${t('people')}` },
+                                        table.location && { label: t('location'), value: table.location },
+                                        table.type && { label: t('type'), value: table.type },
                                     ].filter(Boolean).map(({ label, value }) => (
                                         <div key={label} className="flex justify-between items-center">
-                                            <span className="text-gray-500 dark:text-gray-400">{label}</span>
-                                            <span className="font-semibold text-gray-900 dark:text-white">{value}</span>
+                                            <span className="font-600 text-gray-500">{label}</span>
+                                            <span className="font-800 text-gray-900 dark:text-white">{value}</span>
                                         </div>
                                     ))}
                                 </div>

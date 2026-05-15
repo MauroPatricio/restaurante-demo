@@ -1,0 +1,194 @@
+/* ═══════════════════════════════════════════════════════════
+   Orders Management Premium CSS
+   ═══════════════════════════════════════════════════════════ */
+
+.orders-page {
+    padding: 2.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* ── Header ── */
+.orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.orders-title-section h2 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+    line-height: 1.1;
+}
+
+.orders-title-section p {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* ── Filters ── */
+.orders-filters-container {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+}
+
+.orders-filters-container::-webkit-scrollbar { display: none; }
+
+.filter-tab {
+    padding: 0.75rem 1.25rem;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.filter-tab:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.filter-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 8px 16px -4px hsla(var(--p-h), var(--p-s), var(--p-l), 0.3);
+}
+
+/* ── Table Container ── */
+.orders-table-wrapper {
+    background: var(--surface);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.orders-table th {
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-row {
+    transition: all 0.2s;
+}
+
+.order-row:hover {
+    background: #f8fafc;
+}
+
+.order-row.new-highlight {
+    background: hsla(var(--p-h), var(--p-s), var(--p-l), 0.05);
+}
+
+.order-row td {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.order-id-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.customer-cell h4 {
+    font-weight: 800;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.customer-cell p {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.table-badge {
+    padding: 4px 10px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 0.75rem;
+}
+
+.price-text {
+    font-weight: 900;
+    color: var(--text-main);
+    font-size: 1rem;
+}
+
+/* ── Status Badges ── */
+.status-pill {
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Actions ── */
+.action-btn {
+    padding: 0.5rem;
+    border-radius: 10px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.btn-confirm { background: #10b981; color: white; border: none; padding: 6px 14px; font-weight: 800; font-size: 0.75rem; border-radius: 8px; }
+.btn-cancel { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; padding: 6px 10px; border-radius: 8px; }
+
+/* ── Mobile Cards ── */
+.order-mobile-card {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .orders-page { padding: 1.5rem; }
+}

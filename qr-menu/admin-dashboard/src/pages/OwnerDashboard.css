@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════
+   Owner Dashboard (Executive View) Premium CSS
+   ═══════════════════════════════════════════════════════════ */
+
+.owner-dashboard {
+    padding: 2.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+/* ── Header ── */
+.owner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.owner-title-section h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+}
+
+.owner-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    padding: 8px 12px;
+    border-radius: 99px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+}
+
+/* ── Date & Filters ── */
+.owner-filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--primary-soft);
+    padding: 8px 16px;
+    border-radius: 99px;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.period-select {
+    border: none;
+    background: transparent;
+    font-weight: 800;
+    color: var(--primary);
+    cursor: pointer;
+    outline: none;
+    font-size: 0.85rem;
+}
+
+/* ── KPI Cards ── */
+.owner-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.owner-kpi-card {
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.owner-kpi-info p {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.owner-kpi-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+}
+
+.owner-kpi-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Charts Section ── */
+.owner-charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+.owner-chart-card {
+    padding: 2rem;
+}
+
+.chart-header {
+    margin-bottom: 2rem;
+}
+
+.chart-header h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* ── Ranking Table ── */
+.ranking-card {
+    padding: 2rem;
+}
+
+.ranking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 350px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+.ranking-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+
+.ranking-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.ranking-row {
+    background: var(--surface);
+    transition: transform 0.2s;
+}
+
+.ranking-row:hover {
+    transform: scale(1.005);
+    z-index: 10;
+    box-shadow: var(--shadow-md);
+}
+
+.ranking-row td {
+    padding: 16px;
+    font-weight: 600;
+}
+
+.ranking-row td:first-child { border-radius: 12px 0 0 12px; }
+.ranking-row td:last-child { border-radius: 0 12px 12px 0; }
+
+.restaurant-avatar-sm {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+/* ── Mobile ── */
+@media (max-width: 1024px) {
+    .owner-charts-grid { grid-template-columns: 1fr; }
+    .owner-header { align-items: flex-start; }
+    .owner-dashboard { padding: 1.5rem; }
+}

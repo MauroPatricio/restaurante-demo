@@ -5,17 +5,22 @@ import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useSound } from '../hooks/useSound';
-import { Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, Utensils, Volume2, VolumeX, XCircle, Coffee, Wifi, WifiOff, Power } from 'lucide-react';
+import { 
+    Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, 
+    Utensils, Volume2, VolumeX, XCircle, Coffee, Wifi, WifiOff, Power,
+    Bell, Timer, LayoutDashboard
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { SkeletonGrid } from '../components/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import '../styles/PremiumTheme.css';
+import './Kitchen.css';
 
 const Kitchen = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
-    const { socket } = useSocket();
+    const { socket, connected } = useSocket();
     const restaurantId = user?.restaurant?._id || user?.restaurant?.id || localStorage.getItem('restaurantId');
 
     const [orders, setOrders] = useState([]);
@@ -25,8 +30,6 @@ const Kitchen = () => {
     const [audioEnabled, setAudioEnabled] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [togglingKitchen, setTogglingKitchen] = useState(false);
-    const { connected } = useSocket();
-    const refreshTimerRef = useRef(null);
 
     const [stats, setStats] = useState({
         realtime: {
@@ -43,27 +46,21 @@ const Kitchen = () => {
 
     const columns = useMemo(() => ({
         pending: {
-            title: t('pending') || 'Pending',
+            title: t('pending') || 'Pendente',
             icon: AlertCircle,
             color: '#f59e0b',
-            bg: '#fffbeb',
-            borderColor: '#fef3c7',
             items: orders.filter((o) => ['pending', 'confirmed'].includes(o.status))
         },
         preparing: {
-            title: t('preparing') || 'Preparing',
+            title: t('preparing') || 'Preparando',
             icon: ChefHat,
             color: '#3b82f6',
-            bg: '#eff6ff',
-            borderColor: '#dbeafe',
             items: orders.filter((o) => o.status === 'preparing')
         },
         ready: {
-            title: t('ready') || 'Prontos',
+            title: t('ready') || 'Pronto',
             icon: CheckCircle,
             color: '#10b981',
-            bg: '#ecfdf5',
-            borderColor: '#d1fae5',
             items: orders.filter((o) => o.status === 'ready')
         }
     }), [orders, t]);
@@ -74,7 +71,6 @@ const Kitchen = () => {
             return;
         }
         fetchData();
-        // Fetch kitchen open status from restaurant settings
         restaurantAPI.get(restaurantId).then(res => {
             const settings = res.data?.restaurant?.settings;
             setIsKitchenOpen(settings?.isKitchenOpen !== false);
@@ -87,18 +83,12 @@ const Kitchen = () => {
         if (!socket || !restaurantId) return;
 
         const handleNewOrder = (data) => {
-
-
             setOrders(prev => {
                 const exists = prev.find(o => o._id === data._id || o._id === data.orderId);
                 if (exists) return prev;
-                // Since data might be simplified payload, we might still need a full fetch OR trust the data
-                // If data is simplified, we might want to fetch just that order.
-                // For now, let's assume we might need a full fetch to be safe with model mapping
                 return [data, ...prev];
             });
 
-            // Highlight the new order
             const orderId = data._id || data.orderId;
             setNewOrderIds(prev => new Set([...prev, orderId]));
             setTimeout(() => {
@@ -109,11 +99,8 @@ const Kitchen = () => {
                 });
             }, 10000);
 
-            if (audioEnabled) {
-                playOrderSound();
-            }
+            if (audioEnabled) playOrderSound();
 
-            // Update local stats: Increment pending count
             setStats(prev => ({
                 ...prev,
                 realtime: {
@@ -125,7 +112,6 @@ const Kitchen = () => {
         };
 
         const handleRealtimeUpdate = (data) => {
-
             if (data.status === 'cancelled') {
                 setCancelledOrders(prev => {
                     if (prev.find(o => o._id === data._id)) return prev;
@@ -146,24 +132,22 @@ const Kitchen = () => {
                     }
                 }));
             } else {
-            // Instant local update for visual responsiveness
-            setOrders(prev => {
-                const index = prev.findIndex(o => o._id === data._id);
-                if (index === -1) {
-                    if (['pending', 'confirmed', 'preparing', 'ready'].includes(data.status)) {
-                        return [data, ...prev];
+                setOrders(prev => {
+                    const index = prev.findIndex(o => o._id === data._id);
+                    if (index === -1) {
+                        if (['pending', 'confirmed', 'preparing', 'ready'].includes(data.status)) {
+                            return [data, ...prev];
+                        }
+                        return prev;
                     }
-                    return prev;
-                }
-                const newOrders = [...prev];
-                newOrders[index] = { ...newOrders[index], ...data };
-                return newOrders;
-            });
-        }
-    };
+                    const newOrders = [...prev];
+                    newOrders[index] = { ...newOrders[index], ...data };
+                    return newOrders;
+                });
+            }
+        };
 
         const handleStatsUpdate = (data) => {
-
             if (data.avgPrepTime !== undefined) {
                 setStats(prev => ({
                     ...prev,
@@ -177,8 +161,6 @@ const Kitchen = () => {
         socket.on('order-updated', handleRealtimeUpdate);
         socket.on('stats:updated', handleStatsUpdate);
         socket.on('waiter:call', fetchData);
-        socket.on('waiter:call:acknowledged', fetchData);
-        socket.on('waiter:call:resolved', fetchData);
 
         return () => {
             socket.off('order:new', handleNewOrder);
@@ -186,8 +168,6 @@ const Kitchen = () => {
             socket.off('order-updated', handleRealtimeUpdate);
             socket.off('stats:updated', handleStatsUpdate);
             socket.off('waiter:call', fetchData);
-            socket.off('waiter:call:acknowledged', fetchData);
-            socket.off('waiter:call:resolved', fetchData);
         };
     }, [socket, restaurantId, audioEnabled, playOrderSound]);
 
@@ -195,7 +175,6 @@ const Kitchen = () => {
         if (!restaurantId) return;
         try {
             const today = new Date().toISOString().split('T')[0];
-
             const [ordersRes, statsRes] = await Promise.all([
                 orderAPI.getAll(restaurantId, { status: 'pending,confirmed,preparing,ready' }),
                 analyticsAPI.getRestaurantStats(restaurantId, { startDate: today, endDate: today })
@@ -208,7 +187,6 @@ const Kitchen = () => {
                 realtime: statsRes.data.realtime || {},
                 operational: statsRes.data.operational || { avgPrepTime: 0 }
             });
-
         } catch (error) {
             console.error('Failed to fetch kitchen data:', error);
         } finally {
@@ -217,10 +195,7 @@ const Kitchen = () => {
     };
 
     const updateStatus = useCallback(async (orderId, newStatus) => {
-        // 1. Save previous state for rollback
         const previousOrders = [...orders];
-
-        // 2. Optimistic update
         setOrders(prev => {
             if (['completed', 'served', 'cancelled'].includes(newStatus)) {
                 return prev.filter(o => o._id !== orderId);
@@ -230,11 +205,8 @@ const Kitchen = () => {
 
         try {
             await orderAPI.updateStatus(orderId, newStatus);
-            // We don't call fetchData() here because we trust the optimistic update
-            // and the socket event will eventually sync the full state if needed.
         } catch (error) {
             console.error('Failed to update order status:', error);
-            // 3. Rollback on error
             setOrders(previousOrders);
         }
     }, [orders]);
@@ -253,371 +225,230 @@ const Kitchen = () => {
         }
     };
 
-    // Skeleton loading - maintains layout and visual context
     if (loading) return (
-        <div style={{ padding: '40px', maxWidth: '100vw' }}>
-            {/* Header skeleton */}
-            <div style={{ marginBottom: '48px' }}>
-                <div style={{ height: '60px', width: '350px', background: '#f1f5f9', borderRadius: '12px', marginBottom: '12px' }} className="animate-pulse"></div>
-                <div style={{ height: '16px', width: '280px', background: '#f1f5f9', borderRadius: '8px' }} className="animate-pulse"></div>
+        <div className="kitchen-container">
+            <div className="mb-10">
+                <div className="h-16 w-96 bg-gray-200 rounded-2xl animate-pulse mb-4"></div>
+                <div className="h-6 w-72 bg-gray-200 rounded animate-pulse"></div>
             </div>
-            {/* KPI Cards skeleton */}
-            <SkeletonGrid items={5} columns={5} height="120px" gap="24px" />
+            <SkeletonGrid items={5} columns={5} height="140px" gap="24px" />
         </div>
     );
 
-    if (!restaurantId) {
-        return (
-            <div className="p-8 text-center text-slate-500">
-                <AlertCircle className="mx-auto h-12 w-12 mb-4 text-red-400" />
-                <h2 className="text-xl font-bold text-slate-700">Restaurante não selecionado</h2>
-                <p>Por favor, selecione um restaurante para ver os pedidos.</p>
-            </div>
-        );
-    }
+    if (!restaurantId) return (
+        <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
+            <AlertCircle size={64} className="mb-4 text-red-200" />
+            <h2 className="text-2xl font-black text-gray-900 mb-2">Restaurante não selecionado</h2>
+            <p className="font-600">Por favor, selecione um restaurante para ver os pedidos.</p>
+        </div>
+    );
 
     const { realtime, operational } = stats;
 
     return (
-        <div style={{ padding: '40px', maxWidth: '100vw', minHeight: 'calc(100vh - 64px)' }}>
-
-            {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12">
-                <div>
-                    <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white leading-tight">
-                        {t('kitchen_display') || 'Kitchen Display'}
-                    </h1>
-                    <div className="flex items-center gap-3 mt-3">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)] animate-pulse" />
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
-                            {t('live_kitchen_desc') || 'Real-time order management'} • {new Date().toLocaleDateString()}
-                        </p>
+        <div className="kitchen-container animate-fade-in">
+            {/* ── Header ── */}
+            <header className="kitchen-header">
+                <div className="kitchen-title-section">
+                    <div className="flex items-center gap-3 mb-2">
+                        <LayoutDashboard size={20} className="text-primary" />
+                        <span className="text-[10px] font-900 uppercase tracking-[0.2em] text-primary">{t('kitchen_display') || 'Kitchen Display System (KDS)'}</span>
+                    </div>
+                    <h1>{t('kitchen_display') || 'Kitchen Display'}</h1>
+                    <div className="kitchen-status-indicator">
+                        <div className="status-dot animate-pulse" />
+                        <span className="status-text">{t('live_kitchen_desc') || 'Gestão de pedidos em directo'} • {new Date().toLocaleDateString('pt-PT')}</span>
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
-                    {/* Kitchen Status Toggle */}
+
+                <div className="kitchen-actions">
                     <button
                         onClick={handleToggleKitchen}
                         disabled={togglingKitchen}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border-2 ${
-                            isKitchenOpen
-                                ? 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100'
-                                : 'bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100'
-                        }`}
-                        title={isKitchenOpen ? t('kitchen_close_label', 'Fechar Cozinha') : t('kitchen_open_label', 'Abrir Cozinha')}
+                        className={`kitchen-toggle-btn ${isKitchenOpen ? 'open' : 'closed'}`}
                     >
                         <Power size={18} />
                         {togglingKitchen ? '...' : (isKitchenOpen ? t('kitchen_open_status', 'Cozinha Aberta') : t('kitchen_closed_status', 'Inactivo / Manutenção'))}
                     </button>
+                    
                     <button
                         onClick={() => setAudioEnabled(!audioEnabled)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border-2 ${audioEnabled ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-500'}`}
+                        className={`kitchen-toggle-btn ${audioEnabled ? 'open' : 'closed'}`}
                     >
                         {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                         {audioEnabled ? 'Áudio Ligado' : 'Áudio Desligado'}
                     </button>
-                    <div className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest border-2 ${connected ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-500'}`}>
-                        {connected ? (
-                            <><Wifi size={18} /> {t('connected') || 'Conectado'}</>
-                        ) : (
-                            <><WifiOff size={18} /> {t('offline') || 'Offline'}</>
-                        )}
+
+                    <div className={`kitchen-toggle-btn ${connected ? 'open' : 'closed'}`}>
+                        {connected ? <Wifi size={18} /> : <WifiOff size={18} />}
+                        {connected ? t('connected') : t('offline')}
                     </div>
                 </div>
-            </div>
+            </header>
 
-            {/* Cancelled Banner */}
-            {cancelledOrders.length > 0 && (
-                <div className="premium-card badge-error" style={{ marginBottom: '32px', padding: '16px 24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <h3 style={{ margin: 0, color: 'inherit', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <XCircle size={20} /> Pedidos Cancelados Recentemente
-                    </h3>
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                        {cancelledOrders.map(order => (
-                            <div key={order._id} className="premium-badge badge-error glass-surface" style={{ padding: '8px 16px', textDecoration: 'line-through' }}>
-                                <span style={{ fontWeight: 'bold' }}>#{order.orderNumber || order._id.substr(-4)}</span>
-                                <span style={{ fontSize: '14px' }}>Mesa {order.tableNumber || '?'}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            {/* ── Cancelled Banner ── */}
+            <AnimatePresence>
+                {cancelledOrders.length > 0 && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="glass-card border-red-200 bg-red-50/50 p-6"
+                    >
+                        <h3 className="flex items-center gap-2 text-red-600 font-900 uppercase text-sm mb-4">
+                            <XCircle size={20} /> Pedidos Cancelados Recentemente
+                        </h3>
+                        <div className="flex gap-4 flex-wrap">
+                            {cancelledOrders.map(order => (
+                                <div key={order._id} className="bg-white px-4 py-2 rounded-xl shadow-sm border border-red-100 flex items-center gap-3">
+                                    <span className="font-900 text-red-500 line-through">#{order.orderNumber || order._id.substr(-4)}</span>
+                                    <span className="text-xs font-700 text-gray-500">Mesa {order.tableNumber || '?'}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-
-                <div className="premium-card">
-                    <div className="text-premium-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
-                        {t('active_orders') || 'Active Orders'}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span className="text-premium-header" style={{ fontSize: '32px' }}>{realtime.activeOrders || 0}</span>
-                        <div style={{ padding: '10px', background: '#eff6ff', borderRadius: '12px', color: '#3b82f6' }}>
+            {/* ── KPI Cards ── */}
+            <div className="kitchen-stats-grid">
+                <div className="glass-card kpi-card hover-lift">
+                    <span className="kpi-label">{t('active_orders')}</span>
+                    <div className="kpi-value-container">
+                        <span className="kpi-value">{realtime.activeOrders || 0}</span>
+                        <div className="kpi-icon-box bg-blue-50 text-blue-600">
                             <Utensils size={24} />
                         </div>
                     </div>
                 </div>
 
-                <div className="premium-card">
-                    <div className="text-premium-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
-                        {t('pending_orders') || 'Pending Orders'}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span className="text-premium-header" style={{ fontSize: '32px' }}>{realtime.pendingOrders || 0}</span>
-                        <div style={{ padding: '10px', background: '#fffbeb', borderRadius: '12px', color: '#f59e0b' }}>
+                <div className="glass-card kpi-card hover-lift">
+                    <span className="kpi-label">{t('pending_orders')}</span>
+                    <div className="kpi-value-container">
+                        <span className="kpi-value">{realtime.pendingOrders || 0}</span>
+                        <div className="kpi-icon-box bg-amber-50 text-amber-600">
                             <AlertCircle size={24} />
                         </div>
                     </div>
                 </div>
 
-                <div className="premium-card">
-                    <div className="text-premium-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
-                        Feitos Hoje
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span className="text-premium-header" style={{ fontSize: '32px', color: '#10b981' }}>{realtime.completedOrders || 0}</span>
-                        <div style={{ padding: '10px', background: '#ecfdf5', borderRadius: '12px', color: '#10b981' }}>
+                <div className="glass-card kpi-card hover-lift">
+                    <span className="kpi-label">Feitos Hoje</span>
+                    <div className="kpi-value-container">
+                        <span className="kpi-value text-emerald-600">{realtime.completedOrders || 0}</span>
+                        <div className="kpi-icon-box bg-emerald-50 text-emerald-600">
                             <CheckCircle size={24} />
                         </div>
                     </div>
                 </div>
 
-                <div className="premium-card">
-                    <div className="text-premium-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
-                        Chamadas Garçom
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span className="text-premium-header" style={{ fontSize: '32px', color: (realtime.activeWaiterCalls > 0) ? '#ef4444' : '#94a3b8' }}>{realtime.activeWaiterCalls || 0}</span>
-                        <div style={{ padding: '10px', background: '#fef2f2', borderRadius: '12px', color: '#ef4444' }}>
+                <div className="glass-card kpi-card hover-lift">
+                    <span className="kpi-label">Chamadas Garçom</span>
+                    <div className="kpi-value-container">
+                        <span className={`kpi-value ${realtime.activeWaiterCalls > 0 ? 'text-red-500' : 'text-gray-300'}`}>{realtime.activeWaiterCalls || 0}</span>
+                        <div className="kpi-icon-box bg-rose-50 text-rose-500">
                             <Users size={24} />
                         </div>
                     </div>
                 </div>
 
-                <div className="premium-card">
-                    <div className="text-premium-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
-                        Tempo Médio
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span className="text-premium-header" style={{ fontSize: '32px' }}>
-                            {Math.round(operational.avgPrepTime || 0)} <span style={{ fontSize: '16px', color: '#94a3b8' }}>min</span>
+                <div className="glass-card kpi-card hover-lift">
+                    <span className="kpi-label">Tempo Médio</span>
+                    <div className="kpi-value-container">
+                        <span className="kpi-value">
+                            {Math.round(operational.avgPrepTime || 0)} <span className="text-sm text-gray-400 uppercase">min</span>
                         </span>
-                        <div style={{ padding: '10px', background: '#fef2f2', borderRadius: '12px', color: '#ef4444' }}>
-                            <Clock size={24} />
+                        <div className="kpi-icon-box bg-purple-50 text-purple-600">
+                            <Timer size={24} />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Orders Columns */}
-            <div className="flex flex-col lg:flex-row gap-8 items-stretch">
+            {/* ── Orders Columns ── */}
+            <div className="kitchen-columns">
                 {Object.entries(columns).map(([status, config]) => (
-                    <div key={status} className="premium-card" style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                        minHeight: '800px',
-                        padding: 0,
-                        background: '#f8fafc'
-                    }}>
-                        {/* Column Header */}
-                        <div style={{
-                            padding: '24px',
-                            background: 'white',
-                            borderBottom: '1px solid #f1f5f9',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '20px'
-                        }}>
-                            <h2 className="text-premium-header" style={{
-                                fontSize: '20px',
-                                color: config.color,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                margin: 0
-                            }}>
-                                <div style={{ padding: '8px', background: `${config.color}15`, borderRadius: '10px' }}>
-                                    <config.icon size={20} strokeWidth={2.5} />
+                    <div key={status} className="kitchen-column">
+                        <div className="column-header">
+                            <h2 className="column-title" style={{ color: config.color }}>
+                                <div className="p-2 rounded-xl" style={{ background: `${config.color}15` }}>
+                                    <config.icon size={20} strokeWidth={3} />
                                 </div>
                                 {config.title}
                             </h2>
-                            <span className="premium-badge glass-surface" style={{ color: config.color, padding: '6px 16px', fontSize: '14px', fontWeight: '900' }}>
-                                {config.items.length}
-                            </span>
+                            <span className="column-count" style={{ color: config.color }}>{config.items.length}</span>
                         </div>
 
-                        {/* Orders List */}
-                        <div style={{
-                            flex: 1,
-                            overflowY: 'auto',
-                            padding: '0 20px 20px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '20px'
-                        }}>
-                            <AnimatePresence mode="popLayout" initial={false}>
+                        <div className="orders-list">
+                            <AnimatePresence mode="popLayout">
                                 {config.items.map(order => (
                                     <motion.div
                                         layout
                                         key={order._id}
-                                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                         animate={{ opacity: 1, scale: 1, y: 0 }}
                                         exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                                        transition={{ 
-                                            type: "spring",
-                                            stiffness: 500,
-                                            damping: 50,
-                                            mass: 1
-                                        }}
-                                        className={`premium-card ${newOrderIds.has(order._id) ? 'premium-pulse-soft' : ''}`}
-                                        style={{
-                                            padding: '24px',
-                                            borderLeft: `6px solid ${config.color}`,
-                                            position: 'relative',
-                                            backgroundColor: newOrderIds.has(order._id) ? `${config.color}08` : 'white'
-                                        }}
+                                        className={`order-card ${newOrderIds.has(order._id) ? 'new-order-pulse' : ''}`}
+                                        style={{ borderLeft: `6px solid ${config.color}` }}
                                     >
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'start',
-                                        marginBottom: '20px',
-                                        paddingBottom: '16px',
-                                        borderBottom: '1px solid #f1f5f9'
-                                    }}>
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <span className="text-premium-header" style={{ fontSize: '26px' }}>
-                                                    #{order.orderNumber || (order._id ? order._id.substr(-5).toUpperCase() : '----')}
-                                                </span>
-                                                 <div className="premium-badge glass-surface" style={{ fontSize: '13px' }}>
-                                                     {order.orderType === 'room-service' 
-                                                        ? `🛏️ Quarto ${order.roomService?.roomNumber || '—'}` 
-                                                        : `🪑 Mesa ${order.tableNumber || order.table?.number || order.table || '—'}`}
-                                                 </div>
-                                            </div>
-                                            <div className="text-premium-muted" style={{ marginTop: '6px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <Clock size={14} />
-                                                {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                        </div>
-                                        <KitchenTimer startTime={order.createdAt} />
-                                    </div>
-
-                                    {/* Items List */}
-                                    <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        {order.items?.map((item, idx) => (
-                                            <div key={idx} style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'start',
-                                                padding: '10px',
-                                                borderRadius: '10px',
-                                                background: '#f8fafc'
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <span className="text-premium-header" style={{ color: '#6366f1', fontSize: '15px' }}>{item.qty || item.quantity || 1}x</span>
-                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '15px' }}>{item.item?.name || item.name}</span>
-                                                        {item.notes && (
-                                                            <span className="badge-warning" style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', marginTop: '4px', display: 'inline-block', width: 'fit-content' }}>
-                                                                {item.notes}
-                                                            </span>
-                                                        )}
+                                        <div className="order-card-header">
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="order-number">#{order.orderNumber || (order._id ? order._id.substr(-5).toUpperCase() : '----')}</span>
+                                                    <div className="order-table-badge">
+                                                        {order.orderType === 'room-service' 
+                                                            ? `🛏️ Quarto ${order.roomService?.roomNumber || '—'}` 
+                                                            : `🪑 Mesa ${order.tableNumber || order.table?.number || '—'}`}
                                                     </div>
                                                 </div>
+                                                <div className="flex items-center gap-2 mt-2 text-xs font-700 text-gray-400 uppercase tracking-wider">
+                                                    <Clock size={12} />
+                                                    {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <KitchenTimer startTime={order.createdAt} />
+                                        </div>
 
-                                    {/* Actions */}
-                                    <div className="flex flex-col gap-3">
-                                        {['pending', 'confirmed'].includes(order.status) && (
-                                            <button
-                                                onClick={() => updateStatus(order._id, 'preparing')}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '16px',
-                                                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '16px',
-                                                    fontWeight: '900',
-                                                    fontSize: '14px',
-                                                    cursor: 'pointer',
-                                                    boxShadow: '0 8px 20px -6px rgba(99, 102, 241, 0.4)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '10px'
-                                                }}
-                                            >
-                                                <ChefHat size={20} /> INICIAR PREPARO
-                                            </button>
-                                        )}
-                                        {order.status === 'preparing' && (
-                                            <button
-                                                onClick={() => updateStatus(order._id, 'ready')}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '16px',
-                                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '16px',
-                                                    fontWeight: '900',
-                                                    fontSize: '14px',
-                                                    cursor: 'pointer',
-                                                    boxShadow: '0 8px 20px -6px rgba(16, 185, 129, 0.4)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '10px'
-                                                }}
-                                            >
-                                                <CheckCircle size={20} /> MARCAR COMO PRONTO
-                                            </button>
-                                        )}
-                                        {order.status === 'ready' && (
-                                            <button
-                                                onClick={() => updateStatus(order._id, 'completed')}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '16px',
-                                                    background: 'white',
-                                                    color: '#64748b',
-                                                    border: '2px solid #e2e8f0',
-                                                    borderRadius: '16px',
-                                                    fontWeight: '800',
-                                                    fontSize: '14px',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '10px'
-                                                }}
-                                            >
-                                                <CheckCircle size={20} /> ENTREGUE / FECHAR
-                                            </button>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            ))}
+                                        <div className="order-items">
+                                            {order.items?.map((item, idx) => (
+                                                <div key={idx} className="order-item">
+                                                    <span className="item-qty">{item.qty || item.quantity || 1}x</span>
+                                                    <div className="flex flex-col">
+                                                        <span className="item-name">{item.item?.name || item.name}</span>
+                                                        {item.notes && <span className="item-notes">📝 {item.notes}</span>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="order-actions">
+                                            {['pending', 'confirmed'].includes(order.status) && (
+                                                <button onClick={() => updateStatus(order._id, 'preparing')} className="order-action-btn btn-primary">
+                                                    <ChefHat size={18} /> INICIAR PREPARO
+                                                </button>
+                                            )}
+                                            {order.status === 'preparing' && (
+                                                <button onClick={() => updateStatus(order._id, 'ready')} className="order-action-btn btn-success">
+                                                    <CheckCircle size={18} /> MARCAR PRONTO
+                                                </button>
+                                            )}
+                                            {order.status === 'ready' && (
+                                                <button onClick={() => updateStatus(order._id, 'completed')} className="order-action-btn btn-outline">
+                                                    <XCircle size={18} /> FECHAR PEDIDO
+                                                </button>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                ))}
                             </AnimatePresence>
+                            
                             {config.items.length === 0 && (
-                                <motion.div 
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}
-                                >
-                                    <div style={{ padding: '24px', background: 'white', borderRadius: '50%', marginBottom: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-                                        <config.icon size={48} strokeWidth={1.5} className="text-slate-200" />
+                                <div className="flex flex-col items-center justify-center h-64 text-gray-300">
+                                    <div className="p-6 bg-white rounded-full shadow-sm mb-4">
+                                        <config.icon size={48} strokeWidth={1} />
                                     </div>
-                                    <p className="text-premium-muted" style={{ fontSize: '13px' }}>Sem pedidos em {config.title}</p>
-                                </motion.div>
+                                    <p className="font-800 uppercase tracking-widest text-[10px]">Sem pedidos</p>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -632,25 +463,19 @@ const KitchenTimer = ({ startTime }) => {
 
     useEffect(() => {
         const start = new Date(startTime).getTime();
-        const interval = setInterval(() => {
-            setElapsed(Date.now() - start);
-        }, 1000);
+        const interval = setInterval(() => setElapsed(Date.now() - start), 1000);
         return () => clearInterval(interval);
     }, [startTime]);
 
     const minutes = Math.floor(elapsed / 60000);
     const seconds = Math.floor((elapsed % 60000) / 1000);
 
-    let colorState = 'badge-success';
-    if (minutes >= 15) colorState = 'badge-warning';
-    if (minutes >= 25) colorState = 'badge-error';
+    let state = 'timer-safe';
+    if (minutes >= 15) state = 'timer-warning';
+    if (minutes >= 25) state = 'timer-danger';
 
     return (
-        <div className={`premium-badge ${colorState} glass-surface ${minutes >= 15 ? 'premium-pulse-soft' : ''}`} style={{
-            fontFamily: 'monospace',
-            fontSize: '14px',
-            padding: '8px 16px'
-        }}>
+        <div className={`order-timer ${state} ${minutes >= 15 ? 'animate-pulse' : ''}`}>
             <Clock size={14} />
             {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
         </div>

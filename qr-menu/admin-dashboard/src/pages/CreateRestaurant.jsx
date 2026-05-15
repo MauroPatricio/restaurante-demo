@@ -318,14 +318,14 @@ export default function CreateRestaurant() {
                 .responsive-image { width: 100%; height: 100%; object-fit: cover; }
                 .image-overlay { position: absolute; inset: 0; background: linear-gradient(to top, #0f172a, transparent); opacity: 0.8; }
                 .image-content { position: absolute; bottom: 60px; left: 60px; right: 60px; color: white; z-index: 10; }
-                .image-content h2 { font-size: 2.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 16px; }
+                .image-content h2 { font-size: 2.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 16px; color: white; }
                 
                 /* Form row for side-by-side inputs */
                 .form-row { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
                 .form-row .form-group { margin-bottom: 0; }
                 .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer; transition: border-color 0.2s; }
                 .form-group select:focus { outline: none; border-color: #2563eb; ring: 2px solid #2563eb33; }
-                .image-content p { font-size: 1.1rem; color: #cbd5e1; }
+                .image-content p { font-size: 1.1rem; color: #ffffff; }
 
                 @media(min-width: 900px) {
                     .create-right { display: block; }

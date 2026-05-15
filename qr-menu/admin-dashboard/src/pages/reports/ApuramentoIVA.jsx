@@ -48,15 +48,15 @@ const ApuramentoIVA = () => {
 
     const handleExportPDF = () => {
         if (!data) return;
-        const columns = ['DescriÃ§Ã£o', `Valor (${systemCurrency})` || 'Valor'];
+        const columns = ['Descrição', `Valor (${systemCurrency})` || 'Valor'];
         const rows = [
             ['IVA Liquidado (Vendas)', convertAndFormat(data.ivaLiquidado)],
-            ['IVA DedutÃ­vel (Compras)', convertAndFormat(data.ivaDedutivel)],
+            ['IVA Dedutível (Compras)', convertAndFormat(data.ivaDedutivel)],
             ['IVA a Pagar / (A Recuperar)', convertAndFormat(data.ivaAPagar)]
         ];
         exportToPDF({
             title: 'Apuramento Mensal de IVA (PGC-NIRF)',
-            subtitle: `PerÃ­odo: ${dateRange.startDate} a ${dateRange.endDate}`,
+            subtitle: `Período: ${dateRange.startDate} a ${dateRange.endDate}`,
             columns: columns.map((col, idx) => ({ header: col, dataKey: idx === 0 ? 'desc' : 'val' })),
             data: rows.map(r => ({ desc: r[0], val: r[1] })),
             filename: `Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}`,
@@ -67,18 +67,18 @@ const ApuramentoIVA = () => {
     const handleExportExcel = () => {
         if (!data) return;
         const exportData = [
-            { 'DescriÃ§Ã£o': 'IVA Liquidado (Vendas)', [`Valor (${systemCurrency})`]: data.ivaLiquidado },
-            { 'DescriÃ§Ã£o': 'IVA DedutÃ­vel (Compras)', [`Valor (${systemCurrency})`]: data.ivaDedutivel },
-            { 'DescriÃ§Ã£o': 'IVA a Pagar / (A Recuperar)', [`Valor (${systemCurrency})`]: data.ivaAPagar }
+            { 'Descrição': 'IVA Liquidado (Vendas)', [`Valor (${systemCurrency})`]: data.ivaLiquidado },
+            { 'Descrição': 'IVA Dedutível (Compras)', [`Valor (${systemCurrency})`]: data.ivaDedutivel },
+            { 'Descrição': 'IVA a Pagar / (A Recuperar)', [`Valor (${systemCurrency})`]: data.ivaAPagar }
         ];
         exportToExcel({
             title: 'Apuramento Mensal de IVA (PGC-NIRF)',
             columns: [
-                { header: 'DescriÃ§Ã£o', dataKey: 'desc' },
+                { header: 'Descrição', dataKey: 'desc' },
                 { header: `Valor (${systemCurrency})`, dataKey: 'val' }
             ],
             data: exportData.map(d => ({
-                desc: d['DescriÃ§Ã£o'],
+                desc: d['Descrição'],
                 val: d[`Valor (${systemCurrency})`]
             })),
             filename: `Apuramento_IVA_${dateRange.startDate}_${dateRange.endDate}`,
@@ -94,7 +94,7 @@ const ApuramentoIVA = () => {
                         <Calculator className="w-8 h-8 text-primary" />
                         Apuramento de IVA
                     </h1>
-                    <p className="text-gray-500 mt-1">ClassificaÃ§Ã£o Fiscal Baseada no PGC-NIRF</p>
+                    <p className="text-gray-500 mt-1">Classificação Fiscal Baseada no PGC-NIRF</p>
                 </div>
 
                 <div className="flex items-center gap-4 flex-wrap">
@@ -127,7 +127,7 @@ const ApuramentoIVA = () => {
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <div>
                                 <h2 className="text-lg font-bold text-gray-900">Resumo de IVA</h2>
-                                <p className="text-sm text-gray-500">PerÃ­odo Fiscal Selecionado</p>
+                                <p className="text-sm text-gray-500">Período Fiscal Selecionado</p>
                             </div>
                             <div className="flex gap-2">
                                 <button
@@ -160,14 +160,14 @@ const ApuramentoIVA = () => {
                                 <span className="text-xl font-bold text-red-900">{convertAndFormat(data.ivaLiquidado)}</span>
                             </div>
 
-                            {/* DedutÃ­vel */}
+                            {/* Dedutível */}
                             <div className="flex items-center justify-between p-4 bg-green-50/50 rounded-xl border border-green-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                                         <TrendingDown className="w-6 h-6 text-green-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-medium text-green-900">IVA DedutÃ­vel (Compras)</h3>
+                                        <h3 className="text-sm font-medium text-green-900">IVA Dedutível (Compras)</h3>
                                         <p className="text-xs text-green-600">Conta 2432 - Imposto a recuperar do Estado</p>
                                     </div>
                                 </div>
@@ -199,7 +199,7 @@ const ApuramentoIVA = () => {
                     </div>
                 </div>
             ) : (
-                <div className="text-center py-20 text-gray-500">Nenhum dado encontrado para o perÃ­odo.</div>
+                <div className="text-center py-20 text-gray-500">Nenhum dado encontrado para o período.</div>
             )}
         </div>
     );

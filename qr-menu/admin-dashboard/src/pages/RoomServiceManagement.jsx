@@ -6,8 +6,10 @@ import {
     ToggleLeft, ToggleRight, QrCode, ChevronDown, ChevronUp,
     Building2, AlertCircle, Pencil, X, Check
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function RoomServiceManagement() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
@@ -28,7 +30,7 @@ export default function RoomServiceManagement() {
             const res = await roomServiceAPI.getRooms(restaurantId);
             setRooms(res.data.rooms || []);
         } catch (e) {
-            setError('Erro ao carregar quartos');
+            setError(t('rs_error_load', 'Erro ao carregar quartos'));
         } finally {
             setLoading(false);
         }
@@ -46,19 +48,19 @@ export default function RoomServiceManagement() {
             setShowCreate(false);
             fetchRooms();
         } catch (e) {
-            setError(e.response?.data?.error || 'Erro ao criar quarto');
+            setError(e.response?.data?.error || t('rs_error_create', 'Erro ao criar quarto'));
         } finally {
             setCreating(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Eliminar quarto? Esta ação não pode ser revertida.')) return;
+        if (!confirm(t('rs_confirm_delete', 'Eliminar quarto? Esta ação não pode ser revertida.'))) return;
         try {
             await roomServiceAPI.deleteRoom(id);
             setRooms(prev => prev.filter(r => r._id !== id));
         } catch (e) {
-            setError('Erro ao eliminar quarto');
+            setError(t('rs_error_delete', 'Erro ao eliminar quarto'));
         }
     };
 
@@ -67,12 +69,12 @@ export default function RoomServiceManagement() {
             await roomServiceAPI.updateRoom(room._id, { active: !room.active });
             setRooms(prev => prev.map(r => r._id === room._id ? { ...r, active: !r.active } : r));
         } catch (e) {
-            setError('Erro ao atualizar quarto');
+            setError(t('rs_error_update', 'Erro ao atualizar quarto'));
         }
     };
 
     const handleRegenerateQR = async (room) => {
-        if (!confirm(`Regenerar QR do Quarto ${room.number}? O QR anterior ficará inválido.`)) return;
+        if (!confirm(t('rs_confirm_regenerate', { number: room.number }))) return;
         try {
             const res = await roomServiceAPI.regenerateQR(room._id);
             setRooms(prev => prev.map(r => r._id === room._id ? { ...r, qrCode: res.data.qrCode } : r));
@@ -80,7 +82,7 @@ export default function RoomServiceManagement() {
                 setSelectedQR(prev => ({ ...prev, qrCode: res.data.qrCode }));
             }
         } catch (e) {
-            setError('Erro ao regenerar QR');
+            setError(t('rs_error_regenerate', 'Erro ao regenerar QR'));
         }
     };
 
@@ -108,10 +110,10 @@ export default function RoomServiceManagement() {
                     </div>
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
-                            Gestão de Quartos
+                            {t('rs_title', 'Gestão de Quartos')}
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.875rem' }}>
-                            {rooms.length} quartos registados • Room Service por QR Code
+                            {t('rs_subtitle', { count: rooms.length })}
                         </p>
                     </div>
                 </div>
@@ -125,7 +127,7 @@ export default function RoomServiceManagement() {
                     }}
                 >
                     <Plus size={18} />
-                    Novo Quarto
+                    {t('rs_new_room', 'Novo Quarto')}
                 </button>
             </div>
 
@@ -139,14 +141,14 @@ export default function RoomServiceManagement() {
             {/* Create Form */}
             {showCreate && (
                 <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
-                    <h3 style={{ margin: '0 0 16px', fontWeight: '600', color: 'var(--text-primary)' }}>➕ Criar Novo Quarto</h3>
+                    <h3 style={{ margin: '0 0 16px', fontWeight: '600', color: 'var(--text-primary)' }}>➕ {t('rs_create_title', 'Criar Novo Quarto')}</h3>
                     <form onSubmit={handleCreate}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '16px' }}>
                             {[
-                                { id: 'number', label: 'Nº do Quarto *', placeholder: 'ex: 101' },
-                                { id: 'floor', label: 'Andar', placeholder: 'ex: 1' },
-                                { id: 'label', label: 'Categoria', placeholder: 'ex: Suíte Dupla' },
-                                { id: 'notes', label: 'Notas internas', placeholder: 'opcional' }
+                                { id: 'number', label: t('rs_room_number', 'Nº do Quarto *'), placeholder: t('rs_placeholder_number', 'ex: 101') },
+                                { id: 'floor', label: t('rs_floor', 'Andar'), placeholder: t('rs_placeholder_floor', 'ex: 1') },
+                                { id: 'label', label: t('rs_category', 'Categoria'), placeholder: t('rs_placeholder_category', 'ex: Suíte Dupla') },
+                                { id: 'notes', label: t('rs_notes', 'Notas internas'), placeholder: t('rs_optional', 'opcional') }
                             ].map(f => (
                                 <div key={f.id}>
                                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>{f.label}</label>
@@ -162,10 +164,10 @@ export default function RoomServiceManagement() {
                         </div>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <button type="submit" disabled={creating} style={{ padding: '10px 20px', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>
-                                {creating ? 'A criar...' : '✓ Criar Quarto'}
+                                {creating ? t('rs_creating', 'A criar...') : t('rs_btn_create', '✓ Criar Quarto')}
                             </button>
                             <button type="button" onClick={() => setShowCreate(false)} style={{ padding: '10px 20px', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer' }}>
-                                Cancelar
+                                {t('cancel', 'Cancelar')}
                             </button>
                         </div>
                     </form>
@@ -176,19 +178,19 @@ export default function RoomServiceManagement() {
             {selectedQR && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedQR(null)}>
                     <div style={{ background: 'white', borderRadius: '20px', padding: '32px', maxWidth: '360px', width: '90%', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                        <h3 style={{ margin: '0 0 4px', color: '#1e293b', fontWeight: '700' }}>🏨 Quarto {selectedQR.number}</h3>
+                        <h3 style={{ margin: '0 0 4px', color: '#1e293b', fontWeight: '700' }}>🏨 {t('rs_room', 'Quarto')} {selectedQR.number}</h3>
                         {selectedQR.label && <p style={{ color: '#64748b', margin: '0 0 20px', fontSize: '0.9rem' }}>{selectedQR.label}</p>}
                         {selectedQR.qrCode ? (
                             <img src={selectedQR.qrCode} alt="QR Code" style={{ width: '220px', height: '220px', border: '4px solid #7c3aed', borderRadius: '12px' }} />
                         ) : (
-                            <p style={{ color: '#94a3b8' }}>QR Code não disponível</p>
+                            <p style={{ color: '#94a3b8' }}>{t('rs_qr_not_available', 'QR Code não disponível')}</p>
                         )}
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
                             <button onClick={() => downloadQR(selectedQR)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>
-                                <Download size={16} /> Download
+                                <Download size={16} /> {t('rs_btn_download', 'Download')}
                             </button>
                             <button onClick={() => handleRegenerateQR(selectedQR)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>
-                                <RefreshCw size={16} /> Regenerar
+                                <RefreshCw size={16} /> {t('rs_btn_regenerate', 'Regenerar')}
                             </button>
                             <button onClick={() => setSelectedQR(null)} style={{ padding: '10px 14px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '10px', cursor: 'pointer' }}>
                                 <X size={16} />
@@ -200,20 +202,20 @@ export default function RoomServiceManagement() {
 
             {/* Rooms grouped by floor */}
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>A carregar quartos...</div>
+                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>{t('rs_loading', 'A carregar quartos...')}</div>
             ) : rooms.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px', background: 'var(--bg-card)', borderRadius: '14px', border: '2px dashed var(--border-color)' }}>
                     <BedDouble size={48} style={{ color: 'var(--text-secondary)', marginBottom: '12px' }} />
-                    <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px' }}>Nenhum quarto registado</h3>
-                    <p style={{ color: 'var(--text-secondary)', margin: '0 0 20px' }}>Crie quartos para gerar QR Codes e ativar o Room Service</p>
-                    <button onClick={() => setShowCreate(true)} style={{ padding: '10px 20px', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>+ Criar Primeiro Quarto</button>
+                    <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px' }}>{t('rs_no_rooms', 'Nenhum quarto registado')}</h3>
+                    <p style={{ color: 'var(--text-secondary)', margin: '0 0 20px' }}>{t('rs_no_rooms_desc', 'Crie quartos para gerar QR Codes e ativar o Room Service')}</p>
+                    <button onClick={() => setShowCreate(true)} style={{ padding: '10px 20px', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>{t('rs_btn_create_first', '+ Criar Primeiro Quarto')}</button>
                 </div>
             ) : (
                 Object.entries(floorGroups).sort(([a], [b]) => a.localeCompare(b)).map(([floor, floorRooms]) => (
                     <div key={floor} style={{ marginBottom: '24px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                             <Building2 size={16} style={{ color: 'var(--text-secondary)' }} />
-                            <span style={{ fontWeight: '700', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Andar {floor}</span>
+                            <span style={{ fontWeight: '700', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('rs_floor_label', 'Andar')} {floor}</span>
                             <div style={{ flex: 1, height: '1px', background: 'var(--border-color)', marginLeft: '4px' }} />
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
@@ -226,26 +228,26 @@ export default function RoomServiceManagement() {
                                     {/* Active Badge */}
                                     <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                                         <span style={{ padding: '3px 9px', borderRadius: '99px', fontSize: '0.7rem', fontWeight: '700', background: room.active ? 'rgba(16,185,129,0.15)' : 'rgba(100,116,139,0.15)', color: room.active ? '#10b981' : '#94a3b8' }}>
-                                            {room.active ? 'ATIVO' : 'INATIVO'}
+                                            {room.active ? t('rs_status_active', 'ATIVO') : t('rs_status_inactive', 'INATIVO')}
                                         </span>
                                     </div>
 
                                     <div style={{ marginBottom: '12px' }}>
                                         <h3 style={{ margin: '0 0 2px', fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-primary)' }}>
-                                            🛏️ Quarto {room.number}
+                                            🛏️ {t('rs_room', 'Quarto')} {room.number}
                                         </h3>
                                         {room.label && <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{room.label}</p>}
                                     </div>
 
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                        <button onClick={() => setSelectedQR(room)} title="Ver QR Code" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}>
-                                            <QrCode size={14} /> QR Code
+                                        <button onClick={() => setSelectedQR(room)} title={t('rs_view_qr', 'Ver QR Code')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}>
+                                            <QrCode size={14} /> {t('rs_qr_label', 'QR Code')}
                                         </button>
-                                        <button onClick={() => handleToggleActive(room)} title={room.active ? 'Desativar' : 'Ativar'} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: room.active ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: room.active ? '#ef4444' : '#10b981', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}>
+                                        <button onClick={() => handleToggleActive(room)} title={room.active ? t('rs_btn_deactivate', 'Desativar') : t('rs_btn_activate', 'Ativar')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: room.active ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: room.active ? '#ef4444' : '#10b981', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}>
                                             {room.active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                                            {room.active ? 'Desativar' : 'Ativar'}
+                                            {room.active ? t('rs_btn_deactivate', 'Desativar') : t('rs_btn_activate', 'Ativar')}
                                         </button>
-                                        <button onClick={() => handleDelete(room._id)} title="Eliminar" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: 'none', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                        <button onClick={() => handleDelete(room._id)} title={t('rs_btn_delete', 'Eliminar')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: 'none', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer' }}>
                                             <Trash2 size={14} />
                                         </button>
                                     </div>

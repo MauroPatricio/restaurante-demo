@@ -1,0 +1,157 @@
+/* ═══════════════════════════════════════════════════════════
+   Categories Management Premium CSS
+   ═══════════════════════════════════════════════════════════ */
+
+.categories-page {
+    padding: 2.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+/* ── Header ── */
+.categories-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+}
+
+.categories-title-section h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+    line-height: 1.1;
+}
+
+.categories-title-section p {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* ── KPI Cards ── */
+.categories-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ── Table Section ── */
+.categories-table-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 2rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.table-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.table-header-row h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.categories-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.categories-table th {
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.category-row {
+    transition: all 0.2s;
+}
+
+.category-row:hover {
+    background: #f8fafc;
+}
+
+.category-row td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.grip-cell {
+    width: 40px;
+    color: #cbd5e1;
+}
+
+.category-name {
+    font-weight: 800;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.category-desc {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.badge-status {
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.badge-active { background: #ecfdf5; color: #10b981; }
+.badge-inactive { background: #fef2f2; color: #ef4444; }
+
+/* ── Actions ── */
+.action-group {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-edit { background: #3b82f6; color: #ffffff; }
+.btn-delete { background: #ef4444; color: #ffffff; }
+
+.btn-edit:hover { background: #2563eb; }
+.btn-delete:hover { background: #dc2626; }
+
+.btn-icon svg {
+    stroke: currentColor !important;
+    stroke-width: 2.5px;
+    display: block;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .categories-page { padding: 1.5rem; }
+}

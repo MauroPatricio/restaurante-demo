@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { kitchenAnalyticsAPI } from '../services/api';
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import './KitchenAnalytics.css';
 
-// â”€â”€â”€ KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——— KPI Card —————————————————————————————————————————————————————
 const KPICard = ({ icon: Icon, label, value, sub, color, alert }) => (
     <div className="ka-kpi-card" style={{ '--ka-color': color }}>
         <div className="ka-kpi-icon"><Icon size={22} /></div>
@@ -22,19 +22,23 @@ const KPICard = ({ icon: Icon, label, value, sub, color, alert }) => (
     </div>
 );
 
-// â”€â”€â”€ Bar Chart (horizontal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const HBar = ({ value, max, color = '#6366f1', label }) => (
-    <div className="ka-hbar-row">
-        <span className="ka-hbar-label">{label}</span>
-        <div className="ka-hbar-track">
-            <div className="ka-hbar-fill" style={{ width: `${max > 0 ? Math.min((value / max) * 100, 100) : 0}%`, background: color }} />
+// ——— Bar Chart (horizontal) —————————————————————————————————————————————————————
+const HBar = ({ value, max, color = '#6366f1', label }) => {
+    const { t } = useTranslation();
+    return (
+        <div className="ka-hbar-row">
+            <span className="ka-hbar-label">{label}</span>
+            <div className="ka-hbar-track">
+                <div className="ka-hbar-fill" style={{ width: `${max > 0 ? Math.min((value / max) * 100, 100) : 0}%`, background: color }} />
+            </div>
+            <span className="ka-hbar-value">{value} {t('ka_orders_unit', 'pedidos')}</span>
         </div>
-        <span className="ka-hbar-value">{value}</span>
-    </div>
-);
+    );
+};
 
-// â”€â”€â”€ Timeline Chart (vertical bars, per hour) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——— Timeline Chart (vertical bars, per hour) —————————————————————————————————————
 const TimelineChart = ({ data, peakHour }) => {
+    const { t } = useTranslation();
     const max = Math.max(...data.map(d => d.orders), 1);
     return (
         <div className="ka-timeline">
@@ -44,7 +48,7 @@ const TimelineChart = ({ data, peakHour }) => {
                         <div
                             className={`ka-timeline-bar ${h.hour === peakHour ? 'peak' : ''}`}
                             style={{ height: `${(h.orders / max) * 100}%` }}
-                            title={`${h.hour}: ${h.orders} pedidos`}
+                            title={`${h.hour}: ${h.orders} ${t('orders', 'pedidos')}`}
                         />
                     </div>
                     <span className="ka-timeline-label">{h.hour.split(':')[0]}</span>
@@ -54,28 +58,29 @@ const TimelineChart = ({ data, peakHour }) => {
     );
 };
 
-// â”€â”€â”€ Shift Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——— Shift Card ———————————————————————————————————————————————————————————————————
 const ShiftCard = ({ shift }) => {
-    const icons = { morning: 'ðŸŒ…', afternoon: 'â˜€ï¸', night: 'ðŸŒ™' };
+    const { t } = useTranslation();
+    const icons = { morning: '🌅', afternoon: '☀️', night: '🌙' };
     const effColor = shift.efficiency >= 80 ? '#10b981' : shift.efficiency >= 60 ? '#f59e0b' : '#ef4444';
     return (
         <div className="ka-shift-card">
             <div className="ka-shift-header">
-                <span className="ka-shift-icon">{icons[shift.shift]}</span>
-                <span className="ka-shift-label">{shift.label}</span>
+                <span className="ka-shift-icon">{icons[shift.shift] || '🕒'}</span>
+                <span className="ka-shift-label">{t('ka_shift_' + shift.shift, shift.label)}</span>
             </div>
             <div className="ka-shift-kpis">
                 <div className="ka-shift-kpi">
                     <div className="ka-shift-val">{shift.totalOrders}</div>
-                    <div className="ka-shift-lbl">Pedidos</div>
+                    <div className="ka-shift-lbl">{t('orders', 'Pedidos')}</div>
                 </div>
                 <div className="ka-shift-kpi">
                     <div className="ka-shift-val">{shift.avgPrepTime}m</div>
-                    <div className="ka-shift-lbl">Avg Prep</div>
+                    <div className="ka-shift-lbl">{t('ka_avg_prep_short', 'Avg Prep')}</div>
                 </div>
                 <div className="ka-shift-kpi">
                     <div className="ka-shift-val" style={{ color: effColor }}>{shift.efficiency}%</div>
-                    <div className="ka-shift-lbl">EficiÃªncia</div>
+                    <div className="ka-shift-lbl">{t('ka_efficiency', 'Eficiência')}</div>
                 </div>
             </div>
             {shift.delayedOrders > 0 && (
@@ -88,14 +93,15 @@ const ShiftCard = ({ shift }) => {
     );
 };
 
-// â”€â”€â”€ Bottleneck Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——— Bottleneck Badge —————————————————————————————————————————————————————————————
 const PrepTimeBadge = ({ minutes }) => {
-    if (minutes == null) return <span className="ka-badge-na">N/D</span>;
+    const { t } = useTranslation();
+    if (minutes == null) return <span className="ka-badge-na">{t('na', 'N/D')}</span>;
     const cls = minutes > 30 ? 'danger' : minutes > 20 ? 'warn' : 'good';
-    return <span className={`ka-prep-badge ka-prep-${cls}`}>{minutes}m</span>;
+    return <span className={`ka-prep-badge ka-prep-${cls}`}>{minutes}{t('min_suffix', 'm')}</span>;
 };
 
-// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——— Main Component ————————————————————————————————————————————————————————————————
 const KitchenAnalytics = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -110,7 +116,7 @@ const KitchenAnalytics = () => {
     const [slowest, setSlowest] = useState([]);
     const [fastest, setFastest] = useState([]);
     const [timeline, setTimeline] = useState([]);
-    const [peakHour, setPeakHour] = useState('â€”');
+    const [peakHour, setPeakHour] = useState('—');
     const [shifts, setShifts] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
     const [dishSort, setDishSort] = useState('quantity');
@@ -131,7 +137,7 @@ const KitchenAnalytics = () => {
             setSlowest(dishRes.data.slowestDishes || []);
             setFastest(dishRes.data.fastestDishes || []);
             setTimeline(timelineRes.data.timeline || []);
-            setPeakHour(timelineRes.data.peakHour || 'â€”');
+            setPeakHour(timelineRes.data.peakHour || '—');
             setShifts(shiftRes.data.shifts || []);
         } catch (err) {
             console.error('Failed to load kitchen analytics:', err);
@@ -152,7 +158,7 @@ const KitchenAnalytics = () => {
 
     const handleExportDishes = () => {
         const rows = formatKitchenDishReportForExport(sortedDishes, period);
-        exportToExcel({ title: 'Analytics Cozinha â€” Pratos', columns: Object.keys(rows[0]).map(k => ({ header: k, dataKey: k })), data: rows, filename: `cozinha_pratos_${period}` });
+        exportToExcel({ title: `${t('ka_kitchen_title')} — ${t('ka_col_dishes')}`, columns: Object.keys(rows[0]).map(k => ({ header: k, dataKey: k })), data: rows, filename: `cozinha_pratos_${period}` });
     };
 
     const handleExportShifts = () => {
@@ -165,7 +171,7 @@ const KitchenAnalytics = () => {
             <div className="ka-container">
                 <div className="ka-loading">
                     <RefreshCw size={40} className="spin" />
-                    <p>{t('ka_loading')}</p>
+                    <p>{t('ka_loading', 'Carregando...')}</p>
                 </div>
             </div>
         );
@@ -176,9 +182,9 @@ const KitchenAnalytics = () => {
             {/* Header */}
             <div className="ka-header">
                 <div className="ka-header-left">
-                    <div className="ka-header-badge"><UtensilsCrossed size={16} /> {t('ka_kitchen_badge')}</div>
-                    <h1>{t('ka_kitchen_title')}</h1>
-                    <p className="ka-header-sub">{t('ka_kitchen_sub')}</p>
+                    <div className="ka-header-badge"><UtensilsCrossed size={16} /> {t('ka_kitchen_badge', 'COZINHA')}</div>
+                    <h1>{t('ka_kitchen_title', 'Analytics da Cozinha')}</h1>
+                    <p className="ka-header-sub">{t('ka_kitchen_sub', 'Eficiência, tempos de preparo, gargalos e análise por turno')}</p>
                 </div>
                 <div className="ka-header-controls">
                     <select className="ka-select" value={period} onChange={e => setPeriod(e.target.value)}>
@@ -187,8 +193,8 @@ const KitchenAnalytics = () => {
                         <option value="30d">{t('wa_period_30d')}</option>
                         <option value="90d">{t('wa_period_90d')}</option>
                     </select>
-                    <button className="ka-btn-outline" onClick={fetchAll}>{t('ka_btn_refresh')}</button>
-                    <button className="ka-btn-primary" onClick={handleExportDishes}>{t('ka_btn_export')}</button>
+                    <button className="ka-btn-outline" onClick={fetchAll}>{t('ka_btn_refresh', 'Actualizar')}</button>
+                    <button className="ka-btn-primary" onClick={handleExportDishes}>{t('ka_btn_export', 'Exportar')}</button>
                 </div>
             </div>
 
@@ -196,29 +202,29 @@ const KitchenAnalytics = () => {
             {bottlenecks > 0 && (
                 <div className="ka-alert-banner">
                     <AlertTriangle size={18} />
-                    <span><strong>{bottlenecks} prato{bottlenecks > 1 ? 's' : ''}</strong> com tempo mÃ©dio de preparo acima de 30 minutos â€” {t('ka_bottleneck_alert', { count: bottlenecks })}</span>
+                    <span><strong>{t('ka_bottleneck_count', { count: bottlenecks })}</strong> {t('ka_bottleneck_msg', 'com tempo médio de preparo acima de 30 minutos')} — {t('ka_bottleneck_alert', { count: bottlenecks })}</span>
                 </div>
             )}
 
             {/* KPI Row */}
             {dashboard && (
                 <div className="ka-kpi-row">
-                    <KPICard icon={UtensilsCrossed} label={t('ka_dishes_prepared')} value={dashboard.totalDishes} sub={`${dashboard.completedOrders} pedidos`} color="#6366f1" />
-                    <KPICard icon={Clock} label={t('ka_avg_time')} value={`${dashboard.avgPrepTime}m`} sub={`Min: ${dashboard.minPrepTime}m Â· MÃ¡x: ${dashboard.maxPrepTime}m`} color="#f59e0b" />
-                    <KPICard icon={CheckCircle} label={t('ka_efficiency')} value={`${dashboard.efficiency}%`} sub={t('ka_within_25')} color="#10b981" />
-                    <KPICard icon={Flame} label={t('ka_delayed')} value={`${dashboard.delayRate}%`} sub={t('ka_delayed_over30', { count: dashboard.delayedOrders })} color="#ef4444" alert />
-                    <KPICard icon={BarChart2} label={t('ka_peak_hour')} value={peakHour} sub={t('ka_peak_volume')} color="#ec4899" />
-                    <KPICard icon={TrendingUp} label={t('ka_cancellations')} value={`${dashboard.cancellationRate}%`} sub={t('ka_cancelled_count', { count: dashboard.cancelledOrders })} color="#64748b" />
+                    <KPICard icon={UtensilsCrossed} label={t('ka_dishes_prepared', 'Pratos Preparados')} value={dashboard.totalDishes} sub={t('ka_orders_count', { count: dashboard.completedOrders })} color="#6366f1" />
+                    <KPICard icon={Clock} label={t('ka_avg_time', 'Tempo Médio')} value={`${dashboard.avgPrepTime}${t('min_suffix', 'm')}`} sub={`${t('min', 'Min')}: ${dashboard.minPrepTime}${t('min_suffix', 'm')} · ${t('max', 'Máx')}: ${dashboard.maxPrepTime}${t('min_suffix', 'm')}`} color="#f59e0b" />
+                    <KPICard icon={CheckCircle} label={t('ka_efficiency', 'Eficiência')} value={`${dashboard.efficiency}%`} sub={t('ka_within_25', 'Pedidos entregues em ≤ 25 min')} color="#10b981" />
+                    <KPICard icon={Flame} label={t('ka_delayed', 'Atrasados')} value={`${dashboard.delayRate}%`} sub={t('ka_delayed_over30', { count: dashboard.delayedOrders })} color="#ef4444" alert />
+                    <KPICard icon={BarChart2} label={t('ka_peak_hour', 'Hora de Pico')} value={peakHour} sub={t('ka_peak_volume', 'Maior volume de pedidos')} color="#ec4899" />
+                    <KPICard icon={TrendingUp} label={t('ka_cancellations', 'Cancelamentos')} value={`${dashboard.cancellationRate}%`} sub={t('ka_cancelled_count', { count: dashboard.cancelledOrders })} color="#64748b" />
                 </div>
             )}
 
             {/* Tabs */}
             <div className="ka-tab-bar">
                 {[
-                    { id: 'overview', label: `ðŸ“Š ${t('ka_tab_overview')}` },
-                    { id: 'dishes', label: `ðŸ½ï¸ ${t('ka_tab_dishes')}` },
-                    { id: 'shifts', label: `ðŸ• ${t('ka_tab_shifts')}` },
-                    { id: 'timeline', label: `ðŸ“ˆ ${t('ka_tab_timeline')}` }
+                    { id: 'overview', label: `📊 ${t('ka_tab_overview', 'Visão Geral')}` },
+                    { id: 'dishes', label: `🍴 ${t('ka_tab_dishes', 'Pratos')}` },
+                    { id: 'shifts', label: `🕒 ${t('ka_tab_shifts', 'Turnos')}` },
+                    { id: 'timeline', label: `📈 ${t('ka_tab_timeline', 'Timeline')}` }
                 ].map(tab => (
                     <button key={tab.id} className={`ka-tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
                         {tab.label}
@@ -226,17 +232,17 @@ const KitchenAnalytics = () => {
                 ))}
             </div>
 
-            {/* â”€â”€ Overview Tab â”€â”€ */}
+            {/* —— Overview Tab —— */}
             {activeTab === 'overview' && (
                 <div className="ka-grid-2">
                     {/* Fastest Dishes */}
                     <div className="ka-card">
                         <div className="ka-card-header">
                             <Zap size={18} style={{ color: '#10b981' }} />
-                            <h3>{t('ka_fastest_dishes')}</h3>
+                            <h3>{t('ka_fastest_dishes', 'Pratos Mais Rápidos')}</h3>
                         </div>
                         {fastest.length === 0 ? (
-                            <div className="ka-empty-sm">{t('ka_no_data')}</div>
+                            <div className="ka-empty-sm">{t('ka_no_data', 'Sem dados')}</div>
                         ) : fastest.map((d, i) => (
                             <div key={i} className="ka-dish-row">
                                 <span className="ka-dish-rank">#{i + 1}</span>
@@ -251,10 +257,10 @@ const KitchenAnalytics = () => {
                     <div className="ka-card">
                         <div className="ka-card-header">
                             <AlertTriangle size={18} style={{ color: '#ef4444' }} />
-                            <h3>{t('ka_slowest_dishes')}</h3>
+                            <h3>{t('ka_slowest_dishes', 'Gargalos — Mais Lentos')}</h3>
                         </div>
                         {slowest.length === 0 ? (
-                            <div className="ka-empty-sm">{t('ka_no_data')}</div>
+                            <div className="ka-empty-sm">{t('ka_no_data', 'Sem dados')}</div>
                         ) : slowest.map((d, i) => (
                             <div key={i} className="ka-dish-row">
                                 <span className="ka-dish-rank">#{i + 1}</span>
@@ -269,8 +275,8 @@ const KitchenAnalytics = () => {
                     <div className="ka-card ka-card-full">
                         <div className="ka-card-header">
                             <BarChart2 size={18} style={{ color: '#6366f1' }} />
-                            <h3>{t('ka_orders_by_hour')}</h3>
-                            {peakHour && <span className="ka-peak-tag">Pico: {peakHour}</span>}
+                            <h3>{t('ka_orders_by_hour', 'Pedidos por Hora')}</h3>
+                            {peakHour && <span className="ka-peak-tag">{t('ka_peak_tag', { hour: peakHour })}</span>}
                         </div>
                         <div className="ka-timeline-wrap">
                             <TimelineChart data={timeline} peakHour={peakHour} />
@@ -279,41 +285,41 @@ const KitchenAnalytics = () => {
                 </div>
             )}
 
-            {/* â”€â”€ Dishes Tab â”€â”€ */}
+            {/* —— Dishes Tab —— */}
             {activeTab === 'dishes' && (
                 <div className="ka-card">
                     <div className="ka-card-header">
-                        <h3>{t('ka_performance_by_dish')}</h3>
+                        <h3>{t('ka_performance_by_dish', 'Performance por Prato')}</h3>
                         <div className="ka-sort-controls">
-                            <span className="ka-sort-label">Ordenar:</span>
+                            <span className="ka-sort-label">{t('wa_sort_by', 'Ordenar:')}</span>
                             {[
-                                { id: 'quantity', label: t('ka_sort_quantity') },
-                                { id: 'prepTime', label: t('ka_sort_prep_time') },
-                                { id: 'revenue', label: t('ka_col_revenue') }
+                                { id: 'quantity', label: t('ka_sort_quantity', 'Quantidade') },
+                                { id: 'prepTime', label: t('ka_sort_prep_time', 'Tempo Prep') },
+                                { id: 'revenue', label: t('ka_col_revenue', 'Receita') }
                             ].map(s => (
                                 <button key={s.id} className={`ka-sort-btn ${dishSort === s.id ? 'active' : ''}`} onClick={() => setDishSort(s.id)}>
                                     {s.label}
                                 </button>
                             ))}
                         </div>
-                        <button className="ka-btn-outline" onClick={handleExportDishes}><Download size={14} /> {t('ka_btn_excel')}</button>
+                        <button className="ka-btn-outline" onClick={handleExportDishes}><Download size={14} /> {t('ka_btn_excel', 'Excel')}</button>
                     </div>
                     {sortedDishes.length === 0 ? (
-                        <div className="ka-empty"><UtensilsCrossed size={56} /><p>{t('ka_no_dishes')}</p></div>
+                        <div className="ka-empty"><UtensilsCrossed size={56} /><p>{t('ka_no_dishes', 'Nenhum prato encontrado')}</p></div>
                     ) : (
                         <div className="ka-table-wrap">
                             <table className="ka-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>{t('ka_col_dishes')}</th>
-                                        <th>{t('ka_col_category')}</th>
-                                        <th>{t('ka_col_qty')}</th>
-                                        <th>{t('ka_col_orders')}</th>
-                                        <th>{t('ka_col_revenue')}</th>
-                                        <th>{t('ka_col_avg_time')}</th>
-                                        <th>{t('ka_col_min_max')}</th>
-                                        <th>{t('ka_col_status')}</th>
+                                        <th>{t('ka_col_dishes', 'Pratos')}</th>
+                                        <th>{t('ka_col_category', 'Categoria')}</th>
+                                        <th>{t('ka_col_qty', 'Qtd')}</th>
+                                        <th>{t('ka_col_orders', 'Pedidos')}</th>
+                                        <th>{t('ka_col_revenue', 'Receita')}</th>
+                                        <th>{t('ka_col_avg_time', 'Tempo Médio')}</th>
+                                        <th>{t('ka_col_min_max', 'Mín — Máx')}</th>
+                                        <th>{t('ka_col_status', 'Estado')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -340,16 +346,16 @@ const KitchenAnalytics = () => {
                                             <td><PrepTimeBadge minutes={dish.avgPrepTime} /></td>
                                             <td className="ka-minmax">
                                                 {dish.minPrepTime != null ? (
-                                                    <span>{dish.minPrepTime}m â€” {dish.maxPrepTime}m</span>
-                                                ) : 'â€”'}
+                                                    <span>{dish.minPrepTime}{t('min_suffix', 'm')} — {dish.maxPrepTime}{t('min_suffix', 'm')}</span>
+                                                ) : '—'}
                                             </td>
                                             <td>
                                                 {dish.isBottleneck ? (
-                                                    <span className="ka-status-badge danger">{t('ka_bottleneck_label')}</span>
+                                                    <span className="ka-status-badge danger">{t('ka_bottleneck_label', 'Gargalo')}</span>
                                                 ) : dish.avgPrepTime != null ? (
-                                                    <span className="ka-status-badge ok">{t('ka_normal_label')}</span>
+                                                    <span className="ka-status-badge ok">{t('ka_normal_label', 'Normal')}</span>
                                                 ) : (
-                                                    <span className="ka-status-badge neutral">{t('ka_no_data_label')}</span>
+                                                    <span className="ka-status-badge neutral">{t('ka_no_data_label', 'Sem Dados')}</span>
                                                 )}
                                             </td>
                                         </tr>
@@ -361,12 +367,12 @@ const KitchenAnalytics = () => {
                 </div>
             )}
 
-            {/* â”€â”€ Shifts Tab â”€â”€ */}
+            {/* —— Shifts Tab —— */}
             {activeTab === 'shifts' && (
                 <div>
                     <div className="ka-card-header-standalone">
-                        <h3>{t('ka_performance_by_shift')}</h3>
-                        <button className="ka-btn-outline" onClick={handleExportShifts}><Download size={14} /> {t('ka_btn_csv')}</button>
+                        <h3>{t('ka_performance_by_shift', 'Performance por Turno')}</h3>
+                        <button className="ka-btn-outline" onClick={handleExportShifts}><Download size={14} /> {t('ka_btn_csv', 'CSV')}</button>
                     </div>
                     <div className="ka-shifts-grid">
                         {shifts.map(shift => <ShiftCard key={shift.shift} shift={shift} />)}
@@ -374,24 +380,24 @@ const KitchenAnalytics = () => {
 
                     {/* Shift Comparison Table */}
                     <div className="ka-card" style={{ marginTop: 20 }}>
-                        <div className="ka-card-header"><h3>{t('ka_detailed_comparison')}</h3></div>
+                        <div className="ka-card-header"><h3>{t('ka_detailed_comparison', 'Comparação Detalhada')}</h3></div>
                         <div className="ka-table-wrap">
                             <table className="ka-table">
                                 <thead>
                                     <tr>
-                                        <th>{t('ka_col_shift')}</th>
-                                        <th>{t('ka_col_total_orders')}</th>
-                                        <th>{t('ka_col_completed')}</th>
-                                        <th>{t('ka_col_revenue')}</th>
-                                        <th>{t('ka_col_avg_prep')}</th>
-                                        <th>{t('ka_col_delayed')}</th>
-                                        <th>{t('ka_col_efficiency')}</th>
+                                        <th>{t('ka_col_shift', 'Turno')}</th>
+                                        <th>{t('ka_col_total_orders', 'Total Pedidos')}</th>
+                                        <th>{t('ka_col_completed', 'Concluídos')}</th>
+                                        <th>{t('ka_col_revenue', 'Receita')}</th>
+                                        <th>{t('ka_col_avg_prep', 'Avg Prep')}</th>
+                                        <th>{t('ka_col_delayed', 'Atrasados')}</th>
+                                        <th>{t('ka_col_efficiency', 'Eficiência')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {shifts.map(s => (
                                         <tr key={s.shift}>
-                                            <td><strong>{s.label}</strong></td>
+                                            <td><strong>{t('ka_shift_' + s.shift, s.label)}</strong></td>
                                             <td className="center">{s.totalOrders}</td>
                                             <td className="center">{s.completedOrders}</td>
                                             <td className="ka-green-text">{(s.totalRevenue || 0).toLocaleString('pt-MZ')} {currency}</td>
@@ -412,12 +418,12 @@ const KitchenAnalytics = () => {
                 </div>
             )}
 
-            {/* â”€â”€ Timeline Tab â”€â”€ */}
+            {/* —— Timeline Tab —— */}
             {activeTab === 'timeline' && (
                 <div className="ka-card">
                     <div className="ka-card-header">
-                        <h3>{t('ka_orders_by_hour_title')}</h3>
-                        {peakHour && <span className="ka-peak-tag">Hora de Pico: {peakHour}</span>}
+                        <h3>{t('ka_orders_by_hour_title', 'Pedidos por Hora')}</h3>
+                        {peakHour && <span className="ka-peak-tag">{t('ka_peak_tag_long', { hour: peakHour })}</span>}
                     </div>
                     <div className="ka-timeline-wrap large">
                         <TimelineChart data={timeline} peakHour={peakHour} />
@@ -425,17 +431,17 @@ const KitchenAnalytics = () => {
                     <div className="ka-timeline-legend">
                         <span className="ka-legend-item">
                             <span className="ka-legend-dot peak" />
-                            {t('ka_peak_hour_legend')}
+                            {t('ka_peak_hour_legend', 'Hora de Pico')}
                         </span>
                         <span className="ka-legend-item">
                             <span className="ka-legend-dot normal" />
-                            {t('ka_normal_volume')}
+                            {t('ka_normal_volume', 'Volume Normal')}
                         </span>
                     </div>
 
                     {/* Horizontal bars per hour with order count */}
                     <div style={{ padding: '16px 24px 24px' }}>
-                        <div className="ka-section-title">{t('ka_top_hours')}</div>
+                        <div className="ka-section-title">{t('ka_top_hours', 'Horas de Maior Volume')}</div>
                         {[...timeline]
                             .sort((a, b) => b.orders - a.orders)
                             .slice(0, 10)

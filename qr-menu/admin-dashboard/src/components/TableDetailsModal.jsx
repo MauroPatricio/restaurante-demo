@@ -5,21 +5,28 @@ import { analyticsAPI, tableAPI } from '../services/api';
 import { format, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useTranslation } from 'react-i18next';
 
 export default function TableDetailsModal({ isOpen, onClose, table, restaurantId, onUpdate }) {
     const { convertAndFormat } = useCurrency();
+    const { t } = useTranslation();
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (isOpen && table && restaurantId) {
-            fetchHistory();
+        if (isOpen && table) {
+            if (restaurantId) {
+                fetchHistory();
+            } else {
+                setLoading(false);
+            }
         }
     }, [isOpen, table, restaurantId]);
 
     const fetchHistory = async () => {
+        if (!restaurantId || !table?._id) return;
         try {
             setLoading(true);
             const response = await analyticsAPI.getTableHistory(restaurantId, table._id);
@@ -27,7 +34,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
             setError(null);
         } catch (err) {
             console.error('Failed to fetch table history:', err);
-            setError('Falha ao carregar histórico da mesa.');
+            setError(t('details_error_load', 'Falha ao carregar histórico da mesa.'));
         } finally {
             setLoading(false);
         }
@@ -57,7 +64,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
             }
         } catch (err) {
             console.error('Failed to update table status:', err);
-            alert('Erro ao atualizar estado da mesa.');
+            alert(t('details_error_update', 'Erro ao atualizar estado da mesa.'));
         } finally {
             setUpdating(false);
         }
@@ -85,9 +92,9 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
     };
 
     const statusOptions = [
-        { id: 'free', label: 'Livre', icon: CheckCircle, color: tokens.primary, bg: '#ecfdf5' },
-        { id: 'occupied', label: 'Ocupado', icon: Timer, color: tokens.danger, bg: '#fef2f2' },
-        { id: 'cleaning', label: 'Em Limpeza', icon: ShoppingBag, color: tokens.info, bg: '#eff6ff' }
+        { id: 'free', label: t('hall_status_free', 'Livre'), icon: CheckCircle, color: tokens.primary, bg: '#ecfdf5' },
+        { id: 'occupied', label: t('hall_status_occupied', 'Ocupado'), icon: Timer, color: tokens.danger, bg: '#fef2f2' },
+        { id: 'cleaning', label: t('hall_status_cleaning', 'Em Limpeza'), icon: ShoppingBag, color: tokens.info, bg: '#eff6ff' }
     ];
 
     return (
@@ -134,10 +141,10 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                         </div>
                         <div>
                             <h2 style={{ fontSize: '24px', fontWeight: '900', color: tokens.secondary, margin: 0, letterSpacing: '-0.02em' }}>
-                                Mesa {table?.number < 10 ? `0${table?.number}` : table?.number}
+                                {t('table', 'Mesa')} {table?.number < 10 ? `0${table?.number}` : table?.number}
                             </h2>
                             <span style={{ fontSize: '10px', fontWeight: '800', color: tokens.slate400, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '4px', display: 'block' }}>
-                                Gestão de Estado e Histórico
+                                {t('details_modal_subtitle', 'Gestão de Estado e Histórico')}
                             </span>
                         </div>
                     </div>
@@ -165,7 +172,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                     {/* Status Toggle Section */}
                     <div style={{ marginBottom: '40px' }}>
                         <h4 style={{ fontSize: '12px', fontWeight: '900', color: tokens.slate400, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>
-                            Estado da Unidade
+                            {t('details_unit_state', 'Estado da Unidade')}
                         </h4>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                             {statusOptions.map((opt) => (
@@ -219,7 +226,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
                                 <LoadingSpinner size={40} />
                             </div>
-                            <p style={{ fontSize: '14px', fontWeight: '700', color: tokens.slate400 }}>Recuperando registros...</p>
+                            <p style={{ fontSize: '14px', fontWeight: '700', color: tokens.slate400 }}>{t('details_loading', 'Recuperando registros...')}</p>
                         </div>
                     ) : error ? (
                         <div style={{ textAlign: 'center', padding: '60px', background: '#fff1f2', borderRadius: '32px', border: '1px solid #ffe4e6' }}>
@@ -228,7 +235,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                             <button onClick={fetchHistory} style={{
                                 padding: '12px 24px', background: 'white', border: '1px solid #ffe4e6',
                                 borderRadius: '14px', fontWeight: '800', color: tokens.danger, cursor: 'pointer'
-                            }}>Tentar novamente</button>
+                            }}>{t('details_retry', 'Tentar novamente')}</button>
                         </div>
                     ) : history.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '100px 0' }}>
@@ -239,13 +246,13 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                             }}>
                                 <User size={36} color={tokens.slate200} />
                             </div>
-                            <h3 style={{ fontSize: '22px', fontWeight: '900', color: tokens.secondary, margin: '0 0 8px 0' }}>Sem Histórico</h3>
-                            <p style={{ color: tokens.slate400, fontWeight: '600', maxWidth: '320px', margin: '0 auto', lineHeight: '1.5' }}>Nenhum cliente foi registrado nesta mesa ainda.</p>
+                            <h3 style={{ fontSize: '22px', fontWeight: '900', color: tokens.secondary, margin: '0 0 8px 0' }}>{t('details_no_history', 'Sem Histórico')}</h3>
+                            <p style={{ color: tokens.slate400, fontWeight: '600', maxWidth: '320px', margin: '0 auto', lineHeight: '1.5' }}>{t('details_no_history_desc', 'Nenhum cliente foi registrado nesta mesa ainda.')}</p>
                         </div>
                     ) : (
                         <>
                             <h4 style={{ fontSize: '12px', fontWeight: '900', color: tokens.slate400, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>
-                                Histórico de Clientes
+                                {t('details_history_title', 'Histórico de Clientes')}
                             </h4>
                             <div style={{
                                 background: 'white', borderRadius: '28px', border: '1px solid rgba(0,0,0,0.03)',
@@ -254,10 +261,10 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                                     <thead style={{ background: '#f8fafc' }}>
                                         <tr>
-                                            <th style={thStyle}>Cliente</th>
-                                            <th style={{ ...thStyle, textAlign: 'center' }}>Pedidos</th>
-                                            <th style={{ ...thStyle, textAlign: 'center' }}>Total Gasto</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>Última Visita</th>
+                                            <th style={thStyle}>{t('details_col_client', 'Cliente')}</th>
+                                            <th style={{ ...thStyle, textAlign: 'center' }}>{t('details_col_orders', 'Pedidos')}</th>
+                                            <th style={{ ...thStyle, textAlign: 'center' }}>{t('details_col_total', 'Total Gasto')}</th>
+                                            <th style={{ ...thStyle, textAlign: 'right' }}>{t('details_col_last_visit', 'Última Visita')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -272,8 +279,8 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                                                             <User size={18} />
                                                         </div>
                                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                            <span style={{ fontSize: '14px', fontWeight: '900', color: tokens.slate800 }}>{record.name || 'Visitante'}</span>
-                                                            <span style={{ fontSize: '10px', color: tokens.slate400, fontWeight: '800', textTransform: 'uppercase' }}>{record.phone || 'S/ Contato'}</span>
+                                                            <span style={{ fontSize: '14px', fontWeight: '900', color: tokens.slate800 }}>{record.name || t('details_guest', 'Visitante')}</span>
+                                                            <span style={{ fontSize: '10px', color: tokens.slate400, fontWeight: '800', textTransform: 'uppercase' }}>{record.phone || t('details_no_contact', 'S/ Contato')}</span>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -310,39 +317,157 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                 </div>
 
                 {/* Footer Status */}
-                <div style={{
-                    padding: '24px 40px', borderTop: '1px solid rgba(0,0,0,0.03)',
-                    background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'flex-end'
-                }}>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            padding: '12px 32px', background: tokens.secondary, color: 'white',
-                            borderRadius: '16px', border: 'none', fontWeight: '900', fontSize: '14px',
-                            cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.2)'
-                        }}
-                        className="interact-btn"
-                    >
-                        Fechar
-                    </button>
-                </div>
+               <div
+    style={{
+        padding: '24px 40px',
+        borderTop: '1px solid rgba(239, 68, 68, 0.08)',
+        background: 'linear-gradient(to right, #ffffff, #fff5f5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px'
+    }}
+>
+    {/* Status Indicator */}
+    <div
+        style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 16px',
+            background: '#ffffff',
+            border: '1px solid rgba(239, 68, 68, 0.08)',
+            borderRadius: '14px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+        }}
+    >
+        <div
+            style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background:
+                    table.status === 'occupied'
+                        ? '#ef4444'
+                        : table.status === 'cleaning'
+                        ? '#3b82f6'
+                        : '#10b981',
+                boxShadow:
+                    table.status === 'occupied'
+                        ? '0 0 12px rgba(239,68,68,0.5)'
+                        : table.status === 'cleaning'
+                        ? '0 0 12px rgba(59,130,246,0.5)'
+                        : '0 0 12px rgba(16,185,129,0.5)'
+            }}
+        />
+
+        <span
+            style={{
+                fontSize: '12px',
+                fontWeight: '800',
+                color: '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em'
+            }}
+        >
+            {table.status === 'occupied'
+                ? t('hall_status_occupied', 'Occupied')
+                : table.status === 'cleaning'
+                ? t('hall_status_cleaning', 'Cleaning')
+                : t('hall_status_free', 'Free')}
+        </span>
+    </div>
+
+    {/* Close Button */}
+    <button
+        type="button"
+        onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+        }}
+        style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            padding: '14px 28px',
+            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            color: 'white',
+            borderRadius: '18px',
+            border: 'none',
+            fontWeight: '900',
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 10px 24px rgba(239, 68, 68, 0.28)',
+            letterSpacing: '0.02em',
+            minWidth: '140px'
+        }}
+        className="close-btn-modern"
+    >
+        <X size={18} strokeWidth={2.8} />
+        {t('btn_close', 'Close')}
+    </button>
+</div>
             </div>
 
-            <style>{`
-                @keyframes modalScaleIn {
-                    from { transform: scale(0.9) translateY(20px); opacity: 0; }
-                    to { transform: scale(1) translateY(0); opacity: 1; }
-                }
-                @keyframes spinAround {
-                    to { transform: rotate(360deg); }
-                }
-                .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-                .table-row-hover:hover { background: #fbfcfd !important; }
-                .interact-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.3) !important; filter: brightness(1.1); }
-                .status-card-hover:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
-            `}</style>
+           <style>{`
+    @keyframes modalScaleIn {
+        from {
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes spinAround {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
+
+    .table-row-hover:hover {
+        background: #fbfcfd !important;
+    }
+
+    .interact-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.3) !important;
+        filter: brightness(1.1);
+    }
+
+    .status-card-hover:hover:not(:disabled) {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    }
+
+    .close-btn-modern:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 14px 30px rgba(239, 68, 68, 0.38) !important;
+        filter: brightness(1.05);
+    }
+
+    .close-btn-modern:active {
+        transform: scale(0.98);
+    }
+`}</style>
         </div>
     );
 }

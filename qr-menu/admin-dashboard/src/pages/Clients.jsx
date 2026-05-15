@@ -10,10 +10,12 @@ import { pt } from 'date-fns/locale/pt';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import './Clients.css';
 
 export default function Clients() {
     const { user } = useAuth();
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { convertAndFormat } = useCurrency();
     const [data, setData] = useState({ summary: {}, customers: [] });
     const [loading, setLoading] = useState(true);
@@ -46,7 +48,6 @@ export default function Clients() {
         (client.phone || '').includes(searchTerm)
     );
 
-
     const exportCSV = () => {
         const headers = [t('clients_col_client'), t('clients_col_lifetime'), t('visits_label'), t('clients_col_orders'), t('clients_col_favorite'), t('clients_col_tables'), t('clients_col_last_visit')];
         const rows = filteredClients.map(c => [
@@ -71,202 +72,180 @@ export default function Clients() {
         document.body.removeChild(link);
     };
 
-    const cardStyle = {
-        background: 'white',
-        borderRadius: '20px',
-        padding: '24px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        border: '1px solid #f1f5f9',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-    };
-
     if (loading) return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px', gap: '16px', minHeight: '50vh' }}>
+        <div className="clients-loading-state">
             <LoadingSpinner size={48} />
-            <span style={{ color: '#64748b', fontSize: '14px' }}>{t('loading')}</span>
+            <span>{t('loading', 'Carregando...')}</span>
         </div>
     );
 
     return (
-        <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-            <div className="page-header" style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div>
-                    <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
-                        {t('clients_title')}
-                    </h2>
-                    <p style={{ color: '#64748b', marginTop: '4px' }}>
-                        {t('clients_subtitle')}
-                    </p>
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="clients-container"
+        >
+            <div className="page-header">
+                <div className="header-title">
+                    <h2>{t('clients_title', 'Dashboard de Clientes')}</h2>
+                    <p>{t('clients_subtitle', 'Analise o comportamento e fidelidade dos seus clientes')}</p>
                 </div>
-                <button
-                    onClick={exportCSV}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        background: '#f8fafc', color: '#475569', padding: '10px 18px',
-                        borderRadius: '12px', border: '1px solid #e2e8f0', fontWeight: '600',
-                        cursor: 'pointer', transition: 'all 0.2s'
-                    }}
-                >
+                <button onClick={exportCSV} className="btn-export">
                     <Download size={18} />
-                    {t('clients_export')}
+                    {t('clients_export', 'Exportar Base')}
                 </button>
             </div>
 
             {/* KPI Section */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
-                <div style={cardStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <div style={{ background: '#eff6ff', color: '#3b82f6', padding: '10px', borderRadius: '12px' }}>
-                            <Users size={24} />
-                        </div>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#10b981', display: 'flex', alignItems: 'center' }}>
-                            <ArrowUpRight size={14} /> {t('clients_active')}
-                        </span>
+            <div className="kpi-grid">
+                <motion.div whileHover={{ scale: 1.02 }} className="kpi-card">
+                    <div className="kpi-icon-wrapper" style={{ background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}>
+                        <Users size={26} />
                     </div>
-                    <div>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>{t('clients_total')}</p>
-                        <h3 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: '4px 0 0 0' }}>{summary.totalCustomers || 0}</h3>
+                    <div className="kpi-badge" style={{ color: '#10b981', background: '#dcfce7' }}>
+                        <ArrowUpRight size={14} /> {t('clients_active', 'Ativos')}
                     </div>
-                </div>
+                    <div className="kpi-info">
+                        <p>{t('clients_total', 'Total de Clientes')}</p>
+                        <h3>{summary.totalCustomers || 0}</h3>
+                    </div>
+                </motion.div>
 
-                <div style={cardStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <div style={{ background: '#f0fdf4', color: '#22c55e', padding: '10px', borderRadius: '12px' }}>
-                            <UserCheck size={24} />
-                        </div>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#22c55e', background: '#dcfce7', padding: '2px 8px', borderRadius: '20px' }}>
-                            {summary.loyaltyRate}% {t('clients_loyalty_rate')}
-                        </span>
+                <motion.div whileHover={{ scale: 1.02 }} className="kpi-card">
+                    <div className="kpi-icon-wrapper" style={{ background: '#f0fdf4', color: '#22c55e' }}>
+                        <UserCheck size={26} />
                     </div>
-                    <div>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>{t('clients_recurring')}</p>
-                        <h3 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: '4px 0 0 0' }}>{summary.recurringCustomers || 0}</h3>
+                    <div className="kpi-badge" style={{ color: '#22c55e', background: '#dcfce7' }}>
+                        {summary.loyaltyRate}% {t('clients_loyalty_rate', 'Taxa')}
                     </div>
-                </div>
+                    <div className="kpi-info">
+                        <p>{t('clients_recurring', 'Clientes Recorrentes')}</p>
+                        <h3>{summary.recurringCustomers || 0}</h3>
+                    </div>
+                </motion.div>
 
-                <div style={cardStyle}>
-                    <div style={{ background: '#fef2f2', color: '#ef4444', width: 'fit-content', padding: '10px', borderRadius: '12px' }}>
-                        <Star size={24} />
+                <motion.div whileHover={{ scale: 1.02 }} className="kpi-card">
+                    <div className="kpi-icon-wrapper" style={{ background: '#fffbeb', color: '#f59e0b' }}>
+                        <Star size={26} />
                     </div>
-                    <div>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', margin: 0 }}>{t('clients_avg_preference')}</p>
-                        <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: '4px 0 0 0' }}>
+                    <div className="kpi-info">
+                        <p>{t('clients_avg_preference', 'Preferência Média')}</p>
+                        <h3 style={{ fontSize: '24px' }}>
                             {filteredClients[0]?.favoriteItem || '---'}
                         </h3>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* List & Search */}
-            <div style={{ background: 'white', borderRadius: '24px', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-                <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
-                        <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={20} />
+            <div className="content-area">
+                <div className="search-container">
+                    <div className="search-wrapper">
+                        <Search className="search-icon" size={20} />
                         <input
                             type="text"
-                            placeholder={t('clients_search_placeholder')}
+                            placeholder={t('clients_search_placeholder', 'Buscar por nome ou contato...')}
+                            className="search-input"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            style={{
-                                width: '100%', padding: '12px 12px 12px 44px', borderRadius: '14px',
-                                border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none',
-                                transition: 'border-color 0.2s'
-                            }}
                         />
                     </div>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div className="table-wrapper">
+                    <table className="premium-table">
                         <thead>
-                            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_client').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_lifetime').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('visits_label').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_orders').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_favorite').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px' }}>{t('clients_col_tables').toUpperCase()}</th>
-                                <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: '600', fontSize: '13px', textAlign: 'right' }}>{t('clients_col_last_visit').toUpperCase()}</th>
+                            <tr>
+                                <th>{t('clients_col_client').toUpperCase()}</th>
+                                <th>{t('clients_col_lifetime').toUpperCase()}</th>
+                                <th>{t('visits_label').toUpperCase()}</th>
+                                <th>{t('clients_col_orders').toUpperCase()}</th>
+                                <th>{t('clients_col_favorite').toUpperCase()}</th>
+                                <th>{t('clients_col_tables').toUpperCase()}</th>
+                                <th style={{ textAlign: 'right' }}>{t('clients_col_last_visit').toUpperCase()}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredClients.map(client => (
-                                <tr key={client._id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }} className="hover:bg-slate-50">
-                                    <td style={{ padding: '20px 24px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <div style={{
-                                                width: '40px', height: '40px', borderRadius: '12px',
-                                                background: client.isRecurring ? '#dcfce7' : '#f1f5f9',
-                                                color: client.isRecurring ? '#166534' : '#64748b',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontWeight: 'bold', fontSize: '16px'
-                                            }}>
-                                                {(client.name || 'C').charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <div style={{ fontWeight: '700', color: '#1e293b' }}>{client.name || t('client')}</div>
-                                                <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Phone size={12} /> {client.phone}
+                            <AnimatePresence>
+                                {filteredClients.map((client, index) => (
+                                    <motion.tr 
+                                        key={client._id}
+                                        layout
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="client-row"
+                                    >
+                                        <td>
+                                            <div className="client-cell">
+                                                <div className="client-avatar" style={{
+                                                    background: client.isRecurring ? 'hsl(var(--primary) / 0.1)' : 'hsl(var(--muted))',
+                                                    color: client.isRecurring ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'
+                                                }}>
+                                                    {(client.name || 'C').charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div className="client-name">{client.name || t('client', 'Cliente')}</div>
+                                                    <div className="client-phone">
+                                                        <Phone size={12} /> {client.phone}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '20px 24px' }}>
-                                        <div style={{ fontWeight: '700', color: '#10b981' }}>
-                                            {convertAndFormat(client.totalSpent)}
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{t('clients_avg')}: {convertAndFormat(client.totalSpent / client.orderCount)}</div>
-                                    </td>
-                                    <td style={{ padding: '20px 24px' }}>
-                                        <span style={{
-                                            background: (client.visitCount || 1) > 1 ? '#dcfce7' : '#f8fafc',
-                                            color: (client.visitCount || 1) > 1 ? '#166534' : '#64748b',
-                                            padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700'
-                                        }}>
-                                            {client.visitCount || 1} {t('visits_label')}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '20px 24px' }}>
-                                        <span style={{
-                                            background: client.isRecurring ? '#eff6ff' : '#f8fafc',
-                                            color: client.isRecurring ? '#3b82f6' : '#64748b',
-                                            padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700'
-                                        }}>
-                                            {client.orderCount || client.orders} {t('orders')}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '20px 24px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#475569', fontWeight: '500' }}>
-                                            <Star size={14} className="text-amber-400 fill-amber-400" />
-                                            {client.favoriteItem}
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '20px 24px' }}>
-                                        <div style={{ fontSize: '14px', color: '#475569', fontWeight: '500', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            {(client.tables || [])
-                                                .filter(t => t !== null && t !== undefined)
-                                                .sort((a, b) => a - b)
-                                                .join(', ') || '---'}
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '20px 24px', textAlign: 'right' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <div style={{ fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>
-                                                {format(new Date(client.lastVisit), 'dd MMM yyyy', { locale: pt })}
+                                        </td>
+                                        <td>
+                                            <div className="value-amount">
+                                                {convertAndFormat(client.totalSpent)}
                                             </div>
-                                            <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                                                {t('clients_since')} {format(new Date(client.firstVisit), 'MMM yyyy', { locale: pt })}
+                                            <div className="value-avg">{t('clients_avg', 'Média')}: {convertAndFormat(client.totalSpent / (client.orderCount || 1))}</div>
+                                        </td>
+                                        <td>
+                                            <span className="status-badge" style={{
+                                                background: (client.visitCount || 1) > 1 ? '#dcfce7' : 'hsl(var(--muted) / 0.5)',
+                                                color: (client.visitCount || 1) > 1 ? '#166534' : 'hsl(var(--muted-foreground))'
+                                            }}>
+                                                {client.visitCount || 1} {t('visits_label', 'Visitas')}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="status-badge" style={{
+                                                background: client.isRecurring ? 'hsl(var(--primary) / 0.1)' : 'hsl(var(--muted) / 0.5)',
+                                                color: client.isRecurring ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'
+                                            }}>
+                                                {client.orderCount || client.orders} {t('orders', 'Pedidos')}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="favorite-item">
+                                                <Star size={14} className="favorite-icon" />
+                                                {client.favoriteItem || '---'}
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td>
+                                            <div className="date-primary" style={{ fontWeight: 600 }}>
+                                                {(client.tables || [])
+                                                    .filter(t => t !== null && t !== undefined)
+                                                    .sort((a, b) => a - b)
+                                                    .join(', ') || '---'}
+                                            </div>
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <div className="flex flex-col gap-0.5">
+                                                <div className="date-primary">
+                                                    {format(new Date(client.lastVisit), 'dd/MM/yyyy', { locale: pt })}
+                                                </div>
+                                                <div className="date-secondary">
+                                                    {t('clients_since', 'Desde')} {format(new Date(client.firstVisit), 'dd/MM/yyyy', { locale: pt })}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </motion.tr>
+                                ))}
+                            </AnimatePresence>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }

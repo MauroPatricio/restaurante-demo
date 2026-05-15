@@ -611,7 +611,7 @@ export default function DashboardLayout() {
                 </header>
 
                 {/* Page Content */}
-                <main className="page-content">
+                <main className="page-content animate-fade-in">
                     {/* Subscription Expiration Alert */}
                     {subscription && !isBlocked && (
                         <SubscriptionAlert subscription={subscription} />

@@ -1,0 +1,282 @@
+.waiter-page-wrapper {
+    padding: 24px;
+    background: #f8fafc;
+    min-height: calc(100vh - var(--header-height));
+}
+
+.waiter-layout-split {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+/* ── Sidebar (Left) ── */
+.waiter-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.sidebar-section {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-box.calls { background: #fee2e2; color: #ef4444; }
+.icon-box.pickup { background: #ecfdf5; color: #10b981; }
+
+.empty-sidebar-state {
+    padding: 40px 0;
+    text-align: center;
+    color: #cbd5e1;
+}
+
+.empty-sidebar-state p {
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 12px;
+}
+
+.calls-list, .pickup-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.call-item-card, .pickup-item-card {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid #f1f5f9;
+}
+
+.call-info, .pickup-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.call-table, .pickup-table {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.call-time, .pickup-items {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.btn-resolve, .btn-serve {
+    width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-resolve { background: #ef4444; color: white; }
+.btn-serve { background: #10b981; color: white; }
+
+/* ── Main Content (Right) ── */
+.waiter-main-content {
+    background: white;
+    border-radius: 32px;
+    padding: 32px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.map-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.status-filters-premium {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 16px;
+    gap: 4px;
+}
+
+.filter-pill {
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 800;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.filter-pill.active {
+    background: white;
+    color: #1e293b;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.filter-dot { width: 8px; height: 8px; border-radius: 50%; }
+.filter-dot.all { background: #64748b; }
+.filter-dot.free { background: #10b981; }
+.filter-dot.occupied { background: #ef4444; }
+.filter-dot.cleaning { background: #3b82f6; }
+.filter-dot.reserved { background: #f59e0b; }
+
+.premium-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.premium-table-card {
+    background: white;
+    border: 1px solid #f1f5f9;
+    border-radius: 28px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-table-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+    border-color: #3b82f633;
+}
+
+.card-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.table-number-large {
+    font-size: 64px;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.05em;
+    line-height: 1;
+}
+
+.table-status-centered {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.card-middle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 16px;
+}
+
+.capacity-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.card-status-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+}
+
+.card-bottom {
+    display: flex;
+    justify-content: center;
+}
+
+.tap-hint {
+    font-size: 10px;
+    font-weight: 800;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Status variants for cards */
+.premium-table-card.free { border-top: 4px solid #10b981; }
+.premium-table-card.free .table-status-centered { color: #10b981; }
+.premium-table-card.free .card-status-icon { color: #10b981; border: 1px solid #d1fae5; }
+
+.premium-table-card.occupied { border-top: 4px solid #ef4444; background: #fffafb; }
+.premium-table-card.occupied .table-status-centered { color: #ef4444; }
+.premium-table-card.occupied .card-status-icon { color: #ef4444; border: 1px solid #fee2e2; }
+
+.premium-table-card.cleaning { border-top: 4px solid #3b82f6; background: #f8faff; }
+.premium-table-card.cleaning .table-status-centered { color: #3b82f6; }
+.premium-table-card.cleaning .card-status-icon { color: #3b82f6; border: 1px solid #dbeafe; }
+
+.premium-table-card.reserved { border-top: 4px solid #f59e0b; background: #fffdfa; }
+.premium-table-card.reserved .table-status-centered { color: #f59e0b; }
+.premium-table-card.reserved .card-status-icon { color: #f59e0b; border: 1px solid #fef3c7; }
+
+@media (max-width: 1024px) {
+    .waiter-layout-split { grid-template-columns: 1fr; }
+    .waiter-sidebar { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+    .waiter-sidebar { grid-template-columns: 1fr; }
+}
+

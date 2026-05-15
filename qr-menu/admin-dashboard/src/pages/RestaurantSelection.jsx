@@ -8,6 +8,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { getStatusLabel, getStatusBadgeStyle } from '../utils/subscriptionStatusHelper';
 import { useTranslation } from 'react-i18next';
 
+import './RestaurantSelection.css';
+
 const RestaurantSelection = () => {
     const { user, selectRestaurant } = useAuth();
     const navigate = useNavigate();
@@ -107,20 +109,20 @@ const RestaurantSelection = () => {
     };
 
     return (
-        <div className="selection-layout">
+        <div className="selection-layout animate-fade">
             {/* LEFT SIDE: CONTENT */}
             <div className="selection-left">
-                <div className="selection-card">
+                <div className="selection-card animate-slide-up">
                     <div className="selection-header">
                         <div className="icon-badge">
-                            <Building2 size={28} />
+                            <Building2 size={24} />
                         </div>
                         <h1>{t('welcome_back')}</h1>
                         <p>{t('select_establishment')}</p>
                     </div>
 
                     {error && (
-                        <div className="error-message">
+                        <div className="error-message animate-fade">
                             {error}
                         </div>
                     )}
@@ -171,10 +173,10 @@ const RestaurantSelection = () => {
                                                             className="status-badge subscription-status"
                                                             style={{
                                                                 ...getStatusBadgeStyle(subscriptions[restaurantId]?.status || 'suspended'),
-                                                                fontSize: '0.75rem',
-                                                                padding: '2px 8px',
+                                                                fontSize: '0.65rem',
+                                                                padding: '1px 6px',
                                                                 borderRadius: '4px',
-                                                                fontWeight: '500'
+                                                                fontWeight: '600'
                                                             }}
                                                         >
                                                             {getStatusLabel((subscriptions[restaurantId]?.status || 'suspended').toLowerCase(), t)}
@@ -193,7 +195,7 @@ const RestaurantSelection = () => {
                                                 className={`toggle-btn ${isActive ? 'active' : 'inactive'}`}
                                                 title={isActive ? t('deactivate_establishment') : t('activate_establishment')}
                                             >
-                                                <Power size={16} className={isToggling ? 'spinning' : ''} />
+                                                <Power size={14} className={isToggling ? 'spinning' : ''} />
                                             </button>
                                         )}
                                     </div>
@@ -237,7 +239,7 @@ const RestaurantSelection = () => {
             {/* RIGHT SIDE: IMAGE */}
             <div className="selection-right">
                 <div className="image-overlay"></div>
-                <div className="image-content">
+                <div className="image-content animate-slide-up">
                     <h2>{t('manage_everything_place')}</h2>
                     <p>{t('control_orders_tables_desc')}</p>
                 </div>
@@ -247,103 +249,6 @@ const RestaurantSelection = () => {
                     className="responsive-image"
                 />
             </div>
-
-            <style>{`
-                .selection-layout { display: flex; min-height: 100vh; font-family: 'Inter', sans-serif; }
-                
-                /* Left Side */
-                .selection-left { flex: 1; padding: 40px; display: flex; justify-content: center; align-items: center; overflow-y: auto; background-color: #f8fafc; }
-                .selection-card { width: 100%; max-width: 500px; background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-                
-                .selection-header { margin-bottom: 30px; text-align: center; }
-                .selection-header h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 8px; font-weight: 700; }
-                .selection-header p { color: #64748b; font-size: 1rem; }
-                
-                .icon-badge { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: #4f46e5; color: white; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-
-                /* Global Dashboard Button */
-                .global-dash-btn { width: 100%; padding: 16px; background: #0f172a; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: none; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.2); }
-                .global-dash-btn:hover { background: #1e293b; transform: translateY(-1px); }
-                .btn-content { display: flex; align-items: center; gap: 12px; font-weight: 600; }
-                .icon-primary { color: #818cf8; }
-                .arrow-icon { color: #94a3b8; transition: transform 0.2s; }
-                .global-dash-btn:hover .arrow-icon { transform: translateX(4px); color: white; }
-
-                /* Separator */
-                .separator { position: relative; text-align: center; margin: 24px 0; }
-                .separator::before { content: ''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: #e2e8f0; z-index: 1; }
-                .separator span { position: relative; z-index: 2; background: white; padding: 0 16px; color: #94a3b8; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-
-                /* Restaurants List */
-                .restaurants-list { display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
-                
-                .restaurant-item-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
-                
-                .restaurant-item { flex: 1; padding: 16px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; text-align: left; }
-                .restaurant-item:hover { border-color: #4f46e5; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1); }
-                .restaurant-item.inactive { opacity: 0.5; cursor: not-allowed; }
-                .restaurant-item.inactive:hover { border-color: #e2e8f0; box-shadow: none; }
-                
-                .rest-info { display: flex; align-items: center; gap: 16px; }
-                .rest-avatar { width: 48px; height: 48px; background: #eef2ff; color: #4f46e5; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; }
-                .restaurant-item:hover .rest-avatar { background: #4f46e5; color: white; }
-                .restaurant-item.inactive .rest-avatar { background: #f1f5f9; color: #94a3b8; }
-                
-                .rest-details h3 { font-size: 1rem; font-weight: 600; color: #1e293b; margin: 0; }
-                .rest-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-                .role-badge { background: #f1f5f9; color: #64748b; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
-                
-                .status-badge { font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 4px; }
-                .status-badge::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; }
-                .status-active { color: #10b981; }
-                .status-active::before { background: #10b981; }
-                .status-inactive { color: #ef4444; }
-                .status-inactive::before { background: #ef4444; }
-
-                .chevron { color: #cbd5e1; transition: color 0.2s; }
-                .restaurant-item:hover .chevron { color: #4f46e5; }
-
-                /* Toggle Button */
-                .toggle-btn { padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-                .toggle-btn.active { background: #ecfdf5; border-color: #10b981; color: #10b981; }
-                .toggle-btn.active:hover { background: #10b981; color: white; }
-                .toggle-btn.inactive { background: #fef2f2; border-color: #ef4444; color: #ef4444; }
-                .toggle-btn.inactive:hover { background: #ef4444; color: white; }
-                .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-                
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                .spinning { animation: spin 1s linear infinite; }
-
-                .add-new-btn { width: 100%; padding: 16px; border: 2px dashed #cbd5e1; background: transparent; color: #64748b; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; transition: all 0.2s; margin-top: 12px; }
-                .add-new-btn:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
-
-                /* Footer */
-                .selection-footer { margin-top: 32px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 24px; }
-                .logout-btn { background: none; border: none; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: color 0.2s; }
-                .logout-btn:hover { color: #ef4444; }
-
-                .error-message { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; border: 1px solid #fecaca; }
-
-                /* Right Side (Image) */
-                .selection-right { flex: 1; display: none; position: relative; }
-                .responsive-image { width: 100%; height: 100%; object-fit: cover; }
-                .image-overlay { position: absolute; inset: 0; background: linear-gradient(to top, #0f172a, transparent); opacity: 0.8; }
-                .image-content { position: absolute; bottom: 60px; left: 60px; right: 60px; color: white; z-index: 10; }
-                .image-content h2 { font-size: 2.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 16px; }
-                .image-content p { font-size: 1.1rem; color: #cbd5e1; }
-
-                @media(min-width: 900px) {
-                    .selection-right { display: block; }
-                }
-
-                /* Scrollbar */
-                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
-            `}</style>
         </div>
     );
 };

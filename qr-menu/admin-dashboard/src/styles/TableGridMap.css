@@ -1,0 +1,184 @@
+/* Table Grid Map Premium Styling */
+.table-map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.table-map-card {
+    background: white;
+    border-radius: 24px;
+    border: 1px solid #f1f5f9;
+    padding: 24px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.table-map-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px -10px rgba(0,0,0,0.08);
+    border-color: #e2e8f0;
+}
+
+/* Status specific accents */
+.table-map-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    width: 30px;
+    height: 4px;
+    border-radius: 0 0 4px 4px;
+    transition: all 0.3s;
+}
+
+.table-map-card.status-free::before { background: #10b981; }
+.table-map-card.status-occupied::before { background: #ef4444; }
+.table-map-card.status-reserved::before { background: #f59e0b; }
+.table-map-card.status-cleaning::before { background: #3b82f6; }
+
+.card-top-icon {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #94a3b8;
+}
+
+.status-check-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #10b981;
+}
+
+.card-occupied-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #ef4444;
+}
+
+.card-reserved-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #f59e0b;
+}
+
+.table-number {
+    font-size: 56px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1;
+    margin-top: 10px;
+}
+
+.table-status-label {
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: capitalize;
+}
+
+.status-free .table-status-label { color: #10b981; }
+.status-occupied .table-status-label { color: #ef4444; }
+.status-reserved .table-status-label { color: #f59e0b; }
+.status-cleaning .table-status-label { color: #3b82f6; }
+
+.table-capacity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.card-footer-status {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.status-free .card-footer-status {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.status-occupied .card-footer-status {
+    background: #fef2f2;
+    color: #be123c;
+}
+
+.status-reserved .card-footer-status {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.status-cleaning .card-footer-status {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.footer-arrow {
+    margin-left: auto;
+}
+
+/* Legend Styling */
+.map-legend {
+    display: flex;
+    gap: 24px;
+    padding: 20px;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #f1f5f9;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.legend-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.legend-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.legend-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: #1e293b;
+}
+
+.legend-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+}

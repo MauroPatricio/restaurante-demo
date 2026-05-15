@@ -1,0 +1,126 @@
+/* ═══════════════════════════════════════════════════════════
+   Subcategories Management Premium CSS
+   ═══════════════════════════════════════════════════════════ */
+
+.subcategories-page {
+    padding: 2.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+/* ── Header ── */
+.subcategories-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+}
+
+.subcategories-title-section h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+}
+
+.subcategories-title-section p {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* ── Filter Card ── */
+.filter-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 1.5rem 2rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.filter-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+
+.filter-select {
+    max-width: 320px;
+}
+
+/* ── Table Section ── */
+.subcategories-table-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 2rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.table-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 2rem;
+}
+
+.subcategories-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.subcategories-table th {
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.subcategory-row {
+    transition: all 0.2s;
+}
+
+.subcategory-row:hover {
+    background: #f8fafc;
+}
+
+.subcategory-row td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.subcategory-name {
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.category-badge {
+    display: inline-flex;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .subcategories-page { padding: 1.5rem; }
+    .filter-select { max-width: 100%; }
+}
