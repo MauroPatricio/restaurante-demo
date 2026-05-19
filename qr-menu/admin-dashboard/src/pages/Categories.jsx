@@ -185,11 +185,11 @@ export default function Categories() {
                                         </td>
                                         <td className="text-right">
                                             <div className="action-group">
-                                                <button onClick={() => handleEdit(category)} className="btn-icon btn-edit">
-                                                    <Edit2 size={16} />
+                                                <button onClick={() => handleEdit(category)} className="btn-outline-icon" title={t('edit')}>
+                                                    <Edit2 size={18} />
                                                 </button>
-                                                <button onClick={() => handleDelete(category._id)} className="btn-icon btn-delete">
-                                                    <Trash2 size={16} />
+                                                <button onClick={() => handleDelete(category._id)} className="btn-outline-icon danger" title={t('delete')}>
+                                                    <Trash2 size={18} />
                                                 </button>
                                             </div>
                                         </td>

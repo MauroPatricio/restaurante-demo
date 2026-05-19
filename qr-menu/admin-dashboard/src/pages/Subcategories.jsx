@@ -224,31 +224,11 @@ export default function Subcategories() {
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                            <button
-                                                onClick={() => handleEdit(subcategory)}
-                                                style={{
-                                                    background: '#eff6ff',
-                                                    color: '#3b82f6',
-                                                    border: 'none',
-                                                    borderRadius: '8px',
-                                                    padding: '8px',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                <Edit2 size={16} />
+                                            <button onClick={() => handleEdit(subcategory)} className="btn-outline-icon" title="Edit">
+                                                <Edit2 size={18} />
                                             </button>
-                                            <button
-                                                onClick={() => handleDelete(subcategory._id)}
-                                                style={{
-                                                    background: '#fef2f2',
-                                                    color: '#ef4444',
-                                                    border: 'none',
-                                                    borderRadius: '8px',
-                                                    padding: '8px',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                <Trash2 size={16} />
+                                            <button onClick={() => handleDelete(subcategory._id)} className="btn-outline-icon danger" title="Delete">
+                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                     </td>

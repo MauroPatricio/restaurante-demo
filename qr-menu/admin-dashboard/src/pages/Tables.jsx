@@ -509,17 +509,17 @@ export default function Tables() {
                             </div>
 
                             <div className="table-actions" style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
-                                <button onClick={() => handleViewSession(table)} className="btn-small" style={{ flex: 1, justifyContent: 'center' }} title="Ver Pedidos">
-                                    <Eye size={16} />
+                                <button onClick={() => handleViewSession(table)} className="btn-outline-icon" style={{ flex: 1, width: '100%' }} title="Ver Pedidos">
+                                    <Eye size={18} />
                                 </button>
-                                <button onClick={() => openQR(table)} className="btn-small" style={{ flex: 1, justifyContent: 'center' }} title={t('show_qr')}>
-                                    <Maximize size={16} />
+                                <button onClick={() => openQR(table)} className="btn-outline-icon" style={{ flex: 1, width: '100%' }} title={t('show_qr')}>
+                                    <Maximize size={18} />
                                 </button>
-                                <button onClick={() => handleOpenEdit(table)} className="btn-small" style={{ flex: 1, justifyContent: 'center' }} title={t('edit')}>
-                                    <Edit2 size={16} />
+                                <button onClick={() => handleOpenEdit(table)} className="btn-outline-icon" style={{ flex: 1, width: '100%' }} title={t('edit')}>
+                                    <Edit2 size={18} />
                                 </button>
-                                <button onClick={() => handleDelete(table._id)} className="btn-small btn-danger" style={{ flex: 0, padding: '0 10px' }} title={t('delete')}>
-                                    <Trash2 size={16} color="#dc2626" />
+                                <button onClick={() => handleDelete(table._id)} className="btn-outline-icon danger" style={{ flex: 1, width: '100%' }} title={t('delete')}>
+                                    <Trash2 size={18} />
                                 </button>
                             </div>
 

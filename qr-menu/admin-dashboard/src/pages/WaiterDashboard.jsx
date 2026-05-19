@@ -4,9 +4,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { tableAPI, orderAPI, waiterCallAPI } from '../services/api';
 import {
-    User, Users, Bell, CheckCircle, Clock, MapPin,
-    UtensilsCrossed, AlertTriangle, Coffee, Loader2, ChevronRight, ArrowRight, Zap, Monitor, Layout
-} from 'lucide-react';
+    FiUser as User,
+    FiUsers as Users,
+    FiBell as Bell,
+    FiCheckCircle as CheckCircle,
+    FiClock as Clock,
+    FiMapPin as MapPin,
+    FiCoffee as Coffee,
+    FiChevronRight as ChevronRight,
+    FiArrowRight as ArrowRight,
+    FiAlertTriangle as AlertTriangle,
+    FiTrendingUp as TrendingUp,
+    FiInbox as Inbox
+} from 'react-icons/fi';
+import { TbChefHat as UtensilsCrossed, TbProgressCheck as Loader2 } from 'react-icons/tb';
 
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
@@ -75,15 +86,41 @@ export default function WaiterDashboard() {
         };
     }, [socket, restaurantId]);
 
+    const [recentOrders, setRecentOrders] = useState([]);
+    const [draggedTableId, setDraggedTableId] = useState(null);
+
     const fetchData = () => {
         fetchTables();
         fetchReadyOrders();
+        fetchRecentOrders();
     };
 
     const fetchTables = async () => {
         try {
             const { data } = await tableAPI.getAll(restaurantId, { background: true });
-            setTables(Array.isArray(data?.tables) ? data.tables : []);
+            if (Array.isArray(data?.tables)) {
+                // Apply preferred custom table sort order if saved in localStorage
+                const savedOrder = localStorage.getItem(`table_order_${restaurantId}`);
+                let sortedTables = data.tables;
+                if (savedOrder) {
+                    try {
+                        const orderArray = JSON.parse(savedOrder);
+                        sortedTables = [...data.tables].sort((a, b) => {
+                            const idxA = orderArray.indexOf(a._id);
+                            const idxB = orderArray.indexOf(b._id);
+                            if (idxA === -1 && idxB === -1) return 0;
+                            if (idxA === -1) return 1;
+                            if (idxB === -1) return -1;
+                            return idxA - idxB;
+                        });
+                    } catch (e) {
+                        console.error('Failed to parse saved table order');
+                    }
+                }
+                setTables(sortedTables);
+            } else {
+                setTables([]);
+            }
         } catch (error) {
             setTables([]);
         } finally {
@@ -98,6 +135,63 @@ export default function WaiterDashboard() {
         } catch (error) {
             setReadyOrders([]);
         }
+    };
+
+    const fetchRecentOrders = async () => {
+        try {
+            const { data } = await orderAPI.getAll(restaurantId, { limit: 50 }, { background: true });
+            setRecentOrders(Array.isArray(data?.orders) ? data.orders : []);
+        } catch (error) {
+            setRecentOrders([]);
+        }
+    };
+
+    // HTML5 Drag and Drop event handlers for table re-ordering
+    const handleDragStart = (e, tableId) => {
+        setDraggedTableId(tableId);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', tableId);
+        e.currentTarget.classList.add('dragging');
+    };
+
+    const handleDragEnd = (e) => {
+        e.currentTarget.classList.remove('dragging');
+        setDraggedTableId(null);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        return false;
+    };
+
+    const handleDragEnter = (e) => {
+        e.currentTarget.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.currentTarget.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e, targetTableId) => {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+        
+        if (!draggedTableId || draggedTableId === targetTableId) return;
+
+        const fromIndex = tables.findIndex(t => t._id === draggedTableId);
+        const toIndex = tables.findIndex(t => t._id === targetTableId);
+
+        if (fromIndex === -1 || toIndex === -1) return;
+
+        const reordered = [...tables];
+        const [draggedItem] = reordered.splice(fromIndex, 1);
+        reordered.splice(toIndex, 0, draggedItem);
+
+        setTables(reordered);
+
+        // Save reordered array layout order for persistence
+        const orderIds = reordered.map(t => t._id);
+        localStorage.setItem(`table_order_${restaurantId}`, JSON.stringify(orderIds));
     };
 
     const markOrderServed = async (orderId) => {
@@ -124,6 +218,36 @@ export default function WaiterDashboard() {
     const occupiedTablesCount = tables.filter(t => t.status === 'occupied').length;
     const freeTablesCount = tables.filter(t => t.status === 'free' || !t.status).length;
 
+    // Dynamic KPI calculations matching user screenshot and request
+    const activeOrdersCount = recentOrders.filter(o => o.status === 'pending' || o.status === 'preparing').length;
+    const pendingOrdersCount = recentOrders.filter(o => o.status === 'pending').length;
+    
+    const completedTodayCount = recentOrders.filter(o => {
+        if (o.status !== 'completed' && o.status !== 'served') return false;
+        const orderDate = new Date(o.createdAt);
+        const today = new Date();
+        return orderDate.getDate() === today.getDate() &&
+               orderDate.getMonth() === today.getMonth() &&
+               orderDate.getFullYear() === today.getFullYear();
+    }).length;
+
+    const waiterCallsCount = activeCalls.length;
+
+    // Calculate dynamic average preparation time (in minutes) or fallback to beautiful standard 12 min
+    const completedOrders = recentOrders.filter(o => o.status === 'completed' || o.status === 'served');
+    let avgPrepTimeVal = 12;
+    if (completedOrders.length > 0) {
+        const totalDiff = completedOrders.reduce((sum, o) => {
+            const diff = (new Date(o.updatedAt) - new Date(o.createdAt)) / 60000;
+            return sum + (diff > 0 ? diff : 10);
+        }, 0);
+        const avg = Math.round(totalDiff / completedOrders.length);
+        avgPrepTimeVal = avg > 0 ? avg : 8;
+    }
+
+    // Get last made order details
+    const lastOrder = recentOrders[0] || null;
+
     return (
         <div className="waiter-page-wrapper animate-fade-in">
             <div className="waiter-layout-split">
@@ -135,7 +259,7 @@ export default function WaiterDashboard() {
                             <div className="icon-box calls">
                                 <Bell size={18} />
                             </div>
-                            <h3>{t('table_calls', 'Table Calls')}</h3>
+                            <h3>{t('table_calls', 'Chamadas na Sala')}</h3>
                         </div>
                         <div className="section-content">
                             {activeCalls.length > 0 ? (
@@ -147,7 +271,7 @@ export default function WaiterDashboard() {
                                                 <span className="call-time">{formatDistanceToNow(new Date(call.createdAt), { addSuffix: true, locale: pt })}</span>
                                             </div>
                                             <button onClick={() => removeCall(call._id)} className="btn-resolve">
-                                                {t('attend', 'Atender')}
+                                                {t('acknowledge_btn', 'Atender')}
                                             </button>
                                         </div>
                                     ))}
@@ -155,7 +279,7 @@ export default function WaiterDashboard() {
                             ) : (
                                 <div className="empty-sidebar-state">
                                     <Bell size={40} strokeWidth={1} />
-                                    <p>{t('no_active_calls', 'No active calls')}</p>
+                                    <p>{t('no_active_calls', 'Sem chamadas ativas')}</p>
                                 </div>
                             )}
                         </div>
@@ -167,7 +291,7 @@ export default function WaiterDashboard() {
                             <div className="icon-box pickup">
                                 <CheckCircle size={18} />
                             </div>
-                            <h3>{t('ready_for_pickup', 'Ready for Pickup')}</h3>
+                            <h3>{t('ready_for_pickup', 'Pronto para Servir')}</h3>
                         </div>
                         <div className="section-content">
                             {readyOrders.length > 0 ? (
@@ -187,7 +311,7 @@ export default function WaiterDashboard() {
                             ) : (
                                 <div className="empty-sidebar-state">
                                     <UtensilsCrossed size={40} strokeWidth={1} />
-                                    <p>{t('no_ready_orders', 'No ready orders')}</p>
+                                    <p>{t('no_ready_orders', 'Nenhum prato pronto')}</p>
                                 </div>
                             )}
                         </div>
@@ -196,9 +320,69 @@ export default function WaiterDashboard() {
 
                 {/* ── Main Content (Right) ── */}
                 <main className="waiter-main-content">
+                    {/* ── Waiter Operational Dashboard Cockpit ── */}
+                    <div className="waiter-dashboard-header-panel">
+                        <div className="dashboard-title-row">
+                            <h1 className="waiter-dashboard-title">
+                                {t('waiter_dashboard_label', 'Painel de Operações')}
+                                <span className="waiter-dashboard-subtitle">
+                                    {user?.name} &bull; {t('active_session_label', 'Sessão Ativa')}
+                                </span>
+                            </h1>
+                        </div>
+
+                        {/* KPI Cards Grid - Directly matching user screenshot layout */}
+                        <div className="waiter-kpi-grid">
+                            {/* Card 1: Pedidos Activos */}
+                            <div className="waiter-kpi-card blue">
+                                <div className="kpi-card-content">
+                                    <span className="kpi-card-title">{t('active_orders', 'PEDIDOS ACTIVOS')}</span>
+                                    <span className="kpi-card-value">{activeOrdersCount}</span>
+                                </div>
+                                <div className="kpi-card-icon-container blue">
+                                    <UtensilsCrossed size={20} />
+                                </div>
+                            </div>
+
+                            {/* Card 2: Pedidos Pendentes */}
+                            <div className="waiter-kpi-card orange">
+                                <div className="kpi-card-content">
+                                    <span className="kpi-card-title">{t('pending_orders', 'PEDIDOS PENDENTES')}</span>
+                                    <span className="kpi-card-value">{pendingOrdersCount}</span>
+                                </div>
+                                <div className="kpi-card-icon-container orange">
+                                    <AlertTriangle size={20} />
+                                </div>
+                            </div>
+
+                            {/* Card 3: Feitos Hoje */}
+                            <div className="waiter-kpi-card green">
+                                <div className="kpi-card-content">
+                                    <span className="kpi-card-title">{t('completed_today_kpi', 'FEITOS HOJE')}</span>
+                                    <span className="kpi-card-value">{completedTodayCount}</span>
+                                </div>
+                                <div className="kpi-card-icon-container green">
+                                    <CheckCircle size={20} />
+                                </div>
+                            </div>
+
+                            {/* Card 4: Chamadas Garçom */}
+                            <div className="waiter-kpi-card red">
+                                <div className="kpi-card-content">
+                                    <span className="kpi-card-title">{t('waiter_calls_kpi', 'CHAMADAS GARÇOM')}</span>
+                                    <span className="kpi-card-value">{waiterCallsCount}</span>
+                                </div>
+                                <div className="kpi-card-icon-container red">
+                                    <Users size={20} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Floor Map Container ── */}
                     <div className="floor-map-container">
                         <header className="map-header-premium">
-                            <h2 className="text-2xl font-900 text-gray-900">{t('floor_map', 'Floor Map')}</h2>
+                            <h2 className="text-2xl font-900 text-gray-900">{t('floor_map', 'Mapa de Sala')}</h2>
                             <div className="status-filters-premium">
                                 {['all', 'free', 'occupied', 'cleaning', 'reserved'].map(status => (
                                     <button
@@ -225,6 +409,13 @@ export default function WaiterDashboard() {
                                             key={table._id}
                                             onClick={() => handleTableClick(table)}
                                             className={`premium-table-card ${status}`}
+                                            draggable={true}
+                                            onDragStart={(e) => handleDragStart(e, table._id)}
+                                            onDragEnd={handleDragEnd}
+                                            onDragOver={handleDragOver}
+                                            onDragEnter={handleDragEnter}
+                                            onDragLeave={handleDragLeave}
+                                            onDrop={(e) => handleDrop(e, table._id)}
                                         >
                                             <div className="card-top">
                                                 <span className="table-number-large">
@@ -246,7 +437,7 @@ export default function WaiterDashboard() {
                                             <div className="card-bottom">
                                                 <span className="tap-hint">
                                                     <ChevronRight size={12} />
-                                                    Tap for details
+                                                    {t('tap_for_details', 'Toque para detalhes')}
                                                 </span>
                                             </div>
                                         </div>
@@ -267,6 +458,5 @@ export default function WaiterDashboard() {
     );
 }
 
-// Ensure statusFilter state is defined
-import { TrendingUp } from 'lucide-react';
+
 

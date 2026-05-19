@@ -122,8 +122,8 @@ export default function Orders() {
             <header className="orders-header">
                 <div className="orders-title-section">
                     <div className="flex items-center gap-2 mb-1">
-                        <Activity size={16} className="text-primary" />
-                        <span className="text-[10px] font-900 uppercase tracking-widest text-primary">{t('monitoring')}</span>
+                        <Activity size={16} className="text-primary-600" />
+                        <span className="text-[10px] font-900 uppercase tracking-widest text-primary-600">{t('monitoring')}</span>
                     </div>
                     <h2>{t('orders_management') || 'Gestão de Pedidos'}</h2>
                     <p>{t('orders_management_desc') || 'Veja e gira todos os pedidos em tempo real'}</p>
@@ -258,7 +258,7 @@ export default function Orders() {
                             <motion.div
                                 layout
                                 key={order._id}
-                                className={`glass-card order-mobile-card ${newOrderIds.has(order._id) ? 'border-primary ring-4 ring-primary/5' : ''}`}
+                                className={`glass-card order-mobile-card ${newOrderIds.has(order._id) ? 'border-primary-600 ring-4 ring-primary-600/5' : ''}`}
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
@@ -277,7 +277,7 @@ export default function Orders() {
                                 <div className="grid grid-cols-2 gap-4 py-4 border-y border-dashed border-gray-100 mb-4">
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[10px] font-900 text-gray-400 uppercase tracking-widest">{t('table_label')}</span>
-                                        <span className="font-900 text-primary">{order.orderType === 'room-service' ? `🛏️ ${order.roomService?.roomNumber}` : `🪑 ${order.table?.number || order.table || '-'}`}</span>
+                                        <span className="font-900 text-primary-600">{order.orderType === 'room-service' ? `🛏️ ${order.roomService?.roomNumber}` : `🪑 ${order.table?.number || order.table || '-'}`}</span>
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[10px] font-900 text-gray-400 uppercase tracking-widest">{t('total')}</span>

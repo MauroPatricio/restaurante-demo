@@ -62,11 +62,11 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
 
     return (
         <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-8 sm:p-16 animate-fade-in"
+            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in-fast"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-slide-up"
-                style={{ maxHeight: '80vh', background: 'var(--surface)' }}>
+            <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-slide-up-fast"
+                style={{ maxHeight: '85vh', background: 'var(--surface)' }}>
 
                 {/* ── Header ── */}
                 <div className={`${cfg.light} px-5 py-3 flex items-center justify-between flex-shrink-0 border-b border-white/20`}>
@@ -105,7 +105,7 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
                 <div className="px-5 pt-3 pb-2 flex-shrink-0">
                     <button
                         onClick={handleCreateOrder}
-                        className="w-full bg-primary hover:bg-primary-hover text-white py-2.5 px-5 rounded-xl font-800 text-sm shadow-premium flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                        className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 px-5 rounded-xl font-800 text-sm shadow-premium flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                     >
                         <Plus size={20} strokeWidth={3} />
                         {t('create_new_order') || 'Criar Novo Pedido'}
@@ -120,13 +120,13 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex-1 py-4 px-4 flex items-center justify-center gap-2 text-sm font-bold transition-all relative
                                 ${activeTab === tab.id
-                                    ? 'text-primary'
+                                    ? 'text-primary-600'
                                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                         >
                             <tab.icon size={18} strokeWidth={2.5} />
                             {tab.label}
                             {activeTab === tab.id && (
-                                <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
+                                <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary-600 rounded-full" />
                             )}
                         </button>
                     ))}

@@ -78,10 +78,10 @@ const OwnerDashboard = () => {
             <header className="owner-header">
                 <div className="owner-title-section">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                        <div className="p-2 bg-primary-100 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-lg">
                             <TrendingUp size={20} />
                         </div>
-                        <span className="text-[10px] font-900 uppercase tracking-[0.2em] text-primary">{t('executive_overview')}</span>
+                        <span className="text-[10px] font-900 uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400">{t('executive_overview')}</span>
                     </div>
                     <h1>{t('executive_overview')}</h1>
                     <p className="text-gray-500 font-600">
@@ -93,7 +93,7 @@ const OwnerDashboard = () => {
                     <div className="owner-filters">
                         <Calendar size={16} />
                         <span>{formatDate(new Date(), 'dd MMMM, yyyy', { locale: pt })}</span>
-                        <div className="w-px h-4 bg-primary/20 mx-1"></div>
+                        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1"></div>
                         <div className="flex items-center gap-1">
                             <select 
                                 value={period}
@@ -105,7 +105,7 @@ const OwnerDashboard = () => {
                                 <option value="month">{t('this_month')}</option>
                                 <option value="last_month">{t('last_month')}</option>
                             </select>
-                            <ChevronDown size={14} className="text-primary" />
+                            <ChevronDown size={14} className="text-primary-600" />
                         </div>
                     </div>
 
@@ -361,7 +361,7 @@ const OwnerDashboard = () => {
                                     <td style={{ textAlign: 'right' }}>
                                         <button
                                             onClick={() => handleEnterRestaurant(rest.id)}
-                                            className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-800 text-sm shadow-premium hover:bg-primary-hover transition-all active:scale-[0.98]"
+                                            className="inline-flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-800 text-sm shadow-premium hover:bg-primary-700 transition-all active:scale-[0.98]"
                                         >
                                             {t('manage_dashboard')} <ArrowRight size={16} strokeWidth={2.5} />
                                         </button>

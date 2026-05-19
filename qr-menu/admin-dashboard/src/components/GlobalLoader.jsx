@@ -1,38 +1,38 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
  * GlobalLoader - Componente unificado de loading para todo o sistema
- * Versão Admin-Dashboard com framer-motion para estabilidade
+ * Estilo Premium com ícone de rotação azul/índigo e mensagem i18n
  */
 const GlobalLoader = ({
     mode = 'inline',
     size = 'md',
     message = '',
-    color = '#2563eb',
+    color = '#6366f1', // Beautiful Indigo-Blue from screenshot
     className = '',
-    spinDuration = '0.6s'
+    spinDuration = '0.8s'
 }) => {
     const { t } = useTranslation();
 
-    // Converter size para pixels
     const getIconSize = () => {
         if (typeof size === 'number') return size;
 
         const sizeMap = {
-            'sm': 16,
-            'md': 24,
+            'sm': 18,
+            'md': 32,
             'lg': 48
         };
 
-        return sizeMap[size] || 24;
+        return sizeMap[size] || 32;
     };
 
     const iconSize = getIconSize();
+    const loadingMessage = message || t('processing', 'Processando...');
 
-    // Modo Fullscreen - Overlay completo com backdrop blur
+    // Fullscreen Mode - Centered backdrop loading
     if (mode === 'fullscreen') {
         return (
             <motion.div
@@ -48,68 +48,58 @@ const GlobalLoader = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    backdropFilter: 'blur(4px)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(8px)',
                 }}
             >
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
                     style={{
-                        backgroundColor: 'white',
-                        borderRadius: '16px',
-                        padding: '32px',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        maxWidth: '24rem',
-                        width: '90%',
+                        justifyContent: 'center',
+                        gap: '16px',
                         textAlign: 'center'
                     }}
                 >
                     <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 0.6, ease: 'linear' }}
+                        transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
                         style={{
-                            marginBottom: (message || t('processing')) ? '16px' : '0',
                             color: color,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                         }}
                     >
-                        <Loader2 size={iconSize} />
+                        <RotateCw size={48} strokeWidth={2.5} />
                     </motion.div>
 
                     <h3 style={{
-                        fontSize: '1.25rem',
-                        fontWeight: 'bold',
-                        color: '#111827',
-                        marginBottom: '8px',
-                        margin: 0
-                    }}>
-                        {message || t('processing')}
-                    </h3>
-                    <p style={{
-                        color: '#6b7280',
-                        fontSize: '0.875rem',
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        color: '#475569',
                         margin: 0,
-                        marginTop: '8px'
+                        letterSpacing: '-0.01em'
                     }}>
-                        {t('please_wait')}
-                    </p>
+                        {loadingMessage}
+                    </h3>
                 </motion.div>
             </motion.div>
         );
     }
 
-    // Modo Discrete - Loading no canto superior direito
+    // Discrete Mode - Top-right float loading
     if (mode === 'discrete') {
         return (
             <motion.div
                 key="discrete-loader-overlay"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
                 className="global-loader-discrete"
                 style={{
                     position: 'fixed',
@@ -119,38 +109,39 @@ const GlobalLoader = ({
                     pointerEvents: 'none',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: '10px',
+                    background: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '16px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                    border: '1px solid #f1f5f9'
                 }}
             >
                 <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 0.6, ease: 'linear' }}
+                    transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
                     style={{
                         color: color,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
                 >
-                    <Loader2 size={iconSize} />
+                    <RotateCw size={18} strokeWidth={2.5} />
                 </motion.div>
 
-                {(message || t('processing')) && (
-                    <span style={{
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#64748b',
-                        backgroundColor: 'white',
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                        pointerEvents: 'auto'
-                    }}>
-                        {message || t('processing')}
-                    </span>
-                )}
+                <span style={{
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    color: '#475569'
+                }}>
+                    {loadingMessage}
+                </span>
             </motion.div>
         );
     }
 
-    // Modo Inline - Loading embutido em cards, botões, listas
+    // Inline Mode (Default) - Used inside dashboard and components
     return (
         <div
             className={`global-loader-inline ${className}`}
@@ -159,13 +150,14 @@ const GlobalLoader = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '12px',
-                padding: (message || t('processing')) ? '20px' : '10px'
+                gap: '16px',
+                padding: '40px 20px',
+                width: '100%'
             }}
         >
             <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 0.6, ease: 'linear' }}
+                transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
                 style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -173,19 +165,20 @@ const GlobalLoader = ({
                     color: color,
                 }}
             >
-                <Loader2 size={iconSize} />
+                <RotateCw size={iconSize} strokeWidth={2.5} />
             </motion.div>
 
-            {(message || t('processing')) && (
+            {loadingMessage && (
                 <div
                     style={{
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#64748b',
-                        textAlign: 'center'
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        color: '#475569',
+                        textAlign: 'center',
+                        letterSpacing: '-0.01em'
                     }}
                 >
-                    {message || t('processing')}
+                    {loadingMessage}
                 </div>
             )}
         </div>

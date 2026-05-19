@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { accountingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -91,7 +91,7 @@ const ApuramentoIVA = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Calculator className="w-8 h-8 text-primary" />
+                        <Calculator className="w-8 h-8 text-primary-600" />
                         Apuramento de IVA
                     </h1>
                     <p className="text-gray-500 mt-1">Classificação Fiscal Baseada no PGC-NIRF</p>
@@ -119,7 +119,7 @@ const ApuramentoIVA = () => {
 
             {loading ? (
                 <div className="flex justify-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
                 </div>
             ) : data ? (
                 <div className="max-w-4xl mx-auto space-y-6">
@@ -177,9 +177,9 @@ const ApuramentoIVA = () => {
                             <div className="h-px bg-gray-200 w-full my-4"></div>
 
                             {/* A Pagar */}
-                            <div className={`flex items-center justify-between p-6 rounded-xl border ${data.ivaAPagar >= 0 ? 'bg-primary/5 border-primary/20' : 'bg-blue-50 border-blue-200'}`}>
+                            <div className={`flex items-center justify-between p-6 rounded-xl border ${data.ivaAPagar >= 0 ? 'bg-primary-50 border-primary-200' : 'bg-blue-50 border-blue-200'}`}>
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${data.ivaAPagar >= 0 ? 'bg-primary/20 text-primary' : 'bg-blue-200 text-blue-700'}`}>
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${data.ivaAPagar >= 0 ? 'bg-primary-100 text-primary-600' : 'bg-blue-200 text-blue-700'}`}>
                                         <Percent className="w-7 h-7" />
                                     </div>
                                     <div>
@@ -191,7 +191,7 @@ const ApuramentoIVA = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`text-3xl font-black ${data.ivaAPagar >= 0 ? 'text-primary' : 'text-blue-700'}`}>
+                                <span className={`text-3xl font-black ${data.ivaAPagar >= 0 ? 'text-primary-600' : 'text-blue-700'}`}>
                                     {convertAndFormat(Math.abs(data.ivaAPagar))}
                                 </span>
                             </div>

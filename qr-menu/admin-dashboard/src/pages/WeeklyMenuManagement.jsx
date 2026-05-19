@@ -201,8 +201,8 @@ const WeeklyMenuManagement = () => {
                                     <button onClick={() => handleActivate(menu._id)} className="btn-activate">
                                         <Power size={16} /> Ativar
                                     </button>
-                                    <button onClick={() => handleEdit(menu)} className="btn-edit">
-                                        <Edit size={16} />
+                                    <button onClick={() => handleEdit(menu)} className="btn-outline-icon" title={t('edit')}>
+                                        <Edit size={18} />
                                     </button>
                                 </>
                             )}
@@ -212,8 +212,8 @@ const WeeklyMenuManagement = () => {
                                 </button>
                             )}
                             {(menu.status === 'draft' || menu.status === 'expired') && (
-                                <button onClick={() => handleArchive(menu._id)} className="btn-delete">
-                                    <Trash2 size={16} />
+                                <button onClick={() => handleArchive(menu._id)} className="btn-outline-icon danger" title={t('delete')}>
+                                    <Trash2 size={18} />
                                 </button>
                             )}
                         </div>

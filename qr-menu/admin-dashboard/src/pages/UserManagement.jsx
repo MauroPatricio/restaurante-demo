@@ -307,14 +307,7 @@ export default function UserManagement() {
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(member._id)}
-                                                style={{
-                                                    padding: '8px',
-                                                    background: '#fef2f2',
-                                                    border: 'none',
-                                                    borderRadius: '8px',
-                                                    color: '#dc2626',
-                                                    cursor: 'pointer'
-                                                }}
+                                                className="btn-outline-icon danger"
                                                 title="Remove from Restaurant"
                                             >
                                                 <Trash2 size={18} />

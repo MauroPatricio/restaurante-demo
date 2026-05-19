@@ -242,11 +242,11 @@ export default function Menu() {
                                                         <div className="flex gap-1">
                                                             {item.featured && <Star size={14} fill="#f59e0b" color="#f59e0b" />}
                                                         </div>
-                                                        <div className="card-actions">
-                                                            <button onClick={() => openModal(item)} className="btn-item-action btn-item-edit">
+                                                        <div className="card-actions" style={{ display: 'flex', gap: '8px' }}>
+                                                            <button onClick={() => openModal(item)} className="btn-outline-icon" title={t('edit')}>
                                                                 <Edit size={18} />
                                                             </button>
-                                                            <button onClick={() => handleDelete(item._id)} className="btn-item-action btn-item-delete">
+                                                            <button onClick={() => handleDelete(item._id)} className="btn-outline-icon danger" title={t('delete')}>
                                                                 <Trash2 size={18} />
                                                             </button>
                                                         </div>

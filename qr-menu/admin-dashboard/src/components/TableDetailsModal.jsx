@@ -108,9 +108,9 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
                 onClick={onClose}
                 style={{
                     position: 'absolute', inset: 0,
-                    background: 'rgba(15, 23, 42, 0.3)',
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
+                    background: 'rgba(15, 23, 42, 0.35)',
+                    backdropFilter: 'blur(3px)',
+                    WebkitBackdropFilter: 'blur(3px)',
                 }}
             />
 
@@ -118,10 +118,10 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
             <div style={{
                 position: 'relative', width: '100%', maxWidth: '900px',
                 maxHeight: '85vh', background: tokens.glassBg,
-                backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
                 borderRadius: '40px', border: `1px solid ${tokens.glassBorder}`,
                 boxShadow: tokens.shadow, display: 'flex', flexDirection: 'column',
-                overflow: 'hidden', animation: 'modalScaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+                overflow: 'hidden', animation: 'modalScaleIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)'
             }}>
 
                 {/* Header Section */}
@@ -415,7 +415,7 @@ export default function TableDetailsModal({ isOpen, onClose, table, restaurantId
            <style>{`
     @keyframes modalScaleIn {
         from {
-            transform: scale(0.9) translateY(20px);
+            transform: scale(0.98) translateY(8px);
             opacity: 0;
         }
         to {

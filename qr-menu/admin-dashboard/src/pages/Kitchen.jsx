@@ -251,8 +251,8 @@ const Kitchen = () => {
             <header className="kitchen-header">
                 <div className="kitchen-title-section">
                     <div className="flex items-center gap-3 mb-2">
-                        <LayoutDashboard size={20} className="text-primary" />
-                        <span className="text-[10px] font-900 uppercase tracking-[0.2em] text-primary">{t('kitchen_display') || 'Kitchen Display System (KDS)'}</span>
+                        <LayoutDashboard size={20} className="text-primary-600" />
+                        <span className="text-[10px] font-900 uppercase tracking-[0.2em] text-primary-600">{t('kitchen_display') || 'Kitchen Display System (KDS)'}</span>
                     </div>
                     <h1>{t('kitchen_display') || 'Kitchen Display'}</h1>
                     <div className="kitchen-status-indicator">
