@@ -107,10 +107,13 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 1.5rem;
+    min-width: 0;
 }
 
 .owner-chart-card {
     padding: 2rem;
+    min-width: 0;
+    min-height: 0;
 }
 
 .chart-header {

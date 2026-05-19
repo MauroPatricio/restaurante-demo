@@ -378,7 +378,7 @@ export const createStaffOrder = async (req, res) => {
             phone,
             notes,
             isStaff: true,
-            createdByWaiterId: req.user._id, // Track which waiter created this order
+            createdByWaiterId: req.user?._id || req.user?.id || null, // Track which waiter created this order
             io: req.app.get('io')
         });
 

@@ -40,8 +40,8 @@ const ManagerDashboard = () => {
 
             // Parallel Fetch
             const [ordersRes, tablesRes] = await Promise.all([
-                orderAPI.getAll(restId), // Get all orders (backend should filter or we filter client side for 'today')
-                tableAPI.getAll(restId)
+                orderAPI.getAll(restId, { limit: 200 }, { background: true }), // Bounded fetch for dashboard
+                tableAPI.getAll(restId, { background: true })
             ]);
 
             const allOrders = ordersRes.data.orders || [];

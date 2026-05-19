@@ -256,7 +256,7 @@ export default function CXDashboard() {
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
                         Rating Distribution
                     </h3>
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div style={{ width: '100%', height: 300, minWidth: 0 }}>
                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <BarChart data={chartData} layout="vertical" margin={{ left: 0 }}>
                                 <XAxis type="number" hide />

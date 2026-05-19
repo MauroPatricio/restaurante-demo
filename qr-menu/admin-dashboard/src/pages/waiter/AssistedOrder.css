@@ -40,9 +40,10 @@
     border-radius: 8px;
     cursor: pointer;
     flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
 }
-.ao-back-btn:hover { background: #e2e8f0; }
-.ao-back-btn svg { stroke: currentColor; }
+.ao-back-btn:hover { background: #4f46e5; color: #fff; }
+.ao-back-btn svg { stroke: currentColor; display: block; }
 
 .ao-header-title {
     display: flex;
@@ -295,24 +296,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 30px;
+    width: 34px;
+    height: 32px;
     border: none;
     background: #fff;
     cursor: pointer;
     color: #475569;
     flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
 }
 .ao-qty-btn svg {
     stroke: currentColor;
     display: block;
+    flex-shrink: 0;
 }
-.ao-qty-btn.minus { border-right: 1px solid #e2e8f0; color: #475569; }
+/* Minus button: subtle red on hover */
+.ao-qty-btn.minus { border-right: 1px solid #e2e8f0; color: #64748b; }
+/* Plus button: filled indigo */
 .ao-qty-btn.plus  { background: #4f46e5; color: #ffffff; border-left: 1px solid #4f46e5; }
 
-.ao-qty-btn.minus:hover:not(:disabled) { background: #fef2f2; color: #dc2626; }
-.ao-qty-btn.plus:hover  { background: #4338ca; }
-.ao-qty-btn:disabled    { opacity: 0.3; cursor: default; }
+.ao-qty-btn.minus:hover:not(:disabled) { background: #fef2f2; color: #dc2626; border-right-color: #fecaca; }
+.ao-qty-btn.plus:hover:not(:disabled)  { background: #4338ca; }
+.ao-qty-btn:disabled    { opacity: 0.35; cursor: not-allowed; }
 
 .ao-qty-num {
     min-width: 28px;
@@ -453,13 +458,20 @@
     color: #475569;
     cursor: pointer;
     flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.ao-icon-btn:hover        { background: #f1f5f9; }
+/* Force SVG icons to render with correct color */
+.ao-icon-btn svg {
+    stroke: currentColor;
+    display: block;
+    flex-shrink: 0;
+}
+.ao-icon-btn:hover        { background: #f1f5f9; color: #0f172a; }
 .ao-icon-btn.sm           { width: 26px; height: 26px; border-radius: 6px; }
 .ao-icon-btn.primary      { background: #4f46e5; color: #fff; border-color: #4f46e5; }
-.ao-icon-btn.primary:hover{ background: #4338ca; border-color: #4338ca; }
+.ao-icon-btn.primary:hover{ background: #4338ca; border-color: #4338ca; color: #fff; }
 .ao-icon-btn.danger       { color: #dc2626; border-color: #fecaca; }
-.ao-icon-btn.danger:hover { background: #fef2f2; }
+.ao-icon-btn.danger:hover { background: #fef2f2; color: #dc2626; }
 .ao-icon-btn.danger-ghost { color: #94a3b8; border-color: transparent; background: transparent; }
 .ao-icon-btn.danger-ghost:hover { color: #dc2626; background: #fef2f2; }
 

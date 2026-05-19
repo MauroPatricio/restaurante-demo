@@ -200,10 +200,9 @@ export const SocketProvider = ({ children }) => {
 
             if (data.status !== 'pending') {
                 // It might have been pending before. Safe to re-fetch to be accurate.
-                // Optimization: Decrement if we knew it was pending? Hard to know.
-                // Let's fetch count again to be consistent. 
-                // (Debounced or just call it, distinct from main list fetch)
-                orderAPI.getAll(restaurant._id, { status: 'pending' })
+                // Guard: restaurant may be null in stale closure — skip if no restaurantId
+                if (!restaurant?._id) return;
+                orderAPI.getAll(restaurant._id, { status: 'pending', background: true })
                     .then(({ data }) => {
                         const orders = Array.isArray(data?.orders) ? data.orders : [];
                         setDineInPendingCount(orders.filter(o => !o.roomService).length);

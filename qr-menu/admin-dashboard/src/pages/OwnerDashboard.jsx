@@ -234,7 +234,7 @@ const OwnerDashboard = () => {
                     <div className="chart-header">
                         <h3>{t('revenue_by_restaurant')}</h3>
                     </div>
-                    <div style={{ height: '400px' }}>
+                    <div style={{ height: '400px', minWidth: 0, minHeight: 0 }}>
                         {loading ? (
                             <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>
                         ) : (
@@ -265,7 +265,7 @@ const OwnerDashboard = () => {
                     <div className="chart-header">
                         <h3>{t('order_distribution')}</h3>
                     </div>
-                    <div style={{ height: '400px' }}>
+                    <div style={{ height: '400px', minWidth: 0, minHeight: 0 }}>
                         {loading ? (
                             <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>
                         ) : (

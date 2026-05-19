@@ -502,8 +502,8 @@ router.get('/menu/:restaurantId/categories', async (req, res) => {
 // Import moved to top
 
 
-// Create order
-router.post('/orders', checkSubscription, validateAndOccupyTable, createStaffOrder);
+// Create order (staff-assisted: requires authentication)
+router.post('/orders', authenticateToken, checkSubscription, validateAndOccupyTable, createStaffOrder);
 
 // Get orders for a restaurant
 router.get('/orders/restaurant/:restaurantId', authenticateToken, checkSubscription, async (req, res) => {
