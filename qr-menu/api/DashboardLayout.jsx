@@ -141,9 +141,12 @@ export default function DashboardLayout() {
         }
     };
 
-    // Check if user is Owner or Manager
-    const isOwnerOrManager = user?.role?.name === 'Owner' || user?.role?.name === 'Manager' || user?.role?.name === 'Admin' || user?.role?.isSystem;
+    // Robust check for Managerial/Ownership roles
+    const isOwnerOrManager = ['Owner', 'Manager', 'Admin'].includes(user?.role?.name || user?.role) || user?.role?.isSystem;
 
+    // Secure rule for who can see the subscription alert banner (excludes Manager)
+    const canManageSubscription = ['Owner', 'Admin'].includes(user?.role?.name || user?.role) || isSystemAdmin;
+    
     // Check permissions
     const hasPermission = (perm) => {
         if (!user?.role) return false;
@@ -196,7 +199,7 @@ export default function DashboardLayout() {
                     icon: ShoppingBag,
                     label: t('orders'),
                     path: '/dashboard/orders',
-                    show: hasPermission('manage_orders') || ['Cashier', 'Caixa'].includes(user?.role?.name),
+                    show: hasPermission('manage_orders') || ['Cashier', 'Caixa'].includes(user?.role?.name || user?.role),
                     isOrders: true,
                     orderSource: 'dine-in'
                 },
@@ -204,7 +207,7 @@ export default function DashboardLayout() {
                     icon: Banknote,
                     label: t('payments'),
                     path: '/dashboard/payments',
-                    show: hasPermission('manage_settings') || hasPermission('manage_orders') || ['Cashier', 'Caixa'].includes(user?.role?.name)
+                    show: hasPermission('manage_settings') || hasPermission('manage_orders') || ['Cashier', 'Caixa'].includes(user?.role?.name || user?.role)
                 },
             ]
         },
@@ -238,10 +241,10 @@ export default function DashboardLayout() {
         {
             title: t('financial_stock') || '📦 CONTROLO FINANCEIRO & STOCK',
             items: [
-                { icon: Package, label: t('stock_costs'), path: '/dashboard/stock-management', show: hasPermission('manage_settings') || ['Stock', 'Estoquista'].includes(user?.role?.name), isPremium: true },
-                { icon: Landmark, label: t('accounting_fiscal'), path: '/dashboard/accounting', show: (['MT', 'MZN'].includes(systemCurrency?.toUpperCase())) && (['Owner', 'Manager', 'Contabilista'].includes(user?.role?.name) || user?.role?.isSystem), isPremium: true },
+                { icon: Package, label: t('stock_costs'), path: '/dashboard/stock-management', show: hasPermission('manage_settings') || ['Stock', 'Estoquista'].includes(user?.role?.name || user?.role), isPremium: true },
+                { icon: Landmark, label: t('accounting_fiscal'), path: '/dashboard/accounting', show: (['MT', 'MZN'].includes(systemCurrency?.toUpperCase())) && (['Owner', 'Manager', 'Contabilista'].includes(user?.role?.name || user?.role) || user?.role?.isSystem), isPremium: true },
                 { icon: FileText, label: t('reports'), path: '/dashboard/reports', show: hasPermission('view_reports'), isPremium: true },
-                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: ['Owner', 'Manager', 'Admin'].includes(user?.role?.name) || isSystemAdmin },
+                { icon: CreditCard, label: t('subscription'), path: '/dashboard/subscription', show: canManageSubscription },
             ]
         },
         {
@@ -254,7 +257,7 @@ export default function DashboardLayout() {
             title: t('room_service'),
             items: [
                 { icon: BedDouble, label: t('room_management'), path: '/dashboard/room-service', show: hasPermission('manage_tables') || hasPermission('manage_settings') },
-                { icon: ShoppingBag, label: t('room_orders'), path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders') || ['Cashier', 'Caixa'].includes(user?.role?.name || user?.role), isOrders: true, orderSource: 'room' },
+                { icon: ShoppingBag, label: t('room_orders'), path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders'), isOrders: true, orderSource: 'room' },
             ]
         },
         {
@@ -505,7 +508,7 @@ export default function DashboardLayout() {
                 {/* Page Content */}
                 <main className="page-content animate-fade-in">
                     {/* Subscription Expiration Alert */}
-                    {subscription && !isBlocked && canManageSubscription && (
+                    {subscription && !isBlocked && (
                         <SubscriptionAlert subscription={subscription} />
                     )}
 

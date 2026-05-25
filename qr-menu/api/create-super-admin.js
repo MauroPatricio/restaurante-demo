@@ -9,19 +9,6 @@ const __dirname = dirname(__filename);
 
 dotenv.config({ path: join(__dirname, '.env') });
 
-// Importar bcrypt dinamicamente (suporta bcrypt ou bcryptjs)
-let bcrypt;
-try {
-    bcrypt = (await import('bcrypt')).default || await import('bcrypt');
-} catch (err) {
-    try {
-        bcrypt = (await import('bcryptjs')).default || await import('bcryptjs');
-    } catch (err2) {
-        console.error("❌ O pacote bcrypt/bcryptjs não foi encontrado. Execute 'npm install bcrypt' primeiro.");
-        process.exit(1);
-    }
-}
-
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/qr-menu';
 
 async function createSuperAdmin() {
