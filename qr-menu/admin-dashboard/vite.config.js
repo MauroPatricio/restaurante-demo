@@ -1,68 +1,22 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from 'tailwindcss'
-import autoprefixer from 'autoprefixer'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      workbox: {
-        maximumFileSizeToCacheInBytes: 5000000,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,woff,ttf}'],
-        runtimeCaching: [
-          {
-            // Cache API requests for resilience to bad networks (StaleWhileRevalidate)
-            urlPattern: /^https?:\/\/.*api\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
+  plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Group large vendor libraries into separate chunks
+          if (id.includes('node_modules/recharts')) {
+            return 'recharts';
           }
-        ]
-      },
-      manifest: {
-        name: 'Restaurante Admin',
-        short_name: 'Admin',
-        description: 'Dashboard Admin com suporte Offline',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        icons: [] // Can add icons later
+          if (id.includes('node_modules/html2canvas')) {
+            return 'html2canvas';
+          }
+        }
       }
-    })
-  ],
-  css: {
-    postcss: {
-      plugins: [tailwindcss, autoprefixer],
-    },
-  },
-  server: {
-    host: true,
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:5000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/socket.io': {
-        target: 'http://127.0.0.1:5000',
-        ws: true,
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
-})
+    }
+  }
+});
