@@ -60,10 +60,11 @@ async function createSuperAdmin() {
         await adminUser.save();
 
         // 3. Atribuir o papel global através da nova tabela relacional (UserRestaurantRole)
-        let userRole = await UserRestaurantRole.findOne({ user: adminUser._id, role: adminRole._id });
+        let userRole = await UserRestaurantRole.findOne({ user: adminUser._id, role: adminRole._id, restaurant: null });
         if (!userRole) {
             await UserRestaurantRole.create({
                 user: adminUser._id,
+                restaurant: null, // Papel global, não associado a um restaurante específico
                 role: adminRole._id,
                 active: true
             });

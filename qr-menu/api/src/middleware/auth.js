@@ -40,9 +40,22 @@ export const authenticateToken = async (req, res, next) => {
                 // Attach role to user object for authorizeRoles middleware compatibility
                 req.user.role = userRole.role;
                 req.user.restaurant = decoded.restaurantId; // Attach active context ID
+            } else if (userRole === null) {
+                // This can happen if the user is a system admin trying to access a restaurant context
+                // where they don't have an explicit role. We should check for their global role.
+                const globalRole = await UserRestaurantRole.findOne({ user: user._id, restaurant: null }).populate('role');
+                if (globalRole && globalRole.role && globalRole.role.isSystem) {
+                    req.user.role = globalRole.role;
+                }
             } else {
                 // Token has restaurantId but no active role found (revoked access?)
                 return res.status(403).json({ error: 'Access to this restaurant context is no longer valid' });
+            }
+        } else {
+            // No restaurant in token, check for a global system role
+            const globalRole = await UserRestaurantRole.findOne({ user: user._id, restaurant: null }).populate('role');
+            if (globalRole && globalRole.role && globalRole.role.isSystem) {
+                req.user.role = globalRole.role;
             }
         }
 

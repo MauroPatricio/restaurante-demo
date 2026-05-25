@@ -10,8 +10,9 @@ const UserRestaurantRoleSchema = new mongoose.Schema({
     restaurant: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Restaurant',
-        required: true,
-        index: true
+        // required: true, // No longer required for global roles
+        default: null,
+        index: true,
     },
     role: {
         type: mongoose.Schema.Types.ObjectId,
