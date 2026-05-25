@@ -123,8 +123,8 @@ export const checkSubscription = async (req, res, next) => {
             return res.status(404).json({ error: 'Restaurant not found' });
         }
 
-        // Check if user is Platform SuperAdmin - BYPASS SUBSCRIPTION CHECK
-        if (req.user?.role?.name === 'SuperAdmin' || req.user?.role?.name === 'PlatformAdmin') {
+        // Check if user is Platform SuperAdmin or System Admin - BYPASS SUBSCRIPTION CHECK
+        if (['SuperAdmin', 'PlatformAdmin', 'System Admin'].includes(req.user?.role?.name) || req.user?.role?.isSystem) {
             req.restaurant = restaurant; // Still attach restaurant for context
             req.subscription = await Subscription.findById(restaurant.subscription); // Attach subscription if exists, but don't block
             return next();
