@@ -42,7 +42,7 @@ import Balancete from './pages/reports/Balancete';
 import { SocketProvider } from './contexts/SocketContext';
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import './App.css';
-
+ 
 import UserManagement from './pages/UserManagement';
 import Profiles from './pages/Profiles';
 import Subscriptions from './pages/Subscriptions';
