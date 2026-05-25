@@ -1,67 +1,70 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { ConnectivityProvider, useConnectivity } from './contexts/ConnectivityContext';
 import ToastContainer from './components/ToastContainer';
 import { LoadingProvider } from './contexts/LoadingContext';
 import GlobalLoader from './components/GlobalLoader';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import CreateRestaurant from './pages/CreateRestaurant';
-import RestaurantSelection from './pages/RestaurantSelection';
-import OwnerDashboard from './pages/OwnerDashboard';
 import DashboardLayout from './components/DashboardLayout';
-import Dashboard from './pages/Dashboard';
-import Orders from './pages/Orders';
-import Menu from './pages/Menu';
-import Tables from './pages/Tables';
-import Coupons from './pages/Coupons';
-import Feedback from './pages/Feedback';
-import Subscription from './pages/Subscription';
-import Payments from './pages/Payments';
-import SystemAdmin from './pages/SystemAdmin';
-import Kitchen from './pages/Kitchen';
-import WaiterDashboard from './pages/WaiterDashboard';
-import StockDashboard from './pages/StockDashboard';
-import Delivery from './pages/Delivery';
-import Reports from './pages/Reports';
-import ManagerDashboard from './pages/ManagerDashboard';
-import AccountingDashboard from './pages/AccountingDashboard';
-import FiscalInvoices from './pages/FiscalInvoices';
-import CashManagement from './pages/CashManagement';
-import PlanOfAccounts from './pages/PlanOfAccounts';
-import Clients from './pages/Clients';
-import HallDashboard from './pages/HallDashboard';
-import GeneralLedger from './pages/GeneralLedger';
-import Razao from './pages/reports/Razao';
-import DRE from './pages/reports/DRE';
-import ApuramentoIVA from './pages/reports/ApuramentoIVA';
-import BatchPosting from './pages/accounting/BatchPosting';
-import BalancoPatrimonial from './pages/reports/BalancoPatrimonial';
-import Balancete from './pages/reports/Balancete';
 import { SocketProvider } from './contexts/SocketContext';
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import './App.css';
  
-import UserManagement from './pages/UserManagement';
-import Profiles from './pages/Profiles';
-import Subscriptions from './pages/Subscriptions';
-import ChangePassword from './pages/ChangePassword';
-import AdminHub from './pages/AdminHub';
-import Categories from './pages/Categories';
-import Subcategories from './pages/Subcategories';
-import AssistedOrder from './pages/waiter/AssistedOrder';
 import PremiumFeatureGate from './components/PremiumFeatureGate';
-import WaiterAnalytics from './pages/WaiterAnalytics';
-import KitchenAnalytics from './pages/KitchenAnalytics';
-import WeeklyMenuManagement from './pages/WeeklyMenuManagement';
 
 import DashboardRedirect from './components/DashboardRedirect';
-import RoomServiceManagement from './pages/RoomServiceManagement';
-import RoomOrders from './pages/RoomOrders';
-import AboutUs from './pages/AboutUs';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+
+// Lazy Loaded Routes - Melhora massivamente o tempo de carregamento inicial (TTI)
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const CreateRestaurant = lazy(() => import('./pages/CreateRestaurant'));
+const RestaurantSelection = lazy(() => import('./pages/RestaurantSelection'));
+const OwnerDashboard = lazy(() => import('./pages/OwnerDashboard'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Orders = lazy(() => import('./pages/Orders'));
+const Menu = lazy(() => import('./pages/Menu'));
+const Tables = lazy(() => import('./pages/Tables'));
+const Coupons = lazy(() => import('./pages/Coupons'));
+const Feedback = lazy(() => import('./pages/Feedback'));
+const Subscription = lazy(() => import('./pages/Subscription'));
+const Payments = lazy(() => import('./pages/Payments'));
+const SystemAdmin = lazy(() => import('./pages/SystemAdmin'));
+const Kitchen = lazy(() => import('./pages/Kitchen'));
+const WaiterDashboard = lazy(() => import('./pages/WaiterDashboard'));
+const StockDashboard = lazy(() => import('./pages/StockDashboard'));
+const Delivery = lazy(() => import('./pages/Delivery'));
+const Reports = lazy(() => import('./pages/Reports'));
+const ManagerDashboard = lazy(() => import('./pages/ManagerDashboard'));
+const AccountingDashboard = lazy(() => import('./pages/AccountingDashboard'));
+const FiscalInvoices = lazy(() => import('./pages/FiscalInvoices'));
+const CashManagement = lazy(() => import('./pages/CashManagement'));
+const PlanOfAccounts = lazy(() => import('./pages/PlanOfAccounts'));
+const Clients = lazy(() => import('./pages/Clients'));
+const HallDashboard = lazy(() => import('./pages/HallDashboard'));
+const GeneralLedger = lazy(() => import('./pages/GeneralLedger'));
+const Razao = lazy(() => import('./pages/reports/Razao'));
+const DRE = lazy(() => import('./pages/reports/DRE'));
+const ApuramentoIVA = lazy(() => import('./pages/reports/ApuramentoIVA'));
+const BatchPosting = lazy(() => import('./pages/accounting/BatchPosting'));
+const BalancoPatrimonial = lazy(() => import('./pages/reports/BalancoPatrimonial'));
+const Balancete = lazy(() => import('./pages/reports/Balancete'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
+const Profiles = lazy(() => import('./pages/Profiles'));
+const Subscriptions = lazy(() => import('./pages/Subscriptions'));
+const ChangePassword = lazy(() => import('./pages/ChangePassword'));
+const AdminHub = lazy(() => import('./pages/AdminHub'));
+const Categories = lazy(() => import('./pages/Categories'));
+const Subcategories = lazy(() => import('./pages/Subcategories'));
+const AssistedOrder = lazy(() => import('./pages/waiter/AssistedOrder'));
+const WaiterAnalytics = lazy(() => import('./pages/WaiterAnalytics'));
+const KitchenAnalytics = lazy(() => import('./pages/KitchenAnalytics'));
+const WeeklyMenuManagement = lazy(() => import('./pages/WeeklyMenuManagement'));
+const RoomServiceManagement = lazy(() => import('./pages/RoomServiceManagement'));
+const RoomOrders = lazy(() => import('./pages/RoomOrders'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -121,7 +124,8 @@ function AppContent() {
   return (
     <>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-      <Routes>
+      <Suspense fallback={<GlobalLoader mode="fullscreen" size="lg" message="A carregar sistema..." />}>
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/create-restaurant" element={<CreateRestaurant />} />
@@ -228,7 +232,8 @@ function AppContent() {
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

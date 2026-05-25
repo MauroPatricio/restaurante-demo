@@ -254,7 +254,7 @@ export default function DashboardLayout() {
             title: t('room_service'),
             items: [
                 { icon: BedDouble, label: t('room_management'), path: '/dashboard/room-service', show: hasPermission('manage_tables') || hasPermission('manage_settings') },
-                { icon: ShoppingBag, label: t('room_orders'), path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders'), isOrders: true, orderSource: 'room' },
+                { icon: ShoppingBag, label: t('room_orders'), path: '/dashboard/room-orders', show: hasPermission('manage_orders') || hasPermission('view_orders') || ['Cashier', 'Caixa'].includes(user?.role?.name || user?.role), isOrders: true, orderSource: 'room' },
             ]
         },
         {
@@ -290,9 +290,6 @@ export default function DashboardLayout() {
             ]
         }
     ];
-
-    const currentRouteItem = menuGroups.flatMap(group => group.items).find(item => location.pathname === item.path || location.pathname.startsWith(item.path + '/'));
-    const isCurrentPremiumLocked = currentRouteItem?.isPremium && isExpiring && !isSystemAdmin;
 
     let bannerOffset = 0;
     if (!isBackendConnected) {
@@ -405,11 +402,11 @@ export default function DashboardLayout() {
                                                 // Stop ringing for orders
                                                 if (isOrders) stopRinging();
                                             }}
-                                        className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''} ${item.isPremium && isExpiring && !isSystemAdmin ? 'premium-locked' : ''}`}
+                                            className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''} ${item.isPremium && isExpiring ? 'premium-locked' : ''}`}
                                         >
                                             <Icon size={20} />
                                             <span>{item.label}</span>
-                                        {item.isPremium && isExpiring && !isSystemAdmin && <Lock size={14} className="ml-auto text-orange-400" />}
+                                            {item.isPremium && isExpiring && <Lock size={14} className="ml-auto text-orange-400" />}
                                             {isOrders && !isExpiring && (
                                                 <>
                                                     {item.orderSource === 'room' ? (
@@ -508,65 +505,11 @@ export default function DashboardLayout() {
                 {/* Page Content */}
                 <main className="page-content animate-fade-in">
                     {/* Subscription Expiration Alert */}
-                    {subscription && !isBlocked && (
+                    {subscription && !isBlocked && canManageSubscription && (
                         <SubscriptionAlert subscription={subscription} />
                     )}
 
-                    {isCurrentPremiumLocked ? (
-                        <div className="premium-locked-container" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '60px 20px',
-                            textAlign: 'center',
-                            backgroundColor: '#ffffff',
-                            borderRadius: '12px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                            marginTop: '20px',
-                            border: '1px solid #f3f4f6'
-                        }}>
-                            <div style={{
-                                width: '80px',
-                                height: '80px',
-                                borderRadius: '50%',
-                                backgroundColor: '#fef3c7',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: '24px'
-                            }}>
-                                <Lock size={40} style={{ color: '#d97706' }} />
-                            </div>
-                            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>
-                                {t('feature_locked_title', 'Funcionalidade Premium Bloqueada')}
-                            </h2>
-                            <p style={{ fontSize: '16px', color: '#4b5563', maxWidth: '500px', marginBottom: '32px', lineHeight: '1.6' }}>
-                                {t('feature_locked_desc', 'O acesso a esta funcionalidade está restrito devido ao estado da sua subscrição. Por favor, renove o seu plano para recuperar o acesso total.')}
-                            </p>
-                            <Link to="/dashboard/subscription" style={{
-                                backgroundColor: '#d97706',
-                                color: '#ffffff',
-                                padding: '12px 28px',
-                                borderRadius: '8px',
-                                textDecoration: 'none',
-                                fontWeight: '600',
-                                fontSize: '15px',
-                                transition: 'background-color 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b45309'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
-                            >
-                                <CreditCardIcon size={18} />
-                                {t('subscription_renew', 'Renovar Subscrição')}
-                            </Link>
-                        </div>
-                    ) : (
-                        <Outlet />
-                    )}
+                    <Outlet />
                 </main>
 
                 {/* Waiter Call Alerts - Real-time notifications */}
