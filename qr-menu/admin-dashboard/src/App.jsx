@@ -151,12 +151,11 @@ function AppContent() {
           <Route path="analytics" element={<Dashboard />} />
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="waiter" element={<WaiterDashboard />} />
-          <Route path="stock-old" element={
+          <Route path="stock-management" element={
             <PremiumFeatureGate featureName="Controlo de Stock">
               <StockDashboard />
             </PremiumFeatureGate>
           } />
-          <Route path="stock-management" element={<StockDashboard />} />
           <Route path="orders" element={<Orders />} />
           <Route path="menu" element={<Menu />} />
           <Route path="categories" element={<Categories />} />

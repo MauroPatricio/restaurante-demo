@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import UserRestaurantRole from '../models/UserRestaurantRole.js';
 
 // Middleware to verify JWT token
 export const authenticateToken = async (req, res, next) => {
@@ -12,9 +13,6 @@ export const authenticateToken = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-
-        // Import Role and UserRestaurantRole dynamically to avoid circular dependency issues if any
-        const UserRestaurantRole = (await import('../models/UserRestaurantRole.js')).default;
 
         // Fetch user from database (role is no longer directly on user)
         const user = await User.findById(decoded.userId).select('-password');
