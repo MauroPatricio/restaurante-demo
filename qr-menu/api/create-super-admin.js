@@ -33,6 +33,7 @@ async function createSuperAdmin() {
         // Importação dinâmica dos modelos
         const User = (await import('./src/models/User.js')).default;
         const Role = (await import('./src/models/Role.js')).default;
+        const UserRestaurantRole = (await import('./src/models/UserRestaurantRole.js')).default;
 
         // 1. Verificar ou criar o Cargo de System Admin
         let adminRole = await Role.findOne({ name: 'System Admin' });
@@ -58,18 +59,28 @@ async function createSuperAdmin() {
             adminUser = new User({
                 name: 'Administração Nhiquela',
                 email: adminEmail,
+                phone: '+258840000000', // Campo obrigatório
                 active: true,
                 isEmailVerified: true
             });
         }
 
-        // Gerar Hash da Senha e forçar alteração no primeiro login
-        const salt = await bcrypt.genSalt(10);
-        adminUser.password = await bcrypt.hash(adminPassword, salt);
-        adminUser.role = adminRole._id;
+        // ATENÇÃO: O Model User.js já tem um hook pre('save') que faz o hash automaticamente!
+        // Passamos a senha em texto limpo para evitar a "dupla encriptação".
+        adminUser.password = adminPassword;
         adminUser.isDefaultPassword = true; // Força o redirecionamento para alterar a senha
 
         await adminUser.save();
+
+        // 3. Atribuir o papel global através da nova tabela relacional (UserRestaurantRole)
+        let userRole = await UserRestaurantRole.findOne({ user: adminUser._id, role: adminRole._id });
+        if (!userRole) {
+            await UserRestaurantRole.create({
+                user: adminUser._id,
+                role: adminRole._id,
+                active: true
+            });
+        }
 
         console.log('\n🎉 SUPER ADMIN CRIADO COM SUCESSO! 🎉');
         console.log('--------------------------------------------------');
