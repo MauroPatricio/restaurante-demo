@@ -286,26 +286,8 @@ export default function DashboardLayout() {
         }
     ];
 
-    const getDaysUntilExpiry = () => {
-        if (!subscription?.currentPeriodEnd) return null;
-        const now = new Date();
-        const end = new Date(subscription.currentPeriodEnd);
-        const diffTime = end - now;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
-    };
-
-    const daysUntilExpiry = getDaysUntilExpiry();
-    const showWarningBanner = subscription && (daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0);
-    const showExpiredBanner = isBlocked || (daysUntilExpiry !== null && daysUntilExpiry <= 0);
-
     let bannerOffset = 0;
     if (!isBackendConnected) {
-        bannerOffset += 48;
-    }
-    if (showExpiredBanner && isOwnerOrManager) {
-        bannerOffset += 60;
-    } else if (showWarningBanner && isOwnerOrManager) {
         bannerOffset += 48;
     }
 
@@ -327,101 +309,6 @@ export default function DashboardLayout() {
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}>
                     {t('not_connected_api')}
-                </div>
-            )}
-
-            {/* Subscription Warning Banner */}
-            {showExpiredBanner && isOwnerOrManager && (
-                <div style={{
-                    backgroundColor: '#dc2626',
-                    color: 'white',
-                    padding: '14px 20px',
-                    textAlign: 'center',
-                    fontWeight: '500',
-                    position: 'fixed',
-                    top: !isBackendConnected ? '48px' : 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 9998,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px'
-                }}>
-                    <AlertCircle size={20} />
-                    <span>⚠️ {t('subscription_expired_message')}</span>
-                    <Link to="/dashboard/subscription" style={{
-                        background: 'white',
-                        color: '#dc2626',
-                        padding: '6px 16px',
-                        borderRadius: '6px',
-                        textDecoration: 'none',
-                        fontWeight: '600',
-                        fontSize: '14px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}>
-                        <CreditCardIcon size={16} />
-                        {t('subscription_renew_now')}
-                    </Link>
-
-                    <Link to="/select-restaurant" style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        color: 'white',
-                        padding: '6px 16px',
-                        borderRadius: '6px',
-                        textDecoration: 'none',
-                        fontWeight: '500',
-                        fontSize: '14px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        transition: 'all 0.2s ease'
-                    }}
-                        onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
-                        onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
-                    >
-                        <LayoutGrid size={16} />
-                        {t('back_to_restaurants')}
-                    </Link>
-                </div>
-            )}
-
-            {showWarningBanner && !showExpiredBanner && isOwnerOrManager && (
-                <div style={{
-                    backgroundColor: '#f59e0b',
-                    color: 'white',
-                    padding: '12px 20px',
-                    textAlign: 'center',
-                    fontWeight: '500',
-                    position: 'fixed',
-                    top: !isBackendConnected ? '48px' : 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 9998,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px'
-                }}>
-                    <AlertCircle size={18} />
-                    <span>{t('subscription_expiring_message', { days: daysUntilExpiry })}</span>
-                    <Link to="/dashboard/subscription" style={{
-                        background: 'white',
-                        color: '#f59e0b',
-                        padding: '4px 12px',
-                        borderRadius: '6px',
-                        textDecoration: 'none',
-                        fontWeight: '600',
-                        fontSize: '13px'
-                    }}>
-                        {t('subscription_view_details')}
-                    </Link>
                 </div>
             )}
 

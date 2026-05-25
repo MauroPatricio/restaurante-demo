@@ -19,16 +19,17 @@ export default function SubscriptionAlert({ subscription }) {
 
         let shouldShow = false;
 
+        // Verifica se o utilizador já fechou o alerta nesta sessão de navegação
+        const isDismissed = sessionStorage.getItem('subscriptionAlertDismissed') === 'true';
+
         if (subscription.status === 'expired') {
-            shouldShow = true;
-        } else if (isTrial) {
-            shouldShow = true; // Always show in trial
-        } else if (daysRemaining <= 7) {
-            shouldShow = true; // Show if 7 days or less
+            shouldShow = true; // Mostrar sempre se estiver expirado, ignorar o facto de ter sido fechado
+        } else if (isTrial && !isDismissed) {
+            shouldShow = true; // Mostrar trial se ainda não foi fechado
+        } else if (daysRemaining <= 7 && !isDismissed) {
+            shouldShow = true; // Mostrar a expirar se ainda não foi fechado
         }
 
-        // Check if already dismissed in this session? User said "Sempre que aceder", implies session.
-        // But for now, let's just show it on mount. If it's annoying we can add sessionStorage check.
         setIsVisible(shouldShow);
 
     }, [subscription]);
@@ -90,6 +91,11 @@ export default function SubscriptionAlert({ subscription }) {
         setIsVisible(false); // Close on navigation
     };
 
+    const handleClose = () => {
+        setIsVisible(false);
+        sessionStorage.setItem('subscriptionAlertDismissed', 'true');
+    };
+
     // Styles configuration - Banner style
     const styles = {
         banner: {
@@ -145,17 +151,22 @@ export default function SubscriptionAlert({ subscription }) {
             flexShrink: 0
         },
         closeButton: {
-            color: 'rgba(255,255,255,0.8)',
-            background: 'transparent',
+            color: '#ffffff',
+            background: 'rgba(255,255,255,0.15)',
             border: 'none',
             cursor: 'pointer',
-            padding: '4px',
-            borderRadius: '4px',
-            transition: 'background 0.2s',
+            padding: '8px 10px',
+            borderRadius: '6px',
+            transition: 'all 0.2s ease',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0
+            flexShrink: 0,
+            opacity: 0.9,
+            fontSize: '16px',
+            fontWeight: 'bold',
+            minWidth: '36px',
+            minHeight: '36px'
         }
     };
 
@@ -186,17 +197,18 @@ export default function SubscriptionAlert({ subscription }) {
                 >
                     {t('view_details', 'Ver Detalhes')}
                 </button>
-                <button
-                    onClick={() => setIsVisible(false)}
-                    style={styles.closeButton}
-                    title={t('close', 'Fechar')}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                >
-                    <X size={16} />
-                </button>
+                {config.type !== 'critical' && (
+                    <button
+                        onClick={handleClose}
+                        style={styles.closeButton}
+                        title={t('close', 'Fechar')}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    >
+                        <X size={16} />
+                    </button>
+                )}
             </div>
         </>
     );
 }
-

@@ -18,14 +18,17 @@ git add -A
 
 echo.
 echo Creating commit...
-git commit -m "feat: Convert subscription alert to fixed notification banner with i18n support" -m "- Convert SubscriptionAlert from modal overlay to fixed top notification banner^
-- Add close button (X icon) for dismissing notifications^
-- Add View Details button to navigate to subscription management^
-- Implement color-coded alerts: red (expired), blue (trial), orange (expiring)^
-- Update DashboardLayout.css for banner positioning compatibility^
-- Add i18n translations for subscription status (pt, en, es, fr)^
-^
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+> "%TEMP%\commit_msg.txt" echo feat: Convert subscription alert to fixed notification banner with i18n support
+>> "%TEMP%\commit_msg.txt" echo.
+>> "%TEMP%\commit_msg.txt" echo - Convert SubscriptionAlert from modal overlay to fixed top notification banner
+>> "%TEMP%\commit_msg.txt" echo - Add close button (X icon) for dismissing notifications
+>> "%TEMP%\commit_msg.txt" echo - Add View Details button to navigate to subscription management
+>> "%TEMP%\commit_msg.txt" echo - Implement color-coded alerts: red (expired), blue (trial), orange (expiring)
+>> "%TEMP%\commit_msg.txt" echo - Update DashboardLayout.css for banner positioning compatibility
+>> "%TEMP%\commit_msg.txt" echo - Add i18n translations for subscription status (pt, en, es, fr)
+>> "%TEMP%\commit_msg.txt" echo.
+>> "%TEMP%\commit_msg.txt" echo Co-authored-by: Copilot ^<223556219+Copilot@users.noreply.github.com^>
+git commit -F "%TEMP%\commit_msg.txt"
 
 echo.
 echo Topic branch commit log:
@@ -59,4 +62,3 @@ echo ============================================
 echo Process completed successfully!
 echo ============================================
 pause
-
