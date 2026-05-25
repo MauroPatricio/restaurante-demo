@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertCircle, X, ChevronDown, ChevronUp, Calendar, CreditCard } from 'lucide-react';
+import { AlertCircle, X, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -90,202 +90,113 @@ export default function SubscriptionAlert({ subscription }) {
         setIsVisible(false); // Close on navigation
     };
 
-    // Styles configuration
+    // Styles configuration - Banner style
     const styles = {
-        overlay: {
+        banner: {
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             zIndex: 9999,
-            padding: '16px',
-            animation: 'fadeIn 0.3s ease-out'
-        },
-        container: {
-            backgroundColor: '#ffffff',
-            borderRadius: '24px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0,0,0,0.05)',
-            width: '100%',
-            maxWidth: '480px',
-            overflow: 'hidden',
-            animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            border: '1px solid rgba(255,255,255,0.5)'
-        },
-        header: {
-            padding: '24px',
+            background: config.colors.headerGradient,
+            padding: '16px 24px',
             display: 'flex',
             alignItems: 'center',
             gap: '16px',
-            borderBottom: '1px solid rgba(0,0,0,0.05)',
-            background: config.colors.headerGradient
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            animation: 'slideDown 0.3s ease-out'
         },
         iconWrapper: {
-            width: '48px',
-            height: '48px',
-            borderRadius: '14px',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
             backgroundColor: 'rgba(255,255,255,0.2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#ffffff',
-            backdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(4px)',
+            flexShrink: 0
         },
-        title: {
-            color: '#ffffff',
-            fontSize: '18px',
-            fontWeight: '700',
+        content: {
             flex: 1,
-            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            minWidth: 0
+        },
+        message: {
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: '500',
+            lineHeight: '1.4'
+        },
+        actionButton: {
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            color: '#ffffff',
+            border: '1px solid rgba(255,255,255,0.3)',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap',
+            flexShrink: 0
         },
         closeButton: {
             color: 'rgba(255,255,255,0.8)',
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '50%',
+            padding: '4px',
+            borderRadius: '4px',
             transition: 'background 0.2s',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
-        },
-        body: {
-            padding: '24px'
-        },
-        message: {
-            color: '#334155',
-            fontSize: '16px',
-            lineHeight: '1.6',
-            marginBottom: '20px'
-        },
-        detailsBox: {
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            border: '1px solid #e2e8f0',
-            color: '#475569',
-            fontSize: '14px'
-        },
-        footer: {
-            padding: '20px 24px',
-            backgroundColor: '#f8fafc',
-            borderTop: '1px solid #e2e8f0',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '12px'
-        },
-        buttonSecondary: {
-            padding: '12px 20px',
-            backgroundColor: '#ffffff',
-            color: '#475569',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-        },
-        buttonPrimary: {
-            padding: '12px 24px',
-            backgroundColor: config.colors.primary,
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: `0 4px 6px -1px ${config.colors.shadow}, 0 2px 4px -1px ${config.colors.shadow}`,
-            transition: 'transform 0.1s, box-shadow 0.2s'
+            justifyContent: 'center',
+            flexShrink: 0
         }
     };
 
     return (
-        <div style={styles.overlay}>
+        <>
             <style>
                 {`
-                    @keyframes slideUp {
-                        from { opacity: 0; transform: translateY(20px) scale(0.95); }
-                        to { opacity: 1; transform: translateY(0) scale(1); }
-                    }
-                    @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
+                    @keyframes slideDown {
+                        from { opacity: 0; transform: translateY(-20px); }
+                        to { opacity: 1; transform: translateY(0); }
                     }
                 `}
             </style>
-            <div style={styles.container}>
-                {/* Header */}
-                <div style={styles.header}>
-                    <div style={styles.iconWrapper}>
-                        <Icon size={24} strokeWidth={2.5} />
-                    </div>
-                    <h3 style={styles.title}>
-                        {config.title}
-                    </h3>
-                    <button
-                        onClick={() => setIsVisible(false)}
-                        style={styles.closeButton}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                    >
-                        <X size={20} />
-                    </button>
+            <div style={styles.banner}>
+                <div style={styles.iconWrapper}>
+                    <Icon size={18} strokeWidth={2.5} />
                 </div>
-
-                {/* Body */}
-                <div style={styles.body}>
-                    <p style={styles.message}>
+                <div style={styles.content}>
+                    <div style={styles.message}>
                         {config.message}
-                    </p>
-
-                    {/* Countdown / Details */}
-                    <div style={styles.detailsBox}>
-                        <Calendar size={18} color="#64748b" />
-                        <span>Termina em: <strong style={{ color: '#0f172a' }}>{new Date(subscription.currentPeriodEnd).toLocaleDateString()}</strong></span>
                     </div>
                 </div>
-
-                {/* Footer */}
-                <div style={styles.footer}>
-                    <button
-                        onClick={() => setIsVisible(false)}
-                        style={styles.buttonSecondary}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f1f5f9'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = '#ffffff'}
-                    >
-                        {t('close', 'Fechar')}
-                    </button>
-                    <button
-                        onClick={handleRenew}
-                        style={styles.buttonPrimary}
-                        onMouseEnter={(e) => {
-                            e.target.style.transform = 'translateY(-1px)';
-                            e.target.style.boxShadow = `0 6px 8px -1px ${config.colors.shadow}, 0 4px 6px -1px ${config.colors.shadow}`;
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = `0 4px 6px -1px ${config.colors.shadow}, 0 2px 4px -1px ${config.colors.shadow}`;
-                        }}
-                    >
-                        <CreditCard size={18} />
-                        {t('renew_subscription', 'Renovar / Ver Planos')}
-                    </button>
-                </div>
+                <button
+                    onClick={handleRenew}
+                    style={styles.actionButton}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.3)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+                >
+                    {t('view_details', 'Ver Detalhes')}
+                </button>
+                <button
+                    onClick={() => setIsVisible(false)}
+                    style={styles.closeButton}
+                    title={t('close', 'Fechar')}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                >
+                    <X size={16} />
+                </button>
             </div>
-        </div>
+        </>
     );
 }
 

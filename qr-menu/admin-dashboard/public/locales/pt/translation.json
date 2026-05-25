@@ -1254,7 +1254,7 @@
     "subscription_status_active": "Activo",
     "subscription_status_cancelled": "Cancelado",
     "subscription_status_expired": "Expirado",
-    "subscription_status_expiring": "subscription_status_expiring",
+    "subscription_status_expiring": "A Expirar",
     "subscription_status_pending": "Aguardando Autorização",
     "subscription_status_pending_activation": "Activação Pendente",
     "subscription_status_pending_desc": "Aguardando aprovação do administrador",

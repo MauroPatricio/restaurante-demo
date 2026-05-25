@@ -1212,7 +1212,7 @@
     "subscription_status_active": "Actif",
     "subscription_status_cancelled": "Annulé",
     "subscription_status_expired": "Expiré",
-    "subscription_status_expiring": "subscription_status_expiring",
+    "subscription_status_expiring": "Expiration imminente",
     "subscription_status_pending": "En Attente d'Autorisation",
     "subscription_status_pending_activation": "En attente d'activation",
     "subscription_status_pending_desc": "En attente d'approbation de l'administrateur",
