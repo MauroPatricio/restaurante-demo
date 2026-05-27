@@ -455,7 +455,7 @@ export default function WaiterDashboard() {
                                         ) 
                                         : null;
                                         
-                                    const orderCode = tableActiveOrder ? (formatOrderNumber()) : null;
+                                    const orderCode = tableActiveOrder ? (formatOrderNumber(tableActiveOrder)) : null;
 
                                     return (
                                         <div

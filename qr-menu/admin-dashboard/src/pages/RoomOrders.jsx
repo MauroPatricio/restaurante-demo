@@ -155,7 +155,7 @@ function OrderDetailModal({ order, onClose, t, convertAndFormat, onStatusChange 
                         </div>
                         <div>
                             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>
-                                {t('order')} #{formatOrderNumber()}
+                                {t('order')} #{formatOrderNumber(order)}
                             </h3>
                             <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.875rem' }}>
                                 {new Date(order.createdAt).toLocaleString()}

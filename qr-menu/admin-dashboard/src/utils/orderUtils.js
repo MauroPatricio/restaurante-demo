@@ -1,9 +1,9 @@
-export const formatOrderNumber = (order) => {
-    if (!order) return '000000';
-    if (order.orderNumber) return order.orderNumber;
+export const formatOrderNumber = (orderOrId) => {
+    if (!orderOrId) return '000000';
+    if (typeof orderOrId === 'object' && orderOrId.orderNumber) return orderOrId.orderNumber;
     
-    const id = (order._id || order.id || '').toString();
-    if (!id) return '000000';
+    const id = (typeof orderOrId === 'string' ? orderOrId : (orderOrId._id || orderOrId.id || '')).toString();
+    if (!id || id === '[object Object]') return '000000';
     
     // Convert the last 6 chars of hex ID to an integer, then pad/slice to exactly 6 digits
     const hexSlice = id.slice(-6);

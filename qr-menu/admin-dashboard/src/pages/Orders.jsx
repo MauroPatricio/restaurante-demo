@@ -184,7 +184,7 @@ export default function Orders() {
                                             key={order._id}
                                             className={`order-row ${newOrderIds.has(order._id) ? 'new-highlight' : ''}`}
                                         >
-                                            <td className="order-id-cell">#{formatOrderNumber()}</td>
+                                            <td className="order-id-cell">#{formatOrderNumber(order)}</td>
                                             <td className="text-sm font-700 text-gray-500">
                                                 <div className="flex items-center gap-2">
                                                     <Clock size={14} className="text-gray-300" />
@@ -266,7 +266,7 @@ export default function Orders() {
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <span className="text-[10px] font-900 text-gray-300 uppercase tracking-widest mb-1 block">#{formatOrderNumber()}</span>
+                                        <span className="text-[10px] font-900 text-gray-300 uppercase tracking-widest mb-1 block">#{formatOrderNumber(order)}</span>
                                         <h3 className="text-lg font-900 text-gray-900 uppercase">{order.customerName || t('guest')}</h3>
                                         <p className="text-xs font-700 text-gray-400">{order.phone}</p>
                                     </div>
