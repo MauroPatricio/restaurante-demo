@@ -13,7 +13,7 @@ import './App.css';
  
 import PremiumFeatureGate from './components/PremiumFeatureGate';
 
-import DashboardRedirect from './components/DashboardRedirect';
+import DashboardRedirect from './DashboardRedirect';
 
 // Lazy Loaded Routes - Melhora massivamente o tempo de carregamento inicial (TTI)
 const Login = lazy(() => import('./pages/Login'));
