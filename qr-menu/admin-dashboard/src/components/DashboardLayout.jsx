@@ -437,9 +437,7 @@ export default function DashboardLayout() {
             >
                 {/* Subscription Expiration Alert (Global Position) */}
                 {subscription && !isBlocked && (
-                    <div style={{ padding: '20px 2rem 0 2rem', background: 'var(--background)', zIndex: 50, position: 'relative' }}>
-                        <SubscriptionAlert subscription={subscription} />
-                    </div>
+                    <SubscriptionAlert subscription={subscription} />
                 )}
 
                 {/* Header */}

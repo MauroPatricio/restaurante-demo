@@ -169,7 +169,7 @@ export default function SubscriptionAlert({ subscription }) {
     };
 
     return (
-        <>
+        <div style={{ padding: '20px 2rem 0 2rem', background: 'var(--background)', zIndex: 50, position: 'relative' }}>
             <style>
                 {`
                     @keyframes slideDown {
@@ -207,6 +207,6 @@ export default function SubscriptionAlert({ subscription }) {
                     </button>
                 )}
             </div>
-        </>
+        </div>
     );
 }
