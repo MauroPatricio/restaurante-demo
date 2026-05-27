@@ -1099,6 +1099,18 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .page-header > div:last-child {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
   }

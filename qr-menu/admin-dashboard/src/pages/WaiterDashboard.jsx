@@ -426,8 +426,17 @@ export default function WaiterDashboard() {
                                             
                                             <div className="card-middle">
                                                 <div className="capacity-info">
-                                                    <Users size={14} />
-                                                    <span>{table.capacity || 4} lugares</span>
+                                                    {status === 'occupied' && (table.lastStatusChange || table.updatedAt) ? (
+                                                        <>
+                                                            <Clock size={14} />
+                                                            <span>{formatDistanceToNow(new Date(table.lastStatusChange || table.updatedAt), { locale: pt })}</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Users size={14} />
+                                                            <span>{table.capacity || 4} lugares</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                                 <div className="card-status-icon">
                                                     <StatusIcon size={20} />

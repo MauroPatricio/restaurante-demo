@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { X, Plus, History, Info, Users, MapPin, ChevronRight, ArrowRight, UtensilsCrossed, Edit, Trash2, Maximize2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { pt } from 'date-fns/locale/pt';
+import { X, Plus, History, Info, Users, MapPin, ChevronRight, ArrowRight, UtensilsCrossed, Edit, Trash2, Maximize2, Clock } from 'lucide-react';
 import TableOrderHistory from './TableOrderHistory';
 import TableStatusSelector from './TableStatusSelector';
 import { tableAPI } from '../services/api';
@@ -159,6 +161,7 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
                                 <div className="space-y-3.5 text-sm">
                                     {[
                                         { label: t('table_number'), value: `Mesa ${table.number}` },
+                                        table.status === 'occupied' && { label: t('occupation_time', 'Tempo de Ocupação'), value: (table.lastStatusChange || table.updatedAt) ? formatDistanceToNow(new Date(table.lastStatusChange || table.updatedAt), { locale: pt }) : '-' },
                                         table.capacity && { label: t('capacity'), value: `${table.capacity} ${t('people')}` },
                                         table.location && { label: t('location'), value: table.location },
                                         table.type && { label: t('type'), value: table.type },

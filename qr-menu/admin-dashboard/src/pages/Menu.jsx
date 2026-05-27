@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { menuAPI, categoryAPI, subcategoryAPI, uploadAPI } from '../services/api';
-import { Plus, Edit, Trash2, X, Image as ImageIcon, Package, AlertTriangle, CheckCircle, DollarSign, ChevronDown, ChevronRight, Archive, Star } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, Package, AlertTriangle, CheckCircle, DollarSign, ChevronDown, ChevronRight, Archive, Star, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ImageUpload from '../components/ImageUpload';
 import { getCurrencySymbol } from '../utils/currencyUtils';
@@ -128,10 +128,15 @@ export default function Menu() {
                     <h1>{t('manage_menu', 'Gerir Menu')}</h1>
                     <p>{t('manage_menu_desc', 'Gestão de itens e categorias do menu')}</p>
                 </div>
-                <button onClick={() => openModal()} className="btn-modern-primary">
-                    <Plus size={20} />
-                    {t('add_item', 'Adicionar Item')}
-                </button>
+                <div className="flex items-center gap-3">
+                    <button onClick={fetchMenu} className="btn-modern-outline" title={t('refresh', 'Refresh')}>
+                        <RefreshCcw size={20} />
+                    </button>
+                    <button onClick={() => openModal()} className="btn-modern-primary">
+                        <Plus size={20} />
+                        {t('add_item', 'Adicionar Item')}
+                    </button>
+                </div>
             </header>
 
             <div className="filters-container">

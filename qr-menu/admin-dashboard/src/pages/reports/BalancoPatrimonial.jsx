@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { accountingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-    Building2, Wallet, Shield
+    Building2, Wallet, Shield, TrendingDown, ArrowLeft, AlertCircle, CheckCircle, RefreshCw, Printer
 } from 'lucide-react';
 import { useCurrency } from '../../contexts/CurrencyContext';
 
@@ -72,6 +72,8 @@ export default function BalancoPatrimonial() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    const [data, setData] = useState(null);
+    const [error, setError] = useState(null);
     const { convertAndFormat } = useCurrency();
 
     const load = async () => {

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { exportToPDF, exportToExcel } from '../../utils/export_utils';
 
 export default function DRE() {
     const { t } = useTranslation();

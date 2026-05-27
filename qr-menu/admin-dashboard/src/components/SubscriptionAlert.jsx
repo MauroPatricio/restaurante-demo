@@ -99,11 +99,9 @@ export default function SubscriptionAlert({ subscription }) {
     // Styles configuration - Banner style
     const styles = {
         banner: {
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 9999,
+            position: 'relative',
+            marginBottom: '20px',
+            borderRadius: '8px',
             background: config.colors.headerGradient,
             padding: '16px 24px',
             display: 'flex',

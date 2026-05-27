@@ -42,14 +42,14 @@ const PremiumFeatureGate = ({ children, featureName, blurOnly = false }) => {
     // or we can use the blur effect to encourage renewal.
     if (isExpiring) {
         return (
-            <div className="relative overflow-hidden rounded-xl">
+            <div className="relative overflow-hidden rounded-xl" style={{ paddingBottom: '160px' }}>
                 <style>{`
                     .expiring-notice-overlay {
                         position: absolute;
                         bottom: 0;
                         left: 0;
                         right: 0;
-                        background: linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 70%, transparent 100%);
+                        background: linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.95) 40%, rgba(255,255,255,0.8) 70%, transparent 100%);
                         padding: 60px 24px 24px;
                         text-align: center;
                         z-index: 10;

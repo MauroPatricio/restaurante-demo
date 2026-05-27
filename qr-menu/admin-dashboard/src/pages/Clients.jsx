@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { analyticsAPI } from '../services/api';
-import {
     Search, Download, Users, Phone, Calendar,
-    UserCheck, Star, ArrowUpRight
+    UserCheck, Star, ArrowUpRight, RefreshCcw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
@@ -90,10 +89,15 @@ export default function Clients() {
                     <h2>{t('clients_title', 'Dashboard de Clientes')}</h2>
                     <p>{t('clients_subtitle', 'Analise o comportamento e fidelidade dos seus clientes')}</p>
                 </div>
-                <button onClick={exportCSV} className="btn-export">
-                    <Download size={18} />
-                    {t('clients_export', 'Exportar Base')}
-                </button>
+                <div className="flex items-center gap-3">
+                    <button onClick={fetchClients} className="btn-modern-outline" title={t('refresh', 'Refresh')}>
+                        <RefreshCcw size={20} />
+                    </button>
+                    <button onClick={exportCSV} className="btn-export">
+                        <Download size={18} />
+                        {t('clients_export', 'Exportar Base')}
+                    </button>
+                </div>
             </div>
 
             {/* KPI Section */}

@@ -545,7 +545,7 @@ export default function Tables() {
                             <h3>{editingTable ? t('edit') : t('add_table')}</h3>
                             <button onClick={() => setShowModal(false)} className="icon-btn"><X size={20} /></button>
                         </div>
-                        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <form onSubmit={handleSubmit} className="form-grid" style={{ gap: '15px' }}>
                             {/* Number */}
                             <div className="form-group">
                                 <label>{t('table_number')}</label>

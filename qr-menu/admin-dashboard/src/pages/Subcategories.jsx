@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { subcategoryAPI, categoryAPI } from '../services/api';
-import { Plus, Edit2, Trash2, FolderOpen, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, FolderOpen, Package, RefreshCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
-
-const cardStyle = {
-    background: 'white',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-    border: '1px solid rgba(0,0,0,0.02)',
-};
+import './Subcategories.css';
 
 export default function Subcategories() {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const [subcategories, setSubcategories] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -118,60 +113,53 @@ export default function Subcategories() {
     );
 
     return (
-        <div style={{ padding: '32px', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="subcategories-page animate-fade-in">
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
-                        Subcategories
+            <header className="page-header">
+                <div className="page-title-section">
+                    <h1 className="page-title">
+                        {t('subcategories')}
                     </h1>
-                    <p style={{ color: '#64748b', marginTop: '8px', fontSize: '14px' }}>
-                        Organize items within categories
+                    <p className="page-subtitle">
+                        {t('subcategories_desc')}
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingSubcategory(null);
-                        setFormData({ name: '', description: '', categoryId: '' });
-                        setShowModal(true);
-                    }}
-                    style={{
-                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '12px',
-                        padding: '12px 24px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-                    }}
-                >
-                    <Plus size={20} /> New Subcategory
-                </button>
-            </div>
+                <div className="flex items-center gap-3">
+                    <button onClick={fetchSubcategories} className="btn-modern-outline" title={t('refresh')}>
+                        <RefreshCcw size={20} />
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingSubcategory(null);
+                            setFormData({ name: '', description: '', categoryId: '' });
+                            setShowModal(true);
+                        }}
+                        className="btn-modern-primary"
+                    >
+                        <Plus size={20} /> {t('new_subcategory_btn')}
+                    </button>
+                </div>
+            </header>
 
             {/* Filter */}
-            <div style={cardStyle}>
+            <div className="glass-card filter-card">
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
-                    Filter by Category
+                    {t('filter_by_category')}
                 </label>
                 <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="filter-select"
                     style={{
-                        width: '100%',
-                        maxWidth: '300px',
                         padding: '12px 16px',
+                        borderRadius: '12px',
                         border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        color: '#1e293b',
+                        background: '#f8fafc'
                     }}
                 >
-                    <option value="">All Categories</option>
+                    <option value="all">{t('all_categories_filter')}</option>
                     {categories.map(cat => (
                         <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
@@ -179,40 +167,29 @@ export default function Subcategories() {
             </div>
 
             {/* Subcategories List */}
-            <div style={cardStyle}>
-                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>
-                    All Subcategories ({filteredSubcategories.length})
+            <div className="glass-card subcategories-table-card mt-6">
+                <h3 className="table-title">
+                    {t('all_subcategories')} ({filteredSubcategories.length})
                 </h3>
                 <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', fontSize: '14px', textAlign: 'left' }}>
-                        <thead style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <table className="subcategories-table">
+                        <thead>
                             <tr>
-                                <th style={{ padding: '12px 24px' }}>Name</th>
-                                <th style={{ padding: '12px 24px' }}>Category</th>
-                                <th style={{ padding: '12px 24px' }}>Description</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'center' }}>Items</th>
-                                <th style={{ padding: '12px 24px', textAlign: 'right' }}>Actions</th>
+                                <th>{t('name_label', 'Name')}</th>
+                                <th>{t('category_required', 'Category')}</th>
+                                <th>{t('description_label', 'Description')}</th>
+                                <th style={{ textAlign: 'center' }}>{t('items_label', 'Items')}</th>
+                                <th style={{ textAlign: 'right' }}>{t('actions', 'Actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredSubcategories.map((subcategory) => (
-                                <tr key={subcategory._id} style={{ background: 'white', borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                >
-                                    <td style={{ padding: '16px 24px', fontWeight: '600', color: '#1e293b' }}>
+                                <tr key={subcategory._id}>
+                                    <td className="category-name">
                                         {subcategory.name}
                                     </td>
-                                    <td style={{ padding: '16px 24px' }}>
-                                        <span style={{
-                                            display: 'inline-flex',
-                                            padding: '4px 12px',
-                                            borderRadius: '9999px',
-                                            fontSize: '12px',
-                                            fontWeight: '600',
-                                            background: '#eff6ff',
-                                            color: '#3b82f6'
-                                        }}>
+                                    <td>
+                                        <span className="category-badge">
                                             {subcategory.category?.name || 'N/A'}
                                         </span>
                                     </td>
@@ -223,7 +200,7 @@ export default function Subcategories() {
                                         {subcategory.itemsCount || 0}
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                        <div className="action-group" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                                             <button onClick={() => handleEdit(subcategory)} className="btn-outline-icon" title="Edit">
                                                 <Edit2 size={18} />
                                             </button>
@@ -236,8 +213,13 @@ export default function Subcategories() {
                             ))}
                             {filteredSubcategories.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" style={{ padding: '32px 24px', textAlign: 'center', color: '#94a3b8' }}>
-                                        No subcategories found
+                                    <td colSpan="5" style={{ padding: '48px', textAlign: 'center', color: '#64748b' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                                            <FolderOpen size={48} color="#cbd5e1" />
+                                            <p style={{ fontSize: '16px', fontWeight: '500' }}>
+                                                {t('no_subcategories_found')}
+                                            </p>
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -248,110 +230,84 @@ export default function Subcategories() {
 
             {/* Modal */}
             {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        background: 'white',
-                        borderRadius: '16px',
-                        padding: '32px',
-                        width: '90%',
-                        maxWidth: '500px',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                    }}>
-                        <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>
-                            {editingSubcategory ? 'Edit Subcategory' : 'New Subcategory'}
+                <div className="modal-overlay">
+                    <div className="modal-content glass-panel animate-slide-up" style={{ width: '90%', maxWidth: '500px', padding: '32px' }}>
+                        <h2 className="text-2xl font-900 text-gray-900 mb-6">
+                            {editingSubcategory ? t('edit_subcategory') : t('new_subcategory_btn')}
                         </h2>
                         <form onSubmit={handleSubmit}>
-                            <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
-                                    Category *
-                                </label>
-                                <select
-                                    value={formData.categoryId}
-                                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 16px',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '8px',
-                                        fontSize: '14px'
-                                    }}
-                                >
-                                    <option value="">Select a category</option>
-                                    {categories.map(cat => (
-                                        <option key={cat._id} value={cat._id}>{cat.name}</option>
-                                    ))}
-                                </select>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                        {t('category_required', 'Category *')}
+                                    </label>
+                                    <select
+                                        value={formData.categoryId}
+                                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '8px',
+                                            fontSize: '14px'
+                                        }}
+                                    >
+                                        <option value="">{t('select_category')}</option>
+                                        {categories.map(cat => (
+                                            <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                        {t('name_required', 'Name *')}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder={t('name_placeholder')}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '8px',
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
+                                        {t('description_label', 'Description')}
+                                    </label>
+                                    <textarea
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder={t('description_placeholder')}
+                                        rows={3}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            resize: 'vertical'
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
-                                    Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 16px',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '8px',
-                                        fontSize: '14px'
-                                    }}
-                                    placeholder="e.g. Pasta"
-                                />
-                            </div>
-                            <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
-                                    Description
-                                </label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    rows={3}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 16px',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '8px',
-                                        fontSize: '14px',
-                                        resize: 'vertical'
-                                    }}
-                                />
-                            </div>
-                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '32px' }}>
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    style={{
-                                        padding: '12px 24px',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '8px',
-                                        background: 'white',
-                                        color: '#64748b',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn-modern-outline"
                                 >
-                                    Cancel
+                                    {t('cancel')}
                                 </button>
                                 <button
                                     type="submit"
-                                    style={{
-                                        padding: '12px 24px',
                                         border: 'none',
                                         borderRadius: '8px',
                                         background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',

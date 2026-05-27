@@ -10,7 +10,7 @@ import {
 import {
     Clock, Users, TrendingUp, AlertCircle,
     CheckCircle, Coffee, Utensils, Sparkles,
-    Zap, BarChart3, ChevronRight, Activity
+    Zap, BarChart3, ChevronRight, Activity, RefreshCcw
 } from 'lucide-react';
 import WaiterCallsModal from '../components/WaiterCallsModal';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -207,6 +207,11 @@ export default function Dashboard() {
                 <p style={{ color: '#94a3b8', fontWeight: '700', fontSize: '14px', margin: 0 }}>
                     {t('monitor_desc')}
                 </p>
+                <div style={{ marginTop: '16px' }}>
+                    <button onClick={fetchDashboardData} className="btn-modern-outline" title={t('refresh', 'Refresh')}>
+                        <RefreshCcw size={16} /> {t('refresh', 'Refresh')}
+                    </button>
+                </div>
             </div>
 
             {/* KPI Cards */}

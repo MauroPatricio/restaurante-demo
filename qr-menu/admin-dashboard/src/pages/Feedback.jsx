@@ -30,8 +30,8 @@ const statCardStyle = {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     cursor: 'pointer',
-    flex: 1,
-    minWidth: '200px'
+    flex: '1 1 140px',
+    minWidth: '140px'
 };
 
 const iconBoxStyle = (color, bg) => ({

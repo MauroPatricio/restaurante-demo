@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { categoryAPI } from '../services/api';
-import { Plus, Edit2, Trash2, GripVertical, FolderOpen, Package, Archive, Layout } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, FolderOpen, Package, Archive, Layout, RefreshCcw } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -106,17 +106,22 @@ export default function Categories() {
                     <h1>{t('categories') || 'Categorias'}</h1>
                     <p>{t('categories_desc') || 'Organize os itens do seu menu por categorias'}</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingCategory(null);
-                        setFormData({ name: '', description: '', displayOrder: categories.length });
-                        setShowModal(true);
-                    }}
-                    className="btn-modern-primary"
-                >
-                    <Plus size={20} />
-                    {t('new_category_btn') || 'Nova Categoria'}
-                </button>
+                <div className="flex items-center gap-3">
+                    <button onClick={fetchCategories} className="btn-modern-outline" title={t('refresh', 'Refresh')}>
+                        <RefreshCcw size={20} />
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingCategory(null);
+                            setFormData({ name: '', description: '', displayOrder: categories.length });
+                            setShowModal(true);
+                        }}
+                        className="btn-modern-primary"
+                    >
+                        <Plus size={20} />
+                        {t('new_category_btn') || 'Nova Categoria'}
+                    </button>
+                </div>
             </header>
 
             {/* KPI Cards */}

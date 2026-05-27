@@ -219,7 +219,8 @@
 
 /* ── Header ──────────────────────────────────────────────── */
 .header {
-    height: var(--header-height);
+    min-height: var(--header-height);
+    height: auto;
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -307,6 +308,35 @@
     .sidebar-overlay.visible {
         opacity: 1;
         visibility: visible;
+    }
+    .header {
+        padding: 0 1rem;
+    }
+    .header-title {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+    .user-menu {
+        display: none !important;
+    }
+    .header-left {
+        gap: 8px !important;
+    }
+    .header-right {
+        gap: 8px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 0 0.5rem;
+    }
+    .header-title {
+        max-width: 100px;
+        font-size: 0.9rem;
     }
 }
 

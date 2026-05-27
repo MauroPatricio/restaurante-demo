@@ -1,0 +1,52 @@
+.sticky-card-yellow {
+  background-color: #fff9c4;
+  border-left: 4px solid #fbc02d;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  padding: 16px;
+  color: #333333;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: grab;
+  margin-bottom: 12px;
+}
+
+.sticky-card-default {
+  background-color: #ffffff;
+  border-left: 4px solid #cccccc;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 16px;
+  color: #333333;
+  cursor: grab;
+  margin-bottom: 12px;
+}
+
+.sticky-card-yellow:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.20);
+  transform: translateY(-2px);
+}
+
+.sticky-card-yellow:active, .sticky-card-default:active {
+  cursor: grabbing;
+}
+
+.sticky-card-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 8px;
+}
+
+.sticky-card-body ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.empty-items-text {
+  font-style: italic;
+  color: #666666;
+  font-size: 0.9rem;
+}
