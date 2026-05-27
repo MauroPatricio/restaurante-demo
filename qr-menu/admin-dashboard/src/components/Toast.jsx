@@ -53,7 +53,26 @@ const Toast = ({ type = 'info', message, onClose, persistent = false }) => {
                 position: 'relative'
             }}
         >
-            <Icon size={20} color={iconColor} strokeWidth={2.5} />
+            <button 
+                onClick={onClose}
+                style={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                    margin: 0,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    outline: 'none',
+                    transition: 'transform 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                title="Fechar"
+            >
+                <Icon size={20} color={iconColor} strokeWidth={2.5} />
+            </button>
             <p style={{
                 flex: 1,
                 margin: 0,

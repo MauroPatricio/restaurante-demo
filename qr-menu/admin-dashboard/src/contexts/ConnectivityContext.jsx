@@ -135,6 +135,8 @@ export const ConnectivityProvider = ({ children }) => {
             if (!isOnline) {
                 addToast('error', 'Sem conexão com a internet', true);
             } else {
+                // Hide the offline toast when internet is established
+                setToasts(prev => prev.filter(t => t.type !== 'error'));
                 addToast('success', 'Conexão com a internet restaurada', false, 3000);
             }
             lastOnlineStatusRef.current = isOnline;
