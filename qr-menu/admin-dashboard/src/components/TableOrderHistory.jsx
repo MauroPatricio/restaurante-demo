@@ -113,7 +113,7 @@ const TableOrderHistory = ({ tableId }) => {
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                                         <span style={{ fontWeight: '900', color: '#0f172a', fontSize: '15px' }}>
-                                            #{formatOrderNumber(order.orderNumber)}
+                                            #{formatOrderNumber(order)}
                                         </span>
                                         <span style={{ 
                                             padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: '800', 

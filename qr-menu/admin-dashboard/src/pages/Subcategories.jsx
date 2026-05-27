@@ -147,8 +147,8 @@ export default function Subcategories() {
                     {t('filter_by_category')}
                 </label>
                 <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
                     className="filter-select"
                     style={{
                         padding: '12px 16px',
