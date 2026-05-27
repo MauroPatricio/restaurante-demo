@@ -15,6 +15,8 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
             return {
                 iconBg: '#fee2e2',
                 iconColor: '#dc2626',
+                titleKey: 'subscription_expired_title',
+                defaultTitle: 'Subscription Expired',
                 messageKey: 'subscription_expired_message',
                 defaultMessage: 'The subscription period for this restaurant has expired. Renew now for 30 more days to continue using all features.'
             };
@@ -22,6 +24,8 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
             return {
                 iconBg: '#dbeafe',
                 iconColor: '#2563eb',
+                titleKey: 'feature_locked_title',
+                defaultTitle: 'Premium Feature',
                 messageKey: 'subscription_expired_message_premium',
                 defaultMessage: 'Trial period is restricted for this feature. Renew now to use all features.'
             };
@@ -29,6 +33,8 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
             return {
                 iconBg: '#fef3c7',
                 iconColor: '#d97706',
+                titleKey: 'feature_locked_title',
+                defaultTitle: 'Premium Feature',
                 messageKey: 'subscription_expired_message_premium',
                 defaultMessage: 'Premium access is restricted. Renew your subscription to continue using premium features.'
             };
@@ -137,7 +143,7 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
                 </div>
 
                 <h2 style={titleStyle}>
-                    {t('subscription_expired_title') || 'Subscription Expired'}
+                    {t(theme.titleKey) || theme.defaultTitle}
                 </h2>
 
                 <p style={descriptionStyle}>

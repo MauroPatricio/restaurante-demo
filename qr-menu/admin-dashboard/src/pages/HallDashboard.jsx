@@ -293,7 +293,7 @@ export default function HallDashboard() {
     if (loading) return (
         <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
             <RefreshCw className="animate-spin" size={40} color="#4f46e5" />
-            <p style={{ fontSize: '14px', fontWeight: '700', color: '#64748b' }}>Carregando mapa de mesas...</p>
+            <p style={{ fontSize: '14px', fontWeight: '700', color: '#64748b' }}>{t('loading_table_map') || 'Loading table map...'}</p>
         </div>
     );
 

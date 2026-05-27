@@ -469,43 +469,55 @@ export default function WaiterDashboard() {
                                             onDragEnter={handleDragEnter}
                                             onDragLeave={handleDragLeave}
                                             onDrop={(e) => handleDrop(e, table._id)}
-                                            style={{ position: 'relative' }}
+                                            style={{ position: 'relative', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}
                                         >
-                                            {status === 'occupied' && (
-                                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '8px 12px' }}>
-                                                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#64748b' }}>#{orderCode || '...'}</span>
-                                                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                        <Clock size={12} />
-                                                        {table.lastStatusChange || table.updatedAt ? formatDistanceToNow(new Date(table.lastStatusChange || table.updatedAt), { locale: pt }) : ''}
-                                                    </span>
+                                            {/* Top Header */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', minHeight: '32px' }}>
+                                                {status === 'occupied' && orderCode ? (
+                                                    <div style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '4px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '800' }}>
+                                                        #{orderCode}
+                                                    </div>
+                                                ) : <div />}
+                                                
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                                                    {status === 'occupied' && (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#64748b' }}>
+                                                            <Clock size={12} />
+                                                            {table.lastStatusChange || table.updatedAt ? formatDistanceToNow(new Date(table.lastStatusChange || table.updatedAt), { locale: pt }) : ''}
+                                                        </div>
+                                                    )}
+                                                    <StatusIcon size={20} style={{ color: status === 'occupied' ? '#ef4444' : (status === 'free' ? '#10b981' : (status === 'reserved' ? '#f59e0b' : '#3b82f6')) }} />
+                                                </div>
+                                            </div>
+
+                                            {/* Center Number */}
+                                            <div style={{ textAlign: 'center', margin: '8px 0' }}>
+                                                <div style={{ fontSize: '56px', fontWeight: '900', color: '#0f172a', lineHeight: '1', letterSpacing: '-0.05em' }}>
+                                                    {table.number}
+                                                </div>
+                                                <div style={{ fontSize: '14px', fontWeight: '900', color: status === 'occupied' ? '#ef4444' : (status === 'free' ? '#10b981' : (status === 'reserved' ? '#f59e0b' : '#3b82f6')), marginTop: '12px', letterSpacing: '0.05em' }}>
+                                                    {t(status).toUpperCase()}
+                                                </div>
+                                            </div>
+
+                                            {/* Capacity */}
+                                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '13px', fontWeight: '700', marginBottom: '8px' }}>
+                                                <Users size={16} />
+                                                {table.capacity || 4} {t('seats', 'lugares')}
+                                            </div>
+
+                                            {/* Bottom Button/Hint */}
+                                            {status === 'occupied' && orderCode ? (
+                                                <div style={{ backgroundColor: '#fef2f2', color: '#be123c', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: '800', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    {t('order', 'Pedido')} #{orderCode}
+                                                    <ArrowRight size={14} />
+                                                </div>
+                                            ) : (
+                                                <div style={{ backgroundColor: '#f8fafc', color: '#94a3b8', padding: '12px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: '800', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
+                                                    {t('tap_for_details', 'Toque para detalhes')}
+                                                    <ChevronRight size={14} />
                                                 </div>
                                             )}
-
-                                            <div className="card-top" style={{ marginTop: status === 'occupied' ? '12px' : '0' }}>
-                                                <span className="table-number-large">
-                                                    {table.number < 10 ? `0${table.number}` : table.number}
-                                                </span>
-                                                <span className="table-status-centered">{t(status).toUpperCase()}</span>
-                                            </div>
-                                            
-                                            <div className="card-middle">
-                                                <div className="capacity-info">
-                                                    <>
-                                                        <Users size={14} />
-                                                        <span>{table.capacity || 4} lugares</span>
-                                                    </>
-                                                </div>
-                                                <div className="card-status-icon">
-                                                    <StatusIcon size={20} />
-                                                </div>
-                                            </div>
-
-                                            <div className="card-bottom">
-                                                <span className="tap-hint">
-                                                    <ChevronRight size={12} />
-                                                    {t('tap_for_details', 'Toque para detalhes')}
-                                                </span>
-                                            </div>
                                         </div>
                                     );
                                 })}
