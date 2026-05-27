@@ -23,7 +23,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
-import TableManagementPanel from '../components/TableManagementPanel';
+import TableSessionModal from '../components/TableSessionModal';
+import '../styles/TableSessionModal.css';
 import './WaiterDashboard.css';
 
 const KpiCard = ({ title, value, subValue, icon: Icon, iconClass, className }) => (
@@ -50,7 +51,8 @@ export default function WaiterDashboard() {
     const [readyOrders, setReadyOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedTable, setSelectedTable] = useState(null);
-    const [showManagementPanel, setShowManagementPanel] = useState(false);
+    const [showSessionModal, setShowSessionModal] = useState(false);
+    const [sessionData, setSessionData] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
 
     const restaurantId = user?.restaurant?._id || user?.restaurant?.id || localStorage.getItem('restaurantId');
@@ -204,9 +206,37 @@ export default function WaiterDashboard() {
         }
     };
 
-    const handleTableClick = (table) => {
-        setSelectedTable(table);
-        setShowManagementPanel(true);
+    const handleTableClick = async (table) => {
+        try {
+            // Check for any active calls for this table and dismiss them
+            const call = activeCalls.find(c => c.tableNumber === table.number || c.tableNumber === String(table.number));
+            if (call) {
+                removeCall(call._id || call.callId);
+            }
+
+            const response = await tableAPI.getCurrentSession(table._id);
+            setSelectedTable(table);
+            setSessionData(response.data);
+            setShowSessionModal(true);
+        } catch (error) {
+            console.error('Failed to fetch session:', error);
+            alert(t('failed_load_session'));
+        }
+    };
+
+    const handleFreeTable = async (tableId) => {
+        // Optimistic status update
+        setTables(prev => prev.map(t => 
+            t._id === tableId ? { ...t, status: 'free' } : t
+        ));
+        try {
+            await tableAPI.freeTable(tableId);
+            setShowSessionModal(false);
+            fetchData();
+        } catch (error) {
+            console.error('Failed to free table', error);
+            fetchData();
+        }
     };
 
     if (loading) return (
@@ -457,15 +487,17 @@ export default function WaiterDashboard() {
                 </main>
             </div>
 
-            {showManagementPanel && selectedTable && (
-                <TableManagementPanel
-                    table={selectedTable}
-                    onClose={() => { setShowManagementPanel(false); fetchData(); }}
+            {showSessionModal && sessionData && (
+                <TableSessionModal
+                    table={sessionData.table}
+                    session={sessionData.session}
+                    orders={sessionData.orders}
+                    stats={sessionData.stats}
+                    onClose={() => setShowSessionModal(false)}
+                    onFreeTable={handleFreeTable}
+                    canFree={['manager', 'waiter', 'owner'].includes(user?.role)}
                 />
             )}
         </div>
     );
 }
-
-
-

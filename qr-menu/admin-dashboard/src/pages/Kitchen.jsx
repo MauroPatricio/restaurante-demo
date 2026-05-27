@@ -238,8 +238,8 @@ const Kitchen = () => {
     if (!restaurantId) return (
         <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
             <AlertCircle size={64} className="mb-4 text-red-200" />
-            <h2 className="text-2xl font-black text-gray-900 mb-2">Restaurante não selecionado</h2>
-            <p className="font-600">Por favor, selecione um restaurante para ver os pedidos.</p>
+            <h2 className="text-2xl font-black text-gray-900 mb-2">{t('restaurant_not_selected') || 'Restaurante não selecionado'}</h2>
+            <p className="font-600">{t('please_select_restaurant') || 'Por favor, selecione um restaurante para ver os pedidos.'}</p>
         </div>
     );
 
@@ -276,7 +276,7 @@ const Kitchen = () => {
                         className={`kitchen-toggle-btn ${audioEnabled ? 'open' : 'closed'}`}
                     >
                         {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                        {audioEnabled ? 'Áudio Ligado' : 'Áudio Desligado'}
+                        {audioEnabled ? (t('audio_on') || 'Áudio Ligado') : (t('audio_off') || 'Áudio Desligado')}
                     </button>
 
                     <div className={`kitchen-toggle-btn ${connected ? 'open' : 'closed'}`}>
@@ -296,7 +296,7 @@ const Kitchen = () => {
                         className="glass-card border-red-200 bg-red-50/50 p-6"
                     >
                         <h3 className="flex items-center gap-2 text-red-600 font-900 uppercase text-sm mb-4">
-                            <XCircle size={20} /> Pedidos Cancelados Recentemente
+                            <XCircle size={20} /> {t('recently_cancelled_orders') || 'Pedidos Cancelados Recentemente'}
                         </h3>
                         <div className="flex gap-4 flex-wrap">
                             {cancelledOrders.map(order => (

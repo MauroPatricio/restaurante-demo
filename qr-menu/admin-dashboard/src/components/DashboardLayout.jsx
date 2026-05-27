@@ -435,6 +435,13 @@ export default function DashboardLayout() {
                     marginTop: !isBackendConnected ? '48px' : '0'
                 }}
             >
+                {/* Subscription Expiration Alert (Global Position) */}
+                {subscription && !isBlocked && (
+                    <div style={{ padding: '20px 2rem 0 2rem', background: 'var(--background)', zIndex: 50, position: 'relative' }}>
+                        <SubscriptionAlert subscription={subscription} />
+                    </div>
+                )}
+
                 {/* Header */}
                 <header className="header">
                     <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -499,11 +506,6 @@ export default function DashboardLayout() {
 
                 {/* Page Content */}
                 <main className="page-content animate-fade-in">
-                    {/* Subscription Expiration Alert */}
-                    {subscription && !isBlocked && (
-                        <SubscriptionAlert subscription={subscription} />
-                    )}
-
                     <Outlet />
                 </main>
 

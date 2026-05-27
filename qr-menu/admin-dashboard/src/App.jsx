@@ -152,7 +152,7 @@ function AppContent() {
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="waiter" element={<WaiterDashboard />} />
           <Route path="stock-management" element={
-            <PremiumFeatureGate featureName="Controlo de Stock">
+            <PremiumFeatureGate featureName="Controlo de Stock" blurOnly={true}>
               <StockDashboard />
             </PremiumFeatureGate>
           } />
@@ -162,26 +162,26 @@ function AppContent() {
           <Route path="subcategories" element={<Subcategories />} />
           <Route path="tables" element={<Tables />} />
           <Route path="coupons" element={
-            <PremiumFeatureGate featureName="Cupons de Desconto">
+            <PremiumFeatureGate featureName="Cupons de Desconto" blurOnly={true}>
               <Coupons />
             </PremiumFeatureGate>
           } />
           <Route path="delivery" element={<Delivery />} />
           <Route path="feedback" element={
-            <PremiumFeatureGate featureName="Feedback de Clientes">
+            <PremiumFeatureGate featureName="Feedback de Clientes" blurOnly={true}>
               <Feedback />
             </PremiumFeatureGate>
           } />
           <Route path="subscription" element={<Subscription />} />
           <Route path="payments" element={<Payments />} />
           <Route path="reports" element={
-            <PremiumFeatureGate featureName="Relatórios Detalhados">
+            <PremiumFeatureGate featureName="Relatórios Detalhados" blurOnly={true}>
               <Reports />
             </PremiumFeatureGate>
           } />
           <Route path="accounting" element={
             <AccountingGuard>
-              <PremiumFeatureGate featureName="Módulo Contabilístico & Fiscal">
+              <PremiumFeatureGate featureName="Módulo Contabilístico & Fiscal" blurOnly={true}>
                 <AccountingDashboard />
               </PremiumFeatureGate>
             </AccountingGuard>
@@ -206,8 +206,16 @@ function AppContent() {
           <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="system-admin" element={<SystemAdmin />} />
           <Route path="settings" element={<AdminHub />} />
-          <Route path="room-service" element={<RoomServiceManagement />} />
-          <Route path="room-orders" element={<RoomOrders />} />
+          <Route path="room-service" element={
+            <PremiumFeatureGate featureName="Serviço de Quartos" blurOnly={true}>
+              <RoomServiceManagement />
+            </PremiumFeatureGate>
+          } />
+          <Route path="room-orders" element={
+            <PremiumFeatureGate featureName="Serviço de Quartos" blurOnly={true}>
+              <RoomOrders />
+            </PremiumFeatureGate>
+          } />
           <Route path="about-us" element={<AboutUs />} />
         </Route>
 
