@@ -308,14 +308,7 @@ export default function Subcategories() {
                                 </button>
                                 <button
                                     type="submit"
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                        color: 'white',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn-modern-primary"
                                 >
                                     {editingSubcategory ? 'Update' : 'Create'}
                                 </button>
