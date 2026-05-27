@@ -12,11 +12,11 @@ const TableStatusSelector = ({ table, onStatusUpdate }) => {
     const [reason, setReason] = useState('');
 
     const statuses = [
-        { value: 'free', label: t('free') || 'Livre', color: 'bg-green-500', icon: '✓' },
-        { value: 'occupied', label: t('occupied') || 'Ocupada', color: 'bg-red-500', icon: '🔴' },
-        { value: 'reserved', label: t('reserved') || 'Reservada', color: 'bg-purple-500', icon: '📅' },
-        { value: 'cleaning', label: t('cleaning') || 'Em Limpeza', color: 'bg-blue-500', icon: '🧹' },
-        { value: 'closed', label: t('closed') || 'Fechada', color: 'bg-gray-500', icon: '🚫' }
+        { value: 'free', label: t('free') || 'Livre', color: '#22c55e', bgLight: '#dcfce7', icon: '✓' },
+        { value: 'occupied', label: t('occupied') || 'Ocupada', color: '#ef4444', bgLight: '#fee2e2', icon: '🔴' },
+        { value: 'reserved', label: t('reserved') || 'Reservada', color: '#a855f7', bgLight: '#f3e8ff', icon: '📅' },
+        { value: 'cleaning', label: t('cleaning') || 'Em Limpeza', color: '#3b82f6', bgLight: '#dbeafe', icon: '🧹' },
+        { value: 'closed', label: t('closed') || 'Fechada', color: '#64748b', bgLight: '#f1f5f9', icon: '🚫' }
     ];
 
     const handleStatusSelect = (status) => {
@@ -44,10 +44,8 @@ const TableStatusSelector = ({ table, onStatusUpdate }) => {
                 { icon: '✅' }
             );
 
-            // Trigger haptic feedback if available
             if (navigator.vibrate) navigator.vibrate(50);
 
-            // Call parent callback to refresh
             if (onStatusUpdate) {
                 onStatusUpdate(data.table);
             }
@@ -74,12 +72,12 @@ const TableStatusSelector = ({ table, onStatusUpdate }) => {
 
     return (
         <>
-            <div className="space-y-2">
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>
                     {t('update_table_status') || 'Atualizar Estado da Mesa'}
                 </label>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px' }}>
                     {statuses.map((status) => {
                         const isActive = table?.status === status.value;
                         const isUpdating = updating && selectedStatus === status.value;
@@ -89,48 +87,48 @@ const TableStatusSelector = ({ table, onStatusUpdate }) => {
                                 key={status.value}
                                 onClick={() => handleStatusSelect(status.value)}
                                 disabled={updating || isActive}
-                                className={`
-                                    relative px-3 py-2.5 rounded-lg font-medium text-sm transition-all
-                                    border-2 flex items-center justify-center gap-2
-                                    ${isActive
-                                        ? `${status.color} text-white border-transparent ring-2 ring-offset-2 ring-gray-300`
-                                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                                    }
-                                    ${updating ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}
-                                `}
+                                style={{
+                                    position: 'relative', padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: '600',
+                                    display: 'flex', alignItems: 'center', gap: '8px', border: '2px solid', transition: 'all 0.2s', cursor: (updating || isActive) ? 'not-allowed' : 'pointer',
+                                    backgroundColor: isActive ? status.color : '#ffffff',
+                                    color: isActive ? '#ffffff' : '#475569',
+                                    borderColor: isActive ? status.color : '#e2e8f0',
+                                    opacity: updating ? 0.5 : 1
+                                }}
                             >
                                 {isUpdating ? (
-                                    <Loader size={16} className="animate-spin" />
+                                    <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
                                 ) : (
-                                    <span className="text-base">{status.icon}</span>
+                                    <span style={{ fontSize: '16px' }}>{status.icon}</span>
                                 )}
                                 <span>{status.label}</span>
-                                {isActive && <Check size={14} className="ml-auto" />}
+                                {isActive && <Check size={16} style={{ marginLeft: 'auto' }} />}
                             </button>
                         );
                     })}
                 </div>
 
                 {/* Current Status Display */}
-                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">{t('current_status') || 'Estado Atual'}:</span>
-                        <span className={`px-2 py-1 rounded-md text-white font-semibold ${statuses.find(s => s.value === table?.status)?.color || 'bg-gray-500'}`}>
-                            {statuses.find(s => s.value === table?.status)?.label || table?.status}
-                        </span>
-                    </div>
+                <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '600' }}>{t('current_status') || 'Estado Atual'}:</span>
+                    <span style={{ 
+                        padding: '6px 12px', borderRadius: '8px', color: '#ffffff', fontSize: '13px', fontWeight: '700',
+                        backgroundColor: statuses.find(s => s.value === table?.status)?.color || '#64748b' 
+                    }}>
+                        {statuses.find(s => s.value === table?.status)?.label || table?.status}
+                    </span>
                 </div>
             </div>
 
             {/* Reason Modal */}
             {showReasonModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+                    <div style={{ backgroundColor: '#ffffff', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', width: '100%', maxWidth: '450px', padding: '32px' }}>
+                        <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', marginBottom: '16px', margin: 0 }}>
                             {t('reason_for_change') || 'Motivo da Mudança'}
                         </h3>
 
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px', margin: '0 0 24px 0', lineHeight: 1.5 }}>
                             {t('optional_reason_description') || 'Adicione um motivo opcional para esta mudança de estado (será registado no histórico)'}
                         </p>
 
@@ -138,18 +136,21 @@ const TableStatusSelector = ({ table, onStatusUpdate }) => {
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             placeholder={t('enter_reason') || 'Ex: Manutenção agendada, cliente especial, etc.'}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                            rows="3"
+                            rows="4"
+                            style={{
+                                width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '15px',
+                                outline: 'none', resize: 'none', backgroundColor: '#f8fafc', color: '#0f172a', marginBottom: '24px', boxSizing: 'border-box'
+                            }}
                         />
 
-                        <div className="flex gap-3 mt-6">
+                        <div style={{ display: 'flex', gap: '16px' }}>
                             <button
                                 onClick={() => {
                                     setShowReasonModal(false);
                                     setReason('');
                                     setSelectedStatus(null);
                                 }}
-                                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+                                style={{ flex: 1, padding: '14px', backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '12px', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                             >
                                 <X size={18} />
                                 {t('cancel') || 'Cancelar'}
@@ -157,10 +158,10 @@ const TableStatusSelector = ({ table, onStatusUpdate }) => {
                             <button
                                 onClick={handleReasonSubmit}
                                 disabled={updating}
-                                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                style={{ flex: 1, padding: '14px', backgroundColor: '#4f46e5', color: '#ffffff', borderRadius: '12px', fontSize: '15px', fontWeight: '700', border: 'none', cursor: updating ? 'not-allowed' : 'pointer', opacity: updating ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                             >
                                 {updating ? (
-                                    <Loader size={18} className="animate-spin" />
+                                    <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
                                 ) : (
                                     <Check size={18} />
                                 )}

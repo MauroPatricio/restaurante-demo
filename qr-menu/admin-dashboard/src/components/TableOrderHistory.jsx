@@ -44,13 +44,10 @@ const TableOrderHistory = ({ tableId }) => {
     const loadOrders = async () => {
         try {
             setLoading(true);
-
             const { data } = await tableAPI.getOrders(tableId, { limit: 20 });
-
             setOrders(data.orders || []);
         } catch (error) {
             console.error('❌ Failed to load table orders:', error);
-            console.error('Error details:', error.response?.data || error.message);
         } finally {
             setLoading(false);
         }
@@ -58,14 +55,14 @@ const TableOrderHistory = ({ tableId }) => {
 
     const getStatusColor = (status) => {
         const colors = {
-            pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-            confirmed: 'bg-blue-100 text-blue-800 border-blue-300',
-            preparing: 'bg-purple-100 text-purple-800 border-purple-300',
-            ready: 'bg-orange-100 text-orange-800 border-orange-300',
-            completed: 'bg-green-100 text-green-800 border-green-300',
-            cancelled: 'bg-red-100 text-red-800 border-red-300'
+            pending: { bg: '#fef3c7', text: '#92400e', border: '#fcd34d' },
+            confirmed: { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
+            preparing: { bg: '#f3e8ff', text: '#6b21a8', border: '#d8b4fe' },
+            ready: { bg: '#ffedd5', text: '#9a3412', border: '#fdba74' },
+            completed: { bg: '#dcfce7', text: '#166534', border: '#86efac' },
+            cancelled: { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' }
         };
-        return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
+        return colors[status] || { bg: '#f3f4f6', text: '#1f2937', border: '#d1d5db' };
     };
 
     const toggleOrderExpand = (orderId) => {
@@ -74,9 +71,9 @@ const TableOrderHistory = ({ tableId }) => {
 
     if (loading) {
         return (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="bg-gray-100 dark:bg-gray-800 rounded-xl h-16 animate-pulse" />
+                    <div key={i} style={{ backgroundColor: '#f1f5f9', borderRadius: '12px', height: '64px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
                 ))}
             </div>
         );
@@ -84,139 +81,138 @@ const TableOrderHistory = ({ tableId }) => {
 
     if (orders.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                <Receipt size={48} strokeWidth={1} className="mb-3" />
-                <p className="text-sm font-medium">{t('no_orders_yet') || 'Nenhum pedido ainda'}</p>
-                <p className="text-xs mt-1">{t('orders_will_appear_here') || 'Os pedidos aparecerão aqui'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0', color: '#94a3b8' }}>
+                <Receipt size={48} strokeWidth={1} style={{ marginBottom: '12px' }} />
+                <p style={{ fontSize: '14px', fontWeight: '500', margin: 0 }}>{t('no_orders_yet') || 'Nenhum pedido ainda'}</p>
+                <p style={{ fontSize: '12px', marginTop: '4px', margin: 0 }}>{t('orders_will_appear_here') || 'Os pedidos aparecerão aqui'}</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-            {orders.map((order, index) => (
-                <div
-                    key={order._id}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden transition-all hover:shadow-md"
-                >
-                    {/* Order Header - clickable to expand */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {orders.map((order, index) => {
+                const statusStyle = getStatusColor(order.status);
+                const isExpanded = expandedOrder === order._id;
+                
+                return (
                     <div
-                        className="p-4 cursor-pointer select-none"
-                        onClick={() => toggleOrderExpand(order._id)}
+                        key={order._id}
+                        style={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '16px',
+                            transition: 'all 0.2s'
+                        }}
                     >
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="font-bold text-gray-900 dark:text-white text-sm">
-                                        #{formatOrderNumber()}
-                                    </span>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
-                                        {t(order.status) || order.status}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-                                    <span className="flex items-center gap-1">
-                                        <Clock size={11} />
-                                        {format(new Date(order.createdAt), 'HH:mm · dd/MM/yy')}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Package size={11} />
-                                        {order.items?.length || 0} {t('items') || 'itens'}
-                                    </span>
-                                </div>
-                                {expandedOrder !== order._id && (
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-1 flex items-center gap-0.5">
-                                        <ChevronDown size={10} />
-                                        {t('tap_to_expand') || 'Toque para ver detalhes'}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                <div className="text-right">
-                                    <div className="font-bold text-lg text-gray-900 dark:text-white">
-                                        {convertAndFormat(order.total, order.currency)}
+                        {/* Order Header - clickable to expand */}
+                        <div
+                            style={{ padding: '8px 0', cursor: 'pointer', userSelect: 'none' }}
+                            onClick={() => toggleOrderExpand(order._id)}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                                        <span style={{ fontWeight: '900', color: '#0f172a', fontSize: '15px' }}>
+                                            #{formatOrderNumber(order.orderNumber)}
+                                        </span>
+                                        <span style={{ 
+                                            padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: '800', 
+                                            backgroundColor: statusStyle.bg, color: statusStyle.text, textTransform: 'capitalize'
+                                        }}>
+                                            {t(order.status) || order.status}
+                                        </span>
                                     </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Clock size={12} />
+                                            {format(new Date(order.createdAt), 'HH:mm · dd/MM/yy')}
+                                        </span>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Package size={12} />
+                                            {order.items?.length || 0} {t('items') || 'Items'}
+                                        </span>
+                                    </div>
+                                    {!isExpanded && (
+                                        <p style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                                            <ChevronDown size={12} />
+                                            {t('tap_to_expand') || 'Tap to see details'}
+                                        </p>
+                                    )}
                                 </div>
-                                {expandedOrder === order._id ? (
-                                    <ChevronUp size={20} className="text-gray-400" />
-                                ) : (
-                                    <ChevronDown size={20} className="text-gray-400" />
-                                )}
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontWeight: '900', fontSize: '18px', color: '#0f172a' }}>
+                                            {convertAndFormat(order.total, order.currency)}
+                                        </div>
+                                    </div>
+                                    {isExpanded ? (
+                                        <ChevronUp size={20} color="#cbd5e1" />
+                                    ) : (
+                                        <ChevronDown size={20} color="#cbd5e1" />
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Expanded Details */}
-                    {expandedOrder === order._id && (
-                        <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
-                            <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-3">
-                                {t('order_items') || 'Itens do Pedido'}
-                            </h4>
-                            <div className="space-y-2">
-                                {order.items?.map((item, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="flex justify-between items-center text-sm"
-                                    >
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <span className="font-semibold text-primary-600 dark:text-primary-400">
-                                                {item.qty}x
-                                            </span>
-                                            <span className="text-gray-700 dark:text-gray-300">
-                                                {item.item?.name || 'Item'}
+                        {/* Expanded Details */}
+                        {isExpanded && (
+                            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {order.items?.map((item, idx) => (
+                                        <div
+                                            key={idx}
+                                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                                                <span style={{ fontWeight: '800', color: '#4f46e5' }}>
+                                                    {item.qty}x
+                                                </span>
+                                                <span style={{ color: '#475569', fontWeight: '600' }}>
+                                                    {item.item?.name || 'Item'}
+                                                </span>
+                                            </div>
+                                            <span style={{ fontWeight: '700', color: '#0f172a' }}>
+                                                {convertAndFormat((item.item?.price || 0) * item.qty, order.currency || item.item?.currency)}
                                             </span>
                                         </div>
-                                        <span className="font-medium text-gray-900 dark:text-white">
-                                            {convertAndFormat((item.item?.price || 0) * item.qty, order.currency || item.item?.currency)}
+                                    ))}
+                                </div>
+
+                                {/* Order Summary */}
+                                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                                        <span style={{ color: '#64748b', fontWeight: '600' }}>{t('subtotal') || 'Subtotal'}</span>
+                                        <span style={{ fontWeight: '700', color: '#0f172a' }}>
+                                            {convertAndFormat(order.subtotal, order.currency)}
                                         </span>
                                     </div>
-                                ))}
-                            </div>
-
-                            {/* Order Summary */}
-                            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600 dark:text-gray-400">{t('subtotal') || 'Subtotal'}</span>
-                                    <span className="font-medium text-gray-900 dark:text-white">
-                                        {convertAndFormat(order.subtotal, order.currency)}
-                                    </span>
-                                </div>
-                                {order.tax > 0 && (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600 dark:text-gray-400">{t('tax') || 'Taxa'}</span>
-                                        <span className="font-medium text-gray-900 dark:text-white">
-                                            {convertAndFormat(order.tax, order.currency)}
+                                    {order.tax > 0 && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                                            <span style={{ color: '#64748b', fontWeight: '600' }}>{t('tax') || 'Tax'}</span>
+                                            <span style={{ fontWeight: '700', color: '#0f172a' }}>
+                                                {convertAndFormat(order.tax, order.currency)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {order.discount > 0 && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#16a34a' }}>
+                                            <span style={{ fontWeight: '600' }}>{t('discount') || 'Discount'}</span>
+                                            <span style={{ fontWeight: '700' }}>-{convertAndFormat(order.discount, order.currency)}</span>
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '900', paddingTop: '12px', borderTop: '1px solid #f1f5f9', marginTop: '4px' }}>
+                                        <span style={{ color: '#0f172a' }}>{t('total') || 'Total'}</span>
+                                        <span style={{ color: '#0f172a' }}>
+                                            {convertAndFormat(order.total, order.currency)}
                                         </span>
                                     </div>
-                                )}
-                                {order.discount > 0 && (
-                                    <div className="flex justify-between text-sm text-green-600">
-                                        <span>{t('discount') || 'Desconto'}</span>
-                                         <span className="font-medium">-{convertAndFormat(order.discount, order.currency)}</span>
-                                    </div>
-                                )}
-                                <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <span className="text-gray-900 dark:text-white">{t('total') || 'Total'}</span>
-                                     <span className="text-gray-900 dark:text-white">
-                                        {convertAndFormat(order.total, order.currency)}
-                                    </span>
                                 </div>
                             </div>
-
-                            {/* Customer Info */}
-                            {order.customerName && (
-                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                                        <span className="font-semibold">{t('customer') || 'Cliente'}:</span> {order.customerName}
-                                        {order.phone && <span> • {order.phone}</span>}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            ))}
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 };

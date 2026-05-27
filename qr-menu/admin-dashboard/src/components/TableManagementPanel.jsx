@@ -70,101 +70,123 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-50 flex flex-col items-center p-4 sm:p-6 overflow-y-auto animate-fade-in-fast"
+            style={{
+                position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px', overflowY: 'auto'
+            }}
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-slide-up-fast my-auto"
-                style={{ maxHeight: '90vh', background: 'var(--surface)', flexShrink: 0 }}>
-
-                {/* ── Header ── */}
-                <div className={`${cfg.light} px-5 py-3 flex items-center justify-between flex-shrink-0 border-b border-white/20`}>
-                    <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-lg ${cfg.bg} text-white flex items-center justify-center font-black text-base shadow-lg`}>
+            <div 
+                style={{
+                    backgroundColor: '#ffffff', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                    margin: 'auto', flexShrink: 0
+                }}
+            >
+                {/* Header */}
+                <div style={{ backgroundColor: cfg.light, padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                        <div style={{
+                            width: '52px', height: '52px', borderRadius: '12px', backgroundColor: cfg.bg, color: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '900',
+                            boxShadow: `0 8px 16px ${cfg.bg}40`
+                        }}>
                             {table?.number}
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-xl font-900 text-gray-900 dark:text-white tracking-tight">
-                                    {t('table') || 'Mesa'} {table?.number}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <h2 style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', margin: 0, lineHeight: 1 }}>
+                                    {t('table', 'Table')} {table?.number}
                                 </h2>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-900 uppercase tracking-wider ${cfg.light} ${cfg.text}`}>
-                                    {t(table?.status) || table?.status}
+                                <span style={{ fontSize: '11px', fontWeight: '800', color: cfg.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    {t(table?.status)}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-3 mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px', fontSize: '13px', fontWeight: '600', color: '#64748b' }}>
                                 {table?.location && (
-                                    <span className="flex items-center gap-1"><MapPin size={12} />{table.location}</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} />{table.location}</span>
                                 )}
                                 {table?.capacity && (
-                                    <span className="flex items-center gap-1"><Users size={12} />{table.capacity} {t('seats')}</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} />{table.capacity} {t('seats', 'Seats')}</span>
                                 )}
                             </div>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                    >
-                        <X size={24} />
+                    
+                    <button onClick={onClose} style={{
+                        background: '#fff', border: '1px solid #e2e8f0', borderRadius: '50%', width: '40px', height: '40px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                    }}>
+                        <X size={20} />
                     </button>
                 </div>
 
-                {/* ── Create Order CTA ── */}
-                <div className="px-5 pt-3 pb-2 flex-shrink-0">
+                {/* Create Order CTA */}
+                <div style={{ padding: '24px 24px 16px 24px' }}>
                     <button
                         onClick={handleCreateOrder}
-                        className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 px-5 rounded-xl font-800 text-sm shadow-premium flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                        style={{
+                            width: '100%', backgroundColor: '#4f46e5', color: '#ffffff', border: 'none', padding: '16px',
+                            borderRadius: '12px', fontSize: '15px', fontWeight: '800', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 8px 16px rgba(79, 70, 229, 0.25)'
+                        }}
                     >
                         <Plus size={20} strokeWidth={3} />
-                        {t('create_new_order') || 'Criar Novo Pedido'}
+                        {t('create_new_order') || 'Create New Order'}
                     </button>
                 </div>
 
-                {/* ── Tabs ── */}
-                <div className="flex border-b border-gray-100 dark:border-gray-800 mx-6 flex-shrink-0">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 py-4 px-4 flex items-center justify-center gap-2 text-sm font-bold transition-all relative
-                                ${activeTab === tab.id
-                                    ? 'text-primary-600'
-                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-                        >
-                            <tab.icon size={18} strokeWidth={2.5} />
-                            {tab.label}
-                            {activeTab === tab.id && (
-                                <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary-600 rounded-full" />
-                            )}
-                        </button>
-                    ))}
+                {/* Tabs */}
+                <div style={{ display: 'flex', padding: '0 24px', borderBottom: '2px solid #f1f5f9', gap: '24px' }}>
+                    {tabs.map(tab => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                style={{
+                                    flex: 1, padding: '16px 0', border: 'none', background: 'transparent', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    fontSize: '14px', fontWeight: '800', color: isActive ? '#4f46e5' : '#94a3b8',
+                                    borderBottom: isActive ? '3px solid #4f46e5' : '3px solid transparent',
+                                    marginBottom: '-2px', transition: 'all 0.2s'
+                                }}
+                            >
+                                <tab.icon size={18} strokeWidth={2.5} />
+                                {tab.label}
+                            </button>
+                        );
+                    })}
                 </div>
 
-                {/* ── Tab Content (scrollable) ── */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {/* Tab Content (scrollable) */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '24px', backgroundColor: '#ffffff' }}>
                     {activeTab === 'history' && (
-                        <div className="p-5">
-                            <p className="text-[10px] font-700 text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                <ArrowRight size={12} />
+                        <div>
+                            <p style={{
+                                fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase',
+                                letterSpacing: '0.05em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px'
+                            }}>
+                                <ArrowRight size={14} />
                                 {t('tap_order_details')}
                             </p>
                             <TableOrderHistory tableId={table._id} />
                         </div>
                     )}
-
                     {activeTab === 'status' && (
-                        <div className="p-5 space-y-5">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <TableStatusSelector
                                 table={table}
                                 onStatusUpdate={handleStatusUpdate}
                             />
 
                             {/* Info card */}
-                            <div className="glass-card p-5">
-                                <h4 className="text-[10px] font-900 text-gray-400 uppercase tracking-widest mb-4">
+                            <div style={{ padding: '20px', backgroundColor: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                                <h4 style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px' }}>
                                     {t('table_information') || 'Informações da Mesa'}
                                 </h4>
-                                <div className="space-y-3.5 text-sm">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px' }}>
                                     {[
                                         { label: t('table_number'), value: `Mesa ${table.number}` },
                                         table.status === 'occupied' && { label: t('occupation_time', 'Tempo de Ocupação'), value: (table.lastStatusChange || table.updatedAt) ? formatDistanceToNow(new Date(table.lastStatusChange || table.updatedAt), { locale: pt }) : '-' },
