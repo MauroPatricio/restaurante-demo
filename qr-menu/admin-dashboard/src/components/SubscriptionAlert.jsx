@@ -19,15 +19,13 @@ export default function SubscriptionAlert({ subscription }) {
 
         let shouldShow = false;
 
-        // Verifica se o utilizador já fechou o alerta nesta sessão de navegação
-        const isDismissed = sessionStorage.getItem('subscriptionAlertDismissed') === 'true';
-
+        // Mostrar o alerta sempre que a página for recarregada (refresh) para garantir a visibilidade
         if (subscription.status === 'expired') {
-            shouldShow = true; // Mostrar sempre se estiver expirado, ignorar o facto de ter sido fechado
-        } else if (isTrial && !isDismissed) {
-            shouldShow = true; // Mostrar trial se ainda não foi fechado
-        } else if (daysRemaining <= 7 && !isDismissed) {
-            shouldShow = true; // Mostrar a expirar se ainda não foi fechado
+            shouldShow = true; // Mostrar sempre se estiver expirado
+        } else if (isTrial) {
+            shouldShow = true; // Mostrar trial
+        } else if (daysRemaining <= 7) {
+            shouldShow = true; // Mostrar a expirar
         }
 
         setIsVisible(shouldShow);
@@ -93,7 +91,6 @@ export default function SubscriptionAlert({ subscription }) {
 
     const handleClose = () => {
         setIsVisible(false);
-        sessionStorage.setItem('subscriptionAlertDismissed', 'true');
     };
 
     // Styles configuration - Banner style

@@ -41,6 +41,7 @@ function OrderCard({ order, onStatusChange, t, user, convertAndFormat, onClick }
     return (
         <motion.div 
             layout
+            layoutId={order._id}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ y: -4, boxShadow: '0 12px 20px -8px rgba(0,0,0,0.1)' }}

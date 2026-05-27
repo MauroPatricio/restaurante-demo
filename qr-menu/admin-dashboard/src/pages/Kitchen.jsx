@@ -384,6 +384,7 @@ const Kitchen = () => {
                                 {config.items.map(order => (
                                     <motion.div
                                         layout
+                                        layoutId={order._id}
                                         key={order._id}
                                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                         animate={{ opacity: 1, scale: 1, y: 0 }}

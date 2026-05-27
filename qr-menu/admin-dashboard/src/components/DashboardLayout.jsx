@@ -435,13 +435,15 @@ export default function DashboardLayout() {
                     marginTop: !isBackendConnected ? '48px' : '0'
                 }}
             >
-                {/* Subscription Expiration Alert (Global Position) */}
-                {subscription && !isBlocked && (
-                    <SubscriptionAlert subscription={subscription} />
-                )}
+                {/* Sticky Top Container for Banner and Header */}
+                <div style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', flexDirection: 'column' }}>
+                    {/* Subscription Expiration Alert (Global Position) */}
+                    {subscription && !isBlocked && (
+                        <SubscriptionAlert subscription={subscription} />
+                    )}
 
-                {/* Header */}
-                <header className="header">
+                    {/* Header */}
+                    <header className="header" style={{ position: 'relative', zIndex: 40, top: 'auto' }}>
                     <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <button
                             onClick={toggleSidebar}
@@ -501,6 +503,7 @@ export default function DashboardLayout() {
                         </div>
                     </div>
                 </header>
+                </div>
 
                 {/* Page Content */}
                 <main className="page-content animate-fade-in">
