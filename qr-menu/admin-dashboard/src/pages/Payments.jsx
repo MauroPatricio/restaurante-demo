@@ -162,7 +162,7 @@ export default function Payments() {
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                             {filteredOrders.map(order => (
                                 <tr key={order._id} className="group hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors">
-                                    <td className="px-6 py-4 font-mono text-xs font-bold text-gray-500">#{order._id.slice(-6).toUpperCase()}</td>
+                                    <td className="px-6 py-4 font-mono text-xs font-bold text-gray-500">#{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
                                     <td className="px-6 py-4 text-sm font-medium text-gray-600 dark:text-gray-300">
                                         {format(new Date(order.createdAt), 'PP p')}
                                     </td>
@@ -220,7 +220,7 @@ export default function Payments() {
                         <div key={order._id} className="bg-white dark:bg-gray-800 p-5 rounded-[28px] shadow-sm border-2 border-gray-100 dark:border-gray-700">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-gray-400 tracking-[0.2em] mb-1 uppercase">TXN-#{order._id.slice(-6).toUpperCase()}</span>
+                                    <span className="text-[10px] font-black text-gray-400 tracking-[0.2em] mb-1 uppercase">TXN-#{order.orderNumber || order._id.slice(-6).toUpperCase()}</span>
                                     <h3 className="text-base font-black text-gray-900 dark:text-white uppercase leading-tight">{order.customerName || t('walk_in')}</h3>
                                     <span className="text-xs font-bold text-gray-400 mt-0.5">{format(new Date(order.createdAt), 'dd MMM, HH:mm')}</span>
                                 </div>
@@ -284,7 +284,7 @@ export default function Payments() {
                         <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
                             <div>
                                 <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">{t('verify_receipt')}</h3>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">#{selectedOrder._id.slice(-6).toUpperCase()}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">#{selectedOrder.orderNumber || selectedOrder._id.slice(-6).toUpperCase()}</p>
                             </div>
                             <button onClick={() => setShowVerifyModal(false)} className="h-10 w-10 flex items-center justify-center bg-white dark:bg-gray-800 rounded-xl text-gray-400 hover:text-gray-600 transition-colors shadow-sm">
                                 <XCircle size={24} />

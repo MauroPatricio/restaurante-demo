@@ -225,10 +225,13 @@ export const processOrderCreation = async ({
     const { minTime } = await calculateDynamicPrepTime(maxEta, restaurantId);
     const estimatedReadyTime = new Date(Date.now() + minTime * 60 * 1000);
 
+    const orderNumber = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+
     const newOrder = await Order.create({
         restaurant: restaurantId,
         table: tableId,
         tableSession: session._id,
+        orderNumber,
         tableNumber: table.number,
         orderType,
         items: populatedItems,

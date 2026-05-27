@@ -141,8 +141,13 @@ export default function WaiterDashboard() {
 
     const fetchRecentOrders = async () => {
         try {
-            const { data } = await orderAPI.getAll(restaurantId, { limit: 50 }, { background: true });
-            setRecentOrders(Array.isArray(data?.orders) ? data.orders : []);
+            const statuses = ['pending', 'confirmed', 'preparing', 'almost_ready', 'ready'];
+            const requests = statuses.map(status =>
+                orderAPI.getAll(restaurantId, { status }, { background: true })
+            );
+            const responses = await Promise.all(requests);
+            const allActive = responses.flatMap(r => r.data?.orders || []);
+            setRecentOrders(allActive);
         } catch (error) {
             setRecentOrders([]);
         }
@@ -430,9 +435,29 @@ export default function WaiterDashboard() {
                         <div className="premium-tables-grid">
                             {tables
                                 .filter(t => statusFilter === 'all' || (t.status || 'free') === statusFilter)
+                                .sort((a, b) => {
+                                    const getStatusWeight = (status) => {
+                                        if (status === 'occupied') return 1;
+                                        if (status === 'cleaning' || status === 'reserved') return 2;
+                                        return 3;
+                                    };
+                                    const weightA = getStatusWeight(a.status || 'free');
+                                    const weightB = getStatusWeight(b.status || 'free');
+                                    if (weightA !== weightB) return weightA - weightB;
+                                    return 0;
+                                })
                                 .map(table => {
                                     const status = table.status || 'free';
                                     const StatusIcon = status === 'occupied' ? Users : status === 'reserved' ? Clock : status === 'cleaning' ? Coffee : CheckCircle;
+
+                                    const tableActiveOrder = status === 'occupied' 
+                                        ? recentOrders.find(o => 
+                                            (String(o.tableNumber) === String(table.number) || o.table?._id === table._id || o.table === table._id)
+                                            && o.status !== 'completed' && o.status !== 'cancelled'
+                                        ) 
+                                        : null;
+                                        
+                                    const orderCode = tableActiveOrder ? (tableActiveOrder.orderNumber || tableActiveOrder._id.slice(-6).toUpperCase()) : null;
 
                                     return (
                                         <div
@@ -446,8 +471,19 @@ export default function WaiterDashboard() {
                                             onDragEnter={handleDragEnter}
                                             onDragLeave={handleDragLeave}
                                             onDrop={(e) => handleDrop(e, table._id)}
+                                            style={{ position: 'relative' }}
                                         >
-                                            <div className="card-top">
+                                            {status === 'occupied' && (
+                                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '8px 12px' }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#64748b' }}>#{orderCode || '...'}</span>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Clock size={12} />
+                                                        {table.lastStatusChange || table.updatedAt ? formatDistanceToNow(new Date(table.lastStatusChange || table.updatedAt), { locale: pt }) : ''}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <div className="card-top" style={{ marginTop: status === 'occupied' ? '12px' : '0' }}>
                                                 <span className="table-number-large">
                                                     {table.number < 10 ? `0${table.number}` : table.number}
                                                 </span>
@@ -456,17 +492,10 @@ export default function WaiterDashboard() {
                                             
                                             <div className="card-middle">
                                                 <div className="capacity-info">
-                                                    {status === 'occupied' && (table.lastStatusChange || table.updatedAt) ? (
-                                                        <>
-                                                            <Clock size={14} />
-                                                            <span>{formatDistanceToNow(new Date(table.lastStatusChange || table.updatedAt), { locale: pt })}</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Users size={14} />
-                                                            <span>{table.capacity || 4} lugares</span>
-                                                        </>
-                                                    )}
+                                                    <>
+                                                        <Users size={14} />
+                                                        <span>{table.capacity || 4} lugares</span>
+                                                    </>
                                                 </div>
                                                 <div className="card-status-icon">
                                                     <StatusIcon size={20} />

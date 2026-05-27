@@ -233,7 +233,7 @@ const ManagerDashboard = () => {
                     <tbody>
                         {recentOrders.map(order => (
                             <tr key={order._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '16px 0', fontWeight: '600', color: '#1e293b' }}>#{order._id.slice(-6).toUpperCase()}</td>
+                                <td style={{ padding: '16px 0', fontWeight: '600', color: '#1e293b' }}>#{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
                                 <td style={{ color: '#64748b' }}>{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                                 <td>
                                     <span style={{

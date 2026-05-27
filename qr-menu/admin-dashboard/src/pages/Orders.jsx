@@ -93,9 +93,12 @@ export default function Orders() {
 
     const updateOrderStatus = async (orderId, newStatus) => {
         try {
-            setOrders(prev => prev.map(o =>
-                o._id === orderId ? { ...o, status: newStatus } : o
-            ));
+            setOrders(prev => {
+                if (filter !== 'all' && newStatus !== filter) {
+                    return prev.filter(o => o._id !== orderId);
+                }
+                return prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o);
+            });
             await orderAPI.updateStatus(orderId, newStatus);
         } catch (error) {
             console.error('Failed to update order:', error);
@@ -180,7 +183,7 @@ export default function Orders() {
                                             key={order._id}
                                             className={`order-row ${newOrderIds.has(order._id) ? 'new-highlight' : ''}`}
                                         >
-                                            <td className="order-id-cell">#{order._id.slice(-6).toUpperCase()}</td>
+                                            <td className="order-id-cell">#{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
                                             <td className="text-sm font-700 text-gray-500">
                                                 <div className="flex items-center gap-2">
                                                     <Clock size={14} className="text-gray-300" />
@@ -262,7 +265,7 @@ export default function Orders() {
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <span className="text-[10px] font-900 text-gray-300 uppercase tracking-widest mb-1 block">#{order._id.slice(-6).toUpperCase()}</span>
+                                        <span className="text-[10px] font-900 text-gray-300 uppercase tracking-widest mb-1 block">#{order.orderNumber || order._id.slice(-6).toUpperCase()}</span>
                                         <h3 className="text-lg font-900 text-gray-900 uppercase">{order.customerName || t('guest')}</h3>
                                         <p className="text-xs font-700 text-gray-400">{order.phone}</p>
                                     </div>
