@@ -56,10 +56,10 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
     };
 
     const statusConfig = {
-        free: { bg: 'bg-green-500', light: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-800' },
-        occupied: { bg: 'bg-red-500', light: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-300', border: 'border-red-200 dark:border-red-800' },
-        reserved: { bg: 'bg-purple-500', light: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800' },
-        cleaning: { bg: 'bg-blue-500', light: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
+        free: { bg: '#22c55e', light: '#dcfce7', text: '#15803d', border: '#bbf7d0' },
+        occupied: { bg: '#ef4444', light: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
+        reserved: { bg: '#a855f7', light: '#f3e8ff', text: '#7e22ce', border: '#e9d5ff' },
+        cleaning: { bg: '#3b82f6', light: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe' },
     };
     const cfg = statusConfig[table?.status] || statusConfig.free;
 
@@ -72,7 +72,7 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
         <div
             style={{
                 position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-                zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px', overflowY: 'auto'
+                zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
             }}
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
@@ -80,8 +80,9 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
                 style={{
                     backgroundColor: '#ffffff', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                     width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                    margin: 'auto', flexShrink: 0
+                    maxHeight: 'calc(100vh - 48px)', flexShrink: 0
                 }}
+                onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div style={{ backgroundColor: cfg.light, padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
