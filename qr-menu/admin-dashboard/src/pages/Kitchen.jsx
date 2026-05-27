@@ -5,6 +5,7 @@ import { analyticsAPI } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useSound } from '../hooks/useSound';
+import { formatOrderNumber } from '../utils/orderUtils';
 import { 
     Clock, CheckCircle, AlertCircle, ChefHat, TrendingUp, Users, 
     Utensils, Volume2, VolumeX, XCircle, Coffee, Wifi, WifiOff, Power,
@@ -301,7 +302,7 @@ const Kitchen = () => {
                         <div className="flex gap-4 flex-wrap">
                             {cancelledOrders.map(order => (
                                 <div key={order._id} className="bg-white px-4 py-2 rounded-xl shadow-sm border border-red-100 flex items-center gap-3">
-                                    <span className="font-900 text-red-500 line-through">#{order.orderNumber || order._id.substr(-4)}</span>
+                                    <span className="font-900 text-red-500 line-through">#{formatOrderNumber(order)}</span>
                                     <span className="text-xs font-700 text-gray-500">Mesa {order.tableNumber || '?'}</span>
                                 </div>
                             ))}
@@ -395,7 +396,7 @@ const Kitchen = () => {
                                         <div className="order-card-header">
                                             <div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="order-number">#{order.orderNumber || (order._id ? order._id.substr(-5).toUpperCase() : '----')}</span>
+                                                    <span className="order-number">#{formatOrderNumber(order)}</span>
                                                     <div className="order-table-badge">
                                                         {order.orderType === 'room-service' 
                                                             ? `🛏️ Quarto ${order.roomService?.roomNumber || '—'}` 

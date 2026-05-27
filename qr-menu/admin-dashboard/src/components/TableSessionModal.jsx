@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { getCurrencySymbol } from '../utils/currencyUtils';
 import '../styles/TableSessionModal.css';
+import { formatOrderNumber } from '../utils/orderUtils';
 
 export default function TableSessionModal({
     table,

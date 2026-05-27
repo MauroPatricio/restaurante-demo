@@ -192,17 +192,15 @@ export default function SubscriptionAlert({ subscription }) {
                 >
                     {t('view_details', 'Ver Detalhes')}
                 </button>
-                {config.type !== 'critical' && (
-                    <button
-                        onClick={handleClose}
-                        style={styles.closeButton}
-                        title={t('close', 'Fechar')}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                    >
-                        <X size={16} />
-                    </button>
-                )}
+                <button
+                    onClick={handleClose}
+                    style={styles.closeButton}
+                    title={t('close', 'Fechar')}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                >
+                    <X size={16} />
+                </button>
             </div>
         </div>
     );

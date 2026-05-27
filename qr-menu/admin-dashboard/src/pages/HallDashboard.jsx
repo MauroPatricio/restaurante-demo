@@ -12,6 +12,7 @@ import { analyticsAPI, tableAPI, waiterCallAPI } from '../services/api';
 import TableGridMap from '../components/TableGridMap';
 import TableDetailsModal from '../components/TableDetailsModal';
 import TableSessionModal from '../components/TableSessionModal';
+import { formatOrderNumber } from '../utils/orderUtils';
 
 const KpiCard = ({ title, value, subValue, icon: Icon, color, trend }) => (
     <div style={{
@@ -199,24 +200,8 @@ export default function HallDashboard() {
             setActiveCalls(prev => prev.filter(c => c._id !== callId));
         };
 
-        const handleTableStatusUpdate = (update) => {
-            setData(prev => {
-                const tableIndex = prev.tables.findIndex(t => t._id === update.tableId);
-                if (tableIndex === -1) return prev;
-
-                const newTables = [...prev.tables];
-                newTables[tableIndex] = { ...newTables[tableIndex], status: update.status };
-
-                // Update selectedTable if it's the one that was updated
-                setSelectedTable(current => {
-                    if (current && current._id === update.tableId) {
-                        return { ...current, status: update.status };
-                    }
-                    return current;
-                });
-
-                return { ...prev, tables: newTables };
-            });
+        const handleTableStatusUpdate = () => {
+            fetchHallData();
         };
 
         socket.on('waiter:call', handleNewCall);

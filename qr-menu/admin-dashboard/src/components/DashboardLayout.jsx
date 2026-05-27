@@ -133,13 +133,7 @@ export default function DashboardLayout() {
         try { localStorage.setItem('sidebar_open', String(next)); } catch {}
         return next;
     });
-    // Only close on mobile (overlay tap) — never auto-close on navigation
-    const closeSidebarMobile = () => {
-        if (window.innerWidth < 1024) {
-            setSidebarOpen(false);
-            try { localStorage.setItem('sidebar_open', 'false'); } catch {}
-        }
-    };
+    // Sidebar no longer auto-closes based on user request
 
     // Check if user is Owner or Manager
     const isOwnerOrManager = user?.role?.name === 'Owner' || user?.role?.name === 'Manager' || user?.role?.isSystem;
@@ -316,7 +310,6 @@ export default function DashboardLayout() {
             <div
                 className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
                 style={{ top: `${bannerOffset}px` }}
-                onClick={closeSidebarMobile}
             />
 
             {/* Sidebar */}
@@ -391,9 +384,6 @@ export default function DashboardLayout() {
                                             key={item.path}
                                             to={item.path}
                                             onClick={() => {
-                                                // On mobile: close sidebar after navigation
-                                                // On desktop: keep sidebar open (persistent)
-                                                closeSidebarMobile();
                                                 // Stop ringing for orders
                                                 if (isOrders) stopRinging();
                                             }}

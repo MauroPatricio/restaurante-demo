@@ -23,9 +23,10 @@ import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale/pt';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
-import TableSessionModal from '../components/TableSessionModal';
+import TableManagementPanel from '../components/TableManagementPanel';
 import '../styles/TableSessionModal.css';
 import './WaiterDashboard.css';
+import { formatOrderNumber } from '../utils/orderUtils';
 
 const KpiCard = ({ title, value, subValue, icon: Icon, iconClass, className }) => (
     <div className={`kpi-card ${className}`}>
@@ -219,13 +220,10 @@ export default function WaiterDashboard() {
                 removeCall(call._id || call.callId);
             }
 
-            const response = await tableAPI.getCurrentSession(table._id);
             setSelectedTable(table);
-            setSessionData(response.data);
             setShowSessionModal(true);
         } catch (error) {
-            console.error('Failed to fetch session:', error);
-            alert(t('failed_load_session'));
+            console.error('Failed to open table panel:', error);
         }
     };
 
@@ -457,7 +455,7 @@ export default function WaiterDashboard() {
                                         ) 
                                         : null;
                                         
-                                    const orderCode = tableActiveOrder ? (tableActiveOrder.orderNumber || tableActiveOrder._id.slice(-6).toUpperCase()) : null;
+                                    const orderCode = tableActiveOrder ? (formatOrderNumber()) : null;
 
                                     return (
                                         <div
@@ -516,15 +514,10 @@ export default function WaiterDashboard() {
                 </main>
             </div>
 
-            {showSessionModal && sessionData && (
-                <TableSessionModal
-                    table={sessionData.table}
-                    session={sessionData.session}
-                    orders={sessionData.orders}
-                    stats={sessionData.stats}
+            {showSessionModal && selectedTable && (
+                <TableManagementPanel
+                    table={selectedTable}
                     onClose={() => setShowSessionModal(false)}
-                    onFreeTable={handleFreeTable}
-                    canFree={['manager', 'waiter', 'owner'].includes(user?.role)}
                 />
             )}
         </div>

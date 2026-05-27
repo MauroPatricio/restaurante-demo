@@ -5,6 +5,38 @@ import { Link } from 'react-router-dom';
 const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
     const { t } = useTranslation();
 
+    const now = new Date();
+    const endDate = subscription ? new Date(subscription.currentPeriodEnd) : now;
+    const diffTime = endDate - now;
+    const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const getStatusTheme = () => {
+        if (!subscription || subscription.status === 'expired') {
+            return {
+                iconBg: '#fee2e2',
+                iconColor: '#dc2626',
+                messageKey: 'subscription_expired_message',
+                defaultMessage: 'The subscription period for this restaurant has expired. Renew now for 30 more days to continue using all features.'
+            };
+        } else if (subscription.status === 'trial') {
+            return {
+                iconBg: '#dbeafe',
+                iconColor: '#2563eb',
+                messageKey: 'subscription_expired_message_premium',
+                defaultMessage: 'Trial period is restricted for this feature. Renew now to use all features.'
+            };
+        } else {
+            return {
+                iconBg: '#fef3c7',
+                iconColor: '#d97706',
+                messageKey: 'subscription_expired_message_premium',
+                defaultMessage: 'Premium access is restricted. Renew your subscription to continue using premium features.'
+            };
+        }
+    };
+
+    const theme = getStatusTheme();
+
     const overlayStyle = {
         position: 'fixed',
         top: 0,
@@ -36,7 +68,7 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
         width: '80px',
         height: '80px',
         borderRadius: '50%',
-        backgroundColor: '#fee2e2',
+        backgroundColor: theme.iconBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -101,7 +133,7 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
         <div style={overlayStyle}>
             <div style={modalStyle}>
                 <div style={iconLocalContainerStyle}>
-                    <Lock size={40} color="#dc2626" />
+                    <Lock size={40} color={theme.iconColor} />
                 </div>
 
                 <h2 style={titleStyle}>
@@ -109,7 +141,7 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
                 </h2>
 
                 <p style={descriptionStyle}>
-                    {t('subscription_expired_message') || 'The subscription period for this restaurant has expired. Renew now for 30 more days to continue using all features.'}
+                    {t(theme.messageKey) || theme.defaultMessage}
                 </p>
 
                 <div style={buttonsContainerStyle}>

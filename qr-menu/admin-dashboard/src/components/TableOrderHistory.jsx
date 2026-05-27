@@ -5,6 +5,7 @@ import { tableAPI } from '../services/api';
 import { format } from 'date-fns';
 import { useSocket } from '../contexts/SocketContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { formatOrderNumber } from '../utils/orderUtils';
 
 const TableOrderHistory = ({ tableId }) => {
     const { t } = useTranslation();
@@ -107,7 +108,7 @@ const TableOrderHistory = ({ tableId }) => {
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <span className="font-bold text-gray-900 dark:text-white text-sm">
-                                        #{order.orderNumber || order._id.slice(-6).toUpperCase()}
+                                        #{formatOrderNumber()}
                                     </span>
                                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
                                         {t(order.status) || order.status}

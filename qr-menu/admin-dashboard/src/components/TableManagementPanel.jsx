@@ -20,8 +20,14 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
         if (!socket || !table?._id) return;
 
         const handleTableStatusUpdate = (data) => {
-            if (data.tableId === table._id) {
-                setTable(prev => ({ ...prev, status: data.status, lastStatusChange: data.timestamp }));
+            const incomingTableId = data.table?._id || data.tableId;
+            if (incomingTableId === table._id) {
+                setTable(prev => ({ 
+                    ...prev, 
+                    ...(data.table || {}),
+                    status: data.table?.status || data.status, 
+                    lastStatusChange: data.timestamp 
+                }));
             }
         };
 
@@ -64,11 +70,11 @@ const TableManagementPanel = ({ table: initialTable, onClose }) => {
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in-fast"
+            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-50 flex flex-col items-center p-4 sm:p-6 overflow-y-auto animate-fade-in-fast"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-slide-up-fast"
-                style={{ maxHeight: '85vh', background: 'var(--surface)' }}>
+            <div className="glass-panel rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-slide-up-fast my-auto"
+                style={{ maxHeight: '90vh', background: 'var(--surface)', flexShrink: 0 }}>
 
                 {/* ── Header ── */}
                 <div className={`${cfg.light} px-5 py-3 flex items-center justify-between flex-shrink-0 border-b border-white/20`}>
