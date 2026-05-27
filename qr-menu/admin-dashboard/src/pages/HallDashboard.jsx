@@ -10,8 +10,7 @@ import { useSocket } from '../contexts/SocketContext';
 import { useTranslation } from 'react-i18next';
 import { analyticsAPI, tableAPI, waiterCallAPI } from '../services/api';
 import TableGridMap from '../components/TableGridMap';
-import TableDetailsModal from '../components/TableDetailsModal';
-import TableSessionModal from '../components/TableSessionModal';
+import TableManagementPanel from '../components/TableManagementPanel';
 import { formatOrderNumber } from '../utils/orderUtils';
 
 const KpiCard = ({ title, value, subValue, icon: Icon, color, trend }) => (
@@ -138,13 +137,11 @@ export default function HallDashboard() {
     const [data, setData] = useState({ summary: {}, tables: [] });
     const [loading, setLoading] = useState(true);
     const [isCallsModalOpen, setIsCallsModalOpen] = useState(false);
-    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [showPanel, setShowPanel] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [viewType, setViewType] = useState('grid');
-    const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
-    const [sessionData, setSessionData] = useState(null);
 
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
@@ -261,29 +258,13 @@ export default function HallDashboard() {
 
     const handleOpenDetails = async (table) => {
         setSelectedTable(table);
-        
-        if (table.status === 'occupied') {
-            try {
-                const response = await tableAPI.getCurrentSession(table._id);
-                if (response.data && response.data.success) {
-                    setSessionData(response.data);
-                    setIsSessionModalOpen(true);
-                } else {
-                    setIsDetailsModalOpen(true);
-                }
-            } catch (error) {
-                console.error('Failed to fetch session details:', error);
-                setIsDetailsModalOpen(true);
-            }
-        } else {
-            setIsDetailsModalOpen(true);
-        }
+        setShowPanel(true);
     };
 
     const handleFreeTable = async (tableId) => {
         try {
             await tableAPI.updateStatus(tableId, 'free');
-            setIsSessionModalOpen(false);
+            setShowPanel(false);
             fetchHallData();
         } catch (error) {
             console.error('Failed to free table:', error);
@@ -641,33 +622,13 @@ export default function HallDashboard() {
                 </div>
             )}
 
-            {isSessionModalOpen && selectedTable && (
-                <TableSessionModal 
-                    onClose={() => setIsSessionModalOpen(false)}
+            {showPanel && selectedTable && (
+                <TableManagementPanel 
                     table={selectedTable}
-                    session={sessionData?.session}
-                    orders={sessionData?.orders}
-                    stats={sessionData?.stats}
-                    canFree={true}
-                    onFreeTable={handleFreeTable}
-                    onUpdateStatus={(tableId, status) => {
-                        tableAPI.updateStatus(tableId, status).then(() => fetchHallData());
+                    onClose={() => {
+                        setShowPanel(false);
+                        fetchHallData();
                     }}
-                    onRefresh={() => {
-                        if (selectedTable) {
-                            handleOpenDetails(selectedTable);
-                            fetchHallData();
-                        }
-                    }}
-                />
-            )}
-
-            {isDetailsModalOpen && selectedTable && (
-                <TableDetailsModal
-                    isOpen={isDetailsModalOpen}
-                    onClose={() => setIsDetailsModalOpen(false)}
-                    table={selectedTable}
-                    restaurantId={restaurantId}
                 />
             )}
         </div>

@@ -391,7 +391,7 @@ export default function DashboardLayout() {
                                         >
                                             <Icon size={20} />
                                             <span>{item.label}</span>
-                                            {item.isPremium && isExpiring && <Lock size={14} className="ml-auto text-orange-400" />}
+                                            {item.isPremium && isExpiring && <Lock size={18} strokeWidth={2.5} className="ml-auto text-orange-500" />}
                                             {isOrders && !isExpiring && (
                                                 <>
                                                     {item.orderSource === 'room' ? (
