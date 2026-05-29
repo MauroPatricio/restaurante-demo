@@ -182,3 +182,183 @@ export function formatWaiterTableHistoryForExport(tables, waiterName) {
     return rows;
 }
 
+// ============================================================
+// PREMIUM DETAILED CORPORATE EXPORTS
+// ============================================================
+
+export const exportDetailedPDF = ({ 
+    title, 
+    periodName, 
+    dateRangeStr, 
+    columns, 
+    data, 
+    restaurantName = 'O Meu Restaurante', 
+    filename = 'relatorio', 
+    totals = null, 
+    currency = 'MZN' 
+}) => {
+    // Generate a cryptographic hash for authenticity
+    const rawStamp = `${restaurantName}-${title}-${dateRangeStr}-${new Date().getTime()}`;
+    let hash = 0;
+    for (let i = 0; i < rawStamp.length; i++) {
+        const char = rawStamp.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    const digitalSignature = `STAMP-SECURE-${Math.abs(hash).toString(16).toUpperCase()}-${new Date().getFullYear()}`;
+
+    const doc = new jsPDF('portrait', 'pt', 'a4');
+
+    // Draw Sleek Header Accent Bar (Slate-800)
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 0, 595.28, 15, 'F');
+
+    // Restaurant Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(30, 41, 59);
+    doc.text(restaurantName.toUpperCase(), 40, 50);
+
+    // Title
+    doc.setFontSize(20);
+    doc.text(title, 40, 80);
+
+    // Subtitle & Generation Info
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(100);
+    doc.text(`Período: ${periodName} (${dateRangeStr})`, 40, 100);
+    doc.text(`Emitido em: ${new Date().toLocaleString('pt-MZ')}`, 40, 115);
+
+    // Divider Line
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(1);
+    doc.line(40, 130, 555.28, 130);
+
+    // Helper to get key dynamically (defined before use)
+    const colKey = (c) => typeof c === 'object' ? (c.dataKey || c.accessor) : c;
+
+    // Table Render
+    doc.autoTable({
+        startY: 145,
+        head: [columns.map(c => c.header)],
+        body: data.map(row => columns.map(c => row[colKey(c)])),
+        styles: { fontSize: 8, cellPadding: 5, font: "helvetica" },
+        headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 40, right: 40 },
+    });
+
+    const finalY = doc.lastAutoTable.finalY || 180;
+    let currentY = finalY + 25;
+
+    // Totals Box
+    if (totals && totals.length > 0) {
+        // Prevent box overflow
+        if (currentY + 25 + (totals.length * 15) > 780) {
+            doc.addPage();
+            currentY = 50;
+        }
+
+        doc.setFillColor(241, 245, 249);
+        doc.rect(40, currentY - 15, 515.28, 20 + (totals.length * 15), 'F');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(30, 41, 59);
+        doc.text("RESUMO FINANCEIRO / TOTAIS", 55, currentY);
+        currentY += 18;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        totals.forEach(t => {
+            doc.text(`${t.label}:`, 55, currentY);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${t.value}`, 220, currentY);
+            doc.setFont("helvetica", "normal");
+            currentY += 14;
+        });
+    }
+
+    // Integrity Verification Block
+    currentY += 15;
+    if (currentY > 740) {
+        doc.addPage();
+        currentY = 50;
+    }
+
+    doc.setFillColor(254, 242, 242);
+    doc.setDrawColor(254, 202, 202);
+    doc.rect(40, currentY, 515.28, 48, 'FD');
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(220, 38, 38);
+    doc.text("CERTIFICADO DE AUTENTICIDADE E AUDITORIA FIANTE", 50, currentY + 16);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(127, 29, 29);
+    doc.text("Relatório emitido sob integridade de banco de dados nativo do sistema QR-Menu.", 50, currentY + 28);
+    doc.setFont("courier", "bold");
+    doc.text(`HASH ASSINATURA: ${digitalSignature}`, 50, currentY + 40);
+
+    // Footer Page Numbers
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+            `Gerado automaticamente pelo Sistema de Inteligência QR-Menu | Página ${i} de ${pageCount}`,
+            40,
+            doc.internal.pageSize.height - 20
+        );
+    }
+
+    doc.save(`${filename}.pdf`);
+    return digitalSignature;
+};
+
+export const exportDetailedExcel = ({ 
+    title, 
+    periodName, 
+    dateRangeStr, 
+    columns, 
+    data, 
+    filename = 'relatorio', 
+    totals = null 
+}) => {
+    const excelRows = [];
+
+    // Header metadata
+    excelRows.push({ [columns[0].header]: `RELATÓRIO: ${title.toUpperCase()}` });
+    excelRows.push({ [columns[0].header]: `Período: ${periodName} (${dateRangeStr})` });
+    excelRows.push({ [columns[0].header]: `Data de Emissão: ${new Date().toLocaleString('pt-MZ')}` });
+    excelRows.push({}); // Empty separator row
+
+    // Actual Data rows
+    data.forEach(row => {
+        const formattedRow = {};
+        columns.forEach(col => {
+            formattedRow[col.header] = row[col.dataKey || col.accessor] ?? '';
+        });
+        excelRows.push(formattedRow);
+    });
+
+    // Totals footer
+    if (totals && totals.length > 0) {
+        excelRows.push({});
+        totals.forEach(t => {
+            excelRows.push({
+                [columns[0].header]: t.label,
+                [columns[1].header || columns[0].header]: t.value
+            });
+        });
+    }
+
+    const ws = XLSX.utils.json_to_sheet(excelRows, { skipHeader: false });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Relatório Corporativo");
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+};
+

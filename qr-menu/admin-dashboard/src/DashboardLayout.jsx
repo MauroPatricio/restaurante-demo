@@ -78,9 +78,17 @@ export default function DashboardLayout() {
     const [dismissedRenewalModal, setDismissedRenewalModal] = useState(false);
 
     // Blocking Logic
-    const isSubscriptionPage = location.pathname.includes('/subscription');
+    const allowedBlockedPaths = [
+        '/dashboard/subscription',
+        '/dashboard/waiter',
+        '/dashboard/kitchen',
+        '/dashboard/hall',
+        '/dashboard/orders',
+        '/dashboard/payments'
+    ];
+    const isAllowedPageUnderBlock = allowedBlockedPaths.some(path => location.pathname.startsWith(path));
     // Allow System Admin to bypass
-    const isSystemAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
+    const isSystemAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin' || user?.role?.name === 'Admin';
 
     // Determine user type for the blocker screen
     const userType = (['Owner', 'Admin'].includes(user?.role?.name || user?.role) || user?.role?.isOwner) ? 'owner' : 'staff';
@@ -88,10 +96,10 @@ export default function DashboardLayout() {
     // Show blocker if:
     // 1. Blocked (including expired)
     // 2. Not System Admin
-    // 3. Not on subscription page (so owners can pay) - OR if staff, always block
-    const showBlocker = isBlocked && !isSystemAdmin && (!isSubscriptionPage || userType === 'staff');
+    // 3. Not on an allowed page
+    const showBlocker = isBlocked && !isSystemAdmin && !isAllowedPageUnderBlock;
     const showRenewalModal = false; // Disabled as showBlocker now enforces mandatory block and directs to subscription page
-    const showExpiredBlockerForStaff = requiresRenewal && !isSystemAdmin && userType === 'staff';
+    const showExpiredBlockerForStaff = requiresRenewal && !isSystemAdmin && userType === 'staff' && !isAllowedPageUnderBlock;
     // Actually, if userType is staff, they can't pay, so block everywhere.
     // If owner, allow subscription page.
 
@@ -395,7 +403,7 @@ export default function DashboardLayout() {
                                     const shouldBlink = isOrders && isRinging;
 
                                     // Subscription lock check
-                                    const isBlockedFeature = isBlocked && !isSystemAdmin && item.path !== '/dashboard/subscription';
+                                    const isBlockedFeature = isBlocked && !isSystemAdmin && !allowedBlockedPaths.some(path => item.path.startsWith(path));
 
                                     return (
                                         <Link
