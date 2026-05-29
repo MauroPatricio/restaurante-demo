@@ -41,7 +41,8 @@ export default function CreateRestaurant() {
         street: '',
         number: '',
         neighborhood: '',
-        city: 'Maputo',
+        country: 'Moçambique',
+        province: '',
         phone: '',
         email: ''
     });
@@ -68,7 +69,8 @@ export default function CreateRestaurant() {
                 formData.street,
                 formData.number,
                 formData.neighborhood,
-                formData.city
+                formData.province,
+                formData.country
             ].filter(Boolean);
             const fullAddress = addressParts.join(', ');
 
@@ -203,27 +205,53 @@ export default function CreateRestaurant() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="city">{t('cr_city')}</label>
+                            <label htmlFor="country">{t('cr_country')}</label>
                             <select
-                                id="city"
-                                value={formData.city || 'Maputo'}
-                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                id="country"
+                                value={formData.country}
+                                onChange={(e) => setFormData({ ...formData, country: e.target.value, province: '' })}
                                 required
                             >
-                                <option value="Maputo">Maputo</option>
-                                <option value="Matola">Matola</option>
-                                <option value="Beira">Beira</option>
-                                <option value="Nampula">Nampula</option>
-                                <option value="Tete">Tete</option>
-                                <option value="Quelimane">Quelimane</option>
-                                <option value="Chimoio">Chimoio</option>
-                                <option value="Nacala">Nacala</option>
-                                <option value="Pemba">Pemba</option>
-                                <option value="Inhambane">Inhambane</option>
-                                <option value="Xai-Xai">Xai-Xai</option>
-                                <option value="Lichinga">Lichinga</option>
+                                <option value="Moçambique">Moçambique</option>
+                                <option value="Angola">Angola</option>
+                                <option value="África do Sul">África do Sul</option>
+                                <option value="Brasil">Brasil</option>
+                                <option value="Cabo Verde">Cabo Verde</option>
+                                <option value="Espanha">Espanha</option>
+                                <option value="Estados Unidos">Estados Unidos</option>
+                                <option value="França">França</option>
+                                <option value="Guiné-Bissau">Guiné-Bissau</option>
+                                <option value="Portugal">Portugal</option>
+                                <option value="Reino Unido">Reino Unido</option>
+                                <option value="São Tomé e Príncipe">São Tomé e Príncipe</option>
+                                <option value="Outro">{t('cr_other')}</option>
                             </select>
                         </div>
+
+                        {formData.country === 'Moçambique' && (
+                            <div className="form-group">
+                                <label htmlFor="province">{t('cr_province')}</label>
+                                <select
+                                    id="province"
+                                    value={formData.province}
+                                    onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                                    required
+                                >
+                                    <option value="" disabled>{t('cr_select_province')}</option>
+                                    <option value="Maputo Cidade">Maputo Cidade</option>
+                                    <option value="Maputo Província">Maputo Província</option>
+                                    <option value="Gaza">Gaza</option>
+                                    <option value="Inhambane">Inhambane</option>
+                                    <option value="Sofala">Sofala</option>
+                                    <option value="Manica">Manica</option>
+                                    <option value="Zambézia">Zambézia</option>
+                                    <option value="Tete">Tete</option>
+                                    <option value="Nampula">Nampula</option>
+                                    <option value="Cabo Delgado">Cabo Delgado</option>
+                                    <option value="Niassa">Niassa</option>
+                                </select>
+                            </div>
+                        )}
                         <div className="form-group">
                             <label htmlFor="phone">{t('cr_phone')}</label>
                             <input

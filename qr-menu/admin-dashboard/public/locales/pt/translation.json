@@ -1563,5 +1563,9 @@
   "cr_creating": "A criar...",
   "cr_submit": "Criar Restaurante",
   "cr_success_msg": "Restaurante criado com sucesso!",
-  "cr_error_msg": "Falha ao criar restaurante"
+  "cr_error_msg": "Falha ao criar restaurante",
+  "cr_country": "País",
+  "cr_province": "Província",
+  "cr_select_province": "Selecione a província",
+  "cr_other": "Outro"
 }
