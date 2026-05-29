@@ -379,20 +379,32 @@ export default function DashboardLayout() {
                                     const isOrders = item.isOrders === true;
                                     const shouldBlink = isOrders && isRinging;
 
+                                    // Subscription lock check
+                                    const isBlockedFeature = isBlocked && !isSystemAdmin && item.path !== '/dashboard/subscription';
+
                                     return (
                                         <Link
                                             key={item.path}
-                                            to={item.path}
-                                            onClick={() => {
+                                            to={isBlockedFeature ? '#' : item.path}
+                                            onClick={(e) => {
+                                                if (isBlockedFeature) {
+                                                    e.preventDefault();
+                                                    return;
+                                                }
                                                 // Stop ringing for orders
                                                 if (isOrders) stopRinging();
                                             }}
-                                            className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''} ${item.isPremium && isExpiring ? 'premium-locked' : ''}`}
+                                            className={`nav-item ${isActive(item.path) ? 'active' : ''} ${shouldBlink ? 'blink-urgent' : ''} ${(item.isPremium && isExpiring) || isBlockedFeature ? 'premium-locked' : ''} ${isBlockedFeature ? 'subscription-locked' : ''}`}
+                                            style={isBlockedFeature ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'auto' } : {}}
                                         >
                                             <Icon size={20} />
                                             <span>{item.label}</span>
-                                            {item.isPremium && isExpiring && <Lock size={18} strokeWidth={2.5} className="ml-auto text-orange-500" />}
-                                            {isOrders && !isExpiring && (
+                                            {isBlockedFeature ? (
+                                                <Lock size={14} style={{ marginLeft: 'auto', color: '#ef4444' }} />
+                                            ) : (
+                                                item.isPremium && isExpiring && <Lock size={18} strokeWidth={2.5} className="ml-auto text-orange-500" />
+                                            )}
+                                            {isOrders && !isExpiring && !isBlockedFeature && (
                                                 <>
                                                     {item.orderSource === 'room' ? (
                                                         roomPendingCount > 0 && <span className="nav-badge">{roomPendingCount}</span>

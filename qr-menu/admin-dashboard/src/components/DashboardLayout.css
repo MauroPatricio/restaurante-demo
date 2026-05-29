@@ -360,3 +360,16 @@
     margin-left: auto;
     font-weight: 800;
 }
+
+/* ── Subscription Lock ─────────────────────────────────────── */
+.nav-item.subscription-locked {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+.nav-item.subscription-locked:hover {
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
