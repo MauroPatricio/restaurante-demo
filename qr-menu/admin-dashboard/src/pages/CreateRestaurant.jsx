@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -33,6 +34,7 @@ const compressImage = (file, maxWidth = 800, quality = 0.8) => {
 };
 
 export default function CreateRestaurant() {
+    const { t } = useTranslation();
     const [formData, setFormData] = useState({
         name: '',
         street: '',
@@ -269,8 +271,8 @@ export default function CreateRestaurant() {
             <div className="create-right">
                 <div className="image-overlay"></div>
                 <div className="image-content">
-                    <h2>Expanda seu império.</h2>
-                    <p>Adicione novas localizações e gerencie-as centralmente.</p>
+                    <h2>{t('expand_empire_title')}</h2>
+                    <p>{t('expand_empire_desc')}</p>
                 </div>
                 <img
                     src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80"
