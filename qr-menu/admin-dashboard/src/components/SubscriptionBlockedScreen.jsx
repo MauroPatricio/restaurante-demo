@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Lock, CreditCard, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
     const { t } = useTranslation();
+    const [isHovered, setIsHovered] = useState(false);
 
     const now = new Date();
     const endDate = subscription ? new Date(subscription.currentPeriodEnd) : now;
@@ -15,6 +17,8 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
             return {
                 iconBg: '#fee2e2',
                 iconColor: '#dc2626',
+                buttonBg: '#dc2626',
+                buttonHoverBg: '#b91c1c',
                 titleKey: 'subscription_expired_title',
                 defaultTitle: 'Subscription Expired',
                 messageKey: 'subscription_expired_message',
@@ -24,6 +28,8 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
             return {
                 iconBg: '#dbeafe',
                 iconColor: '#2563eb',
+                buttonBg: '#2563eb',
+                buttonHoverBg: '#1d4ed8',
                 titleKey: 'feature_locked_title',
                 defaultTitle: 'Premium Feature',
                 messageKey: 'subscription_expired_message_premium',
@@ -33,6 +39,8 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
             return {
                 iconBg: '#fef3c7',
                 iconColor: '#d97706',
+                buttonBg: '#d97706',
+                buttonHoverBg: '#b45309',
                 titleKey: 'feature_locked_title',
                 defaultTitle: 'Premium Feature',
                 messageKey: 'subscription_expired_message_premium',
@@ -108,7 +116,7 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
         gap: '8px',
         width: '100%',
         padding: '14px',
-        backgroundColor: '#2563eb',
+        backgroundColor: isHovered ? (theme.buttonHoverBg || '#1d4ed8') : (theme.buttonBg || '#2563eb'),
         color: '#ffffff',
         borderRadius: '10px',
         fontWeight: '600',
@@ -155,6 +163,8 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
                         <Link
                             to="/dashboard/subscription"
                             style={primaryButtonStyle}
+                            onMouseEnter={() => setIsHovered(true)}
+                            onMouseLeave={() => setIsHovered(false)}
                         >
                             <CreditCard size={18} />
                             {t('subscription_renew_button') || 'Renew Subscription'}

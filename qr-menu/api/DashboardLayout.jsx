@@ -86,11 +86,11 @@ export default function DashboardLayout() {
     const userType = (user?.role?.name === 'Owner' || user?.role?.name === 'Admin' || user?.role?.isOwner) ? 'owner' : 'staff';
 
     // Show blocker if:
-    // 1. Blocked
+    // 1. Blocked (including expired)
     // 2. Not System Admin
     // 3. Not on subscription page (so owners can pay) - OR if staff, always block
-    const showBlocker = isBlocked && !requiresRenewal && !isSystemAdmin && (!isSubscriptionPage || userType === 'staff');
-    const showRenewalModal = requiresRenewal && !isSystemAdmin && userType === 'owner' && !dismissedRenewalModal;
+    const showBlocker = isBlocked && !isSystemAdmin && (!isSubscriptionPage || userType === 'staff');
+    const showRenewalModal = false; // Disabled as showBlocker now enforces mandatory block and directs to subscription page
     const showExpiredBlockerForStaff = requiresRenewal && !isSystemAdmin && userType === 'staff';
     // Actually, if userType is staff, they can't pay, so block everywhere.
     // If owner, allow subscription page.
