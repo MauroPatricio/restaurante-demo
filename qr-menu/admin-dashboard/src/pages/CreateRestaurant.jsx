@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 // Compress image to JPEG, max 800px wide, quality 0.8 (~< 300KB for most photos)
 const compressImage = (file, maxWidth = 800, quality = 0.8) => {
@@ -90,12 +91,12 @@ export default function CreateRestaurant() {
 
             if (response.data) {
                 // Success! Redirect back to selection which will fetch the new list
-                alert('Restaurante criado com sucesso!');
+                alert(t('cr_success_msg'));
                 navigate('/select-restaurant');
             }
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.error || 'Falha ao criar restaurante');
+            setError(err.response?.data?.error || t('cr_error_msg'));
         } finally {
             setLoading(false);
         }
@@ -106,9 +107,12 @@ export default function CreateRestaurant() {
             {/* Left Content */}
             <div className="create-left">
                 <div className="create-card">
-                    <div className="create-header">
-                        <h1>🏭 Novo Restaurante</h1>
-                        <p>Configure os detalhes do seu novo estabelecimento</p>
+                    <div className="create-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ textAlign: 'left' }}>
+                            <h1 style={{ marginBottom: '8px', fontSize: '1.5rem', color: '#1e293b' }}>{t('cr_title')}</h1>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>{t('cr_subtitle')}</p>
+                        </div>
+                        <LanguageSwitcher />
                     </div>
 
                     {error && (
@@ -126,7 +130,7 @@ export default function CreateRestaurant() {
                                 ) : (
                                     <div className="logo-placeholder">
                                         <span>🏪</span>
-                                        <small>Logo do Restaurante</small>
+                                        <small>{t('cr_logo')}</small>
                                     </div>
                                 )}
                                 <input
@@ -138,7 +142,7 @@ export default function CreateRestaurant() {
                                         const file = e.target.files[0];
                                         if (!file) return;
                                         if (file.size > 10 * 1024 * 1024) {
-                                            setError('Imagem muito grande. Máximo 10MB.');
+                                            setError(t('cr_img_size_error'));
                                             return;
                                         }
                                         setError('');
@@ -149,57 +153,57 @@ export default function CreateRestaurant() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="name">Nome do Restaurante</label>
+                            <label htmlFor="name">{t('cr_name')}</label>
                             <input
                                 id="name"
                                 type="text"
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                placeholder="Ex: Pizzaria do Zé"
+                                placeholder={t('cr_name_placeholder')}
                             />
                         </div>
 
                         {/* Address Fields - Detailed */}
                         <div className="form-group">
-                            <label htmlFor="street">Rua/Avenida</label>
+                            <label htmlFor="street">{t('cr_street')}</label>
                             <input
                                 id="street"
                                 type="text"
                                 value={formData.street || ''}
                                 onChange={(e) => setFormData({ ...formData, street: e.target.value })}
                                 required
-                                placeholder="Ex: Av. 24 de Julho"
+                                placeholder={t('cr_street_placeholder')}
                             />
                         </div>
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label htmlFor="number">Número</label>
+                                <label htmlFor="number">{t('cr_number')}</label>
                                 <input
                                     id="number"
                                     type="text"
                                     value={formData.number || ''}
                                     onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                                    placeholder="Ex: 123"
+                                    placeholder={t('cr_number_placeholder')}
                                     style={{ width: '100%' }}
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="neighborhood">Bairro</label>
+                                <label htmlFor="neighborhood">{t('cr_neighborhood')}</label>
                                 <input
                                     id="neighborhood"
                                     type="text"
                                     value={formData.neighborhood || ''}
                                     onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
-                                    placeholder="Ex: Polana"
+                                    placeholder={t('cr_neighborhood_placeholder')}
                                     style={{ width: '100%' }}
                                 />
                             </div>
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="city">Cidade</label>
+                            <label htmlFor="city">{t('cr_city')}</label>
                             <select
                                 id="city"
                                 value={formData.city || 'Maputo'}
@@ -221,7 +225,7 @@ export default function CreateRestaurant() {
                             </select>
                         </div>
                         <div className="form-group">
-                            <label htmlFor="phone">Telefone (Comercial)</label>
+                            <label htmlFor="phone">{t('cr_phone')}</label>
                             <input
                                 id="phone"
                                 type="text"
@@ -231,7 +235,7 @@ export default function CreateRestaurant() {
                             />
                         </div>
                         <div className="form-group">
-                            <label htmlFor="email">Email (Comercial)</label>
+                            <label htmlFor="email">{t('cr_email')}</label>
                             <input
                                 id="email"
                                 type="email"
@@ -248,7 +252,7 @@ export default function CreateRestaurant() {
                                 onClick={() => navigate('/select-restaurant')}
                                 disabled={loading}
                             >
-                                Cancelar
+                                {t('cr_cancel')}
                             </button>
                             <button
                                 type="submit"
@@ -258,9 +262,9 @@ export default function CreateRestaurant() {
                                 {loading ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                         <LoadingSpinner size={18} color="white" />
-                                        <span>A criar...</span>
+                                        <span>{t('cr_creating')}</span>
                                     </div>
-                                ) : 'Criar Restaurante'}
+                                ) : t('cr_submit')}
                             </button>
                         </div>
                     </form>
@@ -275,7 +279,7 @@ export default function CreateRestaurant() {
                     <p>{t('expand_empire_desc')}</p>
                 </div>
                 <img
-                    src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80"
+                    src="/image/register.jpg"
                     alt="Restaurant Interior"
                     className="responsive-image"
                 />
@@ -288,9 +292,7 @@ export default function CreateRestaurant() {
                 .create-left { flex: 1; padding: 40px; display: flex; justify-content: center; align-items: center; overflow-y: auto; background-color: #f8fafc; }
                 .create-card { width: 100%; max-width: 500px; background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
                 
-                .create-header { margin-bottom: 30px; text-align: center; }
-                .create-header h1 { font-size: 1.5rem; color: #1e293b; margin-bottom: 8px; }
-                .create-header p { color: #64748b; font-size: 0.9rem; }
+                .create-header { margin-bottom: 30px; }
                 
                 .form-group { margin-bottom: 16px; }
                 .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.875rem; color: #475569; }
