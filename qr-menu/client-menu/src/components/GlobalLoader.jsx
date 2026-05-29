@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -60,7 +60,7 @@ const GlobalLoader = ({
                         transition={{ repeat: Infinity, duration: 0.6, ease: 'linear' }}
                         className={`mb-4 ${colorClass}`}
                     >
-                        <Loader2 size={iconSize} />
+                        <RefreshCw size={iconSize} />
                     </motion.div>
 
                     {message ? (
@@ -97,7 +97,7 @@ const GlobalLoader = ({
                     transition={{ repeat: Infinity, duration: 0.6, ease: 'linear' }}
                     className={colorClass}
                 >
-                    <Loader2 size={iconSize} />
+                    <RefreshCw size={iconSize} />
                 </motion.div>
 
                 {message && (
@@ -117,7 +117,7 @@ const GlobalLoader = ({
                 transition={{ repeat: Infinity, duration: 0.6, ease: 'linear' }}
                 className={colorClass}
             >
-                <Loader2 size={iconSize} />
+                <RefreshCw size={iconSize} />
             </motion.div>
 
             {message && (

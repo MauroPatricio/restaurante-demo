@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { RotateCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -63,7 +63,7 @@ const GlobalLoader = ({
                         justifyContent: 'center',
                         gap: '16px',
                         textAlign: 'center'
-                    }}
+                     }}
                 >
                     <motion.div
                         animate={{ rotate: 360 }}
@@ -75,7 +75,7 @@ const GlobalLoader = ({
                             justifyContent: 'center',
                         }}
                     >
-                        <RotateCw size={48} strokeWidth={2.5} />
+                        <RefreshCw size={48} strokeWidth={2.5} />
                     </motion.div>
 
                     <h3 style={{
@@ -127,7 +127,7 @@ const GlobalLoader = ({
                         justifyContent: 'center',
                     }}
                 >
-                    <RotateCw size={18} strokeWidth={2.5} />
+                    <RefreshCw size={18} strokeWidth={2.5} />
                 </motion.div>
 
                 <span style={{
@@ -165,7 +165,7 @@ const GlobalLoader = ({
                     color: color,
                 }}
             >
-                <RotateCw size={iconSize} strokeWidth={2.5} />
+                <RefreshCw size={iconSize} strokeWidth={2.5} />
             </motion.div>
 
             {loadingMessage && (
