@@ -83,7 +83,7 @@ export default function DashboardLayout() {
     const isSystemAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
 
     // Determine user type for the blocker screen
-    const userType = (user?.role?.name === 'Owner' || user?.role?.isOwner) ? 'owner' : 'staff';
+    const userType = (['Owner', 'Admin'].includes(user?.role?.name || user?.role) || user?.role?.isOwner) ? 'owner' : 'staff';
 
     // Show blocker if:
     // 1. Blocked (including expired)
@@ -502,32 +502,32 @@ export default function DashboardLayout() {
 
                 {/* Waiter Call Alerts - Real-time notifications */}
                 <WaiterCallAlerts />
-
-                {/* Blocking Overlay - Renders ON TOP of the dashboard */}
-                {showBlocker && (
-                    <SubscriptionBlockedScreen
-                        userType={userType}
-                        subscription={subscription}
-                    />
-                )}
-
-                {/* Staff blocked for expired subscription */}
-                {showExpiredBlockerForStaff && (
-                    <SubscriptionBlockedScreen
-                        userType="staff"
-                        subscription={subscription}
-                    />
-                )}
-
-                {/* Mandatory Renewal Modal for Owners */}
-                {showRenewalModal && (
-                    <SubscriptionRenewalModal
-                        subscription={subscription}
-                        onRenew={() => navigate('/dashboard/subscription')}
-                        onCancel={() => setDismissedRenewalModal(true)}
-                    />
-                )}
             </div>
+
+            {/* Blocking Overlay - Renders at root layout level to cover the entire page (including sidebar) */}
+            {showBlocker && (
+                <SubscriptionBlockedScreen
+                    userType={userType}
+                    subscription={subscription}
+                />
+            )}
+
+            {/* Staff blocked for expired subscription */}
+            {showExpiredBlockerForStaff && (
+                <SubscriptionBlockedScreen
+                    userType="staff"
+                    subscription={subscription}
+                />
+            )}
+
+            {/* Mandatory Renewal Modal for Owners */}
+            {showRenewalModal && (
+                <SubscriptionRenewalModal
+                    subscription={subscription}
+                    onRenew={() => navigate('/dashboard/subscription')}
+                    onCancel={() => setDismissedRenewalModal(true)}
+                />
+            )}
         </div>
     );
 }
