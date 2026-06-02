@@ -10,7 +10,7 @@ async function run() {
         const users = db.collection('users');
         
         const result = await users.updateOne(
-            { email: 'admin@nhiquela.com' },
+            { email: 'nhiquelaservicos@gmail.com' },
             { $set: { phone: '+258840000000', name: 'System Administrator', active: true } }
         );
         

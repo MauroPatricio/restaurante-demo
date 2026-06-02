@@ -1,55 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Lock, CreditCard, X } from 'lucide-react';
+import { Lock, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
     const { t } = useTranslation();
+    const { logout } = useAuth();
     const [isHovered, setIsHovered] = useState(false);
-
-    const now = new Date();
-    const endDate = subscription ? new Date(subscription.currentPeriodEnd) : now;
-    const diffTime = endDate - now;
-    const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    const getStatusTheme = () => {
-        if (!subscription || subscription.status === 'expired') {
-            return {
-                iconBg: '#fee2e2',
-                iconColor: '#dc2626',
-                buttonBg: '#dc2626',
-                buttonHoverBg: '#b91c1c',
-                titleKey: 'subscription_expired_title',
-                defaultTitle: 'Subscription Expired',
-                messageKey: 'subscription_expired_message',
-                defaultMessage: 'The subscription period for this restaurant has expired. Renew now for 30 more days to continue using all features.'
-            };
-        } else if (subscription.status === 'trial') {
-            return {
-                iconBg: '#dbeafe',
-                iconColor: '#2563eb',
-                buttonBg: '#2563eb',
-                buttonHoverBg: '#1d4ed8',
-                titleKey: 'feature_locked_title',
-                defaultTitle: 'Premium Feature',
-                messageKey: 'subscription_expired_message_premium',
-                defaultMessage: 'Trial period is restricted for this feature. Renew now to use all features.'
-            };
-        } else {
-            return {
-                iconBg: '#fef3c7',
-                iconColor: '#d97706',
-                buttonBg: '#d97706',
-                buttonHoverBg: '#b45309',
-                titleKey: 'feature_locked_title',
-                defaultTitle: 'Premium Feature',
-                messageKey: 'subscription_expired_message_premium',
-                defaultMessage: 'Premium access is restricted. Renew your subscription to continue using premium features.'
-            };
-        }
-    };
-
-    const theme = getStatusTheme();
 
     const overlayStyle = {
         position: 'fixed',
@@ -68,45 +26,47 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
 
     const modalStyle = {
         backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        padding: '40px',
-        maxWidth: '500px',
+        borderRadius: '24px',
+        padding: '48px 40px',
+        maxWidth: '520px',
         width: '100%',
         textAlign: 'center',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
         position: 'relative',
-        animation: 'fadeIn 0.3s ease-out'
+        animation: 'fadeIn 0.3s ease-out',
+        border: '1px solid #f1f5f9'
     };
 
-    const iconLocalContainerStyle = {
-        width: '80px',
-        height: '80px',
+    const iconContainerStyle = {
+        width: '96px',
+        height: '96px',
         borderRadius: '50%',
-        backgroundColor: theme.iconBg,
+        backgroundColor: '#fee2e2',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        margin: '0 auto 24px auto'
+        margin: '0 auto 28px auto'
     };
 
     const titleStyle = {
-        fontSize: '24px',
-        fontWeight: 'bold',
-        color: '#1f2937',
-        marginBottom: '12px'
+        fontSize: '28px',
+        fontWeight: '700',
+        color: '#1e293b',
+        marginBottom: '16px',
+        letterSpacing: '-0.02em'
     };
 
     const descriptionStyle = {
         fontSize: '16px',
-        color: '#4b5563',
+        color: '#64748b',
         marginBottom: '32px',
-        lineHeight: '1.5'
+        lineHeight: '1.6'
     };
 
     const buttonsContainerStyle = {
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px'
+        gap: '16px'
     };
 
     const primaryButtonStyle = {
@@ -115,16 +75,17 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
         justifyContent: 'center',
         gap: '8px',
         width: '100%',
-        padding: '14px',
-        backgroundColor: isHovered ? (theme.buttonHoverBg || '#1d4ed8') : (theme.buttonBg || '#2563eb'),
+        padding: '16px',
+        backgroundColor: isHovered ? '#1d4ed8' : '#2563eb',
         color: '#ffffff',
-        borderRadius: '10px',
+        borderRadius: '12px',
         fontWeight: '600',
         textDecoration: 'none',
         fontSize: '16px',
         border: 'none',
         cursor: 'pointer',
-        transition: 'background-color 0.2s'
+        transition: 'background-color 0.2s',
+        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)'
     };
 
     const secondaryButtonStyle = {
@@ -132,30 +93,60 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
         alignItems: 'center',
         justifyContent: 'center',
         width: '100%',
-        padding: '14px',
+        padding: '16px',
         backgroundColor: 'transparent',
-        color: '#6b7280',
-        borderRadius: '10px',
+        color: '#64748b',
+        borderRadius: '12px',
         fontWeight: '500',
         textDecoration: 'none',
         fontSize: '16px',
-        border: '1px solid #e5e7eb',
-        cursor: 'pointer'
+        border: '1px solid #e2e8f0',
+        cursor: 'pointer',
+        transition: 'all 0.2s'
+    };
+
+    const disabledButtonStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        padding: '16px',
+        backgroundColor: '#f1f3f5',
+        color: '#868e96',
+        borderRadius: '12px',
+        fontWeight: '500',
+        textDecoration: 'none',
+        fontSize: '16px',
+        border: 'none',
+        cursor: 'default'
+    };
+
+    const linkButtonStyle = {
+        background: 'none',
+        border: 'none',
+        color: '#ef4444',
+        fontSize: '16px',
+        fontWeight: '500',
+        cursor: 'pointer',
+        marginTop: '8px',
+        padding: '8px',
+        alignSelf: 'center',
+        transition: 'color 0.2s'
     };
 
     return (
         <div style={overlayStyle}>
             <div style={modalStyle}>
-                <div style={iconLocalContainerStyle}>
-                    <Lock size={40} color={theme.iconColor} />
+                <div style={iconContainerStyle}>
+                    <Lock size={44} color="#dc2626" />
                 </div>
 
                 <h2 style={titleStyle}>
-                    {t(theme.titleKey) || theme.defaultTitle}
+                    {t('subscription_expired_title') || 'Subscrição Expirada'}
                 </h2>
 
                 <p style={descriptionStyle}>
-                    {t(theme.messageKey) || theme.defaultMessage}
+                    {t('subscription_expired_message') || 'A sua subscrição expirou. O acesso está restringido.'}
                 </p>
 
                 <div style={buttonsContainerStyle}>
@@ -167,24 +158,19 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
                             onMouseLeave={() => setIsHovered(false)}
                         >
                             <CreditCard size={18} />
-                            {t('subscription_renew_button') || 'Renew Subscription'}
+                            {t('subscription_renew_button') || 'Renovar Assinatura'}
                         </Link>
                     ) : (
-                        <div style={{ ...secondaryButtonStyle, backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}>
-                            {t('contact_manager_access') || 'Contact your manager to renew access'}
+                        <div style={disabledButtonStyle}>
+                            {t('contact_manager_access') || 'Contacte o seu gestor para renovar o acesso'}
                         </div>
                     )}
 
-                    <Link
-                        to="/select-restaurant"
-                        style={secondaryButtonStyle}
-                    >
-                        {t('back_to_restaurants') || 'Selecionar Outro Restaurante'}
-                    </Link>
-
                     <button
-                        style={{ ...secondaryButtonStyle, border: 'none', color: '#ef4444', marginTop: '-8px' }}
-                        onClick={() => window.location.href = '/login'}
+                        style={linkButtonStyle}
+                        onClick={logout}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#b91c1c'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#ef4444'}
                     >
                         {t('logout') || 'Sair'}
                     </button>
@@ -195,3 +181,4 @@ const SubscriptionBlockedScreen = ({ userType = 'staff', subscription }) => {
 };
 
 export default SubscriptionBlockedScreen;
+

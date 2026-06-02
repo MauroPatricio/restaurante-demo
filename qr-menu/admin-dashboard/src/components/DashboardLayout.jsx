@@ -80,11 +80,7 @@ export default function DashboardLayout() {
     // Blocking Logic
     const allowedBlockedPaths = [
         '/dashboard/subscription',
-        '/dashboard/waiter',
-        '/dashboard/kitchen',
-        '/dashboard/hall',
-        '/dashboard/orders',
-        '/dashboard/payments'
+        '/dashboard/plans'
     ];
     const isAllowedPageUnderBlock = allowedBlockedPaths.some(path => location.pathname.startsWith(path));
     // Allow System Admin to bypass
@@ -504,6 +500,28 @@ export default function DashboardLayout() {
                                 {getStatusLabel(subscription.status, t)}
                             </div>
                         )}
+                        {/* Renewal Button for owners/managers when subscription is not active */}
+                        {user?.role?.name === 'Owner' || user?.role?.name === 'Manager' ? (
+                            <Link
+                                to="/dashboard/subscription"
+                                style={{
+                                    marginLeft: '12px',
+                                    backgroundColor: '#2563eb',
+                                    color: '#fff',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    textDecoration: 'none',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}
+                            >
+                                <CreditCard size={14} />
+                                {t('renew_subscription') || 'Renovar Subscrição'}
+                            </Link>
+                        ) : null}
 
                         <LanguageSwitcher />
 

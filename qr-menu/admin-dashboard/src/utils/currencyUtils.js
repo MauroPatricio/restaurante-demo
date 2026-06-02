@@ -19,7 +19,11 @@ export const fetchExchangeRates = async (force = false) => {
         // For simplicity in this utility, we'll try to get it from a relative path or env
         const apiUrl = import.meta.env.VITE_API_URL || '/api';
         const response = await axios.get(`${apiUrl}/currency/rates`);
-        const rates = response.data.rates;
+        const rates = response.data?.rates;
+        
+        if (!rates) {
+            throw new Error('Exchange rates not found in response');
+        }
         
         // Normalize: Ensure both MZN and MT exist if one does
         if (rates.MZN && !rates.MT) rates.MT = rates.MZN;
@@ -29,7 +33,7 @@ export const fetchExchangeRates = async (force = false) => {
         lastFetched = now;
         return exchangeRates;
     } catch (error) {
-        console.error('Failed to fetch exchange rates:', error);
+        console.warn('Unable to load exchange rates from server, using local fallback values. (Handled gracefully):', error.message || error);
         // Fallback rates if API fails
         return {
             USD: 1,

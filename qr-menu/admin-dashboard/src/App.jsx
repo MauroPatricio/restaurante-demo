@@ -28,6 +28,7 @@ const Tables = lazy(() => import('./pages/Tables'));
 const Coupons = lazy(() => import('./pages/Coupons'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Subscription = lazy(() => import('./pages/Subscription'));
+const SubscriptionPlans = lazy(() => import('./pages/SubscriptionPlans'));
 const Payments = lazy(() => import('./pages/Payments'));
 const SystemAdmin = lazy(() => import('./pages/SystemAdmin'));
 const Kitchen = lazy(() => import('./pages/Kitchen'));
@@ -173,6 +174,7 @@ function AppContent() {
             </PremiumFeatureGate>
           } />
           <Route path="subscription" element={<Subscription />} />
+          <Route path="plans" element={<SubscriptionPlans />} />
           <Route path="payments" element={<Payments />} />
           <Route path="reports" element={
             <PremiumFeatureGate featureName="Relatórios Detalhados" blurOnly={true}>

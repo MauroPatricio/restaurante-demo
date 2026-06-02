@@ -79,12 +79,7 @@ export default function DashboardLayout() {
 
     // Blocking Logic
     const allowedBlockedPaths = [
-        '/dashboard/subscription',
-        '/dashboard/waiter',
-        '/dashboard/kitchen',
-        '/dashboard/hall',
-        '/dashboard/orders',
-        '/dashboard/payments'
+        '/dashboard/subscription'
     ];
     const isAllowedPageUnderBlock = allowedBlockedPaths.some(path => location.pathname.startsWith(path));
     // Allow System Admin to bypass

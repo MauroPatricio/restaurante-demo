@@ -18,7 +18,7 @@ const verifyAdmin = async () => {
         await mongoose.connect(MONGODB_URI);
         console.log('✅ Connected.');
 
-        const email = 'admin@system.com';
+        const email = 'nhiquelaservicos@gmail.com';
         const user = await User.findOne({ email }).select('+password');
 
         if (!user) {

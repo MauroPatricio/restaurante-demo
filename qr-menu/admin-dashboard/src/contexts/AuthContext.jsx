@@ -109,12 +109,71 @@ export const AuthProvider = ({ children }) => {
         });
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('restaurantId');
-        localStorage.removeItem('user');
-        setUser(null);
-        window.location.href = '/login';
+    const logout = async (logoutType = 'manual') => {
+        try {
+            const token = localStorage.getItem('token');
+            const restaurantId = localStorage.getItem('restaurantId');
+            
+            if (token) {
+                // Call backend API to revoke token and audit log logout event
+                await api.post('/auth/logout', { logoutType, restaurantId }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('❌ Error logging out on backend:', error);
+        } finally {
+            // Reset user state in memory
+            setUser(null);
+            
+            // Clear Local Storage & Session Storage
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Clear Cache Storage (Application API and page cache)
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                } catch (cErr) {
+                    console.error('❌ Error clearing Cache Storage:', cErr);
+                }
+            }
+
+            // Unregister Service Workers (PWA / Offline cache)
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                } catch (swErr) {
+                    console.error('❌ Error unregistering service workers:', swErr);
+                }
+            }
+
+            // Clear IndexedDB databases if any are present (Offline data/pending orders)
+            if ('indexedDB' in window && indexedDB.databases) {
+                try {
+                    const dbs = await indexedDB.databases();
+                    for (const db of dbs) {
+                        if (db.name) {
+                            indexedDB.deleteDatabase(db.name);
+                        }
+                    }
+                } catch (dbErr) {
+                    console.warn('⚠️ Error clearing IndexedDB databases:', dbErr);
+                }
+            }
+
+            // Protect against reverse navigation by replacing history state
+            window.history.pushState(null, '', '/login');
+            
+            // Redirect to login page and trigger success message
+            window.location.href = '/login?logoutSuccess=true';
+        }
     };
 
     const value = {

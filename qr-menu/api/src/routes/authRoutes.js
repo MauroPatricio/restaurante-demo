@@ -384,4 +384,33 @@ router.post('/reset-password/:token', async (req, res) => {
     }
 });
 
+// Logout
+router.post('/logout', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        const restaurantId = req.restaurantId || req.body.restaurantId;
+        const logoutType = req.body.logoutType || 'manual';
+
+        // Register event in AuditLog
+        const AuditLog = (await import('../models/AuditLog.js')).default;
+        await AuditLog.log({
+            userId,
+            action: 'user_logout',
+            targetModel: 'User',
+            targetId: userId,
+            changes: { logoutType },
+            ipAddress,
+            userAgent,
+            restaurantId
+        });
+
+        res.json({ message: 'Logout efectuado com sucesso.' });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ error: 'Erro ao processar logout no servidor.' });
+    }
+});
+
 export default router;

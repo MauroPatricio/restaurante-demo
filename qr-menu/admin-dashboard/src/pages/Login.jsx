@@ -12,9 +12,18 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
     const { t } = useTranslation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('logoutSuccess') === 'true') {
+            setSuccessMessage(t('logout_success_message') || 'Logout efectuado com sucesso.');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, [t]);
 
     // Dynamic Subtitle Logic
     const [subtitleIndex, setSubtitleIndex] = useState(0);
@@ -82,6 +91,22 @@ export default function Login() {
                     {error && (
                         <div className="error-message animate-fade">
                             {error}
+                        </div>
+                    )}
+
+                    {successMessage && (
+                        <div className="success-message animate-fade" style={{
+                            backgroundColor: '#ecfdf5',
+                            color: '#047857',
+                            border: '1px solid #a7f3d0',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            marginBottom: '16px',
+                            fontSize: '14px',
+                            textAlign: 'center',
+                            fontWeight: '500'
+                        }}>
+                            {successMessage}
                         </div>
                     )}
 

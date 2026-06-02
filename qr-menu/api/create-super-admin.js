@@ -35,7 +35,7 @@ async function createSuperAdmin() {
             console.log('✅ Cargo "System Admin" criado na base de dados.');
         }
 
-        const adminEmail = 'admin@nhiquelaservicos.com';
+        const adminEmail = 'nhiquelaservicos@gmail.com';
         const adminPassword = 'Admin@123456';
 
         // 2. Verificar ou criar o Utilizador

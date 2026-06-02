@@ -17,11 +17,15 @@ export const fetchExchangeRates = async (force = false) => {
 
     try {
         const response = await axios.get(`${API_URL}/currency/rates`);
-        exchangeRates = response.data.rates;
+        const rates = response.data?.rates;
+        if (!rates) {
+            throw new Error('Exchange rates not found in response');
+        }
+        exchangeRates = rates;
         lastFetched = now;
         return exchangeRates;
     } catch (error) {
-        console.error('Failed to fetch exchange rates:', error);
+        console.warn('Unable to load exchange rates from server, using local fallback values. (Handled gracefully):', error.message || error);
         // Fallback rates if API fails (USD base)
         return {
             USD: 1,

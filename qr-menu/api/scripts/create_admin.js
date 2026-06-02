@@ -25,7 +25,7 @@ const createAdmin = async () => {
         console.log('✅ Connected.');
 
         // 1. Ensure Admin User First (needed for Restaurant owner)
-        const adminEmail = 'admin@system.com';
+        const adminEmail = 'nhiquelaservicos@gmail.com';
         const adminPassword = 'password123!';
         let user = await User.findOne({ email: adminEmail });
 
@@ -53,7 +53,7 @@ const createAdmin = async () => {
             console.log('🏗️ Creating System Administration Restaurant...');
             systemRestaurant = await Restaurant.create({
                 name: 'System Administration',
-                email: 'admin@system.com',
+                email: 'nhiquelaservicos@gmail.com',
                 phone: '000000000',
                 address: 'System',
                 active: true,

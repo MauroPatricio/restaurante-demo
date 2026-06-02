@@ -20,6 +20,7 @@ const AuditLogSchema = new mongoose.Schema({
             'user_create',
             'user_update',
             'user_delete',
+            'user_logout',
             // Restaurant
             'restaurant_create',
             'restaurant_update',

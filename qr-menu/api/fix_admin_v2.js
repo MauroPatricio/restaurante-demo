@@ -15,7 +15,7 @@ async function fixAdminV2() {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('Connected to MongoDB');
 
-        const email = 'admin@nhiquela.com';
+        const email = 'nhiquelaservicos@gmail.com';
         const user = await User.findOne({ email });
 
         if (user) {

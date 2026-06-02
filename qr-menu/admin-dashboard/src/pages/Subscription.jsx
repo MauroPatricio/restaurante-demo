@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -13,13 +14,15 @@ import {
     AlertTriangle,
     Clock,
     TrendingUp,
-    Check
+    Check,
+    Zap
 } from 'lucide-react';
 
 export default function Subscription() {
     const { t } = useTranslation();
     const { user } = useAuth();
     const { subscription: contextSub, refreshSubscription } = useSubscription();
+    const navigate = useNavigate();
     const [subscription, setSubscription] = useState(null);
     const [systemPrice, setSystemPrice] = useState(1500); // Default fallback
     const [paymentHistory, setPaymentHistory] = useState([]);
@@ -202,6 +205,35 @@ export default function Subscription() {
                     <h1 style={styles.title}>{t('subscription_title')}</h1>
                     <p style={styles.subtitle}>{t('subscription_subtitle')}</p>
                 </div>
+                <button
+                    onClick={() => navigate('/dashboard/plans')}
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 20px',
+                        background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(59, 130, 246, 0.35)',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.45)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.35)';
+                    }}
+                >
+                    <Zap size={16} />
+                    {t('sp_view_plans') || 'Ver Planos'}
+                </button>
             </div>
 
             {/* Status Card */}
