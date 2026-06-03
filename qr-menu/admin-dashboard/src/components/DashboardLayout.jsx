@@ -56,7 +56,7 @@ import RenewalNotifications from './RenewalNotifications';
 import './DashboardLayout.css';
 
 export default function DashboardLayout() {
-    const { user, logout } = useAuth();
+    const { user, selectRestaurant, logout } = useAuth();
     const { subscription, isBlocked, requiresRenewal, isExpiring } = useSubscription();
     const { isBackendConnected } = useConnectivity();
     const { dineInPendingCount, roomPendingCount, isRinging, stopRinging, toggleAudio, audioEnabled } = useSocket();
@@ -84,7 +84,7 @@ export default function DashboardLayout() {
     ];
     const isAllowedPageUnderBlock = allowedBlockedPaths.some(path => location.pathname.startsWith(path));
     // Allow System Admin to bypass
-    const isSystemAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
+    const isSystemAdmin = user?.role?.name === 'System Admin';
 
     // Determine user type for the blocker screen
     const userType = (['Owner', 'Admin'].includes(user?.role?.name || user?.role) || user?.role?.isOwner) ? 'owner' : 'staff';
@@ -277,7 +277,7 @@ export default function DashboardLayout() {
         {
             title: t('system_administration') || '⚙️ SISTEMA & ADMINISTRAÇÃO',
             items: [
-                { icon: Settings, label: t('system_admin_hub'), path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
+                { icon: Settings, label: t('system_admin_hub'), path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.name === 'System Admin' },
                 { icon: CreditCard, label: t('subscription_management_admin') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: user?.role?.name === 'System Admin' },
                 { icon: Info, label: t('about_us'), path: '/dashboard/about-us', show: true },
             ]
@@ -340,11 +340,11 @@ export default function DashboardLayout() {
 
                         {/* Fallback Icon (shown if no logo or error) */}
                         <div className="restaurant-avatar" style={{ display: restaurantData?.logo ? 'none' : 'flex' }}>
-                            <Store size={24} />
+                            {isSystemAdmin && !restaurantData ? <ShieldCheck size={24} /> : <Store size={24} />}
                         </div>
 
                         <div className="restaurant-details">
-                            <h3>{restaurantData?.name || t('restaurant')}</h3>
+                            <h3>{restaurantData?.name || (isSystemAdmin ? (t('system_admin') || 'Administração do Sistema') : t('restaurant'))}</h3>
                             <div className="flex flex-col gap-1">
                                 <span className="user-role">
                                     {user?.role?.name || user?.role || 'User'}
@@ -524,6 +524,48 @@ export default function DashboardLayout() {
                         ) : null}
 
                         <LanguageSwitcher />
+
+                        {user?.restaurants && user.restaurants.length > 1 && (
+                            <div className="restaurant-switcher" style={{ position: 'relative', display: 'inline-block' }}>
+                                <select
+                                    value={restaurantData?.id || restaurantData?._id || ''}
+                                    onChange={async (e) => {
+                                        const nextId = e.target.value;
+                                        if (nextId) {
+                                            try {
+                                                await selectRestaurant(nextId);
+                                                // Refresh page or redirect to main path to refresh components with new restaurant metadata
+                                                navigate('/owner-dashboard');
+                                            } catch (err) {
+                                                console.error('Switch error', err);
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        appearance: 'none',
+                                        backgroundColor: '#f1f5f9',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        padding: '6px 32px 6px 12px',
+                                        fontSize: '0.875rem',
+                                        fontWeight: '500',
+                                        color: '#334155',
+                                        cursor: 'pointer',
+                                        outline: 'none',
+                                        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                                        backgroundRepeat: 'no-repeat',
+                                        backgroundPosition: 'right 8px center',
+                                        backgroundSize: '16px',
+                                    }}
+                                >
+                                    {user.restaurants.map((res) => (
+                                        <option key={res._id || res.id} value={res._id || res.id}>
+                                            🏬 {res.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         <div className="user-menu">
                             <User size={20} />

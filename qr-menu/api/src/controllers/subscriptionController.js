@@ -507,6 +507,8 @@ export const getOwnersSummary = async (req, res) => {
                 subscriptionId: sub._id,
                 name: restaurant.name,
                 status: sub.status,
+                plan: sub.plan || 'standard',
+                currentPeriodEnd: sub.currentPeriodEnd,
                 daysUntilExpiry: sub.getDaysUntilExpiry ? sub.getDaysUntilExpiry() : 0,
                 createdAt: restaurant.createdAt
             });
@@ -635,15 +637,24 @@ export const getGlobalSubscriptionStatus = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Fetch user's restaurants (ForeignKey relationship)
-        // Dynamic import to avoid circular dependency if any, though regular import is preferred if clean.
-        // We use the existing import at the top if available, or dynamic if needed. 
-        // Restaurant is already imported at the top of file? Yes: import Restaurant from '../models/Restaurant.js';
+        // Fetch user's restaurants (ForeignKey relationship + Role based access)
+        const UserRestaurantRole = (await import('../models/UserRestaurantRole.js')).default;
+        const userRoles = await UserRestaurantRole.find({ user: userId, active: true }).select('restaurant');
+        const roleRestaurantIds = userRoles.map(ur => ur.restaurant).filter(Boolean);
 
-        const userRestaurants = await Restaurant.find({ owner: userId });
+        const userRestaurants = await Restaurant.find({
+            $or: [
+                { owner: userId },
+                { _id: { $in: roleRestaurantIds } }
+            ]
+        });
 
         if (userRestaurants.length === 0) {
-            return res.status(404).json({ error: 'No restaurants found for user' });
+            return res.json({
+                globalStatus: 'suspended',
+                isSingleRestaurant: false,
+                restaurants: []
+            });
         }
 
         if (userRestaurants.length === 1) {

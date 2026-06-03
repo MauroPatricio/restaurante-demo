@@ -81,9 +81,9 @@ export const authorizeRoles = (...allowedRoles) => {
         const rawRole = req.user.role;
         const userRoleName = rawRole?.name || (typeof rawRole === 'string' ? rawRole : null);
 
-        if (!userRoleName) {
-            console.warn(`[Authorize] User ${req.user.email} has no valid role name. Raw role:`, JSON.stringify(rawRole));
-            return res.status(403).json({ error: 'Role not assigned', current: rawRole });
+        const isSystemAdmin = rawRole?.isSystem === true || rawRole?.name === 'System Admin' || userRoleName === 'System Admin';
+        if (isSystemAdmin) {
+            return next();
         }
 
         const isAuthorized = roles.some(role => {

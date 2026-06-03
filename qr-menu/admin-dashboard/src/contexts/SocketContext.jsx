@@ -112,7 +112,7 @@ export const SocketProvider = ({ children }) => {
             }
 
             // If Admin, fetch pending renewals
-            const isAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
+            const isAdmin = user?.role?.name === 'System Admin' || (user?.role?.name === 'Admin' && !restaurant?._id);
             if (isAdmin) {
                 try {
                     const { data } = await api.get('/subscriptions/admin/transactions?status=pending');
@@ -251,7 +251,7 @@ export const SocketProvider = ({ children }) => {
 
         // --- Subscription Events ---
         newSocket.on('subscription:renewal_request', (data) => {
-            const isAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin';
+            const isAdmin = user?.role?.name === 'System Admin' || (user?.role?.name === 'Admin' && !restaurant?._id);
             if (isAdmin) {
 
                 setPendingRenewals(prev => {
@@ -276,7 +276,7 @@ export const SocketProvider = ({ children }) => {
             }
 
             // If Admin, remove from pending list
-            if (user?.role?.isSystem) {
+            if (user?.role?.name === 'System Admin' || (user?.role?.name === 'Admin' && !restaurant?._id)) {
                 setPendingRenewals(prev => prev.filter(r => r._id !== data.requestId));
             }
         });
@@ -288,7 +288,7 @@ export const SocketProvider = ({ children }) => {
             }
 
             // If Admin, remove from pending list
-            if (user?.role?.isSystem) {
+            if (user?.role?.name === 'System Admin' || (user?.role?.name === 'Admin' && !restaurant?._id)) {
                 setPendingRenewals(prev => prev.filter(r => r._id !== data.requestId));
             }
         });

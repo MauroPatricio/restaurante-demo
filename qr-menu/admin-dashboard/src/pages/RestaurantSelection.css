@@ -97,6 +97,40 @@
     filter: brightness(1.2);
 }
 
+.global-admin-btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    margin-top: 16px;
+    gap: 12px;
+}
+
+.global-admin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+    filter: brightness(1.1);
+}
+
+.global-admin-btn svg:last-child {
+    transition: transform 0.2s ease;
+}
+
+.global-admin-btn:hover svg:last-child {
+    transform: translateX(4px);
+}
+
+
 .btn-content {
     display: flex;
     align-items: center;

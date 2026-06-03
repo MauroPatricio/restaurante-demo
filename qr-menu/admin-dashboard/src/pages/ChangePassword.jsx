@@ -2,37 +2,43 @@ import { useState } from 'react';
 import { usersAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { Eye, EyeOff } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function ChangePassword() {
+    const { t } = useTranslation();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showCurrent, setShowCurrent] = useState(false);
+    const [showNew, setShowNew] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const { logout } = useAuth(); // Or function to update user state
+    const { logout } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
         if (newPassword !== confirmPassword) {
-            return setError('New passwords do not match');
+            return setError(t('passwords_not_match') || 'New passwords do not match');
         }
 
         if (newPassword.length < 6) {
-            return setError('Password must be at least 6 characters');
+            return setError(t('password_min_length') || 'Password must be at least 6 characters');
         }
 
         setLoading(true);
         try {
             await usersAPI.changePassword({ currentPassword, newPassword });
-            alert('Password changed successfully! Please login again.');
-            logout(); // Force re-login to clear default password flag in context/token
+            alert(t('password_changed_success') || 'Password changed successfully! Please login again.');
+            logout();
             navigate('/login');
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to change password');
+            setError(err.response?.data?.error || t('failed_change_password') || 'Failed to change password');
             setLoading(false);
         }
     };
@@ -52,10 +58,10 @@ export default function ChangePassword() {
                 <div style={{ width: '100%', maxWidth: '400px' }}>
                     <div style={{ marginBottom: '40px' }}>
                         <h1 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', marginBottom: '12px' }}>
-                            Secure Your Account
+                            {t('secure_your_account') || 'Secure Your Account'}
                         </h1>
                         <p style={{ color: '#64748b', fontSize: '16px', lineHeight: '1.6' }}>
-                            Please set a new password to activate your account and access the dashboard.
+                            {t('secure_account_desc') || 'Please set a new password to activate your account and access the dashboard.'}
                         </p>
                     </div>
 
@@ -76,74 +82,140 @@ export default function ChangePassword() {
                     <form onSubmit={handleSubmit}>
                         <div className="form-group" style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#475569', fontSize: '14px' }}>
-                                Current Password
+                                {t('current_password') || 'Current Password'}
                             </label>
-                            <input
-                                type="password"
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '16px',
-                                    borderRadius: '12px',
-                                    border: '1px solid #e2e8f0',
-                                    fontSize: '16px',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s',
-                                    backgroundColor: '#f8fafc'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type={showCurrent ? 'text' : 'password'}
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 48px 16px 16px',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e2e8f0',
+                                        fontSize: '16px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s',
+                                        backgroundColor: '#f8fafc'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                                    onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCurrent(!showCurrent)}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '16px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#64748b',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: 0
+                                    }}
+                                    title={showCurrent ? t('hide_password') || 'Hide password' : t('show_password') || 'Show password'}
+                                >
+                                    {showCurrent ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-group" style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#475569', fontSize: '14px' }}>
-                                New Password
+                                {t('new_password') || 'New Password'}
                             </label>
-                            <input
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '16px',
-                                    borderRadius: '12px',
-                                    border: '1px solid #e2e8f0',
-                                    fontSize: '16px',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s',
-                                    backgroundColor: '#f8fafc'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type={showNew ? 'text' : 'password'}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 48px 16px 16px',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e2e8f0',
+                                        fontSize: '16px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s',
+                                        backgroundColor: '#f8fafc'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                                    onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNew(!showNew)}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '16px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#64748b',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: 0
+                                    }}
+                                    title={showNew ? t('hide_password') || 'Hide password' : t('show_password') || 'Show password'}
+                                >
+                                    {showNew ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-group" style={{ marginBottom: '32px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#475569', fontSize: '14px' }}>
-                                Confirm New Password
+                                {t('confirm_new_password') || 'Confirm New Password'}
                             </label>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '16px',
-                                    borderRadius: '12px',
-                                    border: '1px solid #e2e8f0',
-                                    fontSize: '16px',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s',
-                                    backgroundColor: '#f8fafc'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type={showConfirm ? 'text' : 'password'}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 48px 16px 16px',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e2e8f0',
+                                        fontSize: '16px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s',
+                                        backgroundColor: '#f8fafc'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                                    onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirm(!showConfirm)}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '16px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#64748b',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: 0
+                                    }}
+                                    title={showConfirm ? t('hide_password') || 'Hide password' : t('show_password') || 'Show password'}
+                                >
+                                    {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
 
                         <button
@@ -170,9 +242,9 @@ export default function ChangePassword() {
                             {loading ? (
                                 <>
                                     <LoadingSpinner size={18} color="white" />
-                                    <span>Updating Password...</span>
+                                    <span>{t('updating_password') || 'Updating Password...'}</span>
                                 </>
-                            ) : 'Set New Password'}
+                            ) : t('set_new_password') || 'Set New Password'}
                         </button>
                     </form>
                 </div>
@@ -182,7 +254,6 @@ export default function ChangePassword() {
             <div style={{
                 flex: '1',
                 display: 'none',
-                '@media (min-width: 1024px)': { display: 'block' } // Note: Inline styles don't support media queries directly, will handle with conditional rendering or className if possible, but for inline simple let's use a class or just flex
             }} className="desktop-only-image">
                 <div style={{
                     height: '100%',

@@ -11,10 +11,11 @@ import { calculateTopWaiter, calculateTopDish, calculateFastestDish } from './ow
 
 export const getOwnerStats = async (req, res) => {
     try {
-        const ownerId = req.user._id;
+        const isSystemAdmin = req.user.role?.isSystem === true || req.user.role?.name === 'System Admin';
 
-        // 1. Get all restaurants owned by user
-        const restaurants = await Restaurant.find({ owner: ownerId })
+        // 1. Get restaurants (all for System Admin, or owned ones for Owner)
+        const query = isSystemAdmin ? {} : { owner: ownerId };
+        const restaurants = await Restaurant.find(query)
             .select('_id name settings subscription')
             .populate('subscription', 'status');
 

@@ -83,7 +83,7 @@ export default function DashboardLayout() {
     ];
     const isAllowedPageUnderBlock = allowedBlockedPaths.some(path => location.pathname.startsWith(path));
     // Allow System Admin to bypass
-    const isSystemAdmin = user?.role?.isSystem === true || user?.role?.name === 'System Admin' || user?.role?.name === 'Admin';
+    const isSystemAdmin = user?.role?.name === 'System Admin';
 
     // Determine user type for the blocker screen
     const userType = (['Owner', 'Admin'].includes(user?.role?.name || user?.role) || user?.role?.isOwner) ? 'owner' : 'staff';
@@ -290,7 +290,7 @@ export default function DashboardLayout() {
         {
             title: t('system_administration') || '⚙️ SISTEMA & ADMINISTRAÇÃO',
             items: [
-                { icon: Settings, label: t('system_admin_hub'), path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.isSystem },
+                { icon: Settings, label: t('system_admin_hub'), path: '/dashboard/settings', show: hasPermission('manage_settings') && user?.role?.name === 'System Admin' },
             { icon: CreditCard, label: t('subscription_management_admin') || 'Gestão de Assinaturas', path: '/dashboard/subscriptions', show: isSystemAdmin },
                 { icon: Info, label: t('about_us'), path: '/dashboard/about-us', show: true },
             ]

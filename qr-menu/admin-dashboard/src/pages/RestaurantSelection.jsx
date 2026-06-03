@@ -19,9 +19,15 @@ const RestaurantSelection = () => {
     const [subscriptions, setSubscriptions] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [subError, setSubError] = useState('');
+    const [apiDataRaw, setApiDataRaw] = useState(null);
     const [togglingId, setTogglingId] = useState(null);
 
-    const isOwner = user?.role?.name === 'Owner' || user?.role?.isSystem;
+    const isSystemAdmin = user?.role?.name === 'System Admin';
+    const isOwner = 
+        user?.role?.name === 'Owner' || 
+        user?.restaurants?.some(r => r.role === 'Owner') ||
+        (user?.role?.isSystem && !isSystemAdmin);
 
     useEffect(() => {
         const loadData = async () => {
@@ -39,12 +45,18 @@ const RestaurantSelection = () => {
     }, [user, location.state]);
 
     const fetchSubscriptions = async (restaurantList) => {
+        if (isSystemAdmin) {
+            return;
+        }
+
         try {
             const subscriptionData = {};
 
             // Bulk fetch all subscription statuses for the user
             // This is MUCH faster than individual calls
             const { data } = await api.get('/subscriptions/global-status');
+            console.log('Global Status Response:', data);
+            setApiDataRaw(data);
 
             if (data.restaurants && Array.isArray(data.restaurants)) {
                 data.restaurants.forEach(sub => {
@@ -62,8 +74,10 @@ const RestaurantSelection = () => {
             }
 
             setSubscriptions(subscriptionData);
+            setSubError('');
         } catch (err) {
             console.error('Failed to fetch subscriptions in bulk:', err);
+            setSubError(err.message || 'Unknown error');
             // Fallback: If bulk fails, we could do individual ones but better to show error or empty
         }
     };
@@ -210,6 +224,18 @@ const RestaurantSelection = () => {
                                 <span>{t('add_new_establishment')}</span>
                             </button>
                         </div>
+
+                        {/* Global Admin Access Button (Super Admin only) */}
+                        {isSystemAdmin && (
+                            <button
+                                onClick={() => navigate('/owner-dashboard')}
+                                className="global-admin-btn"
+                            >
+                                <Building2 size={20} />
+                                <span>{t('access_global_admin') || 'Aceder à Administração Global'}</span>
+                                <ArrowRight size={18} />
+                            </button>
+                        )}
                     </div>
 
                     <div className="selection-footer">

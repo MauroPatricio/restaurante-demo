@@ -140,12 +140,16 @@ router.post('/login', async (req, res) => {
         // Generate GLOBAL token (no restaurantId)
         const token = generateToken(user._id);
 
+        const globalRoleEntry = userRoles.find(ur => !ur.restaurant && ur.role && ur.role.isSystem);
+        const globalRole = globalRoleEntry ? globalRoleEntry.role : null;
+
         res.json({
             message: 'Login successful',
             token, // Global token
             user: {
                 ...user.toSafeObject(),
-                restaurants: accessibleRestaurants
+                restaurants: accessibleRestaurants,
+                role: globalRole
             },
             isDefaultPassword: user.isDefaultPassword
         });
@@ -295,9 +299,22 @@ router.get('/me', authenticateToken, async (req, res) => {
             }
         }
 
-        // Safety: If no specific context, but has associations, attach the first one's role for basic permissioning
-        if (!responseUser.role && userRestaurantRoles.length > 0) {
-            responseUser.role = userRestaurantRoles[0].role;
+        // Safety: If no specific context role has been set yet, determine the correct one:
+        // 1. Prefer a global system role (restaurant: null, role.isSystem: true)
+        // 2. Fall back to the first available restaurant role
+        if (!responseUser.role) {
+            // Find a global system admin role entry (no restaurant association)
+            const globalSystemEntry = userRestaurantRoles.find(
+                urr => !urr.restaurant && urr.role && (urr.role.isSystem === true || urr.role.name === 'System Admin')
+            );
+
+            if (globalSystemEntry) {
+                // Super Admin: set the global role and clear restaurant context
+                responseUser.role = globalSystemEntry.role;
+            } else if (userRestaurantRoles.length > 0) {
+                // Regular user with no active restaurant context
+                responseUser.role = userRestaurantRoles[0].role;
+            }
         }
 
         res.json({

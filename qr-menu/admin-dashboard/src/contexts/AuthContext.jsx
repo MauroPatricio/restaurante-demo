@@ -11,8 +11,20 @@ export const useAuth = () => {
     return context;
 };
 
+// Read user from localStorage synchronously so the first render already has the
+// correct role — prevents the button from flashing in after the API round-trip.
+const getInitialUser = () => {
+    try {
+        const stored = localStorage.getItem('user');
+        if (stored) return JSON.parse(stored);
+    } catch {
+        // ignore malformed JSON
+    }
+    return null;
+};
+
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(getInitialUser);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,12 +39,19 @@ export const AuthProvider = ({ children }) => {
                     // Backend is now enriched to provide this in ONE call
                     const { data } = await api.get('/auth/me');
                     setUser(data.user);
+                    // Keep localStorage in sync so the next cold start is instant too
+                    localStorage.setItem('user', JSON.stringify(data.user));
                 } catch (error) {
                     console.error('❌ Failed to load user:', error);
                     localStorage.removeItem('token');
                     localStorage.removeItem('restaurantId');
+                    localStorage.removeItem('user');
                     setUser(null);
                 }
+            } else {
+                // No token — clear any stale cached user
+                localStorage.removeItem('user');
+                setUser(null);
             }
             setLoading(false);
         };
@@ -41,9 +60,32 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (credentials) => {
         const { data } = await api.post('/auth/login', credentials);
+        // Set token first so /auth/me request is authenticated
         localStorage.setItem('token', data.token);
-        setUser(data.user);
-        return data;
+
+        // Immediately fetch the fully-enriched profile (includes role.isSystem, restaurants, etc.)
+        // This ensures the AuthContext user is complete BEFORE navigate() is called in Login.jsx,
+        // so role-conditional UI (like the Super Admin button) is correct on the first render.
+        let enrichedUser = data.user;
+        try {
+            const meResponse = await api.get('/auth/me');
+            enrichedUser = {
+                ...meResponse.data.user,
+                // Preserve restaurants list from login response if /auth/me doesn't include it
+                restaurants: meResponse.data.user?.restaurants?.length
+                    ? meResponse.data.user.restaurants
+                    : data.user.restaurants || []
+            };
+        } catch (meErr) {
+            console.warn('⚠️ /auth/me failed after login, using login response data:', meErr);
+        }
+
+        // Persist enriched user synchronously so getInitialUser() on next mount is instant
+        localStorage.setItem('user', JSON.stringify(enrichedUser));
+        setUser(enrichedUser);
+
+        // Return enriched data so Login.jsx can pass correct restaurants in router state
+        return { ...data, user: enrichedUser };
     };
 
     const selectRestaurant = async (restaurantId) => {

@@ -202,6 +202,18 @@ export default function Subscriptions() {
         return { text: `${daysUntilExpiry} ${t('days_label') || 'days'}`, className: 'normal' };
     };
 
+    // Returns a styled badge config for the subscription plan
+    const getPlanBadge = (plan) => {
+        const p = (plan || 'standard').toLowerCase();
+        const map = {
+            starter:  { label: 'Starter',  bg: '#f3f4f6', color: '#374151', border: '#d1d5db' },
+            standard: { label: 'Standard', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+            pro:      { label: 'Pro',       bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
+            premium:  { label: 'Premium',  bg: '#fefce8', color: '#92400e', border: '#fde68a' },
+        };
+        return map[p] || { label: plan || 'Standard', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
+    };
+
 
 
     // Filtered Owners
@@ -496,6 +508,7 @@ export default function Subscriptions() {
                                         <th>{t('owner_overview')}</th>
                                         <th>{t('email')}</th>
                                         <th>{t('subscription_restaurants_count')}</th>
+                                        <th>{t('subscription_plan') || 'Plano'}</th>
                                         <th>{t('subscription_total_amount')}</th>
                                         <th>{t('status')}</th>
                                     </tr>
@@ -531,6 +544,27 @@ export default function Subscriptions() {
                                                         {owner.restaurantCount}
                                                     </span>
                                                 </td>
+                                                {/* Plan column — shows the plan of the main (first) restaurant */}
+                                                <td>
+                                                    {(() => {
+                                                        const mainRest = owner.restaurants?.[0];
+                                                        const badge = getPlanBadge(mainRest?.plan);
+                                                        return (
+                                                            <span style={{
+                                                                fontSize: '0.75rem',
+                                                                padding: '3px 10px',
+                                                                borderRadius: '999px',
+                                                                background: badge.bg,
+                                                                color: badge.color,
+                                                                border: `1px solid ${badge.border}`,
+                                                                fontWeight: '700',
+                                                                letterSpacing: '0.03em'
+                                                            }}>
+                                                                {badge.label}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </td>
                                                 <td className="font-bold">
                                                     {owner.totalAmount.toLocaleString()} Mt
                                                 </td>
@@ -545,13 +579,14 @@ export default function Subscriptions() {
                                             </tr>
                                             {expandedOwnerId === owner.id && (
                                                 <tr style={{ backgroundColor: '#f9fafb' }}>
-                                                    <td colSpan="6" style={{ padding: '0 1rem 1rem 1rem' }}>
+                                                    <td colSpan="7" style={{ padding: '0 1rem 1rem 1rem' }}>
                                                         <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                                                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                                                                 <thead style={{ backgroundColor: '#f3f4f6' }}>
                                                                     <tr>
                                                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '600', color: '#4b5563' }}>{t('restaurant_structure')}</th>
                                                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '600', color: '#4b5563' }}>{t('type')}</th>
+                                                                        <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '600', color: '#4b5563' }}>{t('subscription_plan') || 'Plano'}</th>
                                                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '600', color: '#4b5563' }}>{t('amount')}</th>
                                                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '600', color: '#4b5563' }}>{t('status')}</th>
                                                                         <th style={{ padding: '0.5rem 1rem', textAlign: 'left', fontWeight: '600', color: '#4b5563' }}>{t('actions')}</th>
@@ -574,6 +609,25 @@ export default function Subscriptions() {
                                                                                         {t('price_additional', 'Additional')} (25%)
                                                                                     </span>
                                                                                 )}
+                                                                            </td>
+                                                                            {/* Plan badge cell */}
+                                                                            <td style={{ padding: '0.75rem 1rem' }}>
+                                                                                {(() => {
+                                                                                    const badge = getPlanBadge(rest.plan);
+                                                                                    return (
+                                                                                        <span style={{
+                                                                                            fontSize: '0.72rem',
+                                                                                            padding: '2px 9px',
+                                                                                            borderRadius: '999px',
+                                                                                            background: badge.bg,
+                                                                                            color: badge.color,
+                                                                                            border: `1px solid ${badge.border}`,
+                                                                                            fontWeight: '700'
+                                                                                        }}>
+                                                                                            {badge.label}
+                                                                                        </span>
+                                                                                    );
+                                                                                })()}
                                                                             </td>
                                                                             <td style={{ padding: '0.75rem 1rem', fontWeight: '600' }}>
                                                                                 {rest.currentAmount?.toLocaleString()} Mt
