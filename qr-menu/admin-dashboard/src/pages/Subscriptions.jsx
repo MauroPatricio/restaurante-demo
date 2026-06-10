@@ -246,6 +246,7 @@ export default function Subscriptions() {
         const syntheticSub = {
             _id: restaurant.subscriptionId,
             status: restaurant.status,
+            daysUntilExpiry: restaurant.daysUntilExpiry,
             restaurant: {
                 _id: restaurant.id,
                 name: restaurant.name
@@ -685,7 +686,7 @@ export default function Subscriptions() {
                             <div style={{ padding: '1.5rem' }}>
                                 <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
                                     <p style={{ marginBottom: '0.5rem' }}><strong>{t('restaurant_structure')}:</strong> {selectedSubscription.restaurant?.name}</p>
-                                    <p><strong>{t('status')}:</strong> <span
+                                    <p style={{ marginBottom: selectedSubscription.daysUntilExpiry !== undefined ? '0.5rem' : '0' }}><strong>{t('status')}:</strong> <span
                                         style={{
                                             padding: '0.25rem 0.75rem',
                                             borderRadius: '12px',
@@ -694,6 +695,11 @@ export default function Subscriptions() {
                                     >
                                         {getStatusLabel(selectedSubscription.status, t)}
                                     </span></p>
+                                    {selectedSubscription.daysUntilExpiry !== undefined && (
+                                        <p><strong>{t('days_remaining')}:</strong> <span className={`expiry-indicator ${getDaysUntilExpiry(selectedSubscription.daysUntilExpiry).className}`}>
+                                            {getDaysUntilExpiry(selectedSubscription.daysUntilExpiry).text}
+                                        </span></p>
+                                    )}
                                 </div>
 
                                 <div className="form-group">

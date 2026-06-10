@@ -10,6 +10,7 @@ import {
     AlertCircle, RefreshCw
 } from 'lucide-react';
 import { exportDetailedPDF, exportDetailedExcel } from '../utils/export_utils';
+import { fetchImageAsBase64 } from '../utils/logo_utils';
 
 import FinancialTab from '../components/reports/FinancialTab';
 import SalesTab from '../components/reports/SalesTab';
@@ -398,7 +399,7 @@ export default function Reports() {
     };
 
     // Premium Corporate PDF and Excel export handler
-    const handleExport = (formatType) => {
+    const handleExport = async (formatType) => {
         if (!reportData) return alert(t('no_data_to_export') || 'Sem dados para exportar');
 
         let columns = [];
@@ -586,6 +587,15 @@ export default function Reports() {
         const periodLabel = `${periodType.toUpperCase()}`;
         const rangeLabel = `${dateRange.startDate} a ${dateRange.endDate}`;
 
+        let logoBase64 = null;
+        if (user?.restaurant?.logo) {
+            try {
+                logoBase64 = await fetchImageAsBase64(user.restaurant.logo);
+            } catch (e) {
+                console.error('Error fetching logo image:', e);
+            }
+        }
+
         let signature = 'STAMP-SECURE-DEFAULT';
         if (formatType === 'pdf') {
             signature = exportDetailedPDF({
@@ -596,7 +606,8 @@ export default function Reports() {
                 data: rows,
                 restaurantName,
                 filename,
-                totals
+                totals,
+                logoBase64
             });
         } else if (formatType === 'excel') {
             exportDetailedExcel({

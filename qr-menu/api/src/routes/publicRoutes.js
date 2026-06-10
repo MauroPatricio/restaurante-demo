@@ -42,8 +42,8 @@ router.get('/menu/validate', async (req, res) => {
         }
 
         // Fetch restaurant and table
-        const restaurant = await Restaurant.findById(restaurantId).populate('subscription');
-        const table = await Table.findById(tableId);
+        const restaurant = await Restaurant.findById(restaurantId).populate('subscription').lean();
+        const table = await Table.findById(tableId).lean();
 
         console.log('🏪 Restaurant check:', {
             found: !!restaurant,
@@ -124,7 +124,7 @@ router.post('/menu/access-by-code', async (req, res) => {
             return res.status(400).json({ error: 'Code is required' });
         }
 
-        const table = await Table.findOne({ numericCode: code }).populate('restaurant');
+        const table = await Table.findOne({ numericCode: code }).populate('restaurant').lean();
 
         if (!table) {
             return res.status(404).json({ error: 'Invalid code', message: 'Código inválido. Verifique o número na mesa.' });
@@ -202,7 +202,7 @@ router.get('/menu/:restaurantId', async (req, res) => {
         }
 
         // Get restaurant with menu items
-        const restaurant = await Restaurant.findById(restaurantId).select('name logo menuItems');
+        const restaurant = await Restaurant.findById(restaurantId).select('name logo menuItems').lean();
 
         if (!restaurant) {
             return res.status(404).json({
@@ -260,7 +260,8 @@ router.get('/orders/history', async (req, res) => {
         })
             .sort({ createdAt: -1 })
             .populate('items.item', 'name price')
-            .limit(20);
+            .limit(20)
+            .lean();
 
         res.json({ orders });
     } catch (error) {
@@ -301,8 +302,8 @@ router.get('/room/validate', async (req, res) => {
         }
 
         const [restaurant, room] = await Promise.all([
-            Restaurant.findById(restaurantId).populate('subscription'),
-            HotelRoom.findById(roomId)
+            Restaurant.findById(restaurantId).populate('subscription').lean(),
+            HotelRoom.findById(roomId).lean()
         ]);
 
         if (!restaurant || !restaurant.active) {
@@ -359,7 +360,7 @@ router.get('/room/menu/:restaurantId', async (req, res) => {
         const Category = (await import('../models/Category.js')).default;
 
         const [restaurant, items, categories] = await Promise.all([
-            Restaurant.findById(restaurantId).select('name logo settings currency'),
+            Restaurant.findById(restaurantId).select('name logo settings currency').lean(),
             MenuItem.find({ restaurant: restaurantId, available: true })
                 .select('name description price costPrice currency imageUrl image photo category popular orderCount stock stockControlled stockMin prepTime active unit')
                 .lean(),
@@ -417,8 +418,8 @@ router.post('/room/orders', async (req, res) => {
         }
 
         const [restaurant, room] = await Promise.all([
-            Restaurant.findById(restaurantId).populate('subscription'),
-            HotelRoom.findById(roomId)
+            Restaurant.findById(restaurantId).populate('subscription').lean(),
+            HotelRoom.findById(roomId).lean()
         ]);
 
         if (!restaurant || !restaurant.active) {
@@ -509,7 +510,8 @@ router.get('/room/order/:id', async (req, res) => {
     try {
         const order = await Order.findById(req.params.id)
             .populate('items.item', 'name price imageUrl')
-            .select('status orderType total customerName roomService statusHistory estimatedReadyTime createdAt items');
+            .select('status orderType total customerName roomService statusHistory estimatedReadyTime createdAt items')
+            .lean();
 
         if (!order || order.orderType !== 'room-service') {
             return res.status(404).json({ error: 'Order not found' });
@@ -570,7 +572,7 @@ router.get('/menu-item/:itemId/suggestions', async (req, res) => {
         const { itemId } = req.params;
         const MenuItem = (await import('../models/MenuItem.js')).default;
 
-        const originalItem = await MenuItem.findById(itemId);
+        const originalItem = await MenuItem.findById(itemId).lean();
         if (!originalItem) return res.status(404).json({ error: 'Item not found' });
 
         // Find alternatives: same category, available, and in stock

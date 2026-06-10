@@ -213,6 +213,11 @@ export default function HomeScreen({ navigation }) {
             />
           )}
           contentContainerStyle={styles.menuList}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          updateCellsBatchingPeriod={50}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>{t('no_items_found')}</Text>

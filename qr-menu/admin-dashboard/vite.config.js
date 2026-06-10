@@ -29,6 +29,12 @@ export default defineConfig({
           if (id.includes('node_modules/html2canvas')) {
             return 'html2canvas';
           }
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/@tanstack/react-query')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/framer-motion')) {
+            return 'vendor-ui';
+          }
         }
       }
     }

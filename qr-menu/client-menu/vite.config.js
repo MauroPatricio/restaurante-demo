@@ -8,7 +8,7 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
-                    vendor: ['react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion', 'axios'],
+                    vendor: ['react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion', 'axios', '@tanstack/react-query'],
                     i18n: ['react-i18next', 'i18next'],
                 },
             },

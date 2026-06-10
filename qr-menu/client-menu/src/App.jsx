@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { ThemeProvider } from './context/ThemeContext';
-import Menu from './pages/Menu';
-import Cart from './pages/Cart';
-import OrderStatus from './pages/OrderStatus';
-import OrderHistory from './pages/OrderHistory';
-import Maintenance from './pages/Maintenance';
-import RoomMenuPage from './pages/RoomMenuPage';
-import RoomOrderTracking from './pages/RoomOrderTracking';
+import { Suspense, lazy } from 'react';
+
+const Menu = lazy(() => import('./pages/Menu'));
+const Cart = lazy(() => import('./pages/Cart'));
+const OrderStatus = lazy(() => import('./pages/OrderStatus'));
+const OrderHistory = lazy(() => import('./pages/OrderHistory'));
+const Maintenance = lazy(() => import('./pages/Maintenance'));
+const RoomMenuPage = lazy(() => import('./pages/RoomMenuPage'));
+const RoomOrderTracking = lazy(() => import('./pages/RoomOrderTracking'));
 import { NotificationProvider } from './context/NotificationContext';
 import { LoadingProvider } from './context/LoadingContext';
 import { CurrencyProvider } from './context/CurrencyContext';
@@ -263,6 +265,12 @@ import RestaurantLoader from './components/RestaurantLoader';
 
 import { SocketProvider } from './context/SocketContext';
 
+const PageLoader = () => (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <LoadingSpinner size={40} color="indigo" />
+    </div>
+);
+
 function App() {
     return (
         <ThemeProvider>
@@ -272,18 +280,20 @@ function App() {
                         <NotificationProvider>
                             <LoadingProvider>
                             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                                <Routes>
-                                    <Route path="/menu" element={<QRRedirect />} />
-                                    <Route path="/menu/:restaurantId" element={<RestaurantLoader><Menu /></RestaurantLoader>} />
-                                    <Route path="/menu/:restaurantId/cart" element={<RestaurantLoader><Cart /></RestaurantLoader>} />
-                                    <Route path="/menu/:restaurantId/status/:orderId" element={<RestaurantLoader><OrderStatus /></RestaurantLoader>} />
-                                    <Route path="/menu/:restaurantId/history" element={<RestaurantLoader><OrderHistory /></RestaurantLoader>} />
-                                    <Route path="/maintenance" element={<Maintenance />} />
-                                    {/* Room Service Routes */}
-                                    <Route path="/room/:restaurantId" element={<RestaurantLoader><RoomMenuPage /></RestaurantLoader>} />
-                                    <Route path="/room/:restaurantId/track/:orderId" element={<RestaurantLoader><RoomOrderTracking /></RestaurantLoader>} />
-                                    <Route path="/" element={<CodeEntry />} />
-                                </Routes>
+                                <Suspense fallback={<PageLoader />}>
+                                    <Routes>
+                                        <Route path="/menu" element={<QRRedirect />} />
+                                        <Route path="/menu/:restaurantId" element={<RestaurantLoader><Menu /></RestaurantLoader>} />
+                                        <Route path="/menu/:restaurantId/cart" element={<RestaurantLoader><Cart /></RestaurantLoader>} />
+                                        <Route path="/menu/:restaurantId/status/:orderId" element={<RestaurantLoader><OrderStatus /></RestaurantLoader>} />
+                                        <Route path="/menu/:restaurantId/history" element={<RestaurantLoader><OrderHistory /></RestaurantLoader>} />
+                                        <Route path="/maintenance" element={<Maintenance />} />
+                                        {/* Room Service Routes */}
+                                        <Route path="/room/:restaurantId" element={<RestaurantLoader><RoomMenuPage /></RestaurantLoader>} />
+                                        <Route path="/room/:restaurantId/track/:orderId" element={<RestaurantLoader><RoomOrderTracking /></RestaurantLoader>} />
+                                        <Route path="/" element={<CodeEntry />} />
+                                    </Routes>
+                                </Suspense>
                             </div>
                         </LoadingProvider>
                     </NotificationProvider>

@@ -12,6 +12,7 @@ import { API_URL } from '../config/api';
 import ThemeToggle from '../components/ThemeToggle';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import WaiterCallButton from '../components/WaiterCallButton';
+import { useQuery } from '@tanstack/react-query';
 import SuggestionsModal from '../components/SuggestionsModal';
 import { useSocket } from '../context/SocketContext';
 import ReactionButtons from '../components/ReactionButtons';
@@ -71,7 +72,6 @@ const Menu = () => {
 
     const [categories, setCategories] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeCategory, setActiveCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
@@ -154,79 +154,62 @@ const Menu = () => {
         if (tableNumber) joinTableRoom(tableNumber);
     }, [restaurantId, tableNumber, joinRestaurantRoom, joinTableRoom]);
 
-    // Fetch Menu (Re-fetches on lastMenuUpdate)
+    // React Query for Menu
+    const { data: menuData, isLoading: isLoadingMenu, error: menuError } = useQuery({
+        queryKey: ['menu', restaurantId, lastMenuUpdate],
+        queryFn: async () => {
+            const [menuRes, catRes] = await Promise.all([
+                api.get(`/menu/${restaurantId}?available=true`),
+                api.get(`/menu/${restaurantId}/categories`)
+            ]);
+
+            const itemsData = menuRes.data.items;
+            const categoriesDataRaw = catRes.data.categories || [];
+            
+            // Remove potential duplicates or 'All' strings from backend before adding our own
+            const uniqueCategories = categoriesDataRaw.filter(c => {
+                const name = typeof c === 'object' ? c.name : c;
+                return name !== 'All' && name !== t('filter_all');
+            });
+            const categoriesData = ['All', ...uniqueCategories];
+
+            return { items: itemsData, categories: categoriesData };
+        },
+        enabled: !!restaurantId && sessionValid,
+        staleTime: 15 * 60 * 1000, // 15 minutes
+    });
+
     useEffect(() => {
-        const fetchMenu = async () => {
-            if (!sessionValid) return; // Wait for valid session
+        if (menuData) {
+            setMenuItems(menuData.items);
+            setCategories(menuData.categories);
+            checkRestaurant(restaurantId);
+        }
+    }, [menuData, checkRestaurant, restaurantId]);
 
-            // Cache Logic
-            const CACHE_KEY = `menu_cache_${restaurantId}`;
-            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-            const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
-
-            if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
-                console.log('Using cached menu data');
-                setRestaurant(cached.restaurant);
-                setMenuItems(cached.items);
-                setCategories(cached.categories);
-                checkRestaurant(restaurantId);
-                setLoading(false);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                const timestamp = Date.now(); // Cache buster
-                const [menuRes, catRes] = await Promise.all([
-                    api.get(`/menu/${restaurantId}?available=true&_t=${timestamp}`),
-                    api.get(`/menu/${restaurantId}/categories`)
-                ]);
-
-                const itemsData = menuRes.data.items;
-                const categoriesDataRaw = catRes.data.categories || [];
-                // Remove potential duplicates or 'All' strings from backend before adding our own
-                const uniqueCategories = categoriesDataRaw.filter(c => {
-                    const name = typeof c === 'object' ? c.name : c;
-                    return name !== 'All' && name !== t('filter_all');
-                });
-                const categoriesData = ['All', ...uniqueCategories];
-
-                setMenuItems(itemsData);
-                setCategories(categoriesData);
-                checkRestaurant(restaurantId);
-
-                // Update Cache
-                localStorage.setItem(CACHE_KEY, JSON.stringify({
-                    timestamp: Date.now(),
-                    restaurant: restaurant,
-                    items: itemsData,
-                    categories: categoriesData
-                }));
-            } catch (err) {
-                console.error(err);
-                setError(t('failed_to_load'));
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (restaurantId && sessionValid) fetchMenu();
-    }, [restaurantId, lastMenuUpdate, sessionValid]);
-
-    // Separate Table Fetch (Re-fetches on lastTableUpdate)
     useEffect(() => {
-        const fetchTableInfo = async () => {
-            if (tableNumber) {
-                try {
-                    const tableRes = await api.get(`/tables/${tableNumber}?_t=${Date.now()}`);
-                    setTableInfo(tableRes.data.table);
-                } catch (e) {
-                    console.warn("Table not found or err", e);
-                }
-            }
-        };
-        fetchTableInfo();
-    }, [tableNumber, lastTableUpdate]);
+        if (menuError) {
+            console.error(menuError);
+            setError(t('failed_to_load'));
+        }
+    }, [menuError, t]);
+
+    // React Query for Table
+    const { data: fetchedTableInfo } = useQuery({
+        queryKey: ['table', tableNumber, lastTableUpdate],
+        queryFn: async () => {
+            const tableRes = await api.get(`/tables/${tableNumber}`);
+            return tableRes.data.table;
+        },
+        enabled: !!tableNumber,
+        staleTime: 60 * 1000, // 1 minute
+    });
+
+    useEffect(() => {
+        if (fetchedTableInfo) {
+            setTableInfo(fetchedTableInfo);
+        }
+    }, [fetchedTableInfo]);
 
     // Handle real-time stock updates
     useEffect(() => {
@@ -352,7 +335,7 @@ const Menu = () => {
         </div>
     );
 
-    if (loading) return (
+    if (isLoadingMenu) return (
         <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
             <LoadingSpinner size={48} />
         </div>

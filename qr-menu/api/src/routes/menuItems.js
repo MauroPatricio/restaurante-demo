@@ -250,8 +250,9 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const menuItem = await MenuItem.findById(req.params.id)
-            .populate('category')
-            .populate('subcategory');
+            .populate('category', 'name')
+            .populate('subcategory', 'name')
+            .lean();
 
         if (!menuItem) {
             return res.status(404).json({ message: 'Menu item not found' });

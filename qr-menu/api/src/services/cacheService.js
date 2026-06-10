@@ -1,10 +1,10 @@
-// Simple in-memory cache service
-// For production, consider using Redis
+import NodeCache from 'node-cache';
 
+// Simple in-memory cache service using node-cache
+// node-cache is more robust than manual Maps with timeouts
 class CacheService {
     constructor() {
-        this.cache = new Map();
-        this.ttls = new Map();
+        this.cache = new NodeCache({ stdTTL: 300, checkperiod: 120 });
     }
 
     /**
@@ -14,20 +14,7 @@ class CacheService {
      * @param {number} ttlSeconds - Time to live in seconds (default: 300 = 5 minutes)
      */
     set(key, value, ttlSeconds = 300) {
-        this.cache.set(key, value);
-
-        // Clear existing timeout if any
-        if (this.ttls.has(key)) {
-            clearTimeout(this.ttls.get(key));
-        }
-
-        // Set new timeout
-        const timeout = setTimeout(() => {
-            this.cache.delete(key);
-            this.ttls.delete(key);
-        }, ttlSeconds * 1000);
-
-        this.ttls.set(key, timeout);
+        this.cache.set(key, value, ttlSeconds);
     }
 
     /**
@@ -36,7 +23,8 @@ class CacheService {
      * @returns {any|null} Cached value or null if not found/expired
      */
     get(key) {
-        return this.cache.get(key) || null;
+        const val = this.cache.get(key);
+        return val === undefined ? null : val;
     }
 
     /**
@@ -53,11 +41,7 @@ class CacheService {
      * @param {string} key - Cache key
      */
     delete(key) {
-        if (this.ttls.has(key)) {
-            clearTimeout(this.ttls.get(key));
-            this.ttls.delete(key);
-        }
-        this.cache.delete(key);
+        this.cache.del(key);
     }
 
     /**
@@ -65,11 +49,11 @@ class CacheService {
      * @param {string} pattern - Pattern to match (e.g., 'menu:*')
      */
     deletePattern(pattern) {
+        const keys = this.cache.keys();
         const regex = new RegExp('^' + pattern.replace('*', '.*') + '$');
-        for (const key of this.cache.keys()) {
-            if (regex.test(key)) {
-                this.delete(key);
-            }
+        const keysToDelete = keys.filter(k => regex.test(k));
+        if (keysToDelete.length > 0) {
+            this.cache.del(keysToDelete);
         }
     }
 
@@ -77,11 +61,7 @@ class CacheService {
      * Clear all cache
      */
     clear() {
-        for (const timeout of this.ttls.values()) {
-            clearTimeout(timeout);
-        }
-        this.cache.clear();
-        this.ttls.clear();
+        this.cache.flushAll();
     }
 
     /**
@@ -89,10 +69,7 @@ class CacheService {
      * @returns {object} Cache stats
      */
     getStats() {
-        return {
-            size: this.cache.size,
-            keys: Array.from(this.cache.keys())
-        };
+        return this.cache.getStats();
     }
 }
 

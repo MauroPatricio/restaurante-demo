@@ -135,6 +135,10 @@ export default function CartScreen({ navigation }: any) {
                 renderItem={renderCartItem}
                 keyExtractor={(_, index) => index.toString()}
                 contentContainerStyle={styles.listContainer}
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                removeClippedSubviews={false} // usually cart items are few, but good to have
             />
 
             {/* Coupon Section */}

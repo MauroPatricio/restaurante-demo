@@ -192,10 +192,10 @@ export const exportDetailedPDF = ({
     dateRangeStr, 
     columns, 
     data, 
-    restaurantName = 'O Meu Restaurante', 
-    filename = 'relatorio', 
-    totals = null, 
-    currency = 'MZN' 
+    restaurantName, 
+    filename, 
+    totals, 
+    logoBase64 
 }) => {
     // Generate a cryptographic hash for authenticity
     const rawStamp = `${restaurantName}-${title}-${dateRangeStr}-${new Date().getTime()}`;
@@ -218,7 +218,15 @@ export const exportDetailedPDF = ({
     doc.setFontSize(14);
     doc.setTextColor(30, 41, 59);
     doc.text(restaurantName.toUpperCase(), 40, 50);
-
+    // Add logo image if available
+    if (logoBase64) {
+        // Determine image dimensions
+        const imgProps = doc.getImageProperties(logoBase64);
+        const imgWidth = 40; // 40pt width
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+        // Position at top-right corner within header area
+        doc.addImage(logoBase64, "PNG", 555.28 - imgWidth - 10, 25, imgWidth, imgHeight);
+    }
     // Title
     doc.setFontSize(20);
     doc.text(title, 40, 80);

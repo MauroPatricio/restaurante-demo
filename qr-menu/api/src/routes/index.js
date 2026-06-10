@@ -10,6 +10,7 @@ import QRCode from 'qrcode';
 import { authenticateToken, authorizeRoles, checkSubscription } from '../middleware/auth.js';
 import { sendOrderNotification } from '../services/firebaseService.js';
 import cache from '../services/cacheService.js';
+import cacheMiddleware from '../middleware/cacheMiddleware.js';
 import upload from '../middleware/upload.js';
 import cloudinary from '../config/cloudinary.js';
 import streamifier from 'streamifier';
@@ -466,13 +467,13 @@ router.get('/menu/:restaurantId', async (req, res) => {
 });
 
 // Get menu categories for a restaurant
-router.get('/menu/:restaurantId/categories', async (req, res) => {
+router.get('/menu/:restaurantId/categories', cacheMiddleware(300), async (req, res) => {
   try {
     // Get unique categories used by menu items for this restaurant
     const items = await MenuItem.find({
       restaurant: req.params.restaurantId,
       available: true
-    }).populate('category').select('category');
+    }).populate('category').select('category').lean();
 
     // Extract unique categories
     const categoryMap = new Map();
