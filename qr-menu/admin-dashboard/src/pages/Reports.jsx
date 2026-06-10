@@ -972,7 +972,7 @@ export default function Reports() {
                             <h3 style={{ fontSize: '28px', fontWeight: '800', margin: 0, color: '#1e293b' }}>
                                 {reportData?.summary?.avgTicket ? Math.round(reportData.summary.avgTicket).toLocaleString('pt-MZ') : 0} MT
                             </h3>
-                            {prevPeriodData?.avgTicket && (
+                            {prevPeriodData?.avgTicket && reportData?.summary && (
                                 <span style={{
                                     padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
                                     background: (reportData.summary.avgTicket >= prevPeriodData.avgTicket) ? '#d1fae5' : '#fee2e2',
