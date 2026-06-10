@@ -7,16 +7,21 @@ import api, { orderAPI } from '../services/api';
 const SocketContext = createContext(null);
 
 const getSocketUrl = () => {
-    const apiUrl = import.meta.env.VITE_API_URL;
+    let apiUrl = import.meta.env.VITE_API_URL;
 
     if (apiUrl) {
+        if (apiUrl.startsWith('https://https://')) apiUrl = apiUrl.replace('https://https://', 'https://');
+        if (apiUrl.startsWith('http://http://')) apiUrl = apiUrl.replace('http://http://', 'http://');
+
         // Remove trailing /api or /api/
         let base = apiUrl.replace(/\/api\/?$/, '');
 
         // If the result is explicitly just a protocol or invalid, fallback
         try {
-            new URL(base);
-            return base;
+            const parsed = new URL(base);
+            if (parsed.hostname && parsed.hostname !== 'https' && parsed.hostname !== 'http') {
+                return base;
+            }
         } catch (e) {
             console.error('Invalid VITE_API_URL for socket, falling back');
         }

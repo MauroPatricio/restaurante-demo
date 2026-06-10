@@ -39,7 +39,12 @@ const OwnerDashboard = () => {
     const fetchStats = async () => {
         try {
             setLoading(true);
-            const { data } = await analyticsAPI.getOwnerStats({ period });
+            const params = { period };
+            // Request stats just for the associated restaurant if set
+            if (user?.restaurant?._id || user?.restaurant?.id || typeof user?.restaurant === 'string') {
+                params.restaurantId = user.restaurant._id || user.restaurant.id || user.restaurant;
+            }
+            const { data } = await analyticsAPI.getOwnerStats(params);
             setStats(data);
         } catch (error) {
             console.error('Failed to fetch owner stats:', error);
@@ -238,7 +243,7 @@ const OwnerDashboard = () => {
                         {loading ? (
                             <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>
                         ) : (
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart
                                     data={stats?.revenueByRestaurant?.map(r => ({
                                         ...r,
@@ -269,7 +274,7 @@ const OwnerDashboard = () => {
                         {loading ? (
                             <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>
                         ) : (
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <PieChart>
                                     <Pie
                                         data={stats?.revenueByRestaurant}

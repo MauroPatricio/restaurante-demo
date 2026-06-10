@@ -1,4 +1,4 @@
-﻿
+
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { 
@@ -124,8 +124,8 @@ export default function ProfitTab({ data, loading }) {
                 {/* Growth/Comparison Bar Chart */}
                 <div style={cardStyle}>
                     <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '24px' }}>{t('financial_flow_summary')}</h4>
-                    <div style={{ width: '100%', height: 350 }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ width: '100%', height: 350, minWidth: 0, minHeight: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <BarChart data={barData} layout="vertical" margin={{ left: 40 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                                 <XAxis type="number" hide />

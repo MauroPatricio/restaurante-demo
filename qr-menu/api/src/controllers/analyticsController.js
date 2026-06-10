@@ -13,7 +13,7 @@ export const getOwnerStats = async (req, res) => {
     try {
         const isSystemAdmin = req.user.role?.isSystem === true || req.user.role?.name === 'System Admin';
         const ownerId = req.user._id;
-        const activeRestaurantId = req.user.restaurant || req.restaurantId;
+        const activeRestaurantId = req.query.restaurantId || req.user.restaurant || req.restaurantId;
 
         // 1. Get restaurants (all for System Admin, or owned ones for Owner)
         let query = isSystemAdmin ? {} : { owner: ownerId };

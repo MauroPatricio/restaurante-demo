@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 /**
@@ -21,7 +21,7 @@ export const exportToPDF = ({ title, subtitle, columns, data, filename, orientat
         doc.text(subtitle, 40, 60);
     }
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: subtitle ? 80 : 60,
         head: [columns.map(c => c.header)],
         body: data.map(row => columns.map(c => row[c.dataKey])),
@@ -32,7 +32,7 @@ export const exportToPDF = ({ title, subtitle, columns, data, filename, orientat
 
     // Add totals if provided
     if (totals) {
-        const finalY = doc.lastAutoTable.finalY || 80;
+        const finalY = doc.lastAutoTable?.finalY || 80;
         doc.setFontSize(10);
         doc.setTextColor(15, 23, 42); // Slate-900
         let yPos = finalY + 20;
@@ -247,7 +247,7 @@ export const exportDetailedPDF = ({
     const colKey = (c) => typeof c === 'object' ? (c.dataKey || c.accessor) : c;
 
     // Table Render
-    doc.autoTable({
+    autoTable(doc, {
         startY: 145,
         head: [columns.map(c => c.header)],
         body: data.map(row => columns.map(c => row[colKey(c)])),
@@ -257,7 +257,7 @@ export const exportDetailedPDF = ({
         margin: { left: 40, right: 40 },
     });
 
-    const finalY = doc.lastAutoTable.finalY || 180;
+    const finalY = doc.lastAutoTable?.finalY || 180;
     let currentY = finalY + 25;
 
     // Totals Box

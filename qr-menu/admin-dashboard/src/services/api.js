@@ -6,6 +6,8 @@ let base;
 
 if (import.meta.env.VITE_API_URL) {
     base = import.meta.env.VITE_API_URL;
+    if (base.startsWith('https://https://')) base = base.replace('https://https://', 'https://');
+    if (base.startsWith('http://http://')) base = base.replace('http://http://', 'http://');
 } else {
     const hostname = window.location.hostname;
 
@@ -22,7 +24,23 @@ if (import.meta.env.VITE_API_URL) {
 }
 
 const API_URL = base;
-const SOCKET_URL = base.replace('/api', '');
+
+const getSocketUrl = (apiUrl) => {
+    if (!apiUrl) return '';
+    if (apiUrl.startsWith('http')) {
+        try {
+            const parsed = new URL(apiUrl);
+            if (parsed.hostname && parsed.hostname !== 'https' && parsed.hostname !== 'http') {
+                return parsed.origin;
+            }
+        } catch (e) {
+            // fallback below
+        }
+    }
+    return apiUrl.replace(/\/api\/?$/, '');
+};
+
+const SOCKET_URL = getSocketUrl(base);
 
 export { API_URL, SOCKET_URL };
 

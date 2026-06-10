@@ -1,17 +1,20 @@
 .waiter-call-alerts {
     position: fixed;
-    top: 100px;
-    right: 32px;
-    width: 420px;
+    top: calc(var(--header-height, 72px) + 16px);
+    right: 24px;
+    width: 380px;
+    max-height: calc(100vh - var(--header-height, 72px) - 32px);
     background: var(--premium-surface);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 28px;
+    border-radius: 20px;
     box-shadow: var(--premium-shadow-lg);
-    z-index: 9999;
+    z-index: 9998;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--premium-border);
+    display: flex;
+    flex-direction: column;
 }
 
 .waiter-call-alerts.minimized {
@@ -95,7 +98,8 @@
 
 /* Body */
 .alerts-body {
-    max-height: 500px;
+    flex: 1;
+    max-height: 460px;
     overflow-y: auto;
     background: rgba(248, 250, 252, 0.8);
 }
