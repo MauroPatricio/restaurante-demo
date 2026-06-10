@@ -32,3 +32,6 @@ export const cacheMiddleware = (durationSeconds = 300) => {
         next();
     };
 };
+
+export default cacheMiddleware;
+
